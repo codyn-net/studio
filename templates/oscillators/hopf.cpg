@@ -1,0 +1,78 @@
+<?xml version='1.0'?>
+<cpg>
+  <property name='allocation'>
+    <allocation>
+      <property name='x' value='0'/>
+      <property name='y' value='0'/>
+      <property name='width' value='500'/>
+      <property name='height' value='500'/>
+    </allocation>
+  </property>
+  <group id='hopf'>
+    <property name='integrate'>
+      <integrate/>
+    </property>
+    <property name='initial'>
+      <hash/>
+    </property>
+    <property name='range'>
+      <hash/>
+    </property>
+    <property name='allocation'>
+      <allocation>
+        <property name='x' value='4.0'/>
+        <property name='y' value='3.0'/>
+        <property name='width' value='1.0'/>
+        <property name='height' value='1.0'/>
+      </allocation>
+    </property>
+    <property name='__main' ref='hopf'/>
+    <property name='__klass' value='Oscillator'/>
+    <property name='__x' value='0'/>
+    <property name='__y' value='0'/>
+    <state id='hopf'>
+      <property name='integrate'>
+        <integrate>
+          <property name='x' value=''/>
+          <property name='y' value=''/>
+        </integrate>
+      </property>
+      <property name='initial'>
+        <hash>
+          <property name='gy' value='1'/>
+          <property name='u' value='1'/>
+          <property name='x' value='1'/>
+          <property name='gx' value='1'/>
+          <property name='w' value='2 * PI'/>
+          <property name='y' value='0'/>
+        </hash>
+      </property>
+      <property name='range'>
+        <hash/>
+      </property>
+      <property name='allocation'>
+        <allocation>
+          <property name='x' value='4.0'/>
+          <property name='y' value='3.0'/>
+          <property name='width' value='1.0'/>
+          <property name='height' value='1.0'/>
+        </allocation>
+      </property>
+      <property name='x' value='1'/>
+      <property name='y' value='0'/>
+      <property name='gx' value='1'/>
+      <property name='gy' value='1'/>
+      <property name='u' value='1'/>
+      <property name='w' value='2 * PI'/>
+    </state>
+    <link>
+      <property name='from' ref='hopf'/>
+      <property name='to' ref='hopf'/>
+      <property name='act_on' value='x, y'/>
+      <property name='equation' value='ex, ey'/>
+      <property name='display' value='(x, y)'/>
+      <property name='ex' value='gx * (u ** 2 - (x ** 2 + y ** 2)) * x + w * y'/>
+      <property name='ey' value='gy * (u ** 2 - (x ** 2 + y ** 2)) * y - w * x'/>
+    </link>
+  </group>
+</cpg>

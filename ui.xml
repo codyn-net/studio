@@ -1,0 +1,76 @@
+<ui>
+  <menubar>
+    <menu name="FileMenu" action="FileMenuAction">
+      <menuitem name="New" action="NewAction" />
+      <menuitem name="Open" action="OpenAction" />
+      <separator/>
+      <menuitem name="Save" action="SaveAction" />
+      <menuitem name="SaveAs" action="SaveAsAction" />
+      <separator/>
+      <menuitem name="Import" action="ImportAction" />
+      <menuitem name="Export" action="ExportAction" />
+      <separator/>
+      <menuitem name="Quit" action="QuitAction" />
+    </menu>
+    <menu name="EditMenu" action="EditMenuAction">
+      <menuitem name="Cut" action="CutAction" />
+      <menuitem name="Copy" action="CopyAction" />
+      <menuitem name="Paste" action="PasteAction" />
+      <separator/>
+      <menuitem name="Group" action="GroupAction" />
+      <menuitem name="Ungroup" action="UngroupAction" />
+    </menu>
+    <menu name="ViewMenu" action="ViewMenuAction">
+      <menuitem name="Center" action="CenterAction" />
+      <separator/>
+      <menuitem name="ViewMonitor" action="ViewMonitorAction"/>
+      <menuitem name="ViewControl" action="ViewControlAction"/>
+      <separator/>
+      <menuitem name="PropertyEditor" action="PropertyEditorAction" />
+    </menu>
+    <menu name="InsertMenu" action="InsertMenuAction">
+      <menuitem name="AddState" action="AddStateAction" />
+      <menuitem name="AddLink" action="AddLinkAction" />
+      <separator/>
+      <placeholder name="InsertTemplates"/>
+    </menu>
+  </menubar>
+  <popup>
+    <menu name="InsertMenu" action="InsertMenuAction">
+      <menuitem name="AddState" action="AddStateAction" />
+      <menuitem name="AddLink" action="AddLinkAction" />
+      <separator/>
+      <placeholder name="InsertTemplates"/>
+    </menu>
+    <separator/>
+    <menuitem name="Properties" action="PropertiesAction" />
+    <separator/>
+    <menu name="MonitorMenu" action="MonitorMenuAction">
+   	  <placeholder name="MonitorPlaceholder"/>
+    </menu>
+    <menu name="ControlMenu" action="ControlMenuAction">
+      <placeholder name="ControlPlaceholder"/>
+    </menu>
+    <separator/>
+    <menuitem name="Group" action="GroupAction"/>
+    <menuitem name="Ungroup" action="UngroupAction"/>
+    <menuitem name="EditGroup" action="EditGroupAction"/>
+  </popup>
+  <toolbar>
+    <toolitem name="New" action="NewAction"/>
+    <toolitem name="Open" action="OpenAction"/>
+    <toolitem name="Save" action="SaveAction"/>
+    <separator/>
+    <toolitem name="Cut" action="CutAction" />
+    <toolitem name="Copy" action="CopyAction" />
+    <toolitem name="Paste" action="PasteAction" />
+    <separator/>
+    <toolitem name="Delete" action="DeleteAction"/>
+    <separator/>
+    <toolitem name="AddState" action="AddStateAction"/>
+    <toolitem name="AddLink" action="AddLinkAction"/>
+    <separator/>
+    <placeholder name="ToolItems"/>
+  </toolbar>
+</ui>
+
