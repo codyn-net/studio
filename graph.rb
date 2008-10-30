@@ -376,15 +376,21 @@ module Cpg
 		def signal_do_scroll_event(event)
 			super
 		
-			factor = 1.2
+			factor = 0.2
 
 			if event.direction == Gdk::EventScroll::UP
-				ax = @yaxis.collect { |x| x / factor }
+				factor *= -1
 			elsif event.direction == Gdk::EventScroll::DOWN
-				ax = @yaxis.collect { |x| x * factor }
+				factor *= 1
 			else
 				return
 			end
+			
+			dist = (@yaxis[1] - @yaxis[0]) / 2.0
+			
+			ax = [0, 0]
+			ax[0] = @yaxis[0] - factor * dist
+			ax[1] = @yaxis[1] + factor * dist
 		
 			self.yaxis = ax
 		end

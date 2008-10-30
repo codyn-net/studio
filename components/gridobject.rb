@@ -258,8 +258,10 @@ module Cpg::Components
 		end
 	
 		def simulation_update(s)
+			c = Cpg::MathContext.new(state)
+
 			s.each do |prop, val|
-				v = (integrated?(prop) ? get_property(prop) : 0) + val
+				v = (integrated?(prop) ? c.eval(get_property(prop)).to_f : 0) + val
 				set_property(prop, v)
 			end
 		end

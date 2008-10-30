@@ -1,5 +1,16 @@
 module Cpg
 	class MathContext
+		class Wrapper
+			def initialize(context, proxy)
+				@context = context
+				@proxy = proxy
+			end
+			
+			def method_missing(name, *args)
+				@context.eval(@proxy.get_property(name))
+			end
+		end
+		
 		include Math
 
 		def initialize(*vars)
@@ -16,7 +27,13 @@ module Cpg
 		end
 		
 		def method_missing(name, *args)
-			eval(@state[name])
+			s = @state[name]
+			
+			if s.is_a?(Components::SimulatedObject)
+				Wrapper.new(self, s)
+			else
+				eval(s)
+			end
 		end
 
 		def eval(s)
