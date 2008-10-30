@@ -24,7 +24,7 @@ module Cpg
 				return s unless s.is_a?(String)
 				return Kernel.eval(s, binding)
 			rescue Exception
-				STDERR.puts("Error in MathContext: #{$!}\n\t#{$@.join("\n\t")}")
+				STDERR.puts("Error in MathContext while evaluating `#{s}': #{$!}\n\t#{$@.join("\n\t")}")
 				return 0
 			end
 		end

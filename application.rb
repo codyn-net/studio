@@ -9,6 +9,7 @@ require 'control'
 require 'messagearea'
 require 'simulation'
 require 'stock'
+require 'flatformat'
 
 module Cpg
 	class Cpg < Array
@@ -497,19 +498,7 @@ module Cpg
 			id = 0
 		
 			# fill in reference ids if necessary
-			@grid.root.each do |at|
-				next unless at.is_a?(Components::Attachment)
-
-				at.objects.each do |obj|
-					next unless obj.is_a?(Serialize)
-					next unless obj.properties.include?(:id)
-				
-					if !obj.property_set?(:id) || obj.get_property(:id) == nil || obj.get_property(:id) == ''
-						obj.set_property(:id, Time.now.to_i + id)
-						id += 1
-					end
-				end
-			end
+			Saver.ensure_ids(@grid.root)
 		
 			objects = @grid.root_objects
 			objects.delete_if { |x| !x.is_a?(Serialize) }
@@ -530,6 +519,22 @@ module Cpg
 			status_message("Saved #{@filename} ...")
 		end
 		
+		def do_save_flat(filename)
+			Saver.ensure_ids(@grid.root)
+			
+			objects = @grid.root_objects
+			objects.delete_if { |x| !(x.is_a?(Components::State) || x.is_a?(Components::Link)) }
+
+			s = FlatFormat.format(objects)
+			
+			f = File.new(filename, 'w')
+			f.write(s)
+			f.puts ''
+			f.close
+			
+			status_message("Saved flat file to #{filename}...")
+		end
+		
 		def do_save_as
 			dlg = Gtk::FileChooserDialog.new('Save CPG file', 
 							 self, 
@@ -539,11 +544,26 @@ module Cpg
 							 [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
 		
 			dlg.current_folder = File.dirname(@filename) if @filename
+			xmlfilter = Gtk::FileFilter.new
+			xmlfilter.add_pattern('*.cpg')
+			xmlfilter.add_pattern('*.xml')
+			xmlfilter.name = 'CPG Network File (*.cpg)'
+
+			dlg.add_filter(xmlfilter)
+			
+			flatfilter = Gtk::FileFilter.new
+			flatfilter.add_pattern('*.txt')
+			flatfilter.name = 'Flat Format File (*.txt)'
+			dlg.add_filter(flatfilter)
 		
 			dlg.signal_connect('response') do |dlg, resp|
 				if resp == Gtk::Dialog::RESPONSE_ACCEPT
-					@filename = dlg.filename
-					do_save_xml
+					if dlg.filter == xmlfilter
+						@filename = dlg.filename
+						do_save_xml
+					else
+						do_save_flat(dlg.filename)
+					end
 				end
 			
 				dlg.destroy
