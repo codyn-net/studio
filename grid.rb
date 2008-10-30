@@ -257,6 +257,8 @@ module Cpg
 				obj.allocation.y = y ? y : cy 
 				obj.allocation.width = width ? width : 1
 				obj.allocation.height = height ? height : 1
+				
+				ensure_unique_id(obj, obj.get_property(:id))
 		
 				current << obj
 				signal_emit('object_added', obj)
@@ -606,6 +608,14 @@ module Cpg
 			new_group(objs)
 			true
 		end
+		
+		def check_link_offsets(obj)
+			obj.links.each do |l1|
+				others = obj.links.select { |x| x.from == l1.from && x.to == l1.to }
+				
+				others.each_with_index { |x, idx| x.offset = idx }
+			end
+		end
 	
 		def ungroup(obj)
 			# unpack children contained in obj, reconnect links to obj to the
@@ -616,17 +626,33 @@ module Cpg
 			# reconnect any attachments to the main object
 			current.each do |link|
 				next unless link.is_a?(Components::Attachment)
-
+				
 				link.objects.collect! do |x|
-					x == obj ? obj.main : x
+					if x == obj
+						obj.main.link(link)
+						obj.main
+					else
+						x
+					end
 				end
 			end
+
+			check_link_offsets(obj.main) if obj.main
+
+			# make sure to set offsets correctly
 		
 			obj.links = []
 		
 			# unpack objects in group, preserving layout, center around group
 			x, y = [obj.allocation.x, obj.allocation.y]
 			cx, cy = mean_position(obj)
+
+			# remove original object from the grid
+			delete(obj)
+
+			# change the id of main to resemble the id of the group
+			pid = obj.get_property(:id)
+			obj.main.set_property(:id, pid) if obj.main && pid && !pid.empty?
 		
 			obj.each do |o|
 				if not o.is_a?(Components::Attachment)
@@ -638,8 +664,14 @@ module Cpg
 				current << o
 				select(o)
 			end
-		
-			delete(obj)
+
+			# add any of the custom properties to the main
+			if obj.main
+				obj.dynamic_properties.each do |prop|
+					obj.main.set_property(prop, obj.get_property(prop))
+				end
+			end			
+						
 			queue_draw
 		end
 	

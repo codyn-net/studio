@@ -104,6 +104,8 @@ module Cpg::Components::Groups
 		end
 	
 		def animate(obj, ts)
+			return false
+
 			if @angle == 180
 				@pause += ts
 			

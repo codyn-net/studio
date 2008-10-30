@@ -169,7 +169,7 @@ module Cpg
 				['MonitorMenuAction', nil, 'Monitor', nil, nil, nil],
 				['ControlMenuAction', nil, 'Control', nil, nil, nil],
 				['PropertiesAction', nil, 'Properties', nil, nil, Proc.new { |g,a| do_object_activated(@grid.selection.first) }],
-				['EditGroupAction', nil, 'Edit group', nil, nil, Proc.new { |g,a| g.level_down(@grid.selection.first) }]
+				['EditGroupAction', nil, 'Edit group', nil, nil, Proc.new { |g,a| @grid.level_down(@grid.selection.first) }]
 			])
 			
 			ag.add_toggle_actions([
@@ -310,8 +310,17 @@ module Cpg
 			
 			singleobj = objs.length == 1
 			singlegroup = (singleobj && objs[0].is_a?(Components::Group))
+			anygroup = objs.select { |x| x.is_a?(Components::Group) }.length
+
+			ungroup = @normal_group.get_action('UngroupAction')
+			ungroup.sensitive = anygroup > 0
 			
-			@normal_group.get_action('UngroupAction').sensitive = singlegroup
+			if anygroup > 1
+				ungroup.label = 'Ungroup all'
+			else
+				ungroup.label = 'Ungroup'
+			end
+			
 			@normal_group.get_action('GroupAction').sensitive = (objs.length > 1 && objs.find { |x| not x.is_a?(Components::Attachment) })
 			@normal_group.get_action('EditGroupAction').sensitive = singlegroup
 			
@@ -886,10 +895,12 @@ module Cpg
 		end
 	
 		def do_ungroup
-			if @grid.selection.length == 1
-				obj = @grid.selection[0]
-			
-				@grid.ungroup(obj) if obj.is_a?(Components::Group)
+			# find all groups in the selection
+			objs = @grid.selection.select { |x| x.is_a?(Components::Group) }
+
+			# for each group, ungroup it			
+			objs.each do |obj|
+				@grid.ungroup(obj)
 			end
 		end
 	

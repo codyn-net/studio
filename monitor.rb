@@ -216,7 +216,8 @@ module Cpg
 				
 				data = v[:period_data].resample(sites, to)
 				
-				v[:graph].yaxis = [data.min * 1.2, data.max * 1.2]
+				dist = (data.max - data.min) / 2.0
+				v[:graph].yaxis = [data.min - dist * 0.2, data.max + dist * 0.2]
 				v[:graph].sample_frequency = 1
 				v[:graph].unit_width = 1
 				v[:graph].data = data

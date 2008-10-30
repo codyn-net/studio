@@ -219,7 +219,7 @@ module Cpg::Components
 			ct.scale(factor, factor)
 			ct.translate(-x.min + (allocation.width / factor - (x.max - x.min)) * 0.5, -y.min + (allocation.height / factor - (y.max - y.min)) * 0.5)
 			
-			@children.sort.each do |child|
+			@children.sort.reverse.each do |child|
 				ct.save
 				ct.translate(child.allocation.x, child.allocation.y)
 
