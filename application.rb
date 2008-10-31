@@ -61,7 +61,7 @@ module Cpg
 		end
 		
 		def initialize
-			super('title' => 'CPG Studio')
+			super('title' => 'New Document - CPG Studio')
 		
 			set_default_size(700, 600)
 		
@@ -394,6 +394,7 @@ module Cpg
 			clear
 			
 			@filename = nil
+			self.title = 'New Document - CPG Studio'
 		end
 	
 		def do_center_view
@@ -531,8 +532,8 @@ module Cpg
 		def do_save_flat(filename)
 			Saver.ensure_ids(@grid.root)
 			
-			objects = @grid.root_objects
-			objects.delete_if { |x| !(x.is_a?(Components::State) || x.is_a?(Components::Link)) }
+			objects = @grid.root_objects.dup
+			objects.delete_if { |x| !(x.is_a?(Components::State) || x.is_a?(Components::Link) || x.is_a?(Components::Group)) }
 
 			s = FlatFormat.format(objects)
 			
