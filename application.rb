@@ -61,7 +61,7 @@ module Cpg
 		end
 		
 		def initialize
-			super('title' => 'New Document - CPG Studio')
+			super
 		
 			set_default_size(700, 600)
 		
@@ -77,6 +77,8 @@ module Cpg
 			show_all
 					
 			clear
+			
+			update_title
 		end
 	
 		def tool_button(stock)
@@ -333,8 +335,7 @@ module Cpg
 	
 		def run
 			if !ARGV.empty?
-				@filename = File.expand_path(ARGV[0])
-				do_load_xml
+				do_load_xml(File.expand_path(ARGV[0]))
 			end
 		
 			Gtk::main
@@ -394,7 +395,7 @@ module Cpg
 			clear
 			
 			@filename = nil
-			self.title = 'New Document - CPG Studio'
+			update_title
 		end
 	
 		def do_center_view
@@ -440,17 +441,19 @@ module Cpg
 			@grid.grab_focus
 		end
 	
-		def do_load_xml
+		def do_load_xml(filename)
 			# clear everything
 			clear
 		
 			begin
-				cpg = Loader.load(File.new(@filename, 'r'))
+				cpg = Loader.load(File.new(filename, 'r'))
 			rescue Exception
 				show_message(Gtk::Stock::DIALOG_ERROR, "<b>Could not load CPG file #{@filename}</b>", "<i>Please make sure that this is a valid CPG file</i>")
 				STDERR.puts("Could not load cpg file #{@filename}: #{$!}\n\t#{$@.join("\n\t")}")
 				return
 			end
+			
+			@filename = filename
 
 			cpg.each do |obj|
 				@grid.add(obj, obj.allocation.x, obj.allocation.y, obj.allocation.width, obj.allocation.height)
@@ -478,7 +481,7 @@ module Cpg
 				@periodentry.text = cpg.period.to_s
 			end
 		
-			self.title = "#{File.basename(@filename)} - CPG Studio"
+			update_title
 			@grid.queue_draw
 			
 			status_message("Loaded #{@filename} ...")
@@ -494,14 +497,21 @@ module Cpg
 		
 			dlg.signal_connect('response') do |dlg, resp|
 				if resp == Gtk::Dialog::RESPONSE_ACCEPT
-					@filename = dlg.filename
-					do_load_xml
+					do_load_xml(dlg.filename)
 				end
 			
 				dlg.destroy
 			end
 		
 			dlg.show
+		end
+		
+		def update_title
+			if @filename
+				self.title = "#{File.basename(@filename)} - CPG Studio"
+			else
+				self.title = 'New Network - CPG Studio'
+			end
 		end
 	
 		def do_save_xml
@@ -521,12 +531,18 @@ module Cpg
 		
 			doc = Saver.save(cpg)
 		
-			f = File.new(@filename, 'w')
-			doc.write(f, 2)
-			f.puts ''
-			f.close
-			
-			status_message("Saved #{@filename} ...")
+			begin
+				f = File.new(@filename, 'w')
+				doc.write(f, 2)
+				f.puts ''
+				f.close
+				
+				status_message("Saved #{@filename} ...")
+				update_title
+			rescue Exception
+				show_message(Gtk::Stock::DIALOG_ERROR, "<b>Could not save CPG file #{@filename}</b>", "<i>Do you have the proper permissions to write in that location?</i>")
+				STDERR.puts("Could not save cpg file #{@filename}: #{$!}\n\t#{$@.join("\n\t")}")
+			end
 		end
 		
 		def do_save_flat(filename)
