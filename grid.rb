@@ -163,13 +163,15 @@ module Cpg
 		end
 	
 		def clear
+			changed = @object_stack && (@object_stack.length != 1 || !@object_stack[0][:group].children.empty?)
+
 			@object_stack = [{:group => Components::Group.new, :grid_size => @grid_size}]
 			@selection = []
 			@drag_state = nil
 
 			queue_draw
 			signal_emit('selection_changed')
-			signal_emit('modified')
+			signal_emit('modified') if changed
 		end
 	
 		def add_attachment(at)

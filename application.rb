@@ -405,6 +405,7 @@ module Cpg
 			clear
 			
 			@filename = nil
+			@modified = false
 			update_title
 		end
 	
@@ -452,7 +453,7 @@ module Cpg
 		end
 		
 		def ask_unsaved_modified
-			if @modified && @filename
+			if @modified
 				dlg = Gtk::MessageDialog.new(self, 
 										     Gtk::Dialog::DESTROY_WITH_PARENT | Gtk::Dialog::MODAL, 
 										     Gtk::MessageDialog::WARNING,
@@ -462,7 +463,9 @@ module Cpg
 				res = dlg.run
 				
 				if res == Gtk::Dialog::RESPONSE_YES
-					do_save_xml
+					d = do_save
+					
+					d.run if d
 				end	
 				
 				dlg.destroy			     
@@ -544,7 +547,7 @@ module Cpg
 			if @filename
 				self.title = "#{extra}#{File.basename(@filename)} - CPG Studio"
 			else
-				self.title = '#{extra}New Network - CPG Studio'
+				self.title = "#{extra}New Network - CPG Studio"
 			end
 		end
 	
@@ -649,6 +652,7 @@ module Cpg
 			end
 		
 			dlg.show
+			dlg
 		end
 	
 		def do_save
