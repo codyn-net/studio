@@ -242,7 +242,11 @@ module Cpg
 			end
 			
 			@map.each do |obj, p|
-				c = MathContext.new(Simulation.instance.state, obj.state)
+				if obj.is_a?(Components::Link)
+					c = MathContext.new(Simulation.instance.state, obj.from.state, obj.state, {:from => obj.from, :to => obj.to})
+				else
+					c = MathContext.new(Simulation.instance.state, obj.state)
+				end
 
 				p.each do |v|
 					#obj.signal_handler_block(@adjustsignals[obj][v[:prop]])
