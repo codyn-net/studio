@@ -12,10 +12,14 @@ module Cpg
 		end
 		
 		include Math
+		
+		def merge(state)
+			@state.merge!(state)
+		end
 
 		def initialize(*vars)
 			@state = {}
-			vars.each { |h| @state.merge!(h) }
+			vars.each { |h| merge(h) }
 
 			#state.each do |k, v|
 			#	instance_variable_set("@#{k}", v)
