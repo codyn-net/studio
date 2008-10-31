@@ -51,6 +51,16 @@ module Cpg
 			GLib::Signal::RUN_LAST,
 			nil,
 			nil)
+		
+		signal_new('modified',
+			GLib::Signal::RUN_LAST,
+			nil,
+			nil)
+			
+		signal_new('modified_view',
+			GLib::Signal::RUN_LAST,
+			nil,
+			nil)
 
 		attr_reader :selection, :object_stack
 		attr_accessor :grid_size
@@ -75,6 +85,7 @@ module Cpg
 			@grid_size = @default_grid_size
 			@hover = []
 			@focus = nil
+			@signals = {}
 		
 			@grid_background = [1, 1, 1]
 			@grid_line = [0.9, 0.9, 0.9]
@@ -84,6 +95,24 @@ module Cpg
 			GLib::Timeout.add(50) do
 				do_animate(50)
 				true
+			end
+		end
+		
+		def signal_register(obj, signal)
+			@signals[obj] ||= []
+			@signals[obj] << obj.signal_connect(signal) { |*args| yield *args }
+		end
+		
+		def signal_unregister(obj)
+			return unless @signals[obj]
+			@signals[obj].each { |x| obj.signal_handler_disconnect(x) }
+			
+			@signals.delete(obj)
+		end
+		
+		def signal_unregister_all
+			@signals.each do |obj, signals|
+				signals.each { |x| obj.signal_handler_disconnect(x) }
 			end
 		end
 	
@@ -140,6 +169,7 @@ module Cpg
 
 			queue_draw
 			signal_emit('selection_changed')
+			signal_emit('modified')
 		end
 	
 		def add_attachment(at)
@@ -165,8 +195,12 @@ module Cpg
 			
 					a.offset = offsets.max + 1
 					current << a
+					
+					signal_emit('object_added', a)
 				end
 			end
+			
+			signal_emit('modified')
 		end
 	
 		def attach(klass, to = nil)
@@ -195,6 +229,7 @@ module Cpg
 				to = to[num..-1]
 			end
 
+			signal_emit('modified')
 			queue_draw
 			return att
 		end
@@ -204,20 +239,24 @@ module Cpg
 		end
 	
 		def delete(obj)
-			current.delete(obj) if current.include?(obj)
+			if current.include?(obj)
+				current.delete(obj) 
+				signal_emit('object_removed', obj)
+			end
+			
 			unselect(obj) if @selection.include?(obj)
 		
 			if not obj.is_a?(Components::Attachment)
 				current.delete_if do |at| 
 					if at.is_a?(Components::Attachment) and at.objects.include?(obj)
 						at.removed
+						
+						signal_emit('object_removed', at)
 						true
 					else
 						false
 					end
 				end
-			
-				signal_emit('object_removed', obj)
 			else
 				obj.removed
 			
@@ -231,8 +270,19 @@ module Cpg
 					end
 				end
 			end
-		
+			
+			signal_emit('modified')
 			queue_draw
+		end
+		
+		def object_added(obj)
+			signal_emit('object_added', obj)
+			
+			return unless obj.is_a?(Components::Group)
+			
+			obj.children.each do |o|
+				object_added(o)
+			end
 		end
 	
 		def add(obj, x = nil, y = nil, width = nil, height = nil)
@@ -261,7 +311,8 @@ module Cpg
 				ensure_unique_id(obj, obj.get_property(:id))
 		
 				current << obj
-				signal_emit('object_added', obj)
+				object_added(obj)
+				signal_emit('modified')
 			end
 		
 			obj.signal_connect('request_redraw') { |obj| queue_draw_obj(obj) }
@@ -552,6 +603,8 @@ module Cpg
 			# remove objects from the grid, and add them to the group
 			objs.each do |o| 
 				current.delete(o)
+				
+				signal_emit('object_removed', o)
 				unselect(o)
 				g << o
 			end
@@ -562,9 +615,11 @@ module Cpg
 			end
 		
 			# add group to current
-			current << g
+			add(g, g.allocation.x, g.allocation.y, g.allocation.width, g.allocation.height)
 		
 			select(g)
+			
+			signal_emit('modified')
 			queue_draw
 		end
 	
@@ -661,7 +716,7 @@ module Cpg
 					o.allocation.y = (y + (o.allocation.y - cy) + 0.00001).round.to_i
 				end
 			
-				current << o
+				add(o, o.allocation.x, o.allocation.y, allocation.width, allocation.height)
 				select(o)
 			end
 
@@ -671,7 +726,8 @@ module Cpg
 					obj.main.set_property(prop, obj.get_property(prop))
 				end
 			end			
-						
+			
+			signal_emit('modified')						
 			queue_draw
 		end
 	
@@ -702,7 +758,8 @@ module Cpg
 			# ensure cx, cy in middle of view
 			current.x = cx - (allocation.width / 2.0)
 			current.y = cy - (allocation.height / 2.0)
-		
+			
+			signal_emit('modified_view')		
 			queue_draw
 		end
 	
@@ -834,6 +891,7 @@ module Cpg
 			current.x = @orig_position[0] - dx
 			current.y = @orig_position[1] - dy
 		
+			signal_emit('modified_view')
 			queue_draw
 		end
 		
@@ -905,11 +963,19 @@ module Cpg
 
 			y = miny.max if y < miny.max
 			y = maxy.min if y > maxy.min
+			
+			changed = false
 		
 			translation.each do |item|
-				item[0].allocation.move(item[1] + x, item[2] + y)
+				a = item[0].allocation
+				
+				if a.x != item[1] + x || a.y != item[2] + y
+					a.move(item[1] + x, item[2] + y)
+					changed = true
+				end
 			end
 		
+			signal_emit('modified_view') if changed
 			queue_draw
 		end
 		
@@ -950,12 +1016,15 @@ module Cpg
 				level_up(@object_stack[1][:group])
 				return
 			end
+			
 		
 			current.x += ((x + current.x) * nsize.to_f / @grid_size.to_f) - (x + current.x)
 			current.y += ((y + current.y) * nsize.to_f / @grid_size.to_f) - (y + current.y)
 		
+			changed = (nsize != @gridsize)
 			@grid_size = nsize
 
+			signal_emit('modified_view') if changed
 			queue_draw
 		end
 	
@@ -985,22 +1054,38 @@ module Cpg
 		end
 	
 		def signal_do_object_added(obj)
-	
+			signal_unregister(obj)
+			
+			['property_changed', 'property_added', 'property_removed'].each do |name|
+				signal_register(obj, name) { |*args| signal_emit('modified') }
+			end
+			
+			if obj.is_a?(Components::SimulatedObject)
+				['initial_changed', 'range_changed'].each do |name|
+					signal_register(obj, name) { |*args| signal_emit('modified') }
+				end
+			end
 		end
 	
 		def signal_do_object_removed(obj)
-	
+			signal_unregister(obj)
 		end
 		
 		def do_move(dx, dy, move_canvas = false)
+			return if dx == 0 && dy == 0
+			
 			if move_canvas
 				current.x += dx * @grid_size
 				current.y += dy * @grid_size
+				
+				signal_emit('modified_view')
 			else
 				each_object(@selection) do |x|
 					x.allocation.x += dx
 					x.allocation.y += dy
 				end
+				
+				signal_emit('modified') unless @selection.empty?
 			end
 			
 			queue_draw
@@ -1119,6 +1204,7 @@ module Cpg
 			@object_stack.unshift({:group => obj, :grid_size => @grid_size})
 			@grid_size = @default_grid_size
 
+			signal_emit('modified_view')
 			queue_draw
 		end
 	
@@ -1126,6 +1212,7 @@ module Cpg
 			a = @object_stack.shift
 			@grid_size = a[:grid_size]
 
+			signal_emit('modified_view')
 			queue_draw
 		end
 		
@@ -1140,6 +1227,12 @@ module Cpg
 			end
 			
 			focus_release
+		end
+		
+		def signal_do_modified
+		end
+		
+		def signal_do_modified_view
 		end
 	end
 end

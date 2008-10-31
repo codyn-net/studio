@@ -23,10 +23,8 @@ module Cpg
 			super({:title => 'Monitor'})
 		
 			@dt = dt
-			@grid = Application.instance.grid
 			@coloridx = 0
-			@linkrulers = false
-			@adjustsignals = {}
+			@linkrulers = true
 
 			build
 			
@@ -44,19 +42,19 @@ module Cpg
 		def build
 			hbox = Gtk::HBox.new(false, 3)
 			but = Gtk::ToggleButton.new
-			but.active = false
 			but.relief = Gtk::RELIEF_NONE
 			
 			im1 = Gtk::Image.new(Stock.icon_path('chain-broken.png'))
 			im2 = Gtk::Image.new(Stock.icon_path('chain.png'))
 			
-			but.image = im1
 			hbox.pack_end(but, false, false, 0)
 			
 			but.signal_connect('toggled') do |x| 
 				@linkrulers = x.active?
 				but.image = x.active? ? im2 : im1
 			end
+			
+			but.active = @linkrulers
 
 			@showrulers = Gtk::CheckButton.new('Show graph rulers')
 			@showrulers.active = true
@@ -86,8 +84,12 @@ module Cpg
 			super
 			
 			signal_register(obj, 'property_changed') { |o, p| update_title(o, p) }
+		end
+		
+		def remove_hook_real(obj, container)
+			super
 			
-			@adjustsignals[obj] = {}
+			Simulation.instance.unset_monitor(obj, container[:prop])
 		end
 	
 		def add_hook_real(obj, prop, state)
@@ -139,24 +141,10 @@ module Cpg
 				do_linkrulers_leave(g, ev) if @linkrulers && g.show_ruler
 			end
 			
-			#@adjustsignals[obj][prop.to_sym] = g.adjustment.signal_connect('value_changed') do |o|#
-			#	linked_adjustments(g) if @linkrulers
-			#end
-		
-			super(obj, prop, state.merge({:graph => g, :widget => hbox, :expander => exp}))
-		end
-		
-		def linked_adjustments(g)
-		
-		end
-		
-		def signals_unregister(obj)
-			super
+			# register monitoring
+			Simulation.instance.set_monitor(obj, prop)
 
-			#if @adjustsignals.include?(obj)
-			#	@adjustsignals[obj].values.each { |x| obj.signal_handler_disconnect(x) }
-			#	@adjustsignals.delete(obj)
-			#end
+			super(obj, prop, state.merge({:graph => g, :widget => hbox, :expander => exp}))
 		end
 		
 		def do_linkrulers(g, ev)
@@ -185,12 +173,6 @@ module Cpg
 		end
 		
 		def do_period_start(steps)
-			# initialize period_data container
-			each_graph do |obj, v|
-				v[:period_data] = []		
-				#obj.signal_handler_block(@adjustsignals[obj][v[:prop]])
-			end
-			
 			@inperiod = true
 			@steps = steps
 		end
@@ -209,20 +191,17 @@ module Cpg
 				numpix = v[:graph].allocation.width
 				
 				# resample data to be on pxd
-				sites = (1..@steps).to_a.collect { |x| x * (numpix / @steps.to_f) }
-				to = (1...numpix)
+				sites = (0..(@steps - 1)).to_a.collect { |x| x * (numpix / @steps.to_f) }
+				to = (0...(numpix - 1))
 				
-				v[:period_data].collect! { |x| (x.nan? || x.infinite?) ? 0 : x } 
-				
-				data = v[:period_data].resample(sites, to)
+				data = Simulation.instance.monitor_data(obj, v[:prop]).collect { |x| (x.nan? || x.infinite?) ? 0 : x } 
+				data = data.resample(sites, to)
 				
 				dist = (data.max - data.min) / 2.0
 				v[:graph].yaxis = [data.min - dist * 0.2, data.max + dist * 0.2]
 				v[:graph].sample_frequency = 1
 				v[:graph].unit_width = 1
 				v[:graph].data = data
-				
-				#obj.signal_handler_unblock(@adjustsignals[obj][v[:prop]])
 			end
 		end
 		
@@ -241,6 +220,8 @@ module Cpg
 				@inperiod = false
 			end
 			
+			return if Simulation.instance.period?
+
 			@map.each do |obj, p|
 				if obj.is_a?(Components::Link)
 					c = MathContext.new(Simulation.instance.state, obj.from.state, obj.state, {:from => obj.from, :to => obj.to})
@@ -249,17 +230,7 @@ module Cpg
 				end
 
 				p.each do |v|
-					#obj.signal_handler_block(@adjustsignals[obj][v[:prop]])
-
-					val = c.eval(obj.get_property(v[:prop])).to_f
-					
-					if Simulation.instance.period?
-						v[:period_data] << val
-					else
-						v[:graph] << val
-					end
-
-					#obj.signal_handler_unblock(@adjustsignals[obj][v[:prop]])
+					v[:graph] << Simulation.instance.monitor_data(obj, v[:prop])[-1]
 				end
 			end
 		end

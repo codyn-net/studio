@@ -89,7 +89,9 @@ module Cpg
 			end
 			
 			signal_register(Application.instance.grid, 'object_added') do |g, obj|
-				add_object(obj)
+				# check needed because signal is also emitted from objects within
+				# a group, but we don't want to show those
+				add_object(obj) if Application.instance.grid.current.include?(obj)
 			end
 			
 			signal_register(Application.instance.grid, 'object_removed') do |g, obj|
@@ -152,9 +154,12 @@ module Cpg
 		
 		def remove_object(obj)
 			parent = find(obj)
-			@store.remove(parent)
 			
-			signals_unregister(obj)
+			if parent
+				@store.remove(parent)
+			
+				signals_unregister(obj)
+			end
 		end
 		
 		def add_object(obj)

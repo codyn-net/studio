@@ -70,6 +70,7 @@ module Cpg
 			@control = nil
 			@property_editors = {}
 			@simulation_paused = false
+			@modified = false
 
 			@simulation = Simulation.new(nil, 0.05)
 			
@@ -284,6 +285,13 @@ module Cpg
 				handle_level_up(obj)
 			end
 			
+			@grid.signal_connect('modified') do |grid|
+				if !@modified
+					@modified = true
+					update_title
+				end
+			end
+			
 			@grid.signal_connect('selection_changed') do |grid|
 				if @propertyview
 					if @grid.selection.length == 1
@@ -364,6 +372,8 @@ module Cpg
 		end
 	
 		def signal_do_delete_event(event)
+			ask_unsaved_modified
+
 			GLib::Source.remove(@simulation_source) if @simulation_source
 			Gtk::main_quit
 		end
@@ -440,19 +450,39 @@ module Cpg
 			
 			@grid.grab_focus
 		end
+		
+		def ask_unsaved_modified
+			if @modified && @filename
+				dlg = Gtk::MessageDialog.new(self, 
+										     Gtk::Dialog::DESTROY_WITH_PARENT | Gtk::Dialog::MODAL, 
+										     Gtk::MessageDialog::WARNING,
+										     Gtk::MessageDialog::BUTTONS_YES_NO,
+										     'There are unsaved changes in the current network, do you want to save these changes first?')
+				
+				res = dlg.run
+				
+				if res == Gtk::Dialog::RESPONSE_YES
+					do_save_xml
+				end	
+				
+				dlg.destroy			     
+			end
+		end
 	
 		def do_load_xml(filename)
-			# clear everything
-			clear
-		
+			ask_unsaved_modified
+
 			begin
 				cpg = Loader.load(File.new(filename, 'r'))
 			rescue Exception
-				show_message(Gtk::Stock::DIALOG_ERROR, "<b>Could not load CPG file #{@filename}</b>", "<i>Please make sure that this is a valid CPG file</i>")
-				STDERR.puts("Could not load cpg file #{@filename}: #{$!}\n\t#{$@.join("\n\t")}")
+				show_message(Gtk::Stock::DIALOG_ERROR, "<b>Could not load CPG file #{filename}</b>", "<i>Please make sure that this is a valid CPG file</i>")
+				STDERR.puts("Could not load cpg file #{filename}: #{$!}\n\t#{$@.join("\n\t")}")
 				return
 			end
-			
+
+			# clear everything
+			clear
+					
 			@filename = filename
 
 			cpg.each do |obj|
@@ -481,6 +511,7 @@ module Cpg
 				@periodentry.text = cpg.period.to_s
 			end
 		
+			@modified = false
 			update_title
 			@grid.queue_draw
 			
@@ -496,21 +527,24 @@ module Cpg
 							 [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
 		
 			dlg.signal_connect('response') do |dlg, resp|
-				if resp == Gtk::Dialog::RESPONSE_ACCEPT
-					do_load_xml(dlg.filename)
-				end
-			
+				filename = dlg.filename
 				dlg.destroy
+				
+				if resp == Gtk::Dialog::RESPONSE_ACCEPT
+					do_load_xml(filename)
+				end
 			end
 		
 			dlg.show
 		end
 		
 		def update_title
+			extra = @modified ? '*' : ''
+			
 			if @filename
-				self.title = "#{File.basename(@filename)} - CPG Studio"
+				self.title = "#{extra}#{File.basename(@filename)} - CPG Studio"
 			else
-				self.title = 'New Network - CPG Studio'
+				self.title = '#{extra}New Network - CPG Studio'
 			end
 		end
 	
@@ -538,6 +572,7 @@ module Cpg
 				f.close
 				
 				status_message("Saved #{@filename} ...")
+				@modified = false
 				update_title
 			rescue Exception
 				show_message(Gtk::Stock::DIALOG_ERROR, "<b>Could not save CPG file #{@filename}</b>", "<i>Do you have the proper permissions to write in that location?</i>")
@@ -545,14 +580,18 @@ module Cpg
 			end
 		end
 		
+		def export_to_flat(objs)
+			objs.delete_if { |x| !(x.is_a?(Components::State) || x.is_a?(Components::Link) || x.is_a?(Components::Group)) }
+			objs = normalize_objects(objs)
+			
+			return FlatFormat.format(objs)
+		end
+		
 		def do_save_flat(filename)
 			Saver.ensure_ids(@grid.root)
 			
-			objects = @grid.root_objects.dup
-			objects.delete_if { |x| !(x.is_a?(Components::State) || x.is_a?(Components::Link) || x.is_a?(Components::Group)) }
-
-			s = FlatFormat.format(objects)
-			
+			s = export_to_flat(@grid.root_objects.dup)
+		
 			f = File.new(filename, 'w')
 			f.write(s)
 			f.puts ''
@@ -561,15 +600,15 @@ module Cpg
 			status_message("Saved flat file to #{filename}...")
 		end
 		
-		def do_save_as
-			dlg = Gtk::FileChooserDialog.new('Save CPG file', 
-							 self, 
-							 Gtk::FileChooser::ACTION_SAVE,
-							 nil,
-							 [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
-							 [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
-		
-			dlg.current_folder = File.dirname(@filename) if @filename
+		def add_save_filters(dlg)
+			autofilter = Gtk::FileFilter.new
+			autofilter.add_pattern('*.cpg')
+			autofilter.add_pattern('*.xml')
+			autofilter.add_pattern('*.txt')
+			autofilter.name = 'Detect automatically'
+			
+			dlg.add_filter(autofilter)
+			
 			xmlfilter = Gtk::FileFilter.new
 			xmlfilter.add_pattern('*.cpg')
 			xmlfilter.add_pattern('*.xml')
@@ -581,10 +620,24 @@ module Cpg
 			flatfilter.add_pattern('*.txt')
 			flatfilter.name = 'Flat Format File (*.txt)'
 			dlg.add_filter(flatfilter)
+			
+			{:auto => autofilter, :xml => xmlfilter, :flat => flatfilter}
+		end
+		
+		def do_save_as
+			dlg = Gtk::FileChooserDialog.new('Save CPG file', 
+							 self, 
+							 Gtk::FileChooser::ACTION_SAVE,
+							 nil,
+							 [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
+							 [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
+		
+			dlg.current_folder = File.dirname(@filename) if @filename
+			filters = add_save_filters(dlg)
 		
 			dlg.signal_connect('response') do |dlg, resp|
 				if resp == Gtk::Dialog::RESPONSE_ACCEPT
-					if dlg.filter == xmlfilter
+					if dlg.filter == filters[:xml] || (filters[:auto] && !(dlg.filename =~ /\.txt$/))
 						@filename = dlg.filename
 						do_save_xml
 					else
@@ -699,18 +752,27 @@ module Cpg
 							 [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
 		
 			dlg.current_folder = File.dirname(@filename) if @filename
+			filters = add_save_filters(dlg)
 
 			if !@grid.selection.empty?
-				xml = export_to_xml(@grid.selection.dup)
+				objs = @grid.selection.dup
 			else
-				xml = export_to_xml(@grid.current.children.dup)
+				objs = @grid.current.children.dup
 			end
+
+			xml = export_to_xml(objs)
+			flat = export_to_flat(objs)
 							
 			dlg.signal_connect('response') do |dlg, resp|
 				if resp == Gtk::Dialog::RESPONSE_ACCEPT
 					begin
 						f = File.new(dlg.filename, 'w')
-						f.puts(xml)
+						
+						if dlg.filter == filters[:xml] || (filters[:auto] && !(dlg.filename =~ /\.txt$/))
+							f.puts(xml)
+						else
+							f.puts(flat)
+						end
 						
 						f.close
 						status_message("Exported to #{dlg.filename} ...")

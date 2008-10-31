@@ -134,16 +134,19 @@ module Cpg
 			return "#{obj}.#{prop}"
 		end
 		
+		def remove_hook_real(obj, container)
+			container[:widget].destroy unless (!container[:widget] || container[:widget].destroyed?)
+			@map[obj].delete(container)
+		end
+		
 		def remove_hook(obj, prop = nil)
-			return unless @map.include?(obj)
+			return unless has_hook?(obj, prop)
 			
 			prop = prop.to_sym if prop
 		
 			@map[obj].dup.each do |x| 
 				if prop == nil || x[:prop].to_sym == prop.to_sym
-					x[:widget].destroy unless (!x[:widget] || x[:widget].destroyed?)
-
-					@map[obj].delete(x)
+					remove_hook_real(obj, x)
 				end
 			end
 

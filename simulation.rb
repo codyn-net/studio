@@ -50,6 +50,7 @@ module Cpg
 			self.root = root
 		
 			@timestep = timestep
+			@monitors = {}
 			reset
 		end
 	
@@ -91,10 +92,26 @@ module Cpg
 			
 			@simulation_source = nil
 		end
+		
+		def update_monitors
+			@monitors.each do |obj, properties|
+				properties.each do |property, values|
+					if obj.is_a?(Components::Link)
+						c = MathContext.new(self.state, obj.from.state, obj.state, {:from => obj.from, :to => obj.to})
+					else
+						c = MathContext.new(self.state, obj.state)
+					end
+				
+					values << c.eval(obj.get_property(property)).to_f
+				end
+			end
+		end
 	
 		def step(objs = nil, dt = nil)
 			states = {}
 			dt ||= @timestep
+			
+			update_monitors
 			
 			begin
 				objs ||= @root.select { |x| not x.is_a?(Components::Attachment) }
@@ -118,6 +135,10 @@ module Cpg
 		def reset
 			@time = 0
 			@root.each { |obj| obj.simulation_reset }
+			
+			@monitors.each do |monitor, properties| 
+				properties.each { |property, values| values.clear }
+			end
 		end
 	
 		def running?
@@ -142,6 +163,28 @@ module Cpg
 			
 			@simulation_source = GLib::Timeout.add(@timestep * 1000) { step; true}
 			signal_emit('start')
+		end
+		
+		# monitoring
+		
+		def set_monitor(object, property)
+			property = property.to_sym
+
+			@monitors[object] = {} unless @monitors[object]
+			@monitors[object][property] = [] unless @monitors[object][property]
+		end
+		
+		def unset_monitor(object, property)
+			@monitors[object].delete(property) if @monitors[object]
+			
+			if @monitors[object] && @monitors[object].empty?
+				@monitors.delete(object)
+			end
+		end
+		
+		def monitor_data(object, property)
+			return [] unless @monitors[object]
+			return @monitors[object][property] || []
 		end
 		
 		def signal_do_step
