@@ -112,7 +112,7 @@ module Cpg
 			@map[obj] = []
 
 			signal_register(obj, 'property_removed') do |o,p|
-				remove_monitor(o, p)
+				remove_hook(o, p)
 			end
 		end
 	
