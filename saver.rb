@@ -21,9 +21,11 @@ module Cpg
 				end
 				
 				if obj.is_a?(Components::Group)
-					startid = ensure_ids(obj.children, startid)
+					startid = self.ensure_ids(obj.children, startid)
 				end
 			end
+			
+			startid
 		end
 	end
 end
