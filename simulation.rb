@@ -23,7 +23,9 @@ module Cpg
 				GLib::Signal::RUN_LAST,
 				nil,
 				nil,
-				Integer)
+				Float,
+				Float,
+				Float)
 
 		signal_new('period_stop',
 				GLib::Signal::RUN_LAST,
@@ -62,11 +64,7 @@ module Cpg
 			@simulation_source === true
 		end
 		
-		def simulate_period(*args)
-			return false if running?
-			
-			@simulation_source = true
-			
+		def parse_period_range(*args)
 			if args.length == 1
 				ts = @timestep
 				from = 0
@@ -78,8 +76,19 @@ module Cpg
 				from, ts, to = args[0..2]
 			end
 			
+			return from, ts, to
+		end
+		
+		def simulate_period(*args)
+			return false if running?
+			
+			@simulation_source = true
+			
+			from, ts, to = parse_period_range(*args)
+			@range = [from, ts, to]
+
 			steps = ((to - from) / ts.to_f).to_i
-			signal_emit('period_start', steps)
+			signal_emit('period_start', from, ts, to)
 			
 			objs = @root.select { |x| not x.is_a?(Components::Attachment) }
 			@time = from
@@ -91,20 +100,6 @@ module Cpg
 			signal_emit('period_stop')
 			
 			@simulation_source = nil
-		end
-		
-		def update_monitors
-			@monitors.each do |obj, properties|
-				properties.each do |property, values|
-					if obj.is_a?(Components::Link)
-						c = MathContext.new(self.state, obj.from.state, obj.state, {:from => obj.from, :to => obj.to})
-					else
-						c = MathContext.new(self.state, obj.state)
-					end
-				
-					values << c.eval(obj.get_property(property)).to_f
-				end
-			end
 		end
 	
 		def step(objs = nil, dt = nil)
@@ -166,12 +161,11 @@ module Cpg
 		end
 		
 		# monitoring
-		
 		def set_monitor(object, property)
 			property = property.to_sym
 
 			@monitors[object] = {} unless @monitors[object]
-			@monitors[object][property] = [] unless @monitors[object][property]
+			@monitors[object][property] = [[], []] unless @monitors[object][property]
 		end
 		
 		def unset_monitor(object, property)
@@ -181,10 +175,35 @@ module Cpg
 				@monitors.delete(object)
 			end
 		end
+
+		def update_monitors
+			@monitors.each do |obj, properties|
+				properties.each do |property, values|
+					if obj.is_a?(Components::Link)
+						c = MathContext.new(self.state, obj.from.state, obj.state, {:from => obj.from, :to => obj.to})
+					else
+						c = MathContext.new(self.state, obj.state)
+					end
+				
+					values[0] << c.eval(obj.get_property(property)).to_f
+					values[1] << @time
+				end
+			end
+		end
 		
 		def monitor_data(object, property)
 			return [] unless @monitors[object]
-			return @monitors[object][property] || []
+			return @monitors[object][property][0] || []
+		end
+		
+		def monitor_data_resampled(object, property, to)
+			return [] unless @monitors[object]
+			return [] unless @monitors[object][property]
+			
+			data = @monitors[object][property][0]
+			sites = @monitors[object][property][1]
+			
+			data.resample(sites, to)
 		end
 		
 		def signal_do_step
@@ -196,10 +215,16 @@ module Cpg
 		def signal_do_stop
 		end
 		
-		def signal_do_period_start(p)
+		def signal_do_period_start(from, timestep, to)
 		end
 		
 		def signal_do_period_stop
 		end
 	end
+end
+
+begin
+	require 'fastsimulation'
+rescue Exception
+	STDERR.puts("Unable to load fast simulation: #{$!}\n#{$@.join("\n\t")}")
 end

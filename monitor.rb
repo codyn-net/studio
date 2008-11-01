@@ -29,7 +29,7 @@ module Cpg
 			build
 			
 			signal_register(Simulation.instance, 'step') { |s| update(s.timestep) }
-			signal_register(Simulation.instance, 'period_start') { |s, period| do_period_start(period) }
+			signal_register(Simulation.instance, 'period_start') { |s, from, timestep, to| do_period_start(from, timestep, to) }
 			signal_register(Simulation.instance, 'period_stop') { |s| do_period_stop }
 		
 			set_default_size(500, 400)
@@ -172,9 +172,9 @@ module Cpg
 			end
 		end
 		
-		def do_period_start(steps)
+		def do_period_start(from, timestep, to)
 			@inperiod = true
-			@steps = steps
+			@range = [from, timestep, to]
 		end
 		
 		def each_graph
@@ -191,11 +191,10 @@ module Cpg
 				numpix = v[:graph].allocation.width
 				
 				# resample data to be on pxd
-				sites = (0..(@steps - 1)).to_a.collect { |x| x * (numpix / @steps.to_f) }
-				to = (0...(numpix - 1))
+				rstep = (@range[2] - @range[0]) / numpix.to_f;
+				to = (0...(numpix - 1)).collect { |x| @range[0] + (x * rstep) }
 				
-				data = Simulation.instance.monitor_data(obj, v[:prop]).collect { |x| (x.nan? || x.infinite?) ? 0 : x } 
-				data = data.resample(sites, to)
+				data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
 				
 				dist = (data.max - data.min) / 2.0
 				v[:graph].yaxis = [data.min - dist * 0.2, data.max + dist * 0.2]

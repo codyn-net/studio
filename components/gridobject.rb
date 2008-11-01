@@ -253,7 +253,7 @@ module Cpg::Components
 	
 		def simulation_reset
 			@initial.each do |k, v|
-				set_property(k, v)
+				set_property(k, v) unless get_property(k).to_s == v.to_s
 			end
 		end
 	

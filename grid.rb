@@ -98,9 +98,9 @@ module Cpg
 			end
 		end
 		
-		def signal_register(obj, signal)
+		def signal_register(obj, signal, usewhat = :signal_connect)
 			@signals[obj] ||= []
-			@signals[obj] << obj.signal_connect(signal) { |*args| yield *args }
+			@signals[obj] << obj.send(usewhat, signal) { |*args| yield *args }
 		end
 		
 		def signal_unregister(obj)
@@ -1059,12 +1059,12 @@ module Cpg
 			signal_unregister(obj)
 			
 			['property_changed', 'property_added', 'property_removed'].each do |name|
-				signal_register(obj, name) { |*args| signal_emit('modified') }
+				signal_register(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
 			end
 			
 			if obj.is_a?(Components::SimulatedObject)
 				['initial_changed', 'range_changed'].each do |name|
-					signal_register(obj, name) { |*args| signal_emit('modified') }
+					signal_register(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
 				end
 			end
 		end

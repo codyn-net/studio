@@ -18,48 +18,74 @@ module Cpg
 		
 		class State < Object
 			attr_reader :links
+			
+			def self.filter!(node, state)
+				state.delete_if { |prop, val| prop == :id || prop == :display || node.invisible?(prop) }
+			end
+			
+			def self.filter(node, state)
+				state = state.dup
+				self.filter!(node, state)
+				
+				state
+			end
 
 			def initialize(node, parent)
 				super
 				
 				@links = node.links.dup
+				
+				State.filter!(node, @state)
 			end
 		end
 		
 		class Link < Object
 			attr_accessor :from, :to
 
+			def self.filter!(node, state)
+				state.delete_if { |prop, val| prop == :id || prop == :label || node.invisible?(prop) || prop == :act_on || prop == :equation || prop == :from || prop == :to || prop == :display }
+			end
+			
+			def self.filter(node, state)
+				state = state.dup
+				self.filter!(node, state)
+				
+				state
+			end
+			
 			def initialize(node, parent)
 				super
 				
 				@from = node.from
 				@to = node.to
+				
+				Link.filter!(node, @state)
 			end
 		end
 		
-		def self.merge_with_parent(node, parent)
+		def self.merge_with_parent(map, node, parent)
 			# merge the state
-			@map[parent].state.merge!(node.state)
-			@map[node] = @map[parent]	
+			map[parent].state.merge!(State.filter(node, node.state))
+			map[node] = map[parent]	
 		end
 		
-		def self.flatten(node, parent = nil)
+		def self.flatten(map, node, parent = nil)
 			res = []
 			if node.is_a?(Components::Link)
-				@map[node] = Link.new(node, parent)
-				res << @map[node]
+				map[node] = Link.new(node, parent)
+				res << map[node]
 			else
 				# group or state
 				if parent && parent.main == node
-					merge_with_parent(node, parent)
+					merge_with_parent(map, node, parent)
 				else
-					@map[node] = State.new(node, parent)
-					res << @map[node]
+					map[node] = State.new(node, parent)
+					res << map[node]
 				end
 				
 				if node.is_a?(Components::Group)
 					node.children.each do |n|
-						res += self.flatten(n, node)
+						res += self.flatten(map, n, node)
 					end
 				end
 			end
@@ -74,11 +100,11 @@ module Cpg
 		def self.format(objects)
 			s = "# CPG Network File\n"
 
-			@map = {}	
+			map = {}	
 			res = []	
 				
 			objects.each do |obj|
-				res += self.flatten(obj)
+				res += self.flatten(map, obj)
 			end
 			
 			# map should now contain the full flattened structure
@@ -86,8 +112,6 @@ module Cpg
 				s += "state\n#{reformat(o.fullname)}\n"
 				
 				o.state.keys.each do |prop|
-					next if prop == :id || prop == :display || o.node.invisible?(prop)
-					
 					s += "#{prop}\t#{reformat(o.node.initial_value(prop))}\t#{o.node.integrated?(prop) ? '1' : '0'}\n"
 				end
 				
@@ -95,11 +119,9 @@ module Cpg
 			end
 			
 			res.select { |x| x.is_a?(Link) }.each do |o|
-				s += "link\n#{reformat(@map[o.from].fullname)}\n#{reformat(@map[o.to].fullname)}\n"
+				s += "link\n#{reformat(map[o.from].fullname)}\n#{reformat(map[o.to].fullname)}\n"
 				
-				o.state.keys.each do |prop|
-					next if prop == :id || prop == :label || o.node.invisible?(prop) || prop == :act_on || prop == :equation || prop == :from || prop == :to || prop == :display
-					
+				o.state.keys.each do |prop|					
 					s += "#{prop}\t#{reformat(o.node.get_property(prop))}\t0\n"
 				end
 				
