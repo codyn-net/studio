@@ -95,7 +95,7 @@ module Cpg
 			oldu = @updating
 			@updating = [obj, container[:prop]]
 			
-			c = MathContext.new(Simulation.instance.state, obj.state)
+			c = Simulation.instance.setup_context(obj)
 			container[:act2].value = c.eval(obj.initial_value(container[:prop])).to_f
 			
 			@updating = oldu
@@ -176,12 +176,14 @@ module Cpg
 			vbox.pack_start(hbox, false, true, 0)
 			vbox.pack_start(to_lbl = center_label(''), false, true, 0)
 			
+			c = Simulation.instance.setup_context(obj)
+			
 			hboth = Gtk::HBox.new(false, 3)
-			s1 = make_slider(obj, prop, obj.get_property(prop).to_f, false)
+			s1 = make_slider(obj, prop, c.eval(obj.get_property(prop)).to_f, false)
 			hboth.pack_start(s1, true, true, 0)
 						
 			if obj.is_a?(Components::SimulatedObject)
-				s2 = make_slider(obj, prop, obj.get_property(prop).to_f, true)	
+				s2 = make_slider(obj, prop, c.eval(obj.get_property(prop)).to_f, true)	
 				hboth.pack_start(s2, true, true, 0)
 			else
 				s2 = nil

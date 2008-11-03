@@ -137,8 +137,6 @@ module Cpg
 				s += "\n"
 			end
 			
-			@map.clear
-			
 			s
 		end
 	end	

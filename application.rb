@@ -154,7 +154,7 @@ module Cpg
 				['SaveAsAction', Gtk::Stock::SAVE_AS, nil, '<Control><Shift>S', 'Save CPG file', Proc.new { |g,a| do_save_as }],
 				
 				['ImportAction', nil, 'Import', nil, 'Import CPG components', Proc.new { |g,a| do_import }],
-				['ExportAction', nil, 'Export', nil, 'Export CPG components', Proc.new { |g,a| do_export }],
+				['ExportAction', nil, 'Export', '<Control>e', 'Export CPG components', Proc.new { |g,a| do_export }],
 				
 				['QuitAction', Gtk::Stock::QUIT, nil, nil, 'Quit', Proc.new { |g,a| do_quit }],
 				

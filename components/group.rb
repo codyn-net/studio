@@ -363,7 +363,11 @@ module Cpg::Components
 				# setup relay signals
 				@signals << relay_signal('property_changed')
 				@signals << relay_signal('property_removed')
-				@signals << relay_signal('range_changed')
+				
+				if @__main.is_a?(SimulatedObject)
+					@signals << relay_signal('range_changed')
+					@signals << relay_signal('initial_changed')
+				end				
 				
 				# and signal property changes for all properties in @__main
 				@__main.properties.each do |p|

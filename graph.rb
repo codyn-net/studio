@@ -159,13 +159,20 @@ module Cpg
 			# create new empty backbuffer
 			return unless window
 		
+			@backbuffer = nil
+			@recreate = true
+
+			queue_draw
+		end
+		
+		def recreate
+			@recreate = false
 			@backbuffer = create_buffer
 		
 			# number of samples fit in the window
 			n = samples
 		
 			# determine offset in @data to draw from
-			#offset = [@data.length - n, 0].max
 			offset = data_offset
 		
 			ctx = @backbuffer.create_cairo_context
@@ -192,7 +199,6 @@ module Cpg
 			end
 
 			ctx.stroke
-			queue_draw
 		end
 	
 		def redraw_one
@@ -322,6 +328,10 @@ module Cpg
 		end
 	
 		def signal_do_expose_event(event)
+			if !@backbuffer && @recreate
+				recreate
+			end
+			
 			# set the clip area for cairo and blit the offscreen to it
 			return unless @backbuffer
 		

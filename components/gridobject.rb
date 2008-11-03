@@ -298,7 +298,7 @@ module Cpg::Components
 	
 		def set_initial_value(prop, val)
 			@initial.set_property(prop, val)
-			
+
 			signal_emit('initial_changed', prop.to_s)
 		end
 	

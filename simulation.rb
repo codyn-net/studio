@@ -127,12 +127,20 @@ module Cpg
 			signal_emit('step')
 		end
 	
-		def reset
+		def reset(resetobjs = true)
 			@time = 0
-			@root.each { |obj| obj.simulation_reset }
+			@root.each { |obj| obj.simulation_reset } if resetobjs
 			
 			@monitors.each do |monitor, properties| 
-				properties.each { |property, values| values.clear }
+				properties.each { |property, values| values.each { |x| x.clear } }
+			end
+		end
+		
+		def setup_context(obj)
+			if obj.is_a?(Components::Attachment)
+				MathContext.new(self.state, obj.from ? obj.from.state : {}, obj.state, {:from => obj.from, :to => obj.to})
+			else
+				MathContext.new(self.state, obj.state)
 			end
 		end
 	
@@ -179,11 +187,7 @@ module Cpg
 		def update_monitors
 			@monitors.each do |obj, properties|
 				properties.each do |property, values|
-					if obj.is_a?(Components::Link)
-						c = MathContext.new(self.state, obj.from.state, obj.state, {:from => obj.from, :to => obj.to})
-					else
-						c = MathContext.new(self.state, obj.state)
-					end
+					c = setup_context(obj)
 				
 					values[0] << c.eval(obj.get_property(property)).to_f
 					values[1] << @time
@@ -226,5 +230,5 @@ end
 begin
 	require 'fastsimulation'
 rescue Exception
-	STDERR.puts("Unable to load fast simulation: #{$!}\n#{$@.join("\n\t")}")
+	STDERR.puts("Unable to load fast simulation: #{$!}")
 end

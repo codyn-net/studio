@@ -130,8 +130,14 @@ module Cpg
 			@objectlist.set_active(obj, prop, true) if @objectlist
 		end
 		
-		def property_name(obj, prop)
-			return "#{obj}.#{prop}"
+		def property_name(obj, prop, long=false)
+			s = "#{obj}.#{prop}"
+			
+			if obj.is_a?(Components::Link) && long
+				s << " #{obj.from} >> #{obj.to}"
+			end
+			
+			s
 		end
 		
 		def remove_hook_real(obj, container)

@@ -103,7 +103,7 @@ module Cpg
 			g.show_ruler = @showrulers.active?
 			
 			hbox = Gtk::HBox.new(false, 3)
-			exp = Gtk::Expander.new(property_name(obj, prop))
+			exp = Gtk::Expander.new(property_name(obj, prop, true))
 			vs = Gtk::VBox.new(false, 3)
 			vs.pack_start(g, true, true, 0)
 			vs.pack_start(Gtk::HScrollbar.new(g.adjustment), false, false, 0)
@@ -167,7 +167,7 @@ module Cpg
 		
 		def update_title(obj, prop)
 			@map[obj].each do |a|
-				title = property_name(obj, a[:prop])
+				title = property_name(obj, a[:prop], true)
 				a[:expander].label = title unless a[:expander].label == title
 			end
 		end
@@ -192,14 +192,16 @@ module Cpg
 				
 				# resample data to be on pxd
 				rstep = (@range[2] - @range[0]) / numpix.to_f;
-				to = (0...(numpix - 1)).collect { |x| @range[0] + (x * rstep) }
+				dpx = 2
+				
+				to = (0...(numpix / dpx)).collect { |x| @range[0] + (x * rstep * dpx) }
 				
 				data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
 				
 				dist = (data.max - data.min) / 2.0
 				v[:graph].yaxis = [data.min - dist * 0.2, data.max + dist * 0.2]
 				v[:graph].sample_frequency = 1
-				v[:graph].unit_width = 1
+				v[:graph].unit_width = dpx
 				v[:graph].data = data
 			end
 		end
@@ -222,11 +224,7 @@ module Cpg
 			return if Simulation.instance.period?
 
 			@map.each do |obj, p|
-				if obj.is_a?(Components::Link)
-					c = MathContext.new(Simulation.instance.state, obj.from.state, obj.state, {:from => obj.from, :to => obj.to})
-				else
-					c = MathContext.new(Simulation.instance.state, obj.state)
-				end
+				c = Simulation.instance.setup_context(obj)
 
 				p.each do |v|
 					v[:graph] << Simulation.instance.monitor_data(obj, v[:prop])[-1]

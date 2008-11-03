@@ -704,6 +704,7 @@ module Cpg
 			x, y = [obj.allocation.x, obj.allocation.y]
 			cx, cy = mean_position(obj)
 
+			
 			# remove original object from the grid
 			delete(obj)
 
@@ -717,8 +718,8 @@ module Cpg
 					o.allocation.x = (x + (o.allocation.x - cx) + 0.00001).round.to_i
 					o.allocation.y = (y + (o.allocation.y - cy) + 0.00001).round.to_i
 				end
-			
-				add(o, o.allocation.x, o.allocation.y, allocation.width, allocation.height)
+
+				add(o, o.allocation.x, o.allocation.y, o.allocation.width, o.allocation.height)
 				select(o)
 			end
 

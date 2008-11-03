@@ -172,7 +172,7 @@ module Cpg
 					@signals << @object.signal_connect('range_changed') do |obj, prop|
 						range_changed(prop)
 					end
-					
+
 					@signals << @object.signal_connect('initial_changed') do |obj, prop|
 						initial_changed(prop)
 					end

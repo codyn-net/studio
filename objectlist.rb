@@ -37,7 +37,26 @@ module Cpg
 		
 		def build
 			@store = Gtk::TreeStore.new(Object, String, Integer)
-
+			@store.set_sort_func(1) do |a, b|
+				if !a[1]
+					# objects before links
+					aat = a[0].is_a?(Components::Attachment)
+					bat = b[0].is_a?(Components::Attachment)
+					
+					if aat && !bat
+						1
+					elsif bat && !aat
+						-1
+					else
+						a[0].to_s <=> b[0].to_s
+					end
+				else
+					a[1].to_s <=> b[1].to_s
+				end
+			end
+			
+			@store.set_sort_column_id(1, Gtk::SORT_ASCENDING)
+		
 			self.model = @store
 			self.headers_visible = false
 			
@@ -80,7 +99,13 @@ module Cpg
 
 			column.set_cell_data_func(renderer) do |column, cell, model, piter|
 				if !piter[1]
-					cell.markup = "<b>#{piter[0]} (#{piter[0].class.to_s.gsub(/.*::/, '')})</b>"
+					s = "#{piter[0]} (#{piter[0].class.to_s.gsub(/.*::/, '')})"
+					
+					if piter[0].is_a?(Components::Link)
+						s << " #{piter[0].from} » #{piter[0].to}"
+					end
+					
+					cell.markup = "<b>#{s}</b>"
 					cell.cell_background_gdk = self.style.base(Gtk::STATE_ACTIVE)
 				else
 					cell.text = piter[1].to_s
@@ -147,6 +172,7 @@ module Cpg
 			return if (obj.invisible?(prop) || prop == :id)
 			
 			piter = @store.append(parent)
+
 			piter[0] = obj
 			piter[1] = prop.to_s
 			piter[2] = 0
