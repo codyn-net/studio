@@ -74,7 +74,10 @@ module Cpg
 		def yaxis=(val)
 			@yaxis = val
 			
-			if @yaxis[0] == @yaxis[1]
+			if @yaxis[0] == 0.0 && @yaxis[1] == 0.0
+				@yaxis[0] = -1
+				@yaxis[1] = 1
+			elsif @yaxis[0] == @yaxis[1]
 				@yaxis[0] -= 0.2 * @yaxis[0]
 				@yaxis[1] += 0.2 * @yaxis[1]
 			end
@@ -95,7 +98,9 @@ module Cpg
 		end
 	
 		def data=(val)
-			@data = val
+			@data = val.dup
+			
+			@data.collect! { |x| (x.nan? || x.infinite?) ? 0 : x }
 		
 			last = (@adjustment.value >= @adjustment.upper - @adjustment.page_size)
 			@adjustment.upper = @data.length
@@ -112,7 +117,7 @@ module Cpg
 		end
 	
 		def <<(sample)
-			@data << sample
+			@data << ((sample.nan? || sample.infinite?) ? 0 : sample)
 		
 			@adjustment.upper = @data.length
 			@adjustment.changed

@@ -640,7 +640,7 @@ module Cpg
 		
 			dlg.signal_connect('response') do |dlg, resp|
 				if resp == Gtk::Dialog::RESPONSE_ACCEPT
-					if dlg.filter == filters[:xml] || (filters[:auto] && !(dlg.filename =~ /\.txt$/))
+					if dlg.filter == filters[:xml] || (dlg.filter == filters[:auto] && !(dlg.filename =~ /\.txt$/))
 						@filename = dlg.filename
 						do_save_xml
 					else
@@ -772,7 +772,7 @@ module Cpg
 					begin
 						f = File.new(dlg.filename, 'w')
 						
-						if dlg.filter == filters[:xml] || (filters[:auto] && !(dlg.filename =~ /\.txt$/))
+						if dlg.filter == filters[:xml] || (dlg.filter == filters[:auto] && !(dlg.filename =~ /\.txt$/))
 							f.puts(xml)
 						else
 							f.puts(flat)

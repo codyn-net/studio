@@ -24,7 +24,7 @@ module Cpg
 					@handlemodified = false
 					
 					# set property value we can do
-					@map[obj].set_value(prop, obj.get_property(prop.to_sym).to_s)
+					@network.set_value(@map[obj], prop.to_s, obj.get_property(prop.to_sym).to_s)
 				end
 			end
 			
@@ -34,6 +34,7 @@ module Cpg
 					
 					# adding a new property we can do
 					@map[obj].add_property(prop, obj.is_a?(Components::SimulatedObject) ? obj.initial_value(prop.to_sym).to_s : obj.get_property(prop.to_sym).to_s, obj.is_a?(Components::SimulatedObject) ? obj.integrated?(prop.to_sym) : false)
+					@network.taint
 				end
 			end
 			
@@ -43,7 +44,7 @@ module Cpg
 						@handlemodified = false
 					
 						# handle initial changed we can do
-						@map[obj].set_initial(prop, obj.initial_value(prop.to_sym))
+						@network.set_initial(@map[obj], prop, obj.initial_value(prop.to_sym).to_s)
 						
 						resimulate
 					end
@@ -104,16 +105,18 @@ module Cpg
 			
 			# first add all the states
 			res.select { |x| !x.is_a?(FlatFormat::Link) }.each do |o|
-				nmap[o] = state = @network.add_state(o.fullname)
-				
+				nmap[o] = state = CCpg::State.new(o.fullname)
+								
 				o.state.keys.each do |prop|
 					state.add_property(prop.to_s, o.node.initial_value(prop).to_s, o.node.integrated?(prop) ? true : false)
 				end
+				
+				@network << state
 			end
 			
 			# then all the links
 			res.select { |x| x.is_a?(FlatFormat::Link) }.each do |o|
-				nmap[o] = link = @network.add_link(nmap[map[o.from]], nmap[map[o.to]])
+				nmap[o] = link = CCpg::Link.new(nmap[map[o.from]], nmap[map[o.to]])
 				
 				o.state.keys.each do |prop|
 					link.add_property(prop.to_s, o.node.get_property(prop).to_s, false)
@@ -125,6 +128,8 @@ module Cpg
 				eq.each_with_index do |e, idx|
 					link.add_action(vars[idx], e)
 				end
+				
+				@network << link
 			end
 			
 			# make sure to complete the mapping from real obj -> cobj

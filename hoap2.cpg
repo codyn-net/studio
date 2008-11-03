@@ -2,14 +2,14 @@
 <cpg>
   <property name='allocation'>
     <allocation>
-      <property name='x' value='-83'/>
-      <property name='y' value='15'/>
+      <property name='x' value='-10'/>
+      <property name='y' value='-30'/>
       <property name='width' value='887'/>
       <property name='height' value='894'/>
     </allocation>
   </property>
   <property name='zoom' value='30.0'/>
-  <property name='pane_position' value='268'/>
+  <property name='pane_position' value='155'/>
   <property name='period' value='0:0.01:2'/>
   <group id='lleg_joint_3'>
     <property name='integrate'>
@@ -42,15 +42,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='-0.0524749723744'/>
-          <property name='w' value='1.25 * 2 * PI'/>
-          <property name='x' value='u * sin(phase) + xoffset'/>
           <property name='xoffset' value='0'/>
-          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
+          <property name='w' value='0.75 * 2 * PI'/>
+          <property name='x' value='u * sin(phase) + xoffset'/>
           <property name='gy' value='0.02'/>
+          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='46.8911199633'/>
           <property name='gx' value='0.02'/>
+          <property name='u' value='60'/>
+          <property name='phase' value='-0.128782147995'/>
         </hash>
       </property>
       <property name='range'>
@@ -66,14 +66,14 @@
       </property>
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
-      <property name='y' value='u * sin(phase + 0.5 * PI) + xoffset'/>
+      <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
       <property name='gx' value='0.02'/>
       <property name='gy' value='0.02'/>
-      <property name='u' value='46.8911199633'/>
-      <property name='w' value='1.25 * 2 * PI'/>
+      <property name='u' value='60'/>
+      <property name='w' value='0.75 * 2 * PI'/>
       <property name='xoffset' value='0.0'/>
       <property name='yoffset' value='0'/>
-      <property name='phase' value='-0.0524749723744'/>
+      <property name='phase' value='-0.128782147995'/>
     </state>
     <link>
       <property name='from' ref='hopf'/>
@@ -119,15 +119,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='-2.79717420348'/>
-          <property name='w' value='1.25 * 2 * PI'/>
+          <property name='xoffset' value='39.4591369054'/>
+          <property name='w' value='0.75 * 2 * PI'/>
           <property name='x' value='u * sin(phase) + xoffset'/>
-          <property name='xoffset' value='39.9931855386'/>
-          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='gy' value='0.02'/>
+          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='31.8389198966'/>
           <property name='gx' value='0.02'/>
+          <property name='u' value='35.9964157078'/>
+          <property name='phase' value='3.14159265359'/>
         </hash>
       </property>
       <property name='range'>
@@ -143,14 +143,14 @@
       </property>
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
-      <property name='y' value='u * sin(phase + 0.5 * PI) + xoffset'/>
+      <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
       <property name='gx' value='0.02'/>
       <property name='gy' value='0.02'/>
-      <property name='u' value='31.8389198966'/>
-      <property name='w' value='1.25 * 2 * PI'/>
-      <property name='xoffset' value='39.9931855386'/>
+      <property name='u' value='35.9964157078'/>
+      <property name='w' value='0.75 * 2 * PI'/>
+      <property name='xoffset' value='39.4591369054'/>
       <property name='yoffset' value='0'/>
-      <property name='phase' value='-2.79717420348'/>
+      <property name='phase' value='3.14159265359'/>
     </state>
     <link>
       <property name='from' ref='hopf'/>
@@ -198,15 +198,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='2.38316419464'/>
-          <property name='w' value='1.25 * 2 * PI'/>
+          <property name='xoffset' value='-27.7497077973'/>
+          <property name='w' value='0.75 * 2 * PI'/>
           <property name='x' value='u * sin(phase) + xoffset'/>
-          <property name='xoffset' value='-26.9016678748'/>
-          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='gy' value='0.1'/>
+          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='11.605024176'/>
           <property name='gx' value='0.1'/>
+          <property name='u' value='10.3295262161'/>
+          <property name='phase' value='2.78949435521'/>
         </hash>
       </property>
       <property name='range'>
@@ -225,9 +225,9 @@
       <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
       <property name='gx' value='0.1'/>
       <property name='gy' value='0.1'/>
-      <property name='u' value='11.605024176'/>
-      <property name='w' value='1.25 * 2 * PI'/>
-      <property name='xoffset' value='-26.9016678748'/>
+      <property name='u' value='10.3295262161'/>
+      <property name='w' value='0.75 * 2 * PI'/>
+      <property name='xoffset' value='-27.7497077973'/>
       <property name='yoffset' value='0'/>
       <property name='phase' value='2.38316419464'/>
     </state>
@@ -275,15 +275,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='0.34441845011'/>
-          <property name='w' value='1.25 * 2 * PI'/>
+          <property name='xoffset' value='39.4591369054'/>
+          <property name='w' value='0.75 * 2 * PI'/>
           <property name='x' value='u * sin(phase) + xoffset'/>
-          <property name='xoffset' value='39.9931855386'/>
-          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='gy' value='0.02'/>
+          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='31.8389198966'/>
           <property name='gx' value='0.02'/>
+          <property name='u' value='35.9964157078'/>
+          <property name='phase' value='6.28318530718'/>
         </hash>
       </property>
       <property name='range'>
@@ -299,14 +299,14 @@
       </property>
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
-      <property name='y' value='u * sin(phase + 0.5 * PI) + xoffset'/>
+      <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
       <property name='gx' value='0.02'/>
       <property name='gy' value='0.02'/>
-      <property name='u' value='31.8389198966'/>
-      <property name='w' value='1.25 * 2 * PI'/>
-      <property name='xoffset' value='39.9931855386'/>
+      <property name='u' value='35.9964157078'/>
+      <property name='w' value='0.75 * 2 * PI'/>
+      <property name='xoffset' value='39.4591369054'/>
       <property name='yoffset' value='0'/>
-      <property name='phase' value='0.34441845011'/>
+      <property name='phase' value='6.28318530718'/>
     </state>
     <link>
       <property name='from' ref='hopf'/>
@@ -352,15 +352,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='3.08911768122'/>
-          <property name='w' value='1.25 * 2 * PI'/>
-          <property name='x' value='u * sin(phase) + xoffset'/>
           <property name='xoffset' value='0'/>
-          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
+          <property name='w' value='0.75 * 2 * PI'/>
+          <property name='x' value='u * sin(phase) + xoffset'/>
           <property name='gy' value='0.02'/>
+          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='46.8911199633'/>
           <property name='gx' value='0.02'/>
+          <property name='u' value='60'/>
+          <property name='phase' value='3.01281050559'/>
         </hash>
       </property>
       <property name='range'>
@@ -376,14 +376,14 @@
       </property>
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
-      <property name='y' value='u * sin(phase + 0.5 * PI) + xoffset'/>
+      <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
       <property name='gx' value='0.02'/>
       <property name='gy' value='0.02'/>
-      <property name='u' value='46.8911199633'/>
-      <property name='w' value='1.25 * 2 * PI'/>
+      <property name='u' value='60'/>
+      <property name='w' value='0.75 * 2 * PI'/>
       <property name='xoffset' value='0.0'/>
       <property name='yoffset' value='0'/>
-      <property name='phase' value='3.08911768122'/>
+      <property name='phase' value='3.01281050559'/>
     </state>
     <link>
       <property name='from' ref='hopf'/>
@@ -403,7 +403,9 @@
       <integrate/>
     </property>
     <property name='initial'>
-      <hash/>
+      <hash>
+        <property name='phase' value='0'/>
+      </hash>
     </property>
     <property name='range'>
       <hash/>
@@ -420,15 +422,16 @@
     <property name='__klass' value='Oscillator'/>
     <property name='__x' value='28.8083376399658'/>
     <property name='__y' value='-10.7530232558139'/>
+    <property name='phase' value='0'/>
     <group id='drive'>
       <property name='integrate'>
         <integrate/>
       </property>
       <property name='initial'>
         <hash>
-          <property name='wstance' value='1.25 * 2 * PI'/>
+          <property name='wstance' value='0.75 * 2 * PI'/>
           <property name='b' value='1'/>
-          <property name='wswing' value='1.25 * 2 * PI'/>
+          <property name='wswing' value='0.75 * 2 * PI'/>
         </hash>
       </property>
       <property name='range'>
@@ -446,8 +449,8 @@
       <property name='__klass' value='Oscillator'/>
       <property name='__x' value='-199.42'/>
       <property name='__y' value='-31.82'/>
-      <property name='wstance' value='1.25 * 2 * PI'/>
-      <property name='wswing' value='1.25 * 2 * PI'/>
+      <property name='wstance' value='0.75 * 2 * PI'/>
+      <property name='wswing' value='0.75 * 2 * PI'/>
       <property name='b' value='1'/>
       <state id='hopf'>
         <property name='integrate'>
@@ -458,14 +461,14 @@
         </property>
         <property name='initial'>
           <hash>
-            <property name='w' value='1.25 * 2 * PI'/>
-            <property name='x' value='1'/>
             <property name='xoffset' value='0'/>
-            <property name='y' value='0'/>
+            <property name='w' value='0.75 * 2 * PI'/>
+            <property name='x' value='1'/>
             <property name='gy' value='1'/>
+            <property name='y' value='0'/>
             <property name='yoffset' value='0'/>
-            <property name='u' value='1'/>
             <property name='gx' value='1'/>
+            <property name='u' value='1'/>
           </hash>
         </property>
         <property name='range'>
@@ -485,7 +488,7 @@
         <property name='gx' value='1'/>
         <property name='gy' value='1'/>
         <property name='u' value='1'/>
-        <property name='w' value='1.25 * 2 * PI'/>
+        <property name='w' value='0.75 * 2 * PI'/>
         <property name='xoffset' value='0.0'/>
         <property name='yoffset' value='0'/>
       </state>
@@ -541,15 +544,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='5.52475684823'/>
-          <property name='w' value='1.25 * 2 * PI'/>
+          <property name='xoffset' value='-27.7497077973'/>
+          <property name='w' value='0.75 * 2 * PI'/>
           <property name='x' value='u * sin(phase) + xoffset'/>
-          <property name='xoffset' value='-26.9016678748'/>
-          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='gy' value='0.1'/>
+          <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='11.605024176'/>
           <property name='gx' value='0.1'/>
+          <property name='u' value='10.3295262161'/>
+          <property name='phase' value='5.9310870088'/>
         </hash>
       </property>
       <property name='range'>
@@ -565,14 +568,14 @@
       </property>
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
-      <property name='y' value='u * sin(phase + 0.5 * PI) + xoffset'/>
+      <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
       <property name='gx' value='0.1'/>
       <property name='gy' value='0.1'/>
-      <property name='u' value='11.605024176'/>
-      <property name='w' value='1.25 * 2 * PI'/>
-      <property name='xoffset' value='-26.9016678748'/>
+      <property name='u' value='10.3295262161'/>
+      <property name='w' value='0.75 * 2 * PI'/>
+      <property name='xoffset' value='-27.7497077973'/>
       <property name='yoffset' value='0'/>
-      <property name='phase' value='5.52475684823'/>
+      <property name='phase' value='5.9310870088'/>
     </state>
     <link>
       <property name='from' ref='hopf'/>
@@ -618,15 +621,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='-0.5 * PI'/>
-          <property name='w' value='1.25 * 2 * PI'/>
-          <property name='x' value='u * sin(phase) + xoffset'/>
           <property name='xoffset' value='0'/>
+          <property name='w' value='0.75 * 2 * PI'/>
+          <property name='x' value='u * sin(phase) + xoffset'/>
+          <property name='gy' value='0.5'/>
           <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
-          <property name='gy' value='1'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='7.28037714304'/>
-          <property name='gx' value='1'/>
+          <property name='gx' value='0.5'/>
+          <property name='u' value='12.0429723772'/>
+          <property name='phase' value='-0.5 * PI'/>
         </hash>
       </property>
       <property name='range'>
@@ -642,11 +645,11 @@
       </property>
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
-      <property name='y' value='u * sin(phase + 0.5 * PI) + xoffset'/>
-      <property name='gx' value='1'/>
-      <property name='gy' value='1'/>
-      <property name='u' value='7.28037714304'/>
-      <property name='w' value='1.25 * 2 * PI'/>
+      <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
+      <property name='gx' value='0.5'/>
+      <property name='gy' value='0.5'/>
+      <property name='u' value='12.0429723772'/>
+      <property name='w' value='0.75 * 2 * PI'/>
       <property name='xoffset' value='0.0'/>
       <property name='yoffset' value='0'/>
       <property name='phase' value='-0.5 * PI'/>
@@ -697,15 +700,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='-0.5 * PI'/>
-          <property name='w' value='1.25 * 2 * PI'/>
-          <property name='x' value='u * sin(phase) + xoffset'/>
           <property name='xoffset' value='0'/>
+          <property name='w' value='0.75 * 2 * PI'/>
+          <property name='x' value='u * sin(phase) + xoffset'/>
+          <property name='gy' value='0.5'/>
           <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
-          <property name='gy' value='1'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='7.28037714304'/>
-          <property name='gx' value='1'/>
+          <property name='gx' value='0.5'/>
+          <property name='u' value='12.0429723772'/>
+          <property name='phase' value='-0.5 * PI'/>
         </hash>
       </property>
       <property name='range'>
@@ -721,11 +724,11 @@
       </property>
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
-      <property name='y' value='u * sin(phase + 0.5 * PI) + xoffset'/>
-      <property name='gx' value='1'/>
-      <property name='gy' value='1'/>
-      <property name='u' value='7.28037714304'/>
-      <property name='w' value='1.25 * 2 * PI'/>
+      <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
+      <property name='gx' value='0.5'/>
+      <property name='gy' value='0.5'/>
+      <property name='u' value='12.0429723772'/>
+      <property name='w' value='0.75 * 2 * PI'/>
       <property name='xoffset' value='0.0'/>
       <property name='yoffset' value='0'/>
       <property name='phase' value='-0.5 * PI'/>
@@ -774,15 +777,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='0.5 * PI'/>
-          <property name='w' value='1.25 * 2 * PI'/>
-          <property name='x' value='u * sin(phase) + xoffset'/>
           <property name='xoffset' value='0'/>
+          <property name='w' value='0.75 * 2 * PI'/>
+          <property name='x' value='u * sin(phase) + xoffset'/>
+          <property name='gy' value='0.5'/>
           <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
-          <property name='gy' value='1'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='7.28037714304'/>
-          <property name='gx' value='1'/>
+          <property name='gx' value='0.5'/>
+          <property name='u' value='12.0429723772'/>
+          <property name='phase' value='0.5 * PI'/>
         </hash>
       </property>
       <property name='range'>
@@ -799,10 +802,10 @@
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
       <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
-      <property name='gx' value='1'/>
-      <property name='gy' value='1'/>
-      <property name='u' value='7.28037714304'/>
-      <property name='w' value='1.25 * 2 * PI'/>
+      <property name='gx' value='0.5'/>
+      <property name='gy' value='0.5'/>
+      <property name='u' value='12.0429723772'/>
+      <property name='w' value='0.75 * 2 * PI'/>
       <property name='xoffset' value='0.0'/>
       <property name='yoffset' value='0'/>
       <property name='phase' value='0.5 * PI'/>
@@ -851,15 +854,15 @@
       </property>
       <property name='initial'>
         <hash>
-          <property name='phase' value='0.5 * PI'/>
-          <property name='w' value='1.25 * 2 * PI'/>
-          <property name='x' value='u * sin(phase) + xoffset'/>
           <property name='xoffset' value='0'/>
+          <property name='w' value='0.75 * 2 * PI'/>
+          <property name='x' value='u * sin(phase) + xoffset'/>
+          <property name='gy' value='0.5'/>
           <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
-          <property name='gy' value='1'/>
           <property name='yoffset' value='0'/>
-          <property name='u' value='7.28037714304'/>
-          <property name='gx' value='1'/>
+          <property name='gx' value='0.5'/>
+          <property name='u' value='12.0429723772'/>
+          <property name='phase' value='0.5 * PI'/>
         </hash>
       </property>
       <property name='range'>
@@ -875,11 +878,11 @@
       </property>
       <property name='display' value=''/>
       <property name='x' value='u * sin(phase) + xoffset'/>
-      <property name='y' value='u * sin(phase + 0.5 * PI) + xoffset'/>
-      <property name='gx' value='1'/>
-      <property name='gy' value='1'/>
-      <property name='u' value='7.28037714304'/>
-      <property name='w' value='1.25 * 2 * PI'/>
+      <property name='y' value='u * sin(phase + 0.5 * PI) + yoffset'/>
+      <property name='gx' value='0.5'/>
+      <property name='gy' value='0.5'/>
+      <property name='u' value='12.0429723772'/>
+      <property name='w' value='0.75 * 2 * PI'/>
       <property name='xoffset' value='0.0'/>
       <property name='yoffset' value='0'/>
       <property name='phase' value='0.5 * PI'/>
@@ -899,7 +902,7 @@
   </group>
   <link>
     <property name='from' ref='drive'/>
-    <property name='to' ref='lleg_joint_4'/>
+    <property name='to' ref='lleg_joint_6'/>
     <property name='act_on' value='w'/>
     <property name='equation' value='w'/>
     <property name='label' value=''/>
@@ -965,14 +968,7 @@
   </link>
   <link>
     <property name='from' ref='drive'/>
-    <property name='to' ref='lleg_joint_2'/>
-    <property name='act_on' value='w'/>
-    <property name='equation' value='w'/>
-    <property name='label' value=''/>
-  </link>
-  <link>
-    <property name='from' ref='drive'/>
-    <property name='to' ref='lleg_joint_6'/>
+    <property name='to' ref='lleg_joint_4'/>
     <property name='act_on' value='w'/>
     <property name='equation' value='w'/>
     <property name='label' value=''/>
@@ -1174,6 +1170,133 @@
   <link>
     <property name='from' ref='rleg_joint_5'/>
     <property name='to' ref='rleg_joint_4'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='lleg_joint_3'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='drive'/>
+    <property name='to' ref='lleg_joint_2'/>
+    <property name='act_on' value='w'/>
+    <property name='equation' value='w'/>
+    <property name='label' value=''/>
+  </link>
+  <link>
+    <property name='from' ref='lleg_joint_4'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='lleg_joint_2'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='lleg_joint_5'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='rleg_joint_5'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='lleg_joint_6'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='rleg_joint_6'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='rleg_joint_4'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='rleg_joint_3'/>
+    <property name='to' ref='drive'/>
+    <property name='act_on' value='x, y'/>
+    <property name='equation' value='rx, ry'/>
+    <property name='label' value='phase'/>
+    <property name='rx' value='(xs * cos(phase) + ys * sin(phase)) * to.u - (to.x - to.xoffset)'/>
+    <property name='xs' value='(x - xoffset) / u'/>
+    <property name='ry' value='(-xs * sin(phase) + ys * cos(phase)) * to.u - (to.y - to.yoffset)'/>
+    <property name='ys' value='(y - yoffset) / u'/>
+    <property name='phase' value='to.phase - from.phase'/>
+  </link>
+  <link>
+    <property name='from' ref='rleg_joint_2'/>
+    <property name='to' ref='drive'/>
     <property name='act_on' value='x, y'/>
     <property name='equation' value='rx, ry'/>
     <property name='label' value='phase'/>
