@@ -190,17 +190,17 @@ module Cpg
 			set_graph_line(ctx)
 		
 			# move to first point
-			start = [n - (@data.length - offset), 0].max
+			start = [n.floor - (@data.length - offset), 0].max
 			dx, dy = scale
 		
-			ctx.move_to((start - 1) * dx, @data[offset] * dy) if @data[offset] != nil
+			ctx.move_to(start * dx, @data[offset] * dy) if @data[offset] != nil
 		
 			# get all the other points
 			slice = @data[(offset + 1)..-1]
 
 			(slice || []).each_with_index do |sample, idx|
 				# draw a line this next sample
-				ctx.line_to((start + idx - 1) * dx, sample * dy)
+				ctx.line_to((start + idx + 1) * dx, sample * dy)
 			end
 
 			ctx.stroke
@@ -284,16 +284,17 @@ module Cpg
 		def draw_ruler(ct)
 			ct.set_source_rgb(0.5, 0.6, 1)
 			ct.line_width = 2
-			ct.move_to(@ruler[0], 0)
-			ct.line_to(@ruler[0], allocation.height)
+			ct.move_to(@ruler[0] + 0.5, 0)
+			ct.line_to(@ruler[0] + 0.5, allocation.height)
 			ct.stroke
 			
 			# find y position at @ruler[0] in data points		
 			offset = data_offset
-			start = [samples - (@data.length - offset), 0].max
+			start = [samples.floor - (@data.length - offset), 0].max
 			dx, dy = scale
 			
-			dp = (@ruler[0] / dx) + 2
+			dp = (@ruler[0] / dx)
+			
 			return if dp.floor < start
 			
 			dpb = dp.floor.to_i
@@ -307,7 +308,7 @@ module Cpg
 			
 			pos1 = dpb + offset - start
 			pos2 = dpe + offset - start
-
+			
 			cy = (((@data[pos1] || 0) * factor) + ((@data[pos2] || 0) * (1 - factor)))
 			
 			# draw label first
