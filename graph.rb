@@ -100,7 +100,7 @@ module Cpg
 		def data=(val)
 			@data = val.dup
 			
-			@data.collect! { |x| (x.nan? || x.infinite?) ? 0 : x }
+			@data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f }
 		
 			last = (@adjustment.value >= @adjustment.upper - @adjustment.page_size)
 			@adjustment.upper = @data.length
@@ -117,7 +117,7 @@ module Cpg
 		end
 	
 		def <<(sample)
-			@data << ((sample.nan? || sample.infinite?) ? 0 : sample)
+			@data << ((sample.to_f.nan? || sample.to_f.infinite?) ? 0.0 : sample.to_f)
 		
 			@adjustment.upper = @data.length
 			@adjustment.changed
