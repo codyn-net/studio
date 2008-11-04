@@ -45,7 +45,7 @@ module Cpg
 
 			if !range
 				v = c.eval(simobj ? obj.initial_value(prop) : obj.get_property(prop)).to_f
-				range = Range.new("#{v - 10 * (v + 1)}:#{v + 10 * (v + 1)}")
+				range = Range.new("#{v - 10 * (v.abs + 1)}:#{v + 10 * (v.abs + 1)}")
 			end
 			
 			from = c.eval(range.from).to_f
