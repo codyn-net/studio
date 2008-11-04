@@ -177,4 +177,25 @@ module Cpg
 	class Array < ::Array
 		include SortedArray
 	end
+	
+	class SerialArray < Array
+		include Cpg::Serialize::Dynamic
+	
+		def properties
+			self
+		end
+	
+		def ensure_property(name)
+			self << name.to_sym unless self.include?(name.to_sym)
+		end
+	
+		def set_property(name, val)
+			ensure_property(name)
+		end
+	
+		def get_property(name)
+			ensure_property(name)
+			''
+		end
+	end
 end
