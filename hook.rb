@@ -97,6 +97,14 @@ module Cpg
 			@map.each { |o,v| remove_hook(o) }
 		end
 		
+		def each_hook
+			@map.each do |obj, properties|
+				properties.each do |container|
+					yield obj, container[:prop]
+				end
+			end
+		end
+		
 		def has_hook?(obj, prop = nil)
 			return false unless @map.include?(obj)
 			return true if prop == nil

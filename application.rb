@@ -498,8 +498,10 @@ module Cpg
 			clear
 					
 			@filename = filename
+			map = {}
 
 			cpg.each do |obj|
+				map[obj.get_property(:id)] = obj if obj.properties.include?(:id)
 				@grid.add(obj, obj.allocation.x, obj.allocation.y, obj.allocation.width, obj.allocation.height)
 			end
 		
@@ -523,6 +525,24 @@ module Cpg
 			
 			if cpg.period
 				@periodentry.text = cpg.period.to_s
+			end
+			
+			if cpg.monitors && !cpg.monitors.empty?
+				ensure_monitor
+
+				cpg.monitors.each do |nm, target|
+					parts = target.split('.', 2)
+					@monitor.add_hook(map[parts[0]], parts[1].to_sym) if map[parts[0]]
+				end
+			end
+			
+			if cpg.controls && !cpg.controls.empty?
+				ensure_control
+
+				cpg.controls.each do |nm, target|
+					parts = target.split('.', 2)
+					@control.add_hook(map[parts[0]], parts[1].to_sym) if map[parts[0]]
+				end
 			end
 		
 			@modified = false
@@ -576,6 +596,27 @@ module Cpg
 			cpg.pane_position = @vpaned.allocation.height - @vpaned.position
 			cpg.zoom = @grid.root_grid_size
 			cpg.period = @periodentry.text
+			
+			# set monitors and controls
+			startp = 1
+			if @monitor && @monitor.visible?
+				@monitor.each_hook do |obj, prop|
+					next unless obj.properties.include?(:id)
+
+					cpg.monitors["m#{startp}".to_sym] = "#{obj.get_property(:id)}.#{prop}"
+					startp = startp + 1
+				end
+			end
+			
+			startp = 1
+			if @control && @control.visible?
+				@control.each_hook do |obj, prop|
+					next unless obj.properties.include?(:id)
+
+					cpg.controls["m#{startp}".to_sym] = "#{obj.get_property(:id)}.#{prop}"
+					startp = startp + 1
+				end
+			end
 		
 			doc = Saver.save(cpg)
 		
