@@ -197,7 +197,7 @@ module Cpg
 				to = (0...(numpix / dpx)).collect { |x| @range[0] + (x * rstep * dpx) }
 				
 				data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
-				data.collect! { |x| (x.nan? || x.infinite?) ? 0 : x } 
+				data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f } 
 				
 				dist = (data.max - data.min) / 2.0
 				v[:graph].yaxis = [data.min - dist * 0.2, data.max + dist * 0.2]
