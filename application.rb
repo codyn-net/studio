@@ -17,7 +17,7 @@ module Cpg
 		include Enumerable
 		include SortedArray
 
-		property :allocation, :zoom, :pane_position, :period
+		property :allocation, :zoom, :pane_position, :period, :monitors, :controls
 		attr_accessor :allocation, :zoom, :pane_position, :period
 
 		def initialize(objects = nil)
@@ -26,6 +26,8 @@ module Cpg
 			@allocation = Allocation.new([nil, nil, nil, nil])
 			@pane_position = 400
 			@period = ''
+			@monitors = Hash.new
+			@controls = Hash.new
 			
 			sort!
 		end
@@ -148,13 +150,14 @@ module Cpg
 			ag = Gtk::ActionGroup.new('NormalActions')
 			ag.add_actions([
 				['FileMenuAction', nil, '_File', nil, nil, nil],
-				['NewAction', Gtk::Stock::NEW, nil, nil, 'New CPG document', Proc.new { |g,a| do_new }],
-				['OpenAction', Gtk::Stock::OPEN, nil, nil, 'Open CPG document', Proc.new { |g,a| do_open }],
+				['NewAction', Gtk::Stock::NEW, nil, nil, 'New CPG network', Proc.new { |g,a| do_new }],
+				['OpenAction', Gtk::Stock::OPEN, nil, nil, 'Open CPG network', Proc.new { |g,a| do_open }],
+				['RevertAction', Gtk::Stock::REVERT_TO_SAVED, nil, nil, 'Revert changes', Proc.new { |g,a| do_revert }],
 				['SaveAction', Gtk::Stock::SAVE, nil, nil, 'Save CPG file', Proc.new { |g,a| do_save }],
 				['SaveAsAction', Gtk::Stock::SAVE_AS, nil, '<Control><Shift>S', 'Save CPG file', Proc.new { |g,a| do_save_as }],
 				
-				['ImportAction', nil, 'Import', nil, 'Import CPG components', Proc.new { |g,a| do_import }],
-				['ExportAction', nil, 'Export', '<Control>e', 'Export CPG components', Proc.new { |g,a| do_export }],
+				['ImportAction', nil, 'Import', nil, 'Import CPG network objects', Proc.new { |g,a| do_import }],
+				['ExportAction', nil, 'Export', '<Control>e', 'Export CPG network objects', Proc.new { |g,a| do_export }],
 				
 				['QuitAction', Gtk::Stock::QUIT, nil, nil, 'Quit', Proc.new { |g,a| do_quit }],
 				
@@ -395,6 +398,14 @@ module Cpg
 				@property_editors.delete(object)
 				dlg.destroy
 			end
+		end
+		
+		def do_revert
+			fname = @filename
+			clear
+			@modified = false
+			
+			do_load_xml(fname)
 		end
 	
 		def do_quit

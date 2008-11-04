@@ -4,6 +4,8 @@
       <menuitem name="New" action="NewAction" />
       <menuitem name="Open" action="OpenAction" />
       <separator/>
+      <menuitem name="Revert" action="RevertAction" />
+      <separator/>
       <menuitem name="Save" action="SaveAction" />
       <menuitem name="SaveAs" action="SaveAsAction" />
       <separator/>
