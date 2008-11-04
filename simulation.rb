@@ -169,6 +169,14 @@ module Cpg
 		end
 		
 		# monitoring
+		def each_monitor
+			@monitors.each do |obj, properties|
+				properties.each do |property, values|
+					yield obj, property
+				end
+			end
+		end
+		
 		def set_monitor(object, property)
 			property = property.to_sym
 
