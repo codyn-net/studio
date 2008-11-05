@@ -139,6 +139,9 @@ module Cpg
 			Simulation.instance.set_monitor(obj, prop)
 
 			super(obj, prop, state.merge({:graph => g, :widget => hbox, :expander => exp}))
+			
+			# request resimulate
+			Simulation.instance.resimulate
 		end
 		
 		def do_linkrulers(g, ev)
@@ -179,31 +182,47 @@ module Cpg
 			end
 		end
 		
+		def set_monitor_data(obj, v)
+			numpix = v[:graph].allocation.width
+				
+			# resample data to be on pxd
+			rstep = (@range[2] - @range[0]) / numpix.to_f;
+			dpx = 2
+			
+			to = (0...(numpix / dpx)).collect { |x| @range[0] + (x * rstep * dpx) }
+			
+			data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
+			data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f } 
+			
+			if data && !data.empty?
+				range = [data.min, data.max]
+			else
+				range = [-3, 3]
+			end
+						
+			dist = (range[1] - range[0]) / 2.0
+			v[:graph].yaxis = [range[0] - dist * 0.2, range[1] + dist * 0.2]
+			v[:graph].sample_frequency = 1
+			v[:graph].unit_width = dpx
+			v[:graph].data = data || []
+		end
+		
 		def do_period_stop
 			# configure graphs so that they show the collected data correctly
 			each_graph do |obj, v|
-				numpix = v[:graph].allocation.width
+				set_monitor_data(obj, v)
 				
-				# resample data to be on pxd
-				rstep = (@range[2] - @range[0]) / numpix.to_f;
-				dpx = 2
-				
-				to = (0...(numpix / dpx)).collect { |x| @range[0] + (x * rstep * dpx) }
-				
-				data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
-				data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f } 
-				
-				if data && !data.empty?
-					range = [data.min, data.max]
-				else
-					range = [-3, 3]
+				if !v[:configure]
+					v[:configure] = v[:graph].signal_connect('configure-event') do |g, ev|
+						GLib::Source.remove(v[:configure_source]) if v[:configure_source]
+						
+						v[:configure_source] = GLib::Timeout.add(50) do
+							v[:configure_source] = nil
+							set_monitor_data(obj, v)
+							false
+						end
+					end
 				end
-							
-				dist = (range[1] - range[0]) / 2.0
-				v[:graph].yaxis = [range[0] - dist * 0.2, range[1] + dist * 0.2]
-				v[:graph].sample_frequency = 1
-				v[:graph].unit_width = dpx
-				v[:graph].data = data || []
 			end
 		end
 		
@@ -228,6 +247,11 @@ module Cpg
 				c = Simulation.instance.setup_context(obj)
 
 				p.each do |v|
+					GLib::Source.remove(v[:configure_source]) if v[:configure_source]
+					v[:graph].signal_handler_disconnect(v[:configure])
+					v.delete(:configure)
+					v.delete(:configure_source)
+					
 					v[:graph] << Simulation.instance.monitor_data(obj, v[:prop])[-1]
 				end
 			end

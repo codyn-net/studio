@@ -228,6 +228,10 @@ module Cpg
 			pentry = Gtk::Entry.new
 			pentry.set_size_request(75, -1)
 			@periodentry = pentry
+
+			pentry.signal_connect('activate') do |b|
+				do_simulation_period(pentry)
+			end		
 			
 			but = Gtk::Button.new
 			but.image = Gtk::Image.new(Gtk::Stock::MEDIA_FORWARD, Gtk::IconSize::BUTTON)
@@ -500,11 +504,6 @@ module Cpg
 			@filename = filename
 			map = {}
 
-			cpg.each do |obj|
-				map[obj.get_property(:id)] = obj if obj.properties.include?(:id)
-				@grid.add(obj, obj.allocation.x, obj.allocation.y, obj.allocation.width, obj.allocation.height)
-			end
-		
 			resize(cpg.allocation.width ? cpg.allocation.width.to_i : allocation.width, cpg.allocation.height ? cpg.allocation.height.to_i : allocation.width)
 			
 			while Gtk.events_pending?
@@ -526,6 +525,11 @@ module Cpg
 			
 			if cpg.zoom
 				@grid.grid_size = cpg.zoom.to_f
+			end
+
+			cpg.each do |obj|
+				map[obj.get_property(:id)] = obj if obj.properties.include?(:id)
+				@grid.add(obj, obj.allocation.x, obj.allocation.y, obj.allocation.width, obj.allocation.height)
 			end
 			
 			if cpg.period

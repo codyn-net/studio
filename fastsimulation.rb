@@ -48,7 +48,7 @@ module Cpg
 						
 						GLib::Source.remove(@resimulate_source) if @resimulate_source
 						@resimulate_source = GLib::Timeout.add(50) do
-							@simulate_source = 0
+							@resimulate_source = nil
 							resimulate
 							false
 						end

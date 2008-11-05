@@ -79,6 +79,10 @@ module Cpg
 			return from, ts, to
 		end
 		
+		def resimulate
+			simulate_period(*@range) if @range
+		end
+		
 		def simulate_period(*args)
 			return false if running?
 			
@@ -98,12 +102,13 @@ module Cpg
 			end
 			
 			signal_emit('period_stop')
-			
+			@range = [from, ts, to]
 			@simulation_source = nil
 		end
 	
 		def step(objs = nil, dt = nil)
 			states = {}
+			@range = nil
 			dt ||= @timestep
 			
 			update_monitors
