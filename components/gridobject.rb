@@ -176,9 +176,6 @@ module Cpg::Components
 			@links.delete(l)
 		end
 	
-		def simulation_reset
-		end
-	
 		def simulation_update(s)
 		end
 	
@@ -192,7 +189,9 @@ module Cpg::Components
 		end
 	
 		def set_property(prop, val)
-			if super and properties.include?(prop.to_sym)
+			prop = prop.to_sym
+			
+			if super and properties.include?(prop)
 				signal_emit('property_changed', prop.to_s)
 			end
 		end
@@ -200,6 +199,8 @@ module Cpg::Components
 		def remove_property(prop)
 			if super
 				signal_emit('property_removed', prop.to_s)
+				
+				@initial.delete(prop)
 				return true
 			end
 		
@@ -230,6 +231,13 @@ module Cpg::Components
 
 			@range.set_property(prop, val)
 			signal_emit('range_changed', prop)
+		end
+		
+		def simulation_reset
+			@initial.each do |k, v|
+				next unless v && !v.empty?
+				set_property(k, v) unless get_property(k).to_s == v.to_s
+			end
 		end
 		
 		def signal_do_range_changed(prop)
@@ -269,28 +277,6 @@ module Cpg::Components
 			super
 		
 			@integrate = Integrate.new
-		end
-	
-		def set_property(prop, val)
-			super
-		
-			prop = prop.to_sym
-			return if prop == :id
-
-			if @initial[prop] == nil and !read_only?(prop) and !invisible?(prop)
-				@initial[prop] = val
-				signal_emit('property_changed', 'initial')
-			end
-		end
-	
-		def remove_property(prop)
-			@initial.delete(prop) if super
-		end
-	
-		def simulation_reset
-			@initial.each do |k, v|
-				set_property(k, v) unless get_property(k).to_s == v.to_s
-			end
 		end
 	
 		def simulation_update(s)

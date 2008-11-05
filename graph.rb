@@ -70,6 +70,17 @@ module Cpg
 		
 			redraw
 		end
+		
+		def auto_axis
+			if @data && !@data.empty?
+				range = [@data.min, @data.max]
+			else
+				range = [-3, 3]
+			end
+						
+			dist = (range[1] - range[0]) / 2.0
+			self.yaxis = [range[0] - dist * 0.2, range[1] + dist * 0.2]
+		end
 	
 		def yaxis=(val)
 			@yaxis = val
@@ -138,7 +149,7 @@ module Cpg
 		def prepare(ctx)
 			dx, dy = scale
 
-			ctx.translate(0.5, @yaxis[1] * -dy + 1.5)
+			ctx.translate(0.5, (@yaxis[1] * -dy).round + 1.5)
 		end
 	
 		def set_graph_line(ctx)
@@ -262,7 +273,7 @@ module Cpg
 		end
 	
 		def draw_yaxis(ct)
-			cx = allocation.width - 1.5
+			cx = allocation.width - 0.5
 		
 			ct.line_width = 1
 			ct.set_source_rgb(0, 0, 0)
@@ -316,11 +327,11 @@ module Cpg
 			e = ct.text_extents(s)
 			
 			ct.rectangle(@ruler[0] + 3, 1, e.width + 4, e.height + 4)
-			ct.set_source_rgb(1, 1, 1)
+			ct.set_source_rgba(1, 1, 1, 0.7)
 			ct.fill
 			
 			ct.move_to(@ruler[0] + 5, 3 + e.height)
-			ct.set_source_rgb(0, 0, 0)
+			ct.set_source_rgba(0, 0, 0, 0.8)
 			ct.show_text(s)
 			ct.stroke
 			
@@ -355,11 +366,11 @@ module Cpg
 				e = ct.text_extents(@label)
 				ct.rectangle(1, 1, e.width + 2 + 1, e.height + 2 + 1)
 
-				ct.set_source_rgb(1, 1, 1)
+				ct.set_source_rgba(1, 1, 1, 0.7)
 				ct.fill
 			
 				ct.move_to(1, 1 + 1 + e.height)
-				ct.set_source_rgb(0, 0, 0)
+				ct.set_source_rgba(0, 0, 0, 0.8)
 				ct.show_text(@label)
 			end
 		

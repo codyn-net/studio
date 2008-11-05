@@ -37,28 +37,26 @@ module Cpg
 					@network.taint
 				end
 			end
-			
-			if obj.is_a?(Components::SimulatedObject)
-				obj.signal_connect('initial_changed') do |obj, prop|
-					if @map.include?(obj)
-						@handlemodified = false
+
+			obj.signal_connect('initial_changed') do |obj, prop|
+				if @map.include?(obj)
+					@handlemodified = false
+				
+					# handle initial changed we can do
+					@network.set_initial(@map[obj], prop, obj.initial_value(prop.to_sym).to_s)
 					
-						# handle initial changed we can do
-						@network.set_initial(@map[obj], prop, obj.initial_value(prop.to_sym).to_s)
-						
-						GLib::Source.remove(@resimulate_source) if @resimulate_source
-						@resimulate_source = GLib::Timeout.add(50) do
-							@resimulate_source = nil
-							resimulate
-							false
-						end
+					GLib::Source.remove(@resimulate_source) if @resimulate_source
+					@resimulate_source = GLib::Timeout.add(50) do
+						@resimulate_source = nil
+						resimulate
+						false
 					end
 				end
-				
-				obj.signal_connect('range_changed') do |obj, prop|
-					# do not handle modified because we don't care about the range
-					@handlemodified = false
-				end
+			end
+			
+			obj.signal_connect('range_changed') do |obj, prop|
+				# do not handle modified because we don't care about the range
+				@handlemodified = false
 			end
 		end
 		
@@ -233,22 +231,14 @@ module Cpg
 		end
 		
 		def monitor_data(obj, prop)
-			if !@network
-				return orig_monitor_data(obj, prop)
-			end
-			
-			return [] unless @map[obj]
+			return [] if !@network || !@map[obj]
 			
 			data = @network.monitor_data(@map[obj], prop.to_s)
 			data
 		end
 		
 		def monitor_data_resampled(obj, prop, to)
-			if !@network
-				return orig_monitor_data_resampled(obj, prop, to)
-			end
-			
-			return [] unless @map[obj]
+			return [] if !@network || !@map[obj]
 			
 			data = @network.monitor_data_resampled(@map[obj], prop.to_s, to)
 			data

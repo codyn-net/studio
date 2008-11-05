@@ -187,7 +187,7 @@ module Cpg
 					[att].flatten.each do |o|
 						a.properties.each do |p|
 							# CHECK: only copy non read only here
-							o.set_property(p, a.get_property(p)) unless a.read_only?(p)
+							o.set_property(p, a.get_property(p)) unless (a.read_only?(p) && !(p == :range || p == :initial))
 						end
 					end
 				else

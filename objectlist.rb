@@ -10,6 +10,14 @@ module Cpg
 				   nil,
 				   Object,
 				   String)
+		
+		signal_new('property_added',
+				   GLib::Signal::RUN_LAST,
+				   nil,
+				   nil,
+				   Object,
+				   String,
+				   Object)
 	
 		def initialize
 			super
@@ -183,7 +191,9 @@ module Cpg
 
 			piter[0] = obj
 			piter[1] = prop.to_s
-			piter[2] = Simulation.instance.monitors?(obj, prop) ? 1 : 0
+			piter[2] = 0
+			
+			signal_emit('property_added', obj, prop, piter)
 		end
 		
 		def remove_object(obj)
@@ -270,6 +280,9 @@ module Cpg
 		end
 		
 		def signal_do_toggled(obj, prop)
+		end
+		
+		def signal_do_property_added(obj, prop, piter)
 		end
 	end
 end

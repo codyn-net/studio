@@ -22,7 +22,7 @@ module Cpg
 			])
 			
 			ag.add_toggle_actions([
-				['ViewSelectAction', nil, '_Select', '<Control>s', 'Show/Hide property selection for monitoring', Proc.new { |g, a| select_toggled(a) }, true],
+				['ViewSelectAction', nil, 'Show _object list', '<Control>o', 'Show/Hide property selection for monitoring', Proc.new { |g, a| select_toggled(a) }, true],
 
 			])
 			
@@ -72,6 +72,10 @@ module Cpg
 				end
 			end
 			
+			@objectlist.signal_connect('property_added') do |lst, obj, prop, piter|
+				piter[2] = has_hook?(obj, prop.to_sym) ? 1 : 0
+			end
+			
 			@objlstsw = sw
 		end
 		
@@ -98,11 +102,22 @@ module Cpg
 		end
 		
 		def each_hook
+			vals = []
 			@map.each do |obj, properties|
 				properties.each do |container|
-					yield obj, container[:prop]
+					vals << [obj, container]
 				end
 			end
+			
+			# sort based on position
+			vals.sort! do |a,b|
+				as = a[1][:widget].parent.child_get_property(a[1][:widget], 'position')
+				bs = b[1][:widget].parent.child_get_property(b[1][:widget], 'position')
+
+				as <=> bs
+			end
+
+			vals.each { |x| yield x[0], x[1][:prop] }
 		end
 		
 		def has_hook?(obj, prop = nil)
@@ -154,10 +169,9 @@ module Cpg
 		end
 		
 		def remove_hook(obj, prop = nil)
+			prop = prop.to_sym if prop
 			return unless has_hook?(obj, prop)
 			
-			prop = prop.to_sym if prop
-		
 			@map[obj].dup.each do |x| 
 				if prop == nil || x[:prop].to_sym == prop.to_sym
 					remove_hook_real(obj, x)

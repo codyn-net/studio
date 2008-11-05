@@ -290,7 +290,6 @@ module Cpg::Components
 		end
 	
 		def to_xml
-			@initial = Cpg::Hash.new
 			super
 		end
 	

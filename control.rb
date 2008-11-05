@@ -40,12 +40,12 @@ module Cpg
 		
 		def get_range(obj, prop)
 			c = MathContext.new(Simulation.instance.state, obj.state)
-			
-			simobj = obj.is_a?(Components::SimulatedObject)
-			range = simobj ? obj.get_range(prop) : nil
+			range = obj.get_range(prop)
 
 			if !range
-				v = c.eval(simobj ? obj.initial_value(prop) : obj.get_property(prop)).to_f
+				v = obj.initial_value(prop)
+				v = obj.get_property(prop) unless (v && !v.to_s.empty?)
+				v = c.eval(v).to_f
 				range = Range.new("#{v - 10 * (v.abs + 1)}:#{v + 10 * (v.abs + 1)}")
 			end
 			
@@ -193,13 +193,9 @@ module Cpg
 			hboth = Gtk::HBox.new(false, 3)
 			s1 = make_slider(obj, prop, c.eval(obj.get_property(prop)).to_f, false)
 			hboth.pack_start(s1, true, true, 0)
-						
-			if obj.is_a?(Components::SimulatedObject)
-				s2 = make_slider(obj, prop, c.eval(obj.get_property(prop)).to_f, true)	
-				hboth.pack_start(s2, true, true, 0)
-			else
-				s2 = nil
-			end
+
+			s2 = make_slider(obj, prop, c.eval(obj.get_property(prop)).to_f, true)	
+			hboth.pack_start(s2, true, true, 0)
 			
 			vbox.pack_start(hboth, true, true, 0)
 			
@@ -213,19 +209,16 @@ module Cpg
 			end
 			
 			hboth.pack_start(t1, true, false, 0)
-			
-			if obj.is_a?(Components::SimulatedObject)
-				t2 = Stock.chain_button	do |but|
-					if but.active?
-						@linked << s2
-					else
-						@linked.delete(s2)
-					end
+
+			t2 = Stock.chain_button	do |but|
+				if but.active?
+					@linked << s2
+				else
+					@linked.delete(s2)
 				end
-							
-				hboth.pack_start(t2, true, false, 0)
 			end
-			
+						
+			hboth.pack_start(t2, true, false, 0)			
 			vbox.pack_start(hboth, false, false, 0)
 			
 			vbox.pack_start(from_lbl = center_label(''), false, true, 0)

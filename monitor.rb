@@ -25,6 +25,7 @@ module Cpg
 			@dt = dt
 			@coloridx = 0
 			@linkrulers = true
+			@linkaxis = true
 
 			build
 			
@@ -33,14 +34,67 @@ module Cpg
 			signal_register(Simulation.instance, 'period_stop') { |s| do_period_stop }
 		
 			set_default_size(500, 400)
+			
+			ag = Gtk::ActionGroup.new('MonitorActions')
+			
+			ag.add_actions([
+				['AutoAxisAction', nil, 'Auto scale axis', '<Control>r', 'Automatically scale axis for data', Proc.new { |g, a| do_auto_axis }]
+			])
+			
+			ag.add_toggle_actions([
+				['LinkedAxisAction', nil, 'Link axis scales', '<Control>l', 'Link graph axis scales', Proc.new { |g, a| do_link_axis(a.active?) }, @linkaxis]
+			])
+			
+			@uimanager.insert_action_group(ag, 0)
+			
+			mid = @uimanager.new_merge_id
+			@uimanager.add_ui(mid, "/menubar/View/ViewBottom", "AutoAxis", "AutoAxisAction", Gtk::UIManager::MENUITEM, false)
+			@uimanager.add_ui(mid, "/menubar/View/ViewBottom", "LinkedAxis", "LinkedAxisAction", Gtk::UIManager::MENUITEM, false)  
 		end
 		
 		def content_area
-			@content = Gtk::VBox.new(false, 6)
+			@content = Gtk::VBox.new(false, 1)
+			
+			Gtk::Drag.dest_set(@content, Gtk::Drag::DEST_DEFAULT_MOTION | Gtk::Drag::DEST_DEFAULT_HIGHLIGHT, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
+			
+			@content.signal_connect('drag-motion') do |c, ctx, x, y, time|
+				true
+			end
+			
+			@content
+		end
+		
+		def do_link_axis(active)
+			@linkaxis = active
+			
+			if @linkaxis
+				yax = [nil, nil]
+				
+				each_graph do |obj, container|
+					y = container[:graph].yaxis
+					
+					yax[0] = y[0] if (yax[0] == nil || y[0] < yax[0])
+					yax[1] = y[1] if (yax[1] == nil || y[1] > yax[1])
+				end
+				
+				return unless yax[0] && yax[1]
+				
+				each_graph do |obj, container|
+					container[:graph].yaxis = yax
+				end
+			end
+		end
+		
+		def do_auto_axis
+			each_graph do |obj, container|
+				container[:graph].auto_axis
+			end
+			
+			do_link_axis(@linkaxis)
 		end
 		
 		def build
-			hbox = Gtk::HBox.new(false, 3)
+			hbox = Gtk::HBox.new(false, 6)
 			
 			but = Stock.chain_button do |x| 
 				@linkrulers = x.active?
@@ -54,7 +108,7 @@ module Cpg
 			@showrulers.active = true
 			hbox.pack_end(@showrulers, false, false, 0)
 						
-			@vbox_content.pack_end(hbox, false, false, 0)
+			@vbox_content.pack_end(hbox, false, false, 3)
 			
 			@showrulers.signal_connect('toggled') do |t|
 				each_graph do |o, x|
@@ -92,26 +146,37 @@ module Cpg
 			end
 
 			g = Graph.new(1 / @dt, DEFAULT_UNIT_WIDTH, [-3, 3])
+			g.label = property_name(obj, prop, true)
 			g.color = next_color
 			g.set_size_request(-1, 50)
 			g.show_ruler = @showrulers.active?
 			
-			hbox = Gtk::HBox.new(false, 3)
-			exp = Gtk::Expander.new(property_name(obj, prop, true))
-			vs = Gtk::VBox.new(false, 3)
-			vs.pack_start(g, true, true, 0)
-			vs.pack_start(Gtk::HScrollbar.new(g.adjustment), false, false, 0)
+			Gtk::Drag.source_set(g, Gdk::Window::ModifierType::BUTTON1_MASK, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
+			
+			g.signal_connect('drag-begin') do |gr, ctx|
+				pix = Gdk::Pixbuf.from_drawable(nil, g.window, 0, 0, g.allocation.width, g.allocation.height)
+				Gtk::Drag.set_icon(ctx, pix, g.allocation.width / 2, g.allocation.height / 2)
+			end
+			
+			hbox = Gtk::HBox.new(false, 1)
+			#exp = Gtk::Expander.new(property_name(obj, prop, true))
+		#	vs = Gtk::VBox.new(false, 3)
+			#vs.pack_start(g, true, true, 0)
+			
+			frame = Gtk::Frame.new
+			frame.shadow_type = Gtk::ShadowType::ETCHED_IN
+			frame << g
+			
+			# FIXME: no scrollbars for now
+			#vs.pack_start(Gtk::HScrollbar.new(g.adjustment), false, false, 0)
 		
-			exp.add(vs)
-			exp.expanded = true
+			#exp.add(vs)
+			#exp.expanded = true
 		
-			hbox.pack_start(exp, true, true, 0)
+			#hbox.pack_start(exp, true, true, 0)
+			hbox.pack_start(frame, true, true, 0)
 	
-			close = Gtk::Button.new
-			close.image = Gtk::Image.new(Gtk::Stock::CLOSE, Gtk::IconSize::MENU)
-			close.relief = Gtk::ReliefStyle::NONE
-		
-			close.signal_connect('clicked') { |x| remove_hook(obj, prop) }
+			close = Stock.close_button { |x| remove_hook(obj, prop) }
 		
 			align = Gtk::VBox.new(false, 0)
 			align.pack_start(close, false, false, 0)
@@ -121,11 +186,11 @@ module Cpg
 
 			@content.pack_start(hbox, true, true, 0)
 		
-			exp.signal_connect('activate') do |o|
-				active = !exp.expanded?
+			#exp.signal_connect('activate') do |o|
+			#	active = !exp.expanded?
 			
-				@content.set_child_packing(hbox, active, active, 0, Gtk::PackType::START)
-			end
+			#	@content.set_child_packing(hbox, active, active, 0, Gtk::PackType::START)
+			#end
 			
 			g.signal_connect_after('motion_notify_event') do |o,ev|
 				do_linkrulers(g, ev) if @linkrulers && g.show_ruler
@@ -138,7 +203,7 @@ module Cpg
 			# register monitoring
 			Simulation.instance.set_monitor(obj, prop)
 
-			super(obj, prop, state.merge({:graph => g, :widget => hbox, :expander => exp}))
+			super(obj, prop, state.merge({:graph => g, :widget => hbox})) #, :expander => exp}))
 			
 			# request resimulate
 			Simulation.instance.resimulate
@@ -165,7 +230,8 @@ module Cpg
 		def update_title(obj, prop)
 			@map[obj].each do |a|
 				title = property_name(obj, a[:prop], true)
-				a[:expander].label = title unless a[:expander].label == title
+				a[:graph].label = title unless a[:graph].label == title
+				#a[:expander].label = title unless a[:expander].label == title
 			end
 		end
 		
@@ -194,14 +260,6 @@ module Cpg
 			data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
 			data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f } 
 			
-			if data && !data.empty?
-				range = [data.min, data.max]
-			else
-				range = [-3, 3]
-			end
-						
-			dist = (range[1] - range[0]) / 2.0
-			v[:graph].yaxis = [range[0] - dist * 0.2, range[1] + dist * 0.2]
 			v[:graph].sample_frequency = 1
 			v[:graph].unit_width = dpx
 			v[:graph].data = data || []

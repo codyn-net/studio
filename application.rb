@@ -539,8 +539,8 @@ module Cpg
 			if cpg.monitors && !cpg.monitors.empty?
 				ensure_monitor
 
-				cpg.monitors.each do |nm, target|
-					parts = target.split('.', 2)
+				cpg.monitors.properties.each do |nm|
+					parts = cpg.monitors[nm].split('.', 2)
 					@monitor.add_hook(map[parts[0]], parts[1].to_sym) if map[parts[0]]
 				end
 			end
@@ -548,8 +548,8 @@ module Cpg
 			if cpg.controls && !cpg.controls.empty?
 				ensure_control
 
-				cpg.controls.each do |nm, target|
-					parts = target.split('.', 2)
+				cpg.controls.properties.each do |nm|
+					parts = cpg.controols[nm].split('.', 2)
 					@control.add_hook(map[parts[0]], parts[1].to_sym) if map[parts[0]]
 				end
 			end

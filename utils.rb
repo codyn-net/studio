@@ -136,6 +136,8 @@ module Cpg
 	
 		def properties
 			k = self.keys
+			
+			k.sort! {|a,b| a.to_s <=> b.to_s }
 			k.delete(:id)
 			k
 		end
