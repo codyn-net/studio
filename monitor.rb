@@ -52,13 +52,37 @@ module Cpg
 			@uimanager.add_ui(mid, "/menubar/View/ViewBottom", "LinkedAxis", "LinkedAxisAction", Gtk::UIManager::MENUITEM, false)  
 		end
 		
+		def under_cursor(x, y)
+			@content.children.find do |child|
+				alloc = child.allocation
+				
+				if x > alloc.x && x < alloc.x + alloc.width &&
+				   y > alloc.y && y < alloc.y + alloc.height
+					true
+				else
+					false
+				end
+			end
+		end
+		
 		def content_area
 			@content = Gtk::VBox.new(false, 1)
 			
-			Gtk::Drag.dest_set(@content, Gtk::Drag::DEST_DEFAULT_MOTION | Gtk::Drag::DEST_DEFAULT_HIGHLIGHT, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
+			Gtk::Drag.dest_set(@content, 0, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
 			
 			@content.signal_connect('drag-motion') do |c, ctx, x, y, time|
-				true
+				if @dragging
+					other = under_cursor(x, y)
+					
+					if other && other != @dragging
+						@content.reorder_child(@dragging, @content.child_get_property(other, 'position'))
+					end
+
+					ctx.drag_status(Gdk::DragContext::ACTION_MOVE, time)
+					true
+				else
+					false
+				end
 			end
 			
 			@content
@@ -151,13 +175,6 @@ module Cpg
 			g.set_size_request(-1, 50)
 			g.show_ruler = @showrulers.active?
 			
-			Gtk::Drag.source_set(g, Gdk::Window::ModifierType::BUTTON1_MASK, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
-			
-			g.signal_connect('drag-begin') do |gr, ctx|
-				pix = Gdk::Pixbuf.from_drawable(nil, g.window, 0, 0, g.allocation.width, g.allocation.height)
-				Gtk::Drag.set_icon(ctx, pix, g.allocation.width / 2, g.allocation.height / 2)
-			end
-			
 			hbox = Gtk::HBox.new(false, 1)
 			#exp = Gtk::Expander.new(property_name(obj, prop, true))
 		#	vs = Gtk::VBox.new(false, 3)
@@ -184,6 +201,20 @@ module Cpg
 			hbox.pack_start(align, false, false, 0)
 			hbox.show_all
 
+			Gtk::Drag.source_set(g, Gdk::Window::ModifierType::BUTTON1_MASK, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
+			
+			g.signal_connect('drag-begin') do |gr, ctx|
+				pix = Gdk::Pixbuf.from_drawable(nil, g.window, 0, 0, g.allocation.width, g.allocation.height)
+
+				Gtk::Drag.set_icon(ctx, pix, g.allocation.width / 2, g.allocation.height / 2)
+				
+				@dragging = hbox
+			end
+			
+			g.signal_connect('drag-end') do |gr, ctx|
+				@dragging = nil
+			end
+			
 			@content.pack_start(hbox, true, true, 0)
 		
 			#exp.signal_connect('activate') do |o|
@@ -203,7 +234,7 @@ module Cpg
 			# register monitoring
 			Simulation.instance.set_monitor(obj, prop)
 
-			super(obj, prop, state.merge({:graph => g, :widget => hbox})) #, :expander => exp}))
+			container = super(obj, prop, state.merge({:graph => g, :widget => hbox})) #, :expander => exp}))
 			
 			# request resimulate
 			Simulation.instance.resimulate
