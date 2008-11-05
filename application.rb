@@ -506,6 +506,11 @@ module Cpg
 			end
 		
 			resize(cpg.allocation.width ? cpg.allocation.width.to_i : allocation.width, cpg.allocation.height ? cpg.allocation.height.to_i : allocation.width)
+			
+			while Gtk.events_pending?
+				# make sure to push resize through
+				Gtk.main_iteration
+			end
 		
 			if cpg.allocation.x
 				@grid.root.x = cpg.allocation.x.to_i
@@ -971,8 +976,15 @@ module Cpg
 			if not @monitor
 				@monitor = Monitor.new(@simulation.timestep)
 				@monitor.set_transient_for(self)
-				@monitor.show
 				
+				@monitor.realize
+				self.present
+				Gtk.main_iteration while Gtk.events_pending?
+				position_window(@monitor)
+				
+				@monitor.present
+				Gtk.main_iteration while Gtk.events_pending?
+
 				position_window(@monitor)
 
 				@monitor.signal_connect('destroy') do |w| 
@@ -986,8 +998,12 @@ module Cpg
 			if not @control
 				@control = Control.new
 				@control.set_transient_for(self)
-				@control.show
+
+				self.present
+				@control.realize				
+				position_window(@control)
 				
+				@control.present
 				position_window(@control)
 			
 				@control.signal_connect('destroy') do |w| 

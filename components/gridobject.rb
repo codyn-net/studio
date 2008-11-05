@@ -27,7 +27,7 @@ module Cpg::Components
 
 	class GridObject < GLib::Object
 		include Cpg::Serialize::Dynamic
-	
+
 		type_register
 	
 		signal_new('request_redraw',
@@ -53,8 +53,23 @@ module Cpg::Components
 			nil,
 			String)
 
+		signal_new('range_changed',
+			GLib::Signal::RUN_LAST,
+			nil,
+			nil,
+			String)
+		
+		signal_new('initial_changed',
+			GLib::Signal::RUN_LAST,
+			nil,
+			nil,
+			String)
+
 		attr_accessor :allocation, :selected, :links, :mousein, :focus
-	
+		property :initial, :range
+		read_only :initial, :range
+		invisible :initial, :range
+
 		def initialize
 			super
 
@@ -63,6 +78,9 @@ module Cpg::Components
 			@mousein = false
 			@focus = false
 			@links = []
+
+			@initial = Cpg::Hash.new
+			@range = Cpg::Hash.new
 		end
 	
 		def to_s
@@ -187,6 +205,38 @@ module Cpg::Components
 		
 			false
 		end
+		
+		def initial_value(prop)
+			@initial.get_property(prop)
+		end
+	
+		def set_initial_value(prop, val)
+			@initial.set_property(prop, val)
+
+			signal_emit('initial_changed', prop.to_s)
+		end
+	
+		def get_range(prop)
+			v = @range.get_property(prop)
+			v && !v.empty? ? Cpg::Range.new(v) : nil
+		end
+
+		def set_range(prop, val)
+			if val && !val.empty?
+				val = Cpg::Range.normalize(val)
+			else
+				val = ''
+			end
+
+			@range.set_property(prop, val)
+			signal_emit('range_changed', prop)
+		end
+		
+		def signal_do_range_changed(prop)
+		end
+		
+		def signal_do_initial_changed(prop)
+		end
 	
 		def request_redraw
 			signal_emit('request_redraw')
@@ -211,28 +261,14 @@ module Cpg::Components
 	class SimulatedObject < GridObject
 		type_register
 
-		signal_new('range_changed',
-			GLib::Signal::RUN_LAST,
-			nil,
-			nil,
-			String)
-		
-		signal_new('initial_changed',
-			GLib::Signal::RUN_LAST,
-			nil,
-			nil,
-			String)
-			
-		property :id, :integrate, :initial, :range, :allocation
-		read_only :integrate, :initial, :range
-		invisible :integrate, :initial, :range, :allocation
+		property :id, :integrate, :allocation
+		read_only :integrate
+		invisible :integrate, :allocation
 	
 		def initialize
 			super
 		
 			@integrate = Integrate.new
-			@initial = Cpg::Hash.new
-			@range = Cpg::Hash.new
 		end
 	
 		def set_property(prop, val)
@@ -290,38 +326,6 @@ module Cpg::Components
 	
 		def integrated?(name)
 			@integrate.include?(name.to_sym)
-		end
-	
-		def initial_value(prop)
-			@initial.get_property(prop)
-		end
-	
-		def set_initial_value(prop, val)
-			@initial.set_property(prop, val)
-
-			signal_emit('initial_changed', prop.to_s)
-		end
-	
-		def get_range(prop)
-			v = @range.get_property(prop)
-			v && !v.empty? ? Cpg::Range.new(v) : nil
-		end
-
-		def set_range(prop, val)
-			if val && !val.empty?
-				val = Cpg::Range.normalize(val)
-			else
-				val = ''
-			end
-
-			@range.set_property(prop, val)
-			signal_emit('range_changed', prop)
-		end
-		
-		def signal_do_range_changed(prop)
-		end
-		
-		def signal_do_initial_changed(prop)
 		end
 	end
 end

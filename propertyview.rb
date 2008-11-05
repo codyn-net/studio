@@ -68,7 +68,7 @@ module Cpg
 			column.min_width = 100
 			tv.append_column(column)
 		
-			if @object && !@object.is_a?(Components::Attachment)
+			if @object
 				renderer = Gtk::CellRendererText.new
 				renderer.signal_connect('edited') do |renderer,path,new_text|
 					piter = @store.get_iter(path)
@@ -85,25 +85,27 @@ module Cpg
 				column.min_width = 30
 				tv.append_column(column)
 
-				renderer = Gtk::CellRendererToggle.new
+				if @object.is_a?(Components::SimulatedObject)
+					renderer = Gtk::CellRendererToggle.new
 		
-				renderer.signal_connect('toggled') do |renderer,path,new_text|
-					piter = @store.get_iter(path)			
-					na = (not renderer.active?)
+					renderer.signal_connect('toggled') do |renderer,path,new_text|
+						piter = @store.get_iter(path)			
+						na = (not renderer.active?)
 
-					@object.set_integrated(piter[0], na)
+						@object.set_integrated(piter[0], na)
+					end
+
+					column = Gtk::TreeViewColumn.new('Int', renderer)
+					column.resizable = true
+					column.set_cell_data_func(renderer) do |column, cell, model, piter|
+						cell.active = @object.integrated?(piter[0])
+						cell.activatable = !@object.read_only?(piter[0]) && piter[0].to_sym != :id
+					end
+					column.max_width = 30
+		
+					tv.append_column(column)
 				end
 
-				column = Gtk::TreeViewColumn.new('Int', renderer)
-				column.resizable = true
-				column.set_cell_data_func(renderer) do |column, cell, model, piter|
-					cell.active = @object.integrated?(piter[0])
-					cell.activatable = !@object.read_only?(piter[0]) && piter[0].to_sym != :id
-				end
-				column.max_width = 30
-		
-				tv.append_column(column)
-			
 				renderer = Gtk::CellRendererText.new
 				renderer.signal_connect('edited') do |renderer,path,new_text|
 					piter = @store.get_iter(path)
@@ -167,15 +169,13 @@ module Cpg
 				@signals << @object.signal_connect('property_added') do |obj, prop|
 					property_added(prop)
 				end
-				
-				if @object.is_a?(Components::SimulatedObject)
-					@signals << @object.signal_connect('range_changed') do |obj, prop|
-						range_changed(prop)
-					end
 
-					@signals << @object.signal_connect('initial_changed') do |obj, prop|
-						initial_changed(prop)
-					end
+				@signals << @object.signal_connect('range_changed') do |obj, prop|
+					range_changed(prop)
+				end
+
+				@signals << @object.signal_connect('initial_changed') do |obj, prop|
+					initial_changed(prop)
 				end
 			
 				init_store		

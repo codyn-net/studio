@@ -19,6 +19,7 @@ module Cpg
 			super({:title => 'Control'})
 		
 			@grid = Application.instance.grid
+			@linked = []
 		
 			set_default_size(500, 200)
 			show_all
@@ -54,6 +55,12 @@ module Cpg
 			
 			return [from, step, to]
 		end
+		
+		def act_linked(mine, val)
+			@linked.each do |x|
+				x.value = val unless x == mine
+			end
+		end
 
 		def make_slider(obj, prop, val, isinit)
 			from, step, to = get_range(obj, prop)
@@ -79,6 +86,8 @@ module Cpg
 					else
 						obj.set_initial_value(prop, s.value)
 					end
+					
+					act_linked(s, s.value)
 				end
 			end
 	
@@ -144,18 +153,21 @@ module Cpg
 					@updating = nil
 				end
 			end
-			
-			if obj.is_a?(Components::SimulatedObject)
-				signal_register(obj, 'range_changed') do |o, p|
-					o = @map[obj].find { |x| x[:prop] == p.to_sym }
-					update_range(obj, o) if o
-				end
-			
-				signal_register(obj, 'initial_changed') do |o, p|
-					o = @map[obj].find { |x| x[:prop] == p.to_sym }
-					update_initial(obj, o) if o
-				end
+
+			signal_register(obj, 'range_changed') do |o, p|
+				o = @map[obj].find { |x| x[:prop] == p.to_sym }
+				update_range(obj, o) if o
 			end
+		
+			signal_register(obj, 'initial_changed') do |o, p|
+				o = @map[obj].find { |x| x[:prop] == p.to_sym }
+				update_initial(obj, o) if o
+			end
+		end
+		
+		def remove_hook_real(obj, container)
+			@linked.delete(container[:act1])
+			@linked.delete(container[:act2])
 		end
 	
 		def add_hook_real(obj, prop, state)
@@ -190,6 +202,32 @@ module Cpg
 			end
 			
 			vbox.pack_start(hboth, true, true, 0)
+			
+			hboth = Gtk::HBox.new(false, 3)
+			t1 = Stock.chain_button do |but|
+				if but.active?
+					@linked << s1
+				else
+					@linked.delete(s1)
+				end
+			end
+			
+			hboth.pack_start(t1, true, false, 0)
+			
+			if obj.is_a?(Components::SimulatedObject)
+				t2 = Stock.chain_button	do |but|
+					if but.active?
+						@linked << s2
+					else
+						@linked.delete(s2)
+					end
+				end
+							
+				hboth.pack_start(t2, true, false, 0)
+			end
+			
+			vbox.pack_start(hboth, false, false, 0)
+			
 			vbox.pack_start(from_lbl = center_label(''), false, true, 0)
 
 			frame.show_all

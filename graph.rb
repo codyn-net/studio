@@ -283,7 +283,7 @@ module Cpg
 		
 		def draw_ruler(ct)
 			ct.set_source_rgb(0.5, 0.6, 1)
-			ct.line_width = 2
+			ct.line_width = 1.5
 			ct.move_to(@ruler[0] + 0.5, 0)
 			ct.line_to(@ruler[0] + 0.5, allocation.height)
 			ct.stroke
@@ -315,11 +315,11 @@ module Cpg
 			s = format('%.2f', cy)
 			e = ct.text_extents(s)
 			
-			ct.rectangle(@ruler[0] + 1, 1, e.width + 4, e.height + 4)
+			ct.rectangle(@ruler[0] + 3, 1, e.width + 4, e.height + 4)
 			ct.set_source_rgb(1, 1, 1)
 			ct.fill
 			
-			ct.move_to(@ruler[0] + 3, 3 + e.height)
+			ct.move_to(@ruler[0] + 5, 3 + e.height)
 			ct.set_source_rgb(0, 0, 0)
 			ct.show_text(s)
 			ct.stroke

@@ -122,6 +122,14 @@ module Cpg
 			signal_register(Application.instance.grid, 'object_removed') do |g, obj|
 				remove_object(obj)
 			end
+			
+			signal_register(Application.instance.grid, 'level_down') do |g, obj|
+				init_store
+			end
+			
+			signal_register(Application.instance.grid, 'level_up') do |g, obj|
+				init_store
+			end
 		end
 		
 		def signal_do_destroy
@@ -175,7 +183,7 @@ module Cpg
 
 			piter[0] = obj
 			piter[1] = prop.to_s
-			piter[2] = 0
+			piter[2] = Simulation.instance.monitors?(obj, prop) ? 1 : 0
 		end
 		
 		def remove_object(obj)

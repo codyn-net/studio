@@ -41,20 +41,14 @@ module Cpg
 		
 		def build
 			hbox = Gtk::HBox.new(false, 3)
-			but = Gtk::ToggleButton.new
-			but.relief = Gtk::RELIEF_NONE
 			
-			im1 = Gtk::Image.new(Stock.icon_path('chain-broken.png'))
-			im2 = Gtk::Image.new(Stock.icon_path('chain.png'))
-			
-			hbox.pack_end(but, false, false, 0)
-			
-			but.signal_connect('toggled') do |x| 
+			but = Stock.chain_button do |x| 
 				@linkrulers = x.active?
-				but.image = x.active? ? im2 : im1
 			end
 			
 			but.active = @linkrulers
+			
+			hbox.pack_end(but, false, false, 0)
 
 			@showrulers = Gtk::CheckButton.new('Show graph rulers')
 			@showrulers.active = true
@@ -199,11 +193,17 @@ module Cpg
 				data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
 				data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f } 
 				
-				dist = (data.max - data.min) / 2.0
-				v[:graph].yaxis = [data.min - dist * 0.2, data.max + dist * 0.2]
+				if data && !data.empty?
+					range = [data.min, data.max]
+				else
+					range = [-3, 3]
+				end
+							
+				dist = (range[1] - range[0]) / 2.0
+				v[:graph].yaxis = [range[0] - dist * 0.2, range[1] + dist * 0.2]
 				v[:graph].sample_frequency = 1
 				v[:graph].unit_width = dpx
-				v[:graph].data = data
+				v[:graph].data = data || []
 			end
 		end
 		

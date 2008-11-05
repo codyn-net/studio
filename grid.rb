@@ -1062,11 +1062,9 @@ module Cpg
 			['property_changed', 'property_added', 'property_removed'].each do |name|
 				signal_register(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
 			end
-			
-			if obj.is_a?(Components::SimulatedObject)
-				['initial_changed', 'range_changed'].each do |name|
-					signal_register(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
-				end
+
+			['initial_changed', 'range_changed'].each do |name|
+				signal_register(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
 			end
 		end
 	

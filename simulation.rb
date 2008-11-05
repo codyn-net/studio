@@ -169,6 +169,10 @@ module Cpg
 		end
 		
 		# monitoring
+		def monitors?(object, property)
+			return @monitors[object] && @monitors[object][property.to_sym]
+		end
+		
 		def set_monitor(object, property)
 			property = property.to_sym
 

@@ -46,7 +46,12 @@ module Cpg
 						# handle initial changed we can do
 						@network.set_initial(@map[obj], prop, obj.initial_value(prop.to_sym).to_s)
 						
-						resimulate
+						GLib::Source.remove(@resimulate_source) if @resimulate_source
+						@resimulate_source = GLib::Timeout.add(50) do
+							@simulate_source = 0
+							resimulate
+							false
+						end
 					end
 				end
 				
@@ -108,7 +113,10 @@ module Cpg
 				nmap[o] = state = CCpg::State.new(o.fullname)
 								
 				o.state.keys.each do |prop|
-					state.add_property(prop.to_s, o.node.initial_value(prop).to_s, o.node.integrated?(prop) ? true : false)
+					v = o.node.initial_value(prop).to_s
+					v = o.node.get_property(prop).to_s if v.empty?
+
+					state.add_property(prop.to_s, v, o.node.integrated?(prop) ? true : false)
 				end
 				
 				@network << state
@@ -119,7 +127,10 @@ module Cpg
 				nmap[o] = link = CCpg::Link.new(nmap[map[o.from]], nmap[map[o.to]])
 				
 				o.state.keys.each do |prop|
-					link.add_property(prop.to_s, o.node.get_property(prop).to_s, false)
+					v = o.node.initial_value(prop).to_s
+					v = o.node.get_property(prop).to_s if v.empty?
+					 
+					link.add_property(prop.to_s, v, false)
 				end
 				
 				vars = o.node.act_on.to_s.split(/\s*,\s*/)
@@ -148,6 +159,7 @@ module Cpg
 			# reinstate monitors
 			@monitors.each do |obj, properties|
 				properties.each do |property, values|
+					next unless @map[obj]
 					@network.set_monitor(@map[obj], property.to_s)
 				end
 			end
@@ -221,18 +233,22 @@ module Cpg
 		end
 		
 		def monitor_data(obj, prop)
-			if !@network || !@map[obj]
+			if !@network
 				return orig_monitor_data(obj, prop)
 			end
+			
+			return [] unless @map[obj]
 			
 			data = @network.monitor_data(@map[obj], prop.to_s)
 			data
 		end
 		
 		def monitor_data_resampled(obj, prop, to)
-			if !@network || !@map[obj]
+			if !@network
 				return orig_monitor_data_resampled(obj, prop, to)
 			end
+			
+			return [] unless @map[obj]
 			
 			data = @network.monitor_data_resampled(@map[obj], prop.to_s, to)
 			data

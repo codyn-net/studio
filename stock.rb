@@ -27,5 +27,24 @@ module Cpg
 		@factory.add(Cpg::Stock::CHAIN_BROKEN.to_s, Gtk::IconSet.new(Gdk::Pixbuf.new(icon_path('chain-broken.png'))))
 		
 		@factory.add_default
+		
+		def self.chain_button
+			but = Gtk::ToggleButton.new
+			but.relief = Gtk::RELIEF_NONE
+			
+			im1 = Gtk::Image.new(icon_path('chain-broken.png'))
+			im2 = Gtk::Image.new(icon_path('chain.png'))
+			
+			but.active = false
+			but.image = im1
+			
+			but.signal_connect('toggled') do |x| 
+				but.image = x.active? ? im2 : im1
+				
+				yield but if block_given?
+			end
+			
+			but
+		end
 	end
 end
