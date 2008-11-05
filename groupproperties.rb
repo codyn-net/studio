@@ -48,8 +48,7 @@ module Cpg
 			piter[0] = nil
 			
 			@objs.each do |obj|
-				next unless obj.properties.include?(:id)
-				next unless obj.get_property(:id)
+				next unless obj.property_set?('id')
 
 				piter = store.append
 				piter[0] = obj

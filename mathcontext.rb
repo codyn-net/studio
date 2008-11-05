@@ -31,7 +31,7 @@ module Cpg
 		end
 		
 		def method_missing(name, *args)
-			s = @state[name]
+			s = @state[name.to_s]
 			
 			if s.is_a?(Components::SimulatedObject)
 				Wrapper.new(self, s)

@@ -131,27 +131,6 @@ class Float
 end
 
 module Cpg
-	class Hash < ::Hash
-		include Cpg::Serialize::Dynamic
-	
-		def properties
-			k = self.keys
-			
-			k.sort! {|a,b| a.to_s <=> b.to_s }
-			k.delete(:id)
-			k
-		end
-	
-		def get_property(name)
-			self[name.to_sym]
-		end
-	
-		def set_property(name, val)
-			return false if name.to_sym == :id
-			self[name.to_sym] = val
-		end
-	end
-
 	module SortedArray
 		def sort_impl(a, b)
 			if !a.is_a?(Components::Attachment) && b.is_a?(Components::Attachment)
@@ -178,26 +157,5 @@ module Cpg
 
 	class Array < ::Array
 		include SortedArray
-	end
-	
-	class SerialArray < Array
-		include Cpg::Serialize::Dynamic
-	
-		def properties
-			self
-		end
-	
-		def ensure_property(name)
-			self << name.to_sym unless self.include?(name.to_sym)
-		end
-	
-		def set_property(name, val)
-			ensure_property(name)
-		end
-	
-		def get_property(name)
-			ensure_property(name)
-			''
-		end
 	end
 end

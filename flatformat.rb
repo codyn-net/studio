@@ -20,7 +20,7 @@ module Cpg
 			attr_reader :links
 			
 			def self.filter!(node, state)
-				state.delete_if { |prop, val| prop == :id || prop == :display || node.invisible?(prop) }
+				state.delete_if { |prop, val| prop == 'id' || prop == 'display' || node.invisible?(prop) }
 			end
 			
 			def self.filter(node, state)
@@ -43,7 +43,7 @@ module Cpg
 			attr_accessor :from, :to
 
 			def self.filter!(node, state)
-				state.delete_if { |prop, val| prop == :id || prop == :label || node.invisible?(prop) || prop == :act_on || prop == :equation || prop == :from || prop == :to || prop == :display }
+				state.delete_if { |prop, val| ['id', 'label', 'act_on', 'equation', 'from', 'to', 'display'].include?(prop) || node.invisible?(prop) }
 			end
 			
 			def self.filter(node, state)

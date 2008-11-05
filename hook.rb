@@ -73,7 +73,7 @@ module Cpg
 			end
 			
 			@objectlist.signal_connect('property_added') do |lst, obj, prop, piter|
-				piter[2] = has_hook?(obj, prop.to_sym) ? 1 : 0
+				piter[2] = has_hook?(obj, prop) ? 1 : 0
 			end
 			
 			@objlstsw = sw
@@ -140,8 +140,6 @@ module Cpg
 		end
 	
 		def add_hook(obj, prop)
-			prop = prop.to_sym
-			
 			if not has_hook?(obj)
 				install_object(obj, prop)
 			end
@@ -169,11 +167,10 @@ module Cpg
 		end
 		
 		def remove_hook(obj, prop = nil)
-			prop = prop.to_sym if prop
 			return unless has_hook?(obj, prop)
 			
 			@map[obj].dup.each do |x| 
-				if prop == nil || x[:prop].to_sym == prop.to_sym
+				if prop == nil || x[:prop] == prop
 					remove_hook_real(obj, x)
 				end
 			end

@@ -1,56 +1,40 @@
 require 'serialize'
 
 module Cpg
-	class Allocation < Array
+	class Allocation < ::Array
 		include Serialize
-	
 		property :x, :y, :width, :height
 	
 		def initialize(ini = nil)
 			super(ini == nil ? [0, 0, 1, 1] : ini)
+			
+			self.x = self[0]
+			self.y = self[1]
+			self.width = self[2]
+			self.height = self[3]
 		end
-	
-		def property_set?(name)
-			true
-		end
-	
-		def get_property(name)
-			send(name)
-		end
-	
+		
 		def set_property(name, val)
-			send("#{name}=", val.to_f)
+			ret = super
+			
+			send("set_#{name}", val.to_f)
+			
+			ret
 		end
 	
-		def x
-			self[0]
-		end
-	
-		def x=(val)
+		def set_x(val)
 			self[0] = val
 		end
 	
-		def y
-			self[1]
-		end
-	
-		def y=(val)
+		def set_y(val)
 			self[1] = val 
 		end
 	
-		def width
-			self[2]
-		end
-	
-		def width=(val)
+		def set_width(val)
 			self[2] = val 
 		end
 	
-		def height
-			self[3]
-		end
-	
-		def height=(val)
+		def set_height(val)
 			self[3] = val 
 		end
 	

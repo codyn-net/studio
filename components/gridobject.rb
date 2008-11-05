@@ -4,31 +4,10 @@ require 'serialize'
 require 'range'
 
 module Cpg::Components
-	class Integrate < Array
-		include Cpg::Serialize::Dynamic
-	
-		def properties
-			self
-		end
-	
-		def ensure_property(name)
-			self << name.to_sym unless self.include?(name.to_sym)
-		end
-	
-		def set_property(name, val)
-			ensure_property(name)
-		end
-	
-		def get_property(name)
-			ensure_property(name)
-			''
-		end
-	end
-
 	class GridObject < GLib::Object
-		include Cpg::Serialize::Dynamic
-
 		type_register
+
+		include Cpg::Serialize
 	
 		signal_new('request_redraw',
 			GLib::Signal::RUN_LAST,
@@ -66,27 +45,23 @@ module Cpg::Components
 			String)
 
 		attr_accessor :allocation, :selected, :links, :mousein, :focus
-		property :initial, :range
-		read_only :initial, :range
-		invisible :initial, :range
+		property :id, :initial, :range
+		read_only :id, :initial, :range
+		invisible :id, :initial, :range
 
 		def initialize
 			super
-
+			
 			@allocation = Cpg::Allocation.new
 			@selected = false
 			@mousein = false
 			@focus = false
 			@links = []
 
-			@initial = Cpg::Hash.new
-			@range = Cpg::Hash.new
+			self.initial = Cpg::Serialize::Hash.new
+			self.range = Cpg::Serialize::Hash.new
 		end
 	
-		def to_s
-			@id.to_s
-		end
-		
 		def mouse_enter
 			@mousein = true
 		end
@@ -95,13 +70,6 @@ module Cpg::Components
 			@mousein = false
 		end
 	
-		def state
-			mystate = {}
-			properties.each { |p| mystate[p] = get_property(p) }
-		
-			mystate
-		end
-		
 		def draw_selection(ct)
 			alpha = 0.2
 	
@@ -176,31 +144,34 @@ module Cpg::Components
 			@links.delete(l)
 		end
 	
-		def simulation_update(s)
+		def state
+			properties.dup
 		end
-	
-		def simulation_step(dt)
-			{}
-		end
-		
+
 		def add_property(prop)
-			super
-			signal_emit('property_added', prop.to_s)
+			if super
+				signal_emit('property_added', prop)
+				true
+			else
+				false
+			end
 		end
 	
 		def set_property(prop, val)
-			prop = prop.to_sym
-			
-			if super and properties.include?(prop)
-				signal_emit('property_changed', prop.to_s)
+			if super
+				signal_emit('property_changed', prop)
+				true
+			else
+				false
 			end
 		end
 	
 		def remove_property(prop)
 			if super
-				signal_emit('property_removed', prop.to_s)
-				
-				@initial.delete(prop)
+				signal_emit('property_removed', prop)
+
+				self.initial.delete(prop)
+				self.range.delete(prop)
 				return true
 			end
 		
@@ -208,18 +179,18 @@ module Cpg::Components
 		end
 		
 		def initial_value(prop)
-			@initial.get_property(prop)
+			self.initial.get_property(prop)
 		end
 	
 		def set_initial_value(prop, val)
-			@initial.set_property(prop, val)
+			self.initial.set_property(prop, val)
 
-			signal_emit('initial_changed', prop.to_s)
+			signal_emit('initial_changed', prop)
 		end
 	
 		def get_range(prop)
-			v = @range.get_property(prop)
-			v && !v.empty? ? Cpg::Range.new(v) : nil
+			v = self.range.get_property(prop)
+			v && !v.to_s.empty? ? Cpg::Range.new(v) : nil
 		end
 
 		def set_range(prop, val)
@@ -229,15 +200,23 @@ module Cpg::Components
 				val = ''
 			end
 
-			@range.set_property(prop, val)
+			self.range.set_property(prop, val)
 			signal_emit('range_changed', prop)
 		end
 		
+		# simulation
 		def simulation_reset
-			@initial.each do |k, v|
+			self.initial.each do |k, v|
 				next unless v && !v.empty?
 				set_property(k, v) unless get_property(k).to_s == v.to_s
 			end
+		end
+		
+		def simulation_update(s)
+		end
+	
+		def simulation_step(dt)
+			{}
 		end
 		
 		def signal_do_range_changed(prop)
@@ -254,64 +233,13 @@ module Cpg::Components
 		end
 	
 		def signal_do_property_changed(prop)
-			if prop.to_sym == :id
-				request_redraw
-			end
+			request_redraw if prop == 'id'
 		end
 	
 		def signal_do_property_removed(prop)
 		end
 		
 		def signal_do_property_added(prop)
-		end
-	end
-
-	class SimulatedObject < GridObject
-		type_register
-
-		property :id, :integrate, :allocation
-		read_only :integrate
-		invisible :integrate, :allocation
-	
-		def initialize
-			super
-		
-			@integrate = Integrate.new
-		end
-	
-		def simulation_update(s)
-			c = Cpg::MathContext.new(state)
-
-			s.each do |prop, val|
-				v = (integrated?(prop) ? c.eval(get_property(prop)).to_f : 0) + val
-				set_property(prop, v)
-			end
-		end
-	
-		def simulation_step(dt)
-			mystate = {}
-		
-			@links.each do |l| 
-				s = l.simulation_evaluate
-			
-				s.each do |k,v|
-					mystate[k] = (mystate[k] || 0) + v * (integrated?(k) ? dt : 1)
-				end
-			end
-		
-			mystate
-		end
-	
-		def set_integrated(name, value)
-			if value
-				@integrate << name.to_sym unless @integrate.include?(name.to_sym)
-			else
-				@integrate.delete(name.to_sym) if @integrate.include?(name.to_sym)
-			end
-		end
-	
-		def integrated?(name)
-			@integrate.include?(name.to_sym)
 		end
 	end
 end

@@ -24,7 +24,7 @@ module Cpg
 					@handlemodified = false
 					
 					# set property value we can do
-					@network.set_value(@map[obj], prop.to_s, obj.get_property(prop.to_sym).to_s)
+					@network.set_value(@map[obj], prop.to_s, obj.get_property(prop).to_s)
 				end
 			end
 			
@@ -33,7 +33,7 @@ module Cpg
 					@handlemodified = false
 					
 					# adding a new property we can do
-					@map[obj].add_property(prop, obj.is_a?(Components::SimulatedObject) ? obj.initial_value(prop.to_sym).to_s : obj.get_property(prop.to_sym).to_s, obj.is_a?(Components::SimulatedObject) ? obj.integrated?(prop.to_sym) : false)
+					@map[obj].add_property(prop, obj.is_a?(Components::SimulatedObject) ? obj.initial_value(prop).to_s : obj.get_property(prop).to_s, obj.is_a?(Components::SimulatedObject) ? obj.integrated?(prop) : false)
 					@network.taint
 				end
 			end
@@ -43,7 +43,7 @@ module Cpg
 					@handlemodified = false
 				
 					# handle initial changed we can do
-					@network.set_initial(@map[obj], prop, obj.initial_value(prop.to_sym).to_s)
+					@network.set_initial(@map[obj], prop, obj.initial_value(prop).to_s)
 					
 					GLib::Source.remove(@resimulate_source) if @resimulate_source
 					@resimulate_source = GLib::Timeout.add(50) do

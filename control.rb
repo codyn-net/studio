@@ -133,8 +133,6 @@ module Cpg
 			super
 			
 			signal_register(obj, 'property_changed') do |o, p|
-				p = p.to_sym
-
 				@map[obj].each do |x|
 					t = property_name(obj, x[:prop])
 					x[:frame].label = t unless x[:frame].label = t
@@ -155,12 +153,12 @@ module Cpg
 			end
 
 			signal_register(obj, 'range_changed') do |o, p|
-				o = @map[obj].find { |x| x[:prop] == p.to_sym }
+				o = @map[obj].find { |x| x[:prop] == p }
 				update_range(obj, o) if o
 			end
 		
 			signal_register(obj, 'initial_changed') do |o, p|
-				o = @map[obj].find { |x| x[:prop] == p.to_sym }
+				o = @map[obj].find { |x| x[:prop] == p }
 				update_initial(obj, o) if o
 			end
 		end

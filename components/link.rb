@@ -1,4 +1,3 @@
-require 'components/gridobject'
 require 'components/attachment'
 require 'serialize'
 require 'mathcontext'
@@ -27,15 +26,19 @@ module Cpg::Components
 		end
 	
 		def set_property(name, val)
-			if name == :from
+			super
+			
+			if name == 'from'
 				@objects[0] = val
-			elsif name == :to
+			elsif name == 'to'
 				@objects[1].unlink(self) if @objects[1] != nil
 				@objects[1] = val
 				@objects[1].link(self) if val
+			elsif name == 'label' || name == 'equation'
+				request_redraw
 			end
 			
-			super
+			true
 		end
 	
 		def initialize(to = [nil, nil])
@@ -44,35 +47,35 @@ module Cpg::Components
 			@offset = 0
 		
 			if to.length > 1
-				@from = @objects[0]
-				@to = @objects[1]
+				self.from = @objects[0]
+				self.to = @objects[1]
 			
-				@to.link(self) if @to != nil
+				self.to.link(self) if self.to != nil
 			end
 		end
 		
 		def <<(objs)
 			objs = objs.is_a?(Enumerable) ? objs : [objs]
 			
-			if objs.length == 1 && !@from && !@to
+			if objs.length == 1 && !self.from && !self.to
 				objs << objs[0]
 			end
 
-			if @from == nil
-				@from = objs.shift
-				@objects[0] = @from
+			if self.from == nil
+				self.from = objs.shift
+				@objects[0] = self.from
 			end
 			
-			if @to == nil && !objs.empty?
-				@to = objs.shift
-				@to.link(self)
+			if self.to == nil && !objs.empty?
+				self.to = objs.shift
+				self.to.link(self)
 
-				@objects[1] = @to
+				@objects[1] = self.to
 			end
 		end
 	
 		def removed
-			@to.unlink(self) if @to != nil
+			self.to.unlink(self) if self.to != nil
 		end
 	
 		def calc_control(from, to)
@@ -172,7 +175,7 @@ module Cpg::Components
 			ct.fill
 		
 			# also draw some text here
-			return unless (@equation or @label)
+			return unless (self.equation or self.label)
 			t = to_s
 
 			e = ct.text_extents(t)
@@ -186,7 +189,7 @@ module Cpg::Components
 		end
 	
 		def to_s
-			(@label or @equation).to_s
+			(self.label or self.equation).to_s
 		end
 	
 		def mean(alloc, offset)
@@ -295,16 +298,16 @@ module Cpg::Components
 	
 		def simulation_evaluate
 			begin
-				return {} if @act_on == nil || @act_on == '' || @equation == nil || @equation == ''
+				return {} if self.act_on == nil || self.act_on == '' || self.equation == nil || self.equation == ''
 			rescue StandardError, e
 				p e
 			end
 
 			# create execution context
-			c = Cpg::MathContext.new(Cpg::Simulation.instance.state, @from.state, state, {:from => self.from, :to => self.to})
+			c = Cpg::MathContext.new(Cpg::Simulation.instance.state, self.from.state, state, {'from' => self.from, 'to' => self.to})
 		
-			vars = @act_on.to_s.split(/\s*,\s*/)
-			eq = @equation.to_s.split(/\s*,\s*/, vars.length)
+			vars = self.act_on.to_s.split(/\s*,\s*/)
+			eq = self.equation.to_s.split(/\s*,\s*/, vars.length)
 		
 			if vars.length != eq.length
 				STDERR.puts('Number of variables is not number of equations')
@@ -314,18 +317,10 @@ module Cpg::Components
 			res = {}
 		
 			vars.each_with_index do |on, i|
-				res[on.to_sym] = c.eval(eq[i])
+				res[on] = c.eval(eq[i])
 			end
 	
 			return res
-		end
-	
-		def signal_do_property_changed(prop)
-			if prop.to_sym == :label
-				request_redraw
-			else
-				super
-			end
 		end
 	end
 end

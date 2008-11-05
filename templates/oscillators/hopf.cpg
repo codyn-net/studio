@@ -70,7 +70,7 @@
       <property name='to' ref='hopf'/>
       <property name='act_on' value='x, y'/>
       <property name='equation' value='ex, ey'/>
-      <property name='display' value='(x, y)'/>
+      <property name='label' value='(x, y)'/>
       <property name='ex' value='gx * (u ** 2 - (x ** 2 + y ** 2)) * x + w * y'/>
       <property name='ey' value='gy * (u ** 2 - (x ** 2 + y ** 2)) * y - w * x'/>
     </link>

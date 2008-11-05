@@ -143,7 +143,7 @@ module Cpg
 		
 		def setup_context(obj)
 			if obj.is_a?(Components::Attachment)
-				MathContext.new(self.state, obj.from ? obj.from.state : {}, obj.state, {:from => obj.from, :to => obj.to})
+				MathContext.new(self.state, obj.from ? obj.from.state : {}, obj.state, {'from' => obj.from, 'to' => obj.to})
 			else
 				MathContext.new(self.state, obj.state)
 			end
@@ -154,7 +154,7 @@ module Cpg
 		end
 	
 		def state
-			{:t => @time}
+			{'t' => @time}
 		end
 	
 		def stop
@@ -175,11 +175,11 @@ module Cpg
 		
 		# monitoring
 		def monitors?(object, property)
-			return @monitors[object] && @monitors[object][property.to_sym]
+			return @monitors[object] && @monitors[object][property]
 		end
 		
 		def set_monitor(object, property)
-			property = property.to_sym
+			property = property
 
 			@monitors[object] = {} unless @monitors[object]
 			@monitors[object][property] = [[], []] unless @monitors[object][property]

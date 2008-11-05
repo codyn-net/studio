@@ -161,8 +161,6 @@ module Cpg
 			parent = @store.iter_first
 			return nil unless parent
 			
-			prop = prop.to_sym if prop
-			
 			begin
 				if obj == parent[0]
 					child = parent.first_child
@@ -185,7 +183,7 @@ module Cpg
 		end
 		
 		def add_property(parent, obj, prop)
-			return if (obj.invisible?(prop) || prop == :id)
+			return if (obj.invisible?(prop) || prop == 'id')
 			
 			piter = @store.append(parent)
 
@@ -212,7 +210,7 @@ module Cpg
 			parent[1] = nil
 			parent[2] = 0
 			
-			obj.properties.each do |p|
+			obj.properties.each do |p, v|
 				add_property(parent, obj, p)
 			end
 			
@@ -228,7 +226,7 @@ module Cpg
 			parent = find(obj)
 			return unless parent
 			
-			add_property(parent, obj, prop.to_sym)
+			add_property(parent, obj, prop)
 			check_consistency(parent)
 		end
 		

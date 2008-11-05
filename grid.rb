@@ -185,9 +185,9 @@ module Cpg
 
 					# copy properties from a to each att
 					[att].flatten.each do |o|
-						a.properties.each do |p|
+						a.properties.each do |p, v|
 							# CHECK: only copy non read only here
-							o.set_property(p, a.get_property(p)) unless (a.read_only?(p) && !(p == :range || p == :initial))
+							o.set_property(p, v) unless (a.read_only?(p) && !(p == 'range' || p == 'initial'))
 						end
 					end
 				else
@@ -198,7 +198,7 @@ module Cpg
 					a.offset = offsets.max + 1
 					current << a
 					
-					signal_emit('object_added', a)
+					object_added(a)
 				end
 			end
 			
@@ -279,6 +279,8 @@ module Cpg
 		
 		def object_added(obj)
 			signal_emit('object_added', obj)
+
+			obj.signal_connect('request_redraw') { |obj| queue_draw_obj(obj) }
 			
 			return unless obj.is_a?(Components::Group)
 			
@@ -310,15 +312,13 @@ module Cpg
 				obj.allocation.width = width ? width : 1
 				obj.allocation.height = height ? height : 1
 				
-				ensure_unique_id(obj, obj.get_property(:id))
+				ensure_unique_id(obj, obj.get_property('id'))
 		
 				current << obj
 				object_added(obj)
 				signal_emit('modified')
 			end
-		
-			obj.signal_connect('request_redraw') { |obj| queue_draw_obj(obj) }
-		
+				
 			queue_draw
 		end
 		
@@ -479,7 +479,7 @@ module Cpg
 		end
 	
 		def queue_draw_obj(obj)
-			return if destroyed?
+			return if destroyed? or !current.include?(obj)
 
 			a = obj.allocation * @grid_size
 		
@@ -554,14 +554,14 @@ module Cpg
 			sid = name
 			i = 1
 
-			ids = current.select { |o| !o.is_a?(Components::Attachment) && o != obj }.collect { |x| x.properties.include?(:id) ? x.get_property(:id).to_s : nil }.compact
+			ids = current.select { |o| !o.is_a?(Components::Attachment) && o != obj }.collect { |x| x.properties.include?('id') ? x.get_property('id').to_s : nil }.compact
 		
 			while ids.include?(sid)
 				sid = "#{orig} (#{i})"
 				i += 1
 			end
 		
-			obj.set_property(:id, sid)
+			obj.set_property('id', sid)
 		end
 	
 		def do_group_real(objs, main, klass)
@@ -709,8 +709,8 @@ module Cpg
 			delete(obj)
 
 			# change the id of main to resemble the id of the group
-			pid = obj.get_property(:id)
-			obj.main.set_property(:id, pid) if obj.main && pid && !pid.empty?
+			pid = obj.get_property('id')
+			obj.main.set_property('id', pid) if obj.main && pid && !pid.empty?
 		
 			obj.each do |o|
 				if not o.is_a?(Components::Attachment)

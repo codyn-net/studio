@@ -34,6 +34,18 @@ module Cpg
 			@store = Gtk::ListStore.new(String, String)
 			tv = Gtk::TreeView.new(@store)
 
+			@store.set_sort_func(1) do |a, b|
+				if a[0] == 'id'
+					-1
+				elsif b[0] == 'id'
+					1
+				else
+					a[0] <=> b[0]
+				end
+			end
+			
+			@store.set_sort_column_id(1, Gtk::SORT_ASCENDING)
+			
 			vw << tv
 		
 			tv.show
@@ -80,7 +92,7 @@ module Cpg
 				column.resizable = true
 				column.set_cell_data_func(renderer) do |column, cell, model, piter|
 					cell.text =  @object.initial_value(piter[0]).to_s
-					cell.editable = !@object.read_only?(piter[0]) && piter[0].to_sym != :id
+					cell.editable = !@object.read_only?(piter[0]) && piter[0] != 'id'
 				end
 				column.min_width = 30
 				tv.append_column(column)
@@ -99,7 +111,7 @@ module Cpg
 					column.resizable = true
 					column.set_cell_data_func(renderer) do |column, cell, model, piter|
 						cell.active = @object.integrated?(piter[0])
-						cell.activatable = !@object.read_only?(piter[0]) && piter[0].to_sym != :id
+						cell.activatable = !@object.read_only?(piter[0]) && piter[0] != 'id'
 					end
 					column.max_width = 30
 		
@@ -116,14 +128,14 @@ module Cpg
 				column.resizable = true
 				column.set_cell_data_func(renderer) do |column, cell, model, piter|
 					cell.text = @object.get_range(piter[0]).to_s
-					cell.editable = !(@object.read_only?(piter[0] || @object.invisible?(piter[0])) || piter[0].to_sym == :id)
+					cell.editable = !(@object.read_only?(piter[0] || @object.invisible?(piter[0])) || piter[0] == 'id')
 				end
 				column.max_width = 100
 		
 				tv.append_column(column)
 			end
 
-			if @object && @object.is_a?(Serialize::Dynamic)
+			if @object
 				hbox = Gtk::HBox.new(false, 3)
 				self.pack_start(hbox, false, false, 0)
 		
@@ -151,7 +163,7 @@ module Cpg
 				hbox.pack_start(but, false, false, 0)
 
 				tv.selection.signal_connect('changed') do |sel|
-					but.sensitive = sel.selected && @object.dynamic_property?(sel.selected[0])
+					but.sensitive = sel.selected && !@object.class_property?(sel.selected[0])
 				end
 			
 				hbox.show_all
@@ -213,7 +225,7 @@ module Cpg
 		end
 		
 		def property_added(prop)
-			add_property(prop)
+			add_property(prop, @object.get_property(prop))
 		end
 		
 		def property_removed(prop)
@@ -224,12 +236,11 @@ module Cpg
 			end
 		end
 	
-		def add_property(prop)
+		def add_property(prop, val)
 			piter = @store.append
 			piter[0] = prop
 		
-			v = @object.get_property(prop)
-			piter[1] = v ? v.to_s : ''
+			piter[1] = val.to_s
 		end
 	
 		def do_add_property(entry)
@@ -238,23 +249,23 @@ module Cpg
 			return if s.empty? or !(s =~ /^[a-zA-Z][a-zA-Z0-9_]*$/)
 
 			# see if the property already exists
-			return if @object.properties.include?(s.to_sym)
-			@object.set_property(s.to_sym, nil)
+			return if @object.properties.include?(s)
+			@object.set_property(s, nil)
 		end
 	
 		def do_remove_property
 			piter = @treeview.selection.selected
 
 			return unless piter
-			return unless @object.dynamic_property?(piter[0])
+			return if @object.class_property?(piter[0])
 		
 			@object.remove_property(piter[0])
 		end
 	
 		def init_store
-			@object.properties.each do |prop|
+			@object.properties.each do |prop, val|
 				next if @object.invisible?(prop)
-				add_property(prop)
+				add_property(prop, val)
 			end
 		end
 		

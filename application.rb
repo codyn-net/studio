@@ -18,17 +18,17 @@ module Cpg
 		include SortedArray
 
 		property :allocation, :zoom, :pane_position, :period, :monitors, :controls
-		attr_accessor :allocation, :zoom, :pane_position, :period
 
 		def initialize(objects = nil)
 			super(objects ? objects : 0)
 	
-			@allocation = Allocation.new([nil, nil, nil, nil])
-			@pane_position = 400
-			@period = ''
-			@monitors = Hash.new
-			@controls = Hash.new
+			self.allocation = Allocation.new([nil, nil, nil, nil])
+			self.pane_position = 400
+			self.period = ''
+			self.monitors = Serialize::Array.new
+			self.controls = Serialize::Array.new
 			
+
 			sort!
 		end
 	end
@@ -528,7 +528,7 @@ module Cpg
 			end
 
 			cpg.each do |obj|
-				map[obj.get_property(:id)] = obj if obj.properties.include?(:id)
+				map[obj.get_property('id')] = obj if obj.properties.include?('id')
 				@grid.add(obj, obj.allocation.x, obj.allocation.y, obj.allocation.width, obj.allocation.height)
 			end
 			
@@ -539,18 +539,18 @@ module Cpg
 			if cpg.monitors && !cpg.monitors.empty?
 				ensure_monitor
 
-				cpg.monitors.properties.each do |nm|
-					parts = cpg.monitors[nm].split('.', 2)
-					@monitor.add_hook(map[parts[0]], parts[1].to_sym) if map[parts[0]]
+				cpg.monitors.properties.each do |nm, val|
+					parts = nm.split('.', 2)
+					@monitor.add_hook(map[parts[0]], parts[1]) if map[parts[0]]
 				end
 			end
 			
 			if cpg.controls && !cpg.controls.empty?
 				ensure_control
 
-				cpg.controls.properties.each do |nm|
-					parts = cpg.controols[nm].split('.', 2)
-					@control.add_hook(map[parts[0]], parts[1].to_sym) if map[parts[0]]
+				cpg.controls.properties.each do |nm, val|
+					parts = nm.split('.', 2)
+					@control.add_hook(map[parts[0]], parts[1]) if map[parts[0]]
 				end
 			end
 		
@@ -602,31 +602,28 @@ module Cpg
 
 			cpg = Cpg.new(objects)
 			cpg.allocation = Allocation.new([@grid.root.x.to_i, @grid.root.y.to_i, allocation.width, allocation.height])
+			
 			cpg.pane_position = @vpaned.allocation.height - @vpaned.position
 			cpg.zoom = @grid.root_grid_size
 			cpg.period = @periodentry.text
 			
 			# set monitors and controls
-			startp = 1
 			if @monitor && @monitor.visible?
 				@monitor.each_hook do |obj, prop|
-					next unless obj.properties.include?(:id)
+					next unless obj.properties.include?('id')
 
-					cpg.monitors["m#{startp}".to_sym] = "#{obj.get_property(:id)}.#{prop}"
-					startp = startp + 1
+					cpg.monitors << "#{obj.get_property('id')}.#{prop}"
 				end
 			end
 			
-			startp = 1
 			if @control && @control.visible?
 				@control.each_hook do |obj, prop|
-					next unless obj.properties.include?(:id)
+					next unless obj.properties.include?('id')
 
-					cpg.controls["m#{startp}".to_sym] = "#{obj.get_property(:id)}.#{prop}"
-					startp = startp + 1
+					cpg.controls << "#{obj.get_property('id')}.#{prop}"
 				end
 			end
-		
+			
 			doc = Saver.save(cpg)
 		
 			begin
@@ -755,8 +752,8 @@ module Cpg
 			cy = (@grid.current.y + (@grid.allocation.height / 2.0)) / @grid.grid_size.to_f
 			
 			cpg.each do |obj|
-				if obj.properties.include?(:id)
-					@grid.ensure_unique_id(obj, obj.get_property(:id))
+				if obj.properties.include?('id')
+					@grid.ensure_unique_id(obj, obj.get_property('id'))
 				end
 			
 				if !obj.is_a?(Components::Attachment)
@@ -899,9 +896,7 @@ module Cpg
 		end
 		
 		def check_object_values(o)
-			o.properties.each do |p|
-				v = o.get_property(p)
-				
+			o.properties.each do |p, v|
 				if v.is_a?(Float) && (v.nan? || v.infinite?)
 					return false
 				end
@@ -1074,12 +1069,12 @@ module Cpg
 				obj = @grid.selection.first
 
 				['Monitor', 'Control'].each do |type|
-					obj.properties.each do |prop|
-						next if (obj.invisible?(prop) or prop == :id)
+					obj.properties.each do |prop, v|
+						next if (obj.invisible?(prop) or prop == 'id')
 						name = "#{type}#{prop}"
 						
 						@popupactiongroup.add_actions([
-							["#{name}Action", nil, prop.to_s, nil, nil, Proc.new { |g,a| send("start_#{type.downcase}".to_sym, obj, prop) }]
+							["#{name}Action", nil, prop.to_s, nil, nil, Proc.new { |g,a| send("start_#{type.downcase}", obj, prop) }]
 						])
 						
 						@uimanager.add_ui(@popupmergeid, "/popup/#{type}Menu/#{type}Placeholder", name, "#{name}Action", Gtk::UIManager::MENUITEM, false) 

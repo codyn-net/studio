@@ -1,4 +1,4 @@
-require 'components/gridobject'
+require 'components/simulatedobject'
 require 'cairo'
 require 'mathcontext'
 
@@ -11,23 +11,23 @@ module Cpg::Components
 
 			@patouter = Cairo::LinearPattern.new(0, 1, 0, 0)
 			@patouter.add_color_stop_rgb(0, 127 / 255.0, 200 / 255.0, 127 / 255.0)
-			@patouter.add_color_stop_rgb(@allocation.height, 1, 1, 1)
+			@patouter.add_color_stop_rgb(self.allocation.height, 1, 1, 1)
 
 			@patinner = Cairo::LinearPattern.new(0, 1, 0, 0)
 			@patinner.add_color_stop_rgb(0, 193 / 255.0, 255 / 255.0, 217 / 255.0)
-			@patinner.add_color_stop_rgb(@allocation.height * 0.8, 1, 1, 1)
+			@patinner.add_color_stop_rgb(self.allocation.height * 0.8, 1, 1, 1)
 		end
 		
 		def set_property(prop, val)
 			super
 			
-			if prop.to_sym == :display
+			if prop == 'display'
 				request_redraw
 			end
 		end
 		
 		def display_s
-			v = Cpg::MathContext.new(Cpg::Simulation.instance.state).eval(@display.to_s)
+			v = Cpg::MathContext.new(Cpg::Simulation.instance.state).eval(self.display.to_s)
 			
 			if v.is_a?(Float)
 				format('%.2f', v)

@@ -1,4 +1,4 @@
-require 'components/gridobject'
+require 'components/simulatedobject'
 require 'utils'
 
 module Cpg::Components
@@ -98,15 +98,32 @@ module Cpg::Components
 		
 			@children = Cpg::Array.new
 			@renderer = nil
-			@__main = nil
-			@__klass = nil
-			@__x = 0
-			@__y = 0
+
+			self.__main = nil
+			self.__klass = nil
+			self.__x = 0
+			self.__y = 0
 			
 			@fadetrans = 1
 			@signals = []
 		end
-	
+		
+		def __main
+			@properties['__main']
+		end
+		
+		def __klass
+			@properties['__klass']
+		end
+		
+		def __x
+			@properties['__x']
+		end
+		
+		def __y
+			@properties['__y']
+		end
+		
 		alias :main :__main
 		alias :x :__x
 		alias :y :__y
@@ -114,15 +131,6 @@ module Cpg::Components
 		alias :x= :__x=
 		alias :y= :__y=
 	
-		def main=(v)
-			set_property(:__main, v)
-		end
-		
-		def klass=(v)
-			set_property(:__klass, v)
-			request_redraw
-		end
-		
 		def mouse_enter
 			super
 			
@@ -279,27 +287,27 @@ module Cpg::Components
 			else
 				@renderer = nil
 			end
+			
+			request_redraw
 		end
 	
 		def my_property(name)
-			own_properties.include?(name.to_sym)
+			@properties.include?(name)
 		end
 		
-		def own_properties
-			SimulatedObject.instance_method(:properties).bind(self).call
-		end
-	
 		# proxy properties to main object
 		def save_properties
-			own_properties
+			@properties
 		end
 	
 		def properties
-			if @__main
-				(super + @__main.properties).uniq
+			if self.__main
+				ret = self.__main.properties.merge(super)
 			else
-				super
+				ret = super
 			end
+			
+			ret
 		end
 	
 		def simulation_reset
@@ -313,7 +321,7 @@ module Cpg::Components
 		def simulation_update(s)
 			# do our children, but not main because it will be actually updated using
 			# our own state (since properties are relayed)
-			@children.each { |child| child.simulation_update(@childstate[child]) unless child == @__main }
+			@children.each { |child| child.simulation_update(@childstate[child]) unless child == self.__main }
 		
 			# and ourselves
 			super
@@ -329,8 +337,8 @@ module Cpg::Components
 		
 			# make sure to merge our state and the main one (it's like a special
 			# link)
-			return mystate unless @__main && @childstate.include?(@__main)
-			cs = @childstate[@__main]
+			return mystate unless @__main && @childstate.include?(self.__main)
+			cs = @childstate[self.__main]
 		
 			cs.each do |k, v|
 				mystate[k] = (mystate[k] || 0) + (v || 0)
@@ -340,37 +348,35 @@ module Cpg::Components
 		end
 	
 		def relay_signal(sname)
-			@__main.signal_connect(sname) { |o, *a| signal_emit(sname, *a) }
+			self.__main.signal_connect(sname) { |o, *a| signal_emit(sname, *a) }
 		end
 		
 		def set_property_main(val)
-			return nil if val == @__main
+			return nil if val == self.__main
 
 			# disconnect relay signals
-			@signals.each { |s| @__main.signal_handler_disconnect(s) } if @__main
+			@signals.each { |s| self.__main.signal_handler_disconnect(s) } if self.__main
 			@signals = []
 			
 			# we now 'virtually' remove all properties of the current main
-			if @__main
-				@__main.properties.each do |p|
+			if self.__main
+				self.__main.properties.each do |p|
 					signal_emit('property_removed', p.to_s) unless my_property(p)
 				end
 			end
 
-			v = SimulatedObject.instance_method(:set_property).bind(self).call(:__main, val)
-		
-			if @__main
+			v = SimulatedObject.instance_method(:set_property).bind(self).call('__main', val)
+	
+			if self.__main
 				# setup relay signals
 				@signals << relay_signal('property_changed')
 				@signals << relay_signal('property_removed')
 				
-				if @__main.is_a?(SimulatedObject)
-					@signals << relay_signal('range_changed')
-					@signals << relay_signal('initial_changed')
-				end				
+				@signals << relay_signal('range_changed')
+				@signals << relay_signal('initial_changed')
 				
-				# and signal property changes for all properties in @__main
-				@__main.properties.each do |p|
+				# and signal property changes for all properties in __main
+				self.__main.properties.each do |p|
 					signal_emit('property_changed', p.to_s) unless my_property(p)
 				end
 			end
@@ -379,21 +385,21 @@ module Cpg::Components
 		end
 	
 		def set_property(prop, val)
-			if prop.to_sym == :__main
+			if prop == '__main'
 				return set_property_main(val)
-			elsif prop.to_sym == :__klass
+			elsif prop == '__klass'
 				set_klass_real(val)
 				return super
 			end
 		
-			return super if (my_property(prop) or (@__main && !@__main.properties.include?(prop.to_sym)))
-			@__main.set_property(prop, val) if @__main
+			return super if (my_property(prop) or (self.__main && !self.__main.properties.include?(prop)))
+			self.__main.set_property(prop, val) if self.__main
 		end
 
 		def self.propagate(func)
 			send :define_method, func do |*a|
-				return super if (my_property(a[0]) or (@__main && !@__main.properties.include?(a[0].to_sym)))
-				@__main.send(func, *a) if @__main
+				return super if (my_property(a[0]) or (self.__main && !self.__main.properties.include?(a[0])))
+				self.__main.send(func, *a) if self.__main
 			end
 		end	
 	
