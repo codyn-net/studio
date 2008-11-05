@@ -24,6 +24,7 @@ module Cpg
 			@shift = 0
 			@label = ''
 			@color = [0, 0, 1]
+			@sites = nil
 		
 			add_events(Gdk::Event::BUTTON1_MOTION_MASK | 
 					   Gdk::Event::BUTTON_PRESS_MASK | 
@@ -106,6 +107,11 @@ module Cpg
 			@adjustment.changed
 		
 			redraw
+		end
+		
+		def set_ticks(width, start)
+			# width is the number of pixels per tick unit
+			# start is the tick unit value from the left
 		end
 	
 		def data=(val)
