@@ -10,7 +10,7 @@
   </property>
   <group id='hopf'>
     <property name='integrate'>
-      <integrate/>
+      <array/>
     </property>
     <property name='initial'>
       <hash/>
@@ -32,10 +32,10 @@
     <property name='__y' value='0'/>
     <state id='hopf'>
       <property name='integrate'>
-        <integrate>
+        <array>
           <property name='x' value=''/>
           <property name='y' value=''/>
-        </integrate>
+        </array>
       </property>
       <property name='initial'>
         <hash>

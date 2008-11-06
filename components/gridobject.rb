@@ -1,13 +1,13 @@
 require 'allocation'
 require 'glib2'
-require 'serialize'
+require 'serialize/object'
 require 'range'
 
 module Cpg::Components
 	class GridObject < GLib::Object
 		type_register
 
-		include Cpg::Serialize
+		include Cpg::Serialize::Object
 	
 		signal_new('request_redraw',
 			GLib::Signal::RUN_LAST,

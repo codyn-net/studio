@@ -297,7 +297,7 @@ module Cpg::Components
 		
 		# proxy properties to main object
 		def save_properties
-			@properties
+			@properties.keys
 		end
 	
 		def properties

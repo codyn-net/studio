@@ -10,10 +10,12 @@ require 'messagearea'
 require 'simulation'
 require 'stock'
 require 'flatformat'
+require 'serialize/object'
+require 'serialize/array'
 
 module Cpg
 	class Cpg < Array
-		include Serialize
+		include Serialize::Object
 		include Enumerable
 		include SortedArray
 
@@ -27,7 +29,6 @@ module Cpg
 			self.period = ''
 			self.monitors = Serialize::Array.new
 			self.controls = Serialize::Array.new
-			
 
 			sort!
 		end
@@ -539,18 +540,19 @@ module Cpg
 			if cpg.monitors && !cpg.monitors.empty?
 				ensure_monitor
 
-				cpg.monitors.properties.each do |nm, val|
-					parts = nm.split('.', 2)
-					@monitor.add_hook(map[parts[0]], parts[1]) if map[parts[0]]
+				cpg.monitors.each do |monitor|
+					next unless map[monitor.id]
+
+					@monitor.add_hook(map[monitor.id], monitor.name)
+					@monitor.set_yaxis(map[monitor.id], monitor.name, [monitor.ymin.to_f, monitor.ymax.to_f])
 				end
 			end
 			
 			if cpg.controls && !cpg.controls.empty?
 				ensure_control
 
-				cpg.controls.properties.each do |nm, val|
-					parts = nm.split('.', 2)
-					@control.add_hook(map[parts[0]], parts[1]) if map[parts[0]]
+				cpg.controls.each do |control|
+					@control.add_hook(map[control.id], control.name) if map[control.id]
 				end
 			end
 		
@@ -598,7 +600,7 @@ module Cpg
 			Saver.ensure_ids(@grid.root)
 		
 			objects = @grid.root_objects
-			objects.delete_if { |x| !x.is_a?(Serialize) }
+			objects.delete_if { |x| !x.is_a?(Serialize::Object) }
 
 			cpg = Cpg.new(objects)
 			cpg.allocation = Allocation.new([@grid.root.x.to_i, @grid.root.y.to_i, allocation.width, allocation.height])
@@ -612,7 +614,13 @@ module Cpg
 				@monitor.each_hook do |obj, prop|
 					next unless obj.properties.include?('id')
 
-					cpg.monitors << "#{obj.get_property('id')}.#{prop}"
+					yax = @monitor.yaxis(obj, prop)
+
+					cpg.monitors << Serialize::Monitor.new.merge!({
+						'id' => obj.get_property('id').to_s,
+						'name' => prop.to_s,
+						'ymin' => yax[0],
+						'ymax' => yax[1]})
 				end
 			end
 			
@@ -620,7 +628,7 @@ module Cpg
 				@control.each_hook do |obj, prop|
 					next unless obj.properties.include?('id')
 
-					cpg.controls << "#{obj.get_property('id')}.#{prop}"
+					cpg.controls["#{obj.get_property('id')}"] = prop.to_s
 				end
 			end
 			

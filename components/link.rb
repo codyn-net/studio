@@ -1,5 +1,4 @@
 require 'components/attachment'
-require 'serialize'
 require 'mathcontext'
 
 module Cpg::Components

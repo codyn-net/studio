@@ -16,7 +16,7 @@
       <monitor id='lleg_joint_2'>
         <property name='name' value='x'/>
       </monitor>
-    </hash>
+    </array>
   </property>
   <property name='controls'>
     <hash/>

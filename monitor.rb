@@ -163,6 +163,25 @@ module Cpg
 			
 			Simulation.instance.unset_monitor(obj, container[:prop])
 		end
+		
+		def set_yaxis(obj, prop, yax)
+			@map[obj].each do |p|
+				if p[:prop] == prop
+					p[:graph].yaxis = yax
+					return
+				end
+			end
+		end
+		
+		def yaxis(obj, prop)
+			@map[obj].each do |p|
+				if p[:prop] == prop
+					return p[:graph].yaxis
+				end
+			end
+			
+			return [-3, 3]
+		end
 	
 		def add_hook_real(obj, prop, state)
 			@map[obj].each do |p|
@@ -174,6 +193,10 @@ module Cpg
 			g.color = next_color
 			g.set_size_request(-1, 50)
 			g.show_ruler = @showrulers.active?
+			
+			if @linkaxis && !@map.empty? && !@map[@map.keys[0]].empty?
+				g.yaxis = @map[@map.keys[0]][0][:graph].yaxis
+			end
 			
 			hbox = Gtk::HBox.new(false, 1)
 			#exp = Gtk::Expander.new(property_name(obj, prop, true))

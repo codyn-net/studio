@@ -1,4 +1,3 @@
-require 'serialize'
 require 'components/attachment'
 
 class Object

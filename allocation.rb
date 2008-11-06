@@ -1,8 +1,8 @@
-require 'serialize'
+require 'serialize/object'
 
 module Cpg
 	class Allocation < ::Array
-		include Serialize
+		include Serialize::Object
 		property :x, :y, :width, :height
 	
 		def initialize(ini = nil)

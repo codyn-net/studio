@@ -1,6 +1,6 @@
 require 'rexml/document'
 require 'rexml/element'
-require 'serialize'
+require 'serialize/serialize'
 
 module Cpg
 	class Loader
