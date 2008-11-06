@@ -13,11 +13,11 @@
   <property name='period' value='0:0.005:8'/>
   <property name='monitors'>
     <hash>
-      <property name='m1' value='lleg_joint_2.x'/>
-      <property name='m2' value='lleg_joint_3.x'/>
-      <property name='m3' value='lleg_joint_4.x'/>
-      <property name='m4' value='lleg_joint_5.x'/>
-      <property name='m5' value='lleg_joint_6.x'/>
+      <property name='lleg_joint_2' value='x'/>
+      <property name='lleg_joint_3' value='x'/>
+      <property name='lleg_joint_4' value='x'/>
+      <property name='lleg_joint_5' value='x'/>
+      <property name='lleg_joint_6' value='x'/>
     </hash>
   </property>
   <property name='controls'>
