@@ -1,5 +1,6 @@
 require 'gtk2'
 require 'hook'
+require 'table'
 
 module Cpg
 	class Control < Hook
@@ -26,9 +27,43 @@ module Cpg
 		end
 		
 		def content_area
-			@content = Gtk::HBox.new(false, 3)
+			@content = Table.new(1, 1, true)
+			@content.expand = Table::EXPAND_RIGHT
 			
 			@content
+		end
+		
+		def sort_hook(a, b)
+			aw = find_child(a[1][:widget])
+			bw = find_child(b[1][:widget])
+			
+			return 0 if !aw || !bw
+			
+			al = @content.child_get_property(aw, 'left-attach')
+			at = @content.child_get_property(aw, 'top-attach')
+			
+			bl = @content.child_get_property(bw, 'left-attach')
+			bt = @content.child_get_property(bw, 'top-attach')
+			
+			if @content.expand == Table::EXPAND_DOWN
+				at == bt ? al <=> bl : at <=> bt
+			else
+				al == bl ? at <=> bt : al <=> bl
+			end
+		end
+		
+		def set_size(cols, rows)
+			cols = cols.to_i
+			rows = rows.to_i
+			
+			cols = @content.n_columns if cols <= 0
+			rows = @content.n_rows if rows <= 0
+			
+			@content.resize(rows, cols)
+		end
+		
+		def size
+			return [@content.n_columns, @content.n_rows]
 		end
 	
 		def center_label(s)
@@ -223,7 +258,7 @@ module Cpg
 
 			frame.show_all
 		
-			@content.pack_start(frame, true, true, 0)
+			@content << frame
 
 			container = {:act1 => s1, :act2 => s2, :widget => frame, :from_lbl => from_lbl, :to_lbl => to_lbl, :frame => frame}
 			container.merge!(state)

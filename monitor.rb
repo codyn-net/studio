@@ -2,6 +2,7 @@ require 'graph'
 require 'stock'
 require 'simulation'
 require 'hook'
+require 'table'
 
 module Cpg
 	class Monitor < Hook
@@ -52,38 +53,80 @@ module Cpg
 			@uimanager.add_ui(mid, "/menubar/View/ViewBottom", "LinkedAxis", "LinkedAxisAction", Gtk::UIManager::MENUITEM, false)  
 		end
 		
-		def under_cursor(x, y)
-			@content.children.find do |child|
-				alloc = child.allocation
-				
-				if x > alloc.x && x < alloc.x + alloc.width &&
-				   y > alloc.y && y < alloc.y + alloc.height
-					true
-				else
-					false
-				end
+		def find_child(w)
+			while (w && w.parent != @content)
+				w = w.parent
+			end
+			
+			w
+		end
+		
+		def sort_hook(a, b)
+			aw = find_child(a[1][:widget])
+			bw = find_child(b[1][:widget])
+			
+			return 0 if !aw || !bw
+			
+			al = @content.child_get_property(aw, 'left-attach')
+			at = @content.child_get_property(aw, 'top-attach')
+			
+			bl = @content.child_get_property(bw, 'left-attach')
+			bt = @content.child_get_property(bw, 'top-attach')
+			
+			if @content.expand == Table::EXPAND_DOWN
+				at == bt ? al <=> bl : at <=> bt
+			else
+				al == bl ? at <=> bt : al <=> bl
 			end
 		end
 		
+		def set_size(cols, rows)
+			cols = cols.to_i
+			rows = rows.to_i
+			
+			cols = @content.n_columns if cols <= 0
+			rows = @content.n_rows if rows <= 0
+			
+			@content.resize(rows, cols)
+		end
+		
+		def size
+			return [@content.n_columns, @content.n_rows]
+		end
+		
+#		def under_cursor(x, y)
+#			@content.children.find do |child|
+#				alloc = child.allocation
+#				
+#				if x > alloc.x && x < alloc.x + alloc.width &&
+#				   y > alloc.y && y < alloc.y + alloc.height
+#					true
+#				else
+#					false
+#				end
+#			end
+#		end
+		
 		def content_area
-			@content = Gtk::VBox.new(false, 1)
+			@content = Table.new(1, 1, true)
+			@content.expand = Table::EXPAND_DOWN
 			
-			Gtk::Drag.dest_set(@content, 0, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
+#			Gtk::Drag.dest_set(@content, 0, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
 			
-			@content.signal_connect('drag-motion') do |c, ctx, x, y, time|
-				if @dragging
-					other = under_cursor(x, y)
-					
-					if other && other != @dragging
-						@content.reorder_child(@dragging, @content.child_get_property(other, 'position'))
-					end
+#			@content.signal_connect('drag-motion') do |c, ctx, x, y, time|
+#				if @dragging
+#					other = under_cursor(x, y)
+#					
+#					if other && other != @dragging
+#						@content.reorder_child(@dragging, @content.child_get_property(other, 'position'))
+#					end
 
-					ctx.drag_status(Gdk::DragContext::ACTION_MOVE, time)
-					true
-				else
-					false
-				end
-			end
+#					ctx.drag_status(Gdk::DragContext::ACTION_MOVE, time)
+#					true
+#				else
+#					false
+#				end
+#			end
 			
 			@content
 		end
@@ -224,21 +267,22 @@ module Cpg
 			hbox.pack_start(align, false, false, 0)
 			hbox.show_all
 
-			Gtk::Drag.source_set(g, Gdk::Window::ModifierType::BUTTON1_MASK, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
-			
-			g.signal_connect('drag-begin') do |gr, ctx|
-				pix = Gdk::Pixbuf.from_drawable(nil, g.window, 0, 0, g.allocation.width, g.allocation.height)
+#			Gtk::Drag.source_set(g, Gdk::Window::ModifierType::BUTTON1_MASK, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
+#			
+#			g.signal_connect('drag-begin') do |gr, ctx|
+#				pix = Gdk::Pixbuf.from_drawable(nil, g.window, 0, 0, g.allocation.width, g.allocation.height)
 
-				Gtk::Drag.set_icon(ctx, pix, g.allocation.width / 2, g.allocation.height / 2)
-				
-				@dragging = hbox
-			end
+#				Gtk::Drag.set_icon(ctx, pix, g.allocation.width / 2, g.allocation.height / 2)
+#				
+#				@dragging = hbox
+#			end
+#			
+#			g.signal_connect('drag-end') do |gr, ctx|
+#				@dragging = nil
+#			end
 			
-			g.signal_connect('drag-end') do |gr, ctx|
-				@dragging = nil
-			end
-			
-			@content.pack_start(hbox, true, true, 0)
+			#@content.pack_start(hbox, true, true, 0)
+			@content << hbox
 		
 			#exp.signal_connect('activate') do |o|
 			#	active = !exp.expanded?

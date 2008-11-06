@@ -21,6 +21,7 @@ module Cpg
 		include SortedArray
 
 		property :allocation, :zoom, :pane_position, :period, :monitors, :controls
+		property :monitors_size, :controls_size
 
 		def initialize(objects = nil)
 			super(objects ? objects : 0)
@@ -30,6 +31,9 @@ module Cpg
 			self.period = ''
 			self.monitors = Serialize::Array.new
 			self.controls = Serialize::Array.new
+			
+			self.monitors_size = Serialize::Array.new([1, 1])
+			self.controls_size = Serialize::Array.new([1, 1])
 
 			sort!
 		end
@@ -541,6 +545,11 @@ module Cpg
 			if cpg.monitors && !cpg.monitors.empty?
 				ensure_monitor
 
+				if cpg.monitors_size && cpg.monitors_size.length == 2
+					s = cpg.monitors_size
+					@monitor.set_size(s[0], s[1])
+				end
+
 				cpg.monitors.each do |monitor|
 					next unless map[monitor.id]
 
@@ -551,6 +560,11 @@ module Cpg
 			
 			if cpg.controls && !cpg.controls.empty?
 				ensure_control
+				
+				if cpg.controls_size && cpg.controls_size.length == 2
+					s = cpg.controls_size
+					@control.set_size(s[0], s[1])
+				end
 
 				cpg.controls.each do |control|
 					@control.add_hook(map[control.id], control.name) if map[control.id]
@@ -623,6 +637,8 @@ module Cpg
 						'ymin' => yax[0],
 						'ymax' => yax[1]})
 				end
+				
+				cpg.monitors_size = Serialize::Array.new(@monitor.size)
 			end
 			
 			if @control && @control.visible?
@@ -631,6 +647,8 @@ module Cpg
 
 					cpg.controls["#{obj.get_property('id')}"] = prop.to_s
 				end
+				
+				cpg.controls_size = Serialize::Array.new(@control.size)
 			end
 			
 			doc = Saver.save(cpg)

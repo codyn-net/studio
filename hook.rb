@@ -101,6 +101,10 @@ module Cpg
 			@map.each { |o,v| remove_hook(o) }
 		end
 		
+		def sort_hooks(a, b)
+			0
+		end
+		
 		def each_hook
 			vals = []
 			@map.each do |obj, properties|
@@ -110,13 +114,7 @@ module Cpg
 			end
 			
 			# sort based on position
-			vals.sort! do |a,b|
-				as = a[1][:widget].parent.child_get_property(a[1][:widget], 'position')
-				bs = b[1][:widget].parent.child_get_property(b[1][:widget], 'position')
-
-				as <=> bs
-			end
-
+			vals.sort! { |a, b| sort_hook(a, b) }
 			vals.each { |x| yield x[0], x[1][:prop] }
 		end
 		

@@ -37,7 +37,7 @@ module Cpg::Serialize
 		end
 	
 		def set_property(name, val)
-			self << name unless self.include?(name)
+			self << name
 			true
 		end
 	
