@@ -13,7 +13,7 @@ module Cpg
 			@range = nil
 			reset
 			
-			@handlemodified = false
+			@handlemodified = true
 			@map = {}
 		end
 		
@@ -33,7 +33,10 @@ module Cpg
 					@handlemodified = false
 					
 					# adding a new property we can do
-					@map[obj].add_property(prop, obj.is_a?(Components::SimulatedObject) ? obj.initial_value(prop).to_s : obj.get_property(prop).to_s, obj.is_a?(Components::SimulatedObject) ? obj.integrated?(prop) : false)
+					v = obj.initial_value(prop).to_s
+					v = obj.get_property(prop).to_s if v.empty?
+					@map[obj].add_property(prop, v, obj.is_a?(Components::SimulatedObject) ? obj.integrated?(prop) : false)
+					# make sure to taint the network so it recompiles
 					@network.taint
 				end
 			end
@@ -72,7 +75,7 @@ module Cpg
 				@map = {}
 			end
 			
-			@handlemodified = false
+			@handlemodified = true
 		end
 		
 		alias :orig_root :root=
