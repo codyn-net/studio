@@ -17,14 +17,28 @@ module Cpg
 			@map = {}
 		end
 		
+		def queue_resimulate
+			GLib::Source.remove(@resimulate_source) if @resimulate_source
+			@resimulate_source = GLib::Timeout.add(50) do
+				@resimulate_source = nil
+				resimulate
+				false
+			end
+		end
+		
 		def do_object_added(obj)
 			# make sure to connect property changes
 			obj.signal_connect('property_changed') do |obj, prop|
 				if @map.include?(obj)
 					@handlemodified = false
 					
-					# set property value we can do
-					@network.set_value(@map[obj], prop.to_s, obj.get_property(prop).to_s)
+					# set property value we can do					
+					if obj.initial_value(prop).to_s.empty?
+						@network.set_initial(@map[obj], prop, obj.get_property(prop).to_s)
+						queue_resimulate
+					else
+						@network.set_value(@map[obj], prop.to_s, obj.get_property(prop).to_s)
+					end
 				end
 			end
 			
@@ -48,12 +62,7 @@ module Cpg
 					# handle initial changed we can do
 					@network.set_initial(@map[obj], prop, obj.initial_value(prop).to_s)
 					
-					GLib::Source.remove(@resimulate_source) if @resimulate_source
-					@resimulate_source = GLib::Timeout.add(50) do
-						@resimulate_source = nil
-						resimulate
-						false
-					end
+					queue_resimulate
 				end
 			end
 			
