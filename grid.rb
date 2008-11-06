@@ -79,8 +79,8 @@ module Cpg
 		
 			set_can_focus(true)
 		
-			@max_size = 100
-			@min_size = 30
+			@max_size = 120
+			@min_size = 20
 			@default_grid_size = 50
 			@grid_size = @default_grid_size
 			@hover = []
