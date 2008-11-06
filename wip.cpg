@@ -12,12 +12,10 @@
   <property name='pane_position' value='215'/>
   <property name='period' value='0:0.005:8'/>
   <property name='monitors'>
-    <hash>
-      <property name='lleg_joint_2' value='x'/>
-      <property name='lleg_joint_3' value='x'/>
-      <property name='lleg_joint_4' value='x'/>
-      <property name='lleg_joint_5' value='x'/>
-      <property name='lleg_joint_6' value='x'/>
+    <array>
+      <monitor id='lleg_joint_2'>
+        <property name='name' value='x'/>
+      </monitor>
     </hash>
   </property>
   <property name='controls'>
