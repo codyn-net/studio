@@ -31,7 +31,7 @@
       <hash/>
     </property>
     <property name='integrate'>
-      <integrate/>
+      <array/>
     </property>
     <property name='allocation'>
       <allocation>
@@ -63,10 +63,10 @@
         <hash/>
       </property>
       <property name='integrate'>
-        <integrate>
+        <array>
           <property name='x' value=''/>
           <property name='y' value=''/>
-        </integrate>
+        </array>
       </property>
       <property name='allocation'>
         <allocation>
@@ -114,7 +114,7 @@
       <hash/>
     </property>
     <property name='integrate'>
-      <integrate/>
+      <array/>
     </property>
     <property name='allocation'>
       <allocation>
@@ -146,10 +146,10 @@
         <hash/>
       </property>
       <property name='integrate'>
-        <integrate>
+        <array>
           <property name='x' value=''/>
           <property name='y' value=''/>
-        </integrate>
+        </array>
       </property>
       <property name='allocation'>
         <allocation>
@@ -199,7 +199,7 @@
       <hash/>
     </property>
     <property name='integrate'>
-      <integrate/>
+      <array/>
     </property>
     <property name='allocation'>
       <allocation>
@@ -231,10 +231,10 @@
         <hash/>
       </property>
       <property name='integrate'>
-        <integrate>
+        <array>
           <property name='x' value=''/>
           <property name='y' value=''/>
-        </integrate>
+        </array>
       </property>
       <property name='allocation'>
         <allocation>
@@ -282,7 +282,7 @@
       <hash/>
     </property>
     <property name='integrate'>
-      <integrate/>
+      <array/>
     </property>
     <property name='allocation'>
       <allocation>
@@ -314,10 +314,10 @@
         <hash/>
       </property>
       <property name='integrate'>
-        <integrate>
+        <array>
           <property name='x' value=''/>
           <property name='y' value=''/>
-        </integrate>
+        </array>
       </property>
       <property name='allocation'>
         <allocation>
@@ -365,7 +365,7 @@
       <hash/>
     </property>
     <property name='integrate'>
-      <integrate/>
+      <array/>
     </property>
     <property name='allocation'>
       <allocation>
@@ -397,10 +397,10 @@
         <hash/>
       </property>
       <property name='integrate'>
-        <integrate>
+        <array>
           <property name='x' value=''/>
           <property name='y' value=''/>
-        </integrate>
+        </array>
       </property>
       <property name='allocation'>
         <allocation>
