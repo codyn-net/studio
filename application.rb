@@ -12,6 +12,7 @@ require 'stock'
 require 'flatformat'
 require 'serialize/object'
 require 'serialize/array'
+require 'set'
 
 module Cpg
 	class Cpg < Array
@@ -342,7 +343,7 @@ module Cpg
 			@normal_group.get_action('GroupAction').sensitive = (objs.length > 1 && objs.find { |x| not x.is_a?(Components::Attachment) })
 			@normal_group.get_action('EditGroupAction').sensitive = singlegroup
 			
-			['Properties', 'MonitorMenu', 'ControlMenu'].each do |x|
+			['Properties'].each do |x|
 				@normal_group.get_action("#{x}Action").sensitive = singleobj
 			end
 			
@@ -1037,13 +1038,17 @@ module Cpg
 		def start_monitor(obj, prop)
 			ensure_monitor
 		
-			@monitor.add_hook(obj, prop)
+			(obj.is_a?(Enumerable) ? obj : [obj]).each do |o|
+				@monitor.add_hook(o, prop)
+			end
 		end
 	
 		def start_control(obj, prop)
 			ensure_control
 
-			@control.add_hook(obj, prop)
+			(obj.is_a?(Enumerable) ? obj : [obj]).each do |o|
+				@control.add_hook(o, prop)
+			end
 		end
 	
 		def do_group
@@ -1061,6 +1066,13 @@ module Cpg
 				@grid.ungroup(obj)
 			end
 		end
+		
+		def common_properties(objs)
+			sets = objs.collect { |x| x.properties.keys.select { |p| !x.invisible?(p) }.to_set }
+			
+			# intersect on all sets
+			sets.inject { |v, a| v & a }
+		end
 	
 		def do_popup(button, time)
 			if @popupmergeid
@@ -1073,16 +1085,17 @@ module Cpg
 			@uimanager.insert_action_group(@popupactiongroup, 0)
 			
 			# merge monitor and control
-			if @grid.selection.length == 1
-				obj = @grid.selection.first
+			objs = @grid.selection.dup
+			props = common_properties(objs)
 
+			if !props.empty?
 				['Monitor', 'Control'].each do |type|
-					obj.properties.each do |prop, v|
-						next if (obj.invisible?(prop) or prop == 'id')
+					props.each do |prop|
+						next if prop == 'id'
 						name = "#{type}#{prop}"
 						
 						@popupactiongroup.add_actions([
-							["#{name}Action", nil, prop.to_s, nil, nil, Proc.new { |g,a| send("start_#{type.downcase}", obj, prop) }]
+							["#{name}Action", nil, prop.to_s, nil, nil, Proc.new { |g,a| send("start_#{type.downcase}", objs, prop) }]
 						])
 						
 						@uimanager.add_ui(@popupmergeid, "/popup/#{type}Menu/#{type}Placeholder", name, "#{name}Action", Gtk::UIManager::MENUITEM, false) 
