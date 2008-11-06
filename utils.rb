@@ -82,11 +82,6 @@ module ArrayOperations
 		
 		result
 	end
-	
-	def inject(n)
-		each { |value| n = yield(n, value) }
-		n
-	end
 
 	def sum
 		inject(0) { |n, value| n + value }
