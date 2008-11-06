@@ -207,7 +207,7 @@ module Cpg::Components
 		# simulation
 		def simulation_reset
 			self.initial.each do |k, v|
-				next unless v && !v.empty?
+				next unless v && !v.to_s.empty?
 				set_property(k, v) unless get_property(k).to_s == v.to_s
 			end
 		end
