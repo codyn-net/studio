@@ -47,7 +47,7 @@ module Cpg
 			but
 		end
 		
-		def self.close_button
+		def self.small_button(stock, &block)
 			but = Gtk::Button.new
 			
 			rc = Gtk::RcStyle.new
@@ -55,14 +55,18 @@ module Cpg
 			rc.xthickness = 0
 			but.modify_style(rc)
 			
-			but.image = Gtk::Image.new(Gtk::Stock::CLOSE, Gtk::IconSize::MENU)
+			but.image = Gtk::Image.new(stock, Gtk::IconSize::MENU)
 			but.relief = Gtk::ReliefStyle::NONE
 			
-			if block_given?
-				but.signal_connect('clicked') { |b| yield b }
+			if block
+				but.signal_connect('clicked') { |b| block.call(b) }
 			end
 			
 			but
+		end
+		
+		def self.close_button(&block)
+			small_button(Gtk::Stock::CLOSE, &block)
 		end
 	end
 end

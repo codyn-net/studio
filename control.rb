@@ -29,6 +29,8 @@ module Cpg
 		def content_area
 			@content = Table.new(1, 1, true)
 			@content.expand = Table::EXPAND_RIGHT
+			@content.row_spacings = 1
+			@content.column_spacings = 1
 			
 			@content
 		end

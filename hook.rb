@@ -127,6 +127,8 @@ module Cpg
 		
 		def add_hook_real(obj, prop, state)
 			@map[obj] << state
+			
+			state
 		end
 		
 		def install_object(obj, prop)
@@ -162,6 +164,12 @@ module Cpg
 		def remove_hook_real(obj, container)
 			container[:widget].destroy unless (!container[:widget] || container[:widget].destroyed?)
 			@map[obj].delete(container)
+		end
+		
+		def find_hook(obj, prop)
+			return nil unless @map[obj]
+			
+			@map[obj].find { |x| x[:prop] == prop }
 		end
 		
 		def remove_hook(obj, prop = nil)

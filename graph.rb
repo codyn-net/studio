@@ -5,24 +5,76 @@ require 'utils'
 module Cpg
 	class Graph < Gtk::DrawingArea
 		type_register
+		attr_reader :sample_width, :yaxis, :data, :label, :color, :adjustment, :show_ruler
 
-		attr_reader :sample_frequency, :unit_width, :yaxis, :data, :label, :color, :adjustment, :show_ruler
+		class Data
+			attr_reader :data, :color, :graph, :label
+			
+			def initialize(graph, data, color, label = '')
+				@graph = graph
+				@data = data
+				@color = color
+				@label = label
+			end
+			
+			def data=(data)
+				@data = data.dup
+			
+				@graph.data_changed(self)
+			end
+			
+			def color=(color)
+				@color = color
+				@graph.data_changed(self)
+			end
+			
+			def label=(label)
+				@label = label
+				@graph.data_changed(self)
+			end
+		end
+		
+		class ColorTable
+			def initialize
+				@colors = [
+					[0, 0, 0.6],
+					[0, 0.6, 0],
+					[0.6, 0, 0],
+					[0, 0.6, 0.6],
+					[0.6, 0.6, 0],
+					[0.6, 0, 0.6],
+					[0, 0, 0]
+				]
+				
+				@idx = @colors.length - 1
+			end
+			
+			def next
+				@idx = @idx == @colors.length - 1 ? 0 : @idx + 1
+				
+				@colors[@idx]
+			end
+		end
+		
+		def self.next_color
+			@colortable ||= ColorTable.new
+			
+			@colortable.next
+		end
 
-		def initialize(sample_frequency = 10, unit_width = 30, yaxis = [-1, 1])
+		def initialize(sample_width = 1, yaxis = [-1, 1])
 			super()
 
-			@adjustment = Gtk::Adjustment.new(0, 0, 0, 1, sample_frequency, 0)
+			@adjustment = Gtk::Adjustment.new(0, 0, 0, 1, sample_width * 10, 0)
 			@changed_signal = @adjustment.signal_connect('value_changed') { |adj| redraw }
 			@show_ruler = true
 
-			self.sample_frequency = sample_frequency
-			self.unit_width = unit_width
+			self.sample_width = sample_width
 			self.yaxis = yaxis
 		
 			@data = []
 			@backbuffer = nil
 			@shift = 0
-			@label = ''
 			@color = [0, 0, 1]
 			@sites = nil
 		
@@ -51,33 +103,35 @@ module Cpg
 			queue_draw
 		end
 	
-		def color=(val)
-			@color = val
+		def data_changed(plot)
 			redraw
 		end
 	
-		def label=(val)
-			@label = val
-			redraw
-		end
-	
-		def unit_width=(val)
-			@unit_width = val
-			
-			ps = @sample_frequency * allocation.width / @unit_width.to_f
-			@adjustment.page_size = ps unless ps.infinite?
+		def sample_width=(val)
+			@sample_width = val
 
+			@adjustment.page_size = sample_width * 10
 			@adjustment.changed
 		
 			redraw
 		end
 		
+		def num_plots
+			@data.length
+		end
+		
 		def auto_axis
-			if @data && !@data.empty?
-				range = [@data.min, @data.max]
-			else
-				range = [-3, 3]
+			range = [nil, nil]
+			
+			@data.each do |d|
+				r = [d.data.min, d.data.max]
+
+				range[0] = r[0] if !range[0] || r[0] < range[0]
+				range[1] = r[1] if !range[1] || r[1] > range[1]
 			end
+			
+			range[0] = -3 unless range[0]
+			range[1] = 3 unless range[1]
 						
 			dist = (range[1] - range[0]) / 2.0
 			self.yaxis = [range[0] - dist * 0.2, range[1] + dist * 0.2]
@@ -96,60 +150,53 @@ module Cpg
 			
 			redraw
 		end
-	
-		def sample_frequency=(val)
-			@sample_frequency = val
-
-			@adjustment.page_increment = val
-			
-			ps = @sample_frequency * allocation.width / @unit_width.to_f
-			@adjustment.page_size = ps unless ps.infinite?
-			@adjustment.changed
-		
-			redraw
-		end
 		
 		def set_ticks(width, start)
 			# width is the number of pixels per tick unit
 			# start is the tick unit value from the left
 		end
-	
-		def data=(val)
-			@data = val.dup
+		
+		def <<(data)
+			add(data)
+		end
+		
+		def add(data, color = nil)
+			color = self.class.next_color unless color
 			
-			@data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f }
+			d = Data.new(self, data, color)
+			@data << d
+			redraw
+			
+			d
+		end
 		
-			last = (@adjustment.value >= @adjustment.upper - @adjustment.page_size)
-			@adjustment.upper = @data.length
-			@adjustment.value = [@adjustment.lower, @adjustment.upper - @adjustment.page_size].max if last
-		
-			@adjustment.changed
-
+		def remove(plot)
+			@data.delete(plot)
 			redraw
 		end
 	
 		def scale
-			return @unit_width / @sample_frequency.to_f, 
+			return @sample_width.to_f, 
 				   -(allocation.height - 3) / (@yaxis[1] - @yaxis[0]).to_f
 		end
 	
-		def <<(sample)
-			@data << ((sample.to_f.nan? || sample.to_f.infinite?) ? 0.0 : sample.to_f)
-		
-			@adjustment.upper = @data.length
-			@adjustment.changed
-		
-			if @adjustment.value >= @adjustment.upper - @adjustment.page_size - 1
-				@adjustment.signal_handler_block(@changed_signal)
-				@adjustment.value = @adjustment.upper - @adjustment.page_size
-				@adjustment.signal_handler_unblock(@changed_signal)
-			
-				redraw_one
-			end
-		end
+#		def <<(sample)
+#			@data << ((sample.to_f.nan? || sample.to_f.infinite?) ? 0.0 : sample.to_f)
+#		
+#			@adjustment.upper = @data.length
+#			@adjustment.changed
+#		
+#			if @adjustment.value >= @adjustment.upper - @adjustment.page_size - 1
+#				@adjustment.signal_handler_block(@changed_signal)
+#				@adjustment.value = @adjustment.upper - @adjustment.page_size
+#				@adjustment.signal_handler_unblock(@changed_signal)
+#			
+#				redraw_one
+#			end
+#		end
 	
 		def samples
-			(allocation.width / @unit_width.to_f) * @sample_frequency
+			allocation.width / @sample_width.to_f
 		end
 	
 		def prepare(ctx)
@@ -158,8 +205,8 @@ module Cpg
 			ctx.translate(0.5, (@yaxis[1] * -dy).round + 1.5)
 		end
 	
-		def set_graph_line(ctx)
-			ctx.set_source_rgb(@color[0], @color[1], @color[2])
+		def set_graph_line(ctx, d)
+			ctx.set_source_rgb(*d.color)
 			ctx.line_width = 2
 		end
 	
@@ -173,7 +220,8 @@ module Cpg
 		end
 	
 		def data_offset
-			@adjustment.value.to_i
+			#@adjustment.value.to_i
+			0
 		end
 	
 		# Redraw the whole graph
@@ -202,65 +250,67 @@ module Cpg
 
 			# draw the xaxis
 			draw_xaxis(ctx, 0)
+			
+			@data.each do |d|		
+				# set line color
+				set_graph_line(ctx, d)
 		
-			# set line color
-			set_graph_line(ctx)
+				# move to first point
+				start = [n.floor - (d.data.length - offset), 0].max
+				dx, dy = scale
 		
-			# move to first point
-			start = [n.floor - (@data.length - offset), 0].max
-			dx, dy = scale
+				ctx.move_to(start * dx, d.data[offset] * dy) if d.data[offset] != nil
 		
-			ctx.move_to(start * dx, @data[offset] * dy) if @data[offset] != nil
-		
-			# get all the other points
-			slice = @data[(offset + 1)..-1]
+				# get all the other points
+				slice = d.data[(offset + 1)..-1]
 
-			(slice || []).each_with_index do |sample, idx|
-				# draw a line this next sample
-				ctx.line_to((start + idx + 1) * dx, sample * dy)
+				(slice || []).each_with_index do |sample, idx|
+					# draw a line this next sample
+					ctx.line_to((start + idx + 1) * dx, sample * dy)
+				end
+
+				ctx.stroke
 			end
-
-			ctx.stroke
 		end
 	
-		def redraw_one
-			# simply shift the backbuffer and add sample
-			return unless window
-			return if @data.length <= 1
+#		def redraw_one
+#			# simply shift the backbuffer and add sample
+#			return unless window
+#			return if @data.length <= 1
 
-			# copy current backbuffer, but shifted one sample
-			dx, dy = scale		
-		
-			buf = create_buffer
-			ctx = buf.create_cairo_context
-		
-			# now shift it, but on the whole pixel, otherwise it will be messy
-			ctx.set_source_pixmap(@backbuffer, -dx, 0)
-			ctx.paint
-		
-			# draw the points we now need to draw, according to this new
-			# shift of ours
-			prepare(ctx)
+#			# copy current backbuffer, but shifted one sample
+#			dx, dy = scale		
+#		
+#			buf = create_buffer
+#			ctx = buf.create_cairo_context
+#		
+#			# now shift it, but on the whole pixel, otherwise it will be messy
+#			ctx.set_source_pixmap(@backbuffer, -dx, 0)
+#			ctx.paint
+#		
+#			# draw the points we now need to draw, according to this new
+#			# shift of ours
+#			prepare(ctx)
 
-			n = samples
+#			n = samples
 
-			ctx.line_cap = Cairo::LINE_CAP_ROUND
+#			ctx.line_cap = Cairo::LINE_CAP_ROUND
 
-			draw_xaxis(ctx, (n - 4) * dx)
-		
-			# set line color
-			set_graph_line(ctx)
+#			draw_xaxis(ctx, (n - 4) * dx)
+#		
+#			# set line color
+#			set_graph_line(ctx)
 
-			if @data[-2] != nil
-				ctx.move_to((n - 4) * dx, @data[-2] * dy)
-			end
-		
-			ctx.line_to((n - 3) * dx, @data[-1] * dy)
-			ctx.stroke
-		
-			@backbuffer = buf
-			queue_draw
-		end
+#			if @data[-2] != nil
+#				ctx.move_to((n - 4) * dx, @data[-2] * dy)
+#			end
+#		
+#			ctx.line_to((n - 3) * dx, @data[-1] * dy)
+#			ctx.stroke
+#		
+#			@backbuffer = buf
+#			queue_draw
+#		end
 	
 		def create_buffer
 			buf = Gdk::Pixmap.new(window, allocation.width, allocation.height, -1)
@@ -305,9 +355,11 @@ module Cpg
 			ct.line_to(@ruler[0] + 0.5, allocation.height)
 			ct.stroke
 			
+			return if @data.empty?
+			
 			# find y position at @ruler[0] in data points		
 			offset = data_offset
-			start = [samples.floor - (@data.length - offset), 0].max
+			start = [samples.floor - (@data.first.data.length - offset), 0].max
 			dx, dy = scale
 			
 			dp = (@ruler[0] / dx)
@@ -326,7 +378,7 @@ module Cpg
 			pos1 = dpb + offset - start
 			pos2 = dpe + offset - start
 			
-			cy = (((@data[pos1] || 0) * factor) + ((@data[pos2] || 0) * (1 - factor)))
+			cy = (((@data.first.data[pos1] || 0) * factor) + ((@data.first.data[pos2] || 0) * (1 - factor)))
 			
 			# draw label first
 			s = format('%.2f', cy)
@@ -349,6 +401,47 @@ module Cpg
 			ct.set_source_rgb(0.5, 0.6, 1)
 			ct.stroke
 		end
+		
+		def hex_color(col)
+			return '#000' unless col
+			
+			'#' + col.collect do |x|
+				s = (x * 255).to_i.to_s(16)
+				
+				s = '0' + s if s.length == 1
+				s
+			end.join('')
+		end
+		
+		def draw_label(ct)
+			return if @data.empty?
+			
+			layout = ct.create_pango_layout
+			layout.set_font_description(Pango::FontDescription.new('Sans 8'))
+			
+			t = []
+
+			@data.each do |d|
+				t << "<span color='#{hex_color(d.color)}'>#{d.label.to_s}</span>" if d.label && !d.label.to_s.empty?
+			end
+			
+			return if t.empty?	
+			
+			layout.markup = t.join(' / ')
+			
+			e = layout.pixel_size
+			ct.rectangle(1, 1, e[0] + 2 + 1, e[1] + 2 + 1)
+
+			ct.set_source_rgba(1, 1, 1, 0.7)
+			ct.fill
+		
+			ct.move_to(1, 1)
+			ct.set_source_rgba(0, 0, 0, 0.8)
+			
+			ct.save
+			ct.show_pango_layout(layout)
+			ct.restore
+		end
 	
 		def signal_do_expose_event(event)
 			if !@backbuffer && @recreate
@@ -368,17 +461,7 @@ module Cpg
 			ct.restore
 		
 			# paint label over it
-			if @label && !@label.empty?
-				e = ct.text_extents(@label)
-				ct.rectangle(1, 1, e.width + 2 + 1, e.height + 2 + 1)
-
-				ct.set_source_rgba(1, 1, 1, 0.7)
-				ct.fill
-			
-				ct.move_to(1, 1 + 1 + e.height)
-				ct.set_source_rgba(0, 0, 0, 0.8)
-				ct.show_text(@label)
-			end
+			draw_label(ct)			
 		
 			# paint yaxis
 			draw_yaxis(ct)
@@ -391,10 +474,6 @@ module Cpg
 		def signal_do_configure_event(event)
 			super
 
-			# update page size
-			@adjustment.page_size = @sample_frequency * allocation.width / @unit_width.to_f
-			@adjustment.changed
-		
 			if @adjustment.value > @adjustment.upper - @adjustment.page_size
 				# no need to redraw twice
 				@adjustment.signal_handler_block(@changed_signal)

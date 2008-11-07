@@ -7,18 +7,8 @@ require 'table'
 module Cpg
 	class Monitor < Hook
 		type_register
-	
-		COLORS = [
-			[0, 0, 0.6],
-			[0, 0.6, 0],
-			[0.6, 0, 0],
-			[0, 0.6, 0.6],
-			[0.6, 0.6, 0],
-			[0.6, 0, 0.6],
-			[0, 0, 0]
-		]
-		
-		DEFAULT_UNIT_WIDTH = 40
+
+		SAMPLE_WIDTH = 2
 	
 		def initialize(dt)
 			super({:title => 'Monitor'})
@@ -53,17 +43,9 @@ module Cpg
 			@uimanager.add_ui(mid, "/menubar/View/ViewBottom", "LinkedAxis", "LinkedAxisAction", Gtk::UIManager::MENUITEM, false)  
 		end
 		
-		def find_child(w)
-			while (w && w.parent != @content)
-				w = w.parent
-			end
-			
-			w
-		end
-		
 		def sort_hook(a, b)
-			aw = find_child(a[1][:widget])
-			bw = find_child(b[1][:widget])
+			aw = @content.child_real(a[1][:widget])
+			bw = @content.child_real(b[1][:widget])
 			
 			return 0 if !aw || !bw
 			
@@ -110,6 +92,8 @@ module Cpg
 		def content_area
 			@content = Table.new(1, 1, true)
 			@content.expand = Table::EXPAND_DOWN
+			@content.row_spacings = 1
+			@content.column_spacings = 1
 			
 #			Gtk::Drag.dest_set(@content, 0, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
 			
@@ -185,23 +169,28 @@ module Cpg
 			
 			hbox.show_all
 		end
-	
-		def next_color
-			c = COLORS[@coloridx]
-		
-			@coloridx += 1
-			@coloridx = 0 if @coloridx == COLORS.length
-		
-			return c
-		end
 		
 		def install_object(obj, prop)
 			super
 			
-			signal_register(obj, 'property_changed') { |o, p| update_title(o, p) }
+			signal_register(obj, 'property_changed') do |o, p| 
+				if ['display', 'label', 'equation', 'id'].include?(p)
+					update_title(o, prop)
+				end
+			end
 		end
 		
 		def remove_hook_real(obj, container)
+			g = container[:graph]
+			
+			g.signal_handler_disconnect(container[:configure]) if container[:configure]
+
+			if g.num_plots > 1
+				# prevent removal of graph
+				g.remove(container[:plot])
+				container[:widget] = nil
+			end
+			
 			super
 			
 			Simulation.instance.unset_monitor(obj, container[:prop])
@@ -231,9 +220,7 @@ module Cpg
 				return if p[:prop] == prop
 			end
 
-			g = Graph.new(1 / @dt, DEFAULT_UNIT_WIDTH, [-3, 3])
-			g.label = property_name(obj, prop, true)
-			g.color = next_color
+			g = Graph.new(SAMPLE_WIDTH, [-3, 3])
 			g.set_size_request(-1, 50)
 			g.show_ruler = @showrulers.active?
 			
@@ -258,11 +245,23 @@ module Cpg
 		
 			#hbox.pack_start(exp, true, true, 0)
 			hbox.pack_start(frame, true, true, 0)
-	
-			close = Stock.close_button { |x| remove_hook(obj, prop) }
+			
+			close = Stock.close_button { |x| remove_all_hooks(obj, prop) }
 		
-			align = Gtk::VBox.new(false, 0)
+			align = Gtk::VBox.new(false, 3)
 			align.pack_start(close, false, false, 0)
+			
+			merge = Stock.small_button(Gtk::Stock::GOTO_TOP) { |x| do_merge(obj, prop, 0, -1) }
+			align.pack_start(merge, false, false, 0)
+			
+			merge = Stock.small_button(Gtk::Stock::GOTO_BOTTOM) { |x| do_merge(obj, prop, 0, 1) }
+			align.pack_start(merge, false, false, 0)
+			
+			merge = Stock.small_button(Gtk::Stock::GOTO_LAST) { |x| do_merge(obj, prop, 1, 0) }
+			align.pack_start(merge, false, false, 0)
+			
+			merge = Stock.small_button(Gtk::Stock::GOTO_FIRST) { |x| do_merge(obj, prop, -1, 0) }
+			align.pack_start(merge, false, false, 0)
 		
 			hbox.pack_start(align, false, false, 0)
 			hbox.show_all
@@ -301,10 +300,68 @@ module Cpg
 			# register monitoring
 			Simulation.instance.set_monitor(obj, prop)
 
-			container = super(obj, prop, state.merge({:graph => g, :widget => hbox})) #, :expander => exp}))
+			container = super(obj, prop, state.merge({:graph => g, :widget => hbox, :plot => (g << [])})) #, :expander => exp}))
+			
+			container[:plot].label = property_name(obj, prop, true)
 			
 			# request resimulate
 			Simulation.instance.resimulate
+		end
+		
+		def remove_all_hooks(obj, prop)
+			h = find_hook(obj, prop)
+			
+			return unless h
+			widget = h[:widget]
+			
+			items = find_for_widget(widget)
+			
+			items.each do |x|
+				remove_hook(x[0], x[1][:prop])
+			end
+		end
+		
+		def find_for_widget(w)
+			res = []
+			
+			@map.each do |obj, lst|
+				lst.each { |x| res << [obj, x] if x[:widget] == w }
+			end
+			
+			res
+		end
+		
+		def do_merge(obj, prop, dx, dy)
+			h = find_hook(obj, prop)
+			
+			return unless h
+			
+			widget = h[:widget]		
+			to = @content.find(widget, dx, dy)
+			
+			return unless to
+			
+			to = to.children.first
+			
+			items = find_for_widget(widget)
+			toitem = find_for_widget(to).first[1]
+			
+			# merge items with the found graph
+			items.each do |item|
+				o = item[0]
+				item = item[1]
+				
+				item[:plot] = toitem[:graph].add(item[:plot].data, item[:plot].color)
+				item[:graph] = toitem[:graph]
+				item[:widget] = to
+				
+				GLib::Source.remove(item[:configure]) if item[:configure]
+				item[:configure] = nil
+			end
+			
+			update_title(obj, prop)
+			
+			widget.destroy
 		end
 		
 		def do_linkrulers(g, ev)
@@ -326,11 +383,11 @@ module Cpg
 		end
 		
 		def update_title(obj, prop)
-			@map[obj].each do |a|
-				title = property_name(obj, a[:prop], true)
-				a[:graph].label = title unless a[:graph].label == title
-				#a[:expander].label = title unless a[:expander].label == title
-			end
+			h = find_hook(obj, prop)
+			
+			return unless h
+			
+			h[:plot].label = property_name(obj, prop, true)
 		end
 		
 		def do_period_start(from, timestep, to)
@@ -351,66 +408,78 @@ module Cpg
 				
 			# resample data to be on pxd
 			rstep = (@range[2] - @range[0]) / numpix.to_f;
-			dpx = 2
 			
-			to = (0...(numpix / dpx)).collect { |x| @range[0] + (x * rstep * dpx) }
+			to = (0...(numpix / SAMPLE_WIDTH)).collect { |x| @range[0] + (x * rstep * SAMPLE_WIDTH) }
 			
 			data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
 			data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f } 
-			
-			v[:graph].sample_frequency = 1
-			v[:graph].unit_width = dpx
-			v[:graph].data = data || []
+
+			v[:plot].data = data || []
 		end
 		
-		def do_period_stop
-			# configure graphs so that they show the collected data correctly
-			each_graph do |obj, v|
-				set_monitor_data(obj, v)
-				
-				if !v[:configure]
-					v[:configure] = v[:graph].signal_connect('configure-event') do |g, ev|
-						GLib::Source.remove(v[:configure_source]) if v[:configure_source]
-						
-						v[:configure_source] = GLib::Timeout.add(50) do
-							v[:configure_source] = nil
-							set_monitor_data(obj, v)
-							false
-						end
+		def update_monitor_data(obj, v)
+			# find all plots
+			items = find_for_widget(v[:widget])
+			
+			items.each do |x|
+				set_monitor_data(x[0], x[1])
+			end
+		end
+		
+		def set_configure_handler(obj, v)
+			if !v[:configure]				
+				v[:configure] = v[:graph].signal_connect('configure-event') do |g, ev|
+					GLib::Source.remove(v[:configure_source]) if v[:configure_source]
+					
+					v[:configure_source] = GLib::Timeout.add(50) do
+						v[:configure_source] = nil
+						update_monitor_data(obj, v)
+						false
 					end
 				end
 			end
 		end
 		
+		def do_period_stop
+			# configure graphs so that they show the collected data correctly
+			configures = {}
+			
+			each_graph do |obj, v|
+				set_monitor_data(obj, v)
+				
+				g = v[:graph]
+				set_configure_handler(obj, v) unless configures[g]
+				configures[g] = true
+			end
+		end
+		
 		def reset_graphs
 			each_graph do |obj, v|
-				v[:graph].data = []
-				v[:graph].unit_width = DEFAULT_UNIT_WIDTH
-				v[:graph].sample_frequency = (1 / @dt).to_i
+				v[:plot].data = []
 				v[:graph].yaxis = [-3, 3]
 			end
 		end
 	
 		def update(timestep)
-			if @inperiod && !Simulation.instance.period?
-				reset_graphs
-				@inperiod = false
-			end
-			
-			return if Simulation.instance.period?
+#			if @inperiod && !Simulation.instance.period?
+#				reset_graphs
+#				@inperiod = false
+#			end
+#			
+#			return if Simulation.instance.period?
 
-			@map.each do |obj, p|
-				c = Simulation.instance.setup_context(obj)
+#			@map.each do |obj, p|
+#				c = Simulation.instance.setup_context(obj)
 
-				p.each do |v|
-					GLib::Source.remove(v[:configure_source]) if v[:configure_source]
-					v[:graph].signal_handler_disconnect(v[:configure])
-					v.delete(:configure)
-					v.delete(:configure_source)
-					
-					v[:graph] << Simulation.instance.monitor_data(obj, v[:prop])[-1]
-				end
-			end
+#				p.each do |v|
+#					GLib::Source.remove(v[:configure_source]) if v[:configure_source]
+#					v[:graph].signal_handler_disconnect(v[:configure])
+#					v.delete(:configure)
+#					v.delete(:configure_source)
+#					
+#					v[:graph] << Simulation.instance.monitor_data(obj, v[:prop])[-1]
+#				end
+#			end
 		end
 	end
 end

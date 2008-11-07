@@ -35,15 +35,15 @@ module Cpg
 		end
 	
 		def child_position(child, left, top)
-			child_set_property(child, 'left_attach', left)
-			child_set_property(child, 'right_attach', left + 1)
-			child_set_property(child, 'top_attach', top)
-			child_set_property(child, 'bottom_attach', top + 1)
+			child_set_property(child, 'left-attach', left)
+			child_set_property(child, 'right-attach', left + 1)
+			child_set_property(child, 'top-attach', top)
+			child_set_property(child, 'bottom-attach', top + 1)
 		end
 	
 		def move_to(from, to)
 			['left', 'right', 'top', 'bottom'].each do |name|
-				child_set_property(from, "#{name}_attach", child_get_property(to, "#{name}_attach"))
+				child_set_property(from, "#{name}-attach", child_get_property(to, "#{name}-attach"))
 			end
 		end
 	
@@ -60,8 +60,8 @@ module Cpg
 		
 			children.each do |child|
 				a = child.allocation
-				left = child_get_property(child, 'left_attach')
-				top = child_get_property(child, 'top_attach')
+				left = child_get_property(child, 'left-attach')
+				top = child_get_property(child, 'top-attach')
 			
 				columns[left] = [a.x, a.x + a.width]
 				rows[top] = [a.y, a.y + a.height]
@@ -71,7 +71,7 @@ module Cpg
 
 			col = nil
 			columns.each_with_index do |ptr, idx|
-				if ptr[0] < x && ptr[1] > x
+				if ptr && ptr[0] < x && ptr[1] > x
 					col = idx 
 					break
 				end
@@ -79,7 +79,7 @@ module Cpg
 		
 			row = nil
 			rows.each_with_index do |ptr, idx|
-				if ptr[0] < y && ptr[1] > y
+				if ptr && ptr[0] < y && ptr[1] > y
 					row = idx
 					break
 				end
@@ -124,8 +124,9 @@ module Cpg
 			end
 
 			children.each do |child|
-				left = child_get_property(child, 'left_attach')
-				top = child_get_property(child, 'top_attach')
+				next if child.is_a?(Placeholder)
+				left = child_get_property(child, 'left-attach')
+				top = child_get_property(child, 'top-attach')
 			
 				all.delete_if { |x| x == [left, top] }
 			end	
@@ -144,6 +145,29 @@ module Cpg
 	
 		def <<(child)
 			add(child)
+		end
+		
+		def child_real(child)
+			while (child && child.parent != self)
+				child = child.parent
+			end
+			
+			child
+		end
+		
+		def find(child, dx, dy)
+			child = child_real(child)
+			
+			return nil unless child
+
+			left = child_get_property(child, 'left-attach') + dx
+			top = child_get_property(child, 'top-attach') + dy
+			
+			children.find do |item|
+				child_get_property(item, 'left-attach') == left &&
+				child_get_property(item, 'top-attach') == top &&
+				!item.is_a?(Placeholder)
+			end
 		end
 	
 		def add(child)
@@ -216,7 +240,10 @@ module Cpg
 				if left == col && child.is_a?(Placeholder)
 					child.destroy
 				else
-					child_set_property(child, 'left-attach', left - 1) if left && left > col
+					if left && left > col
+						child_set_property(child, 'left-attach', left - 1)
+						child_set_property(child, 'right-attach', left)  
+					end
 				end
 			end
 			
@@ -233,18 +260,20 @@ module Cpg
 				if top == row && child.is_a?(Placeholder)
 					child.destroy
 				else
-					child_set_property(child, 'top-attach', top - 1) if top && top > row
+					if top >= row
+						child_set_property(child, 'top-attach', top - 1) 
+						child_set_property(child, 'bottom-attach', top)
+					end
 				end
 			end
 			
 			resize(self.n_rows - 1, self.n_columns)
-			
 			queue_draw
 		end
 
 		def compact
-			return if destroyed?
-
+			@compacting = true
+			
 			# remove any empty rows or columns
 			while ((r = find_empty_row))
 				remove_row(r)
@@ -253,6 +282,8 @@ module Cpg
 			while ((c = find_empty_column))
 				remove_column(c)
 			end
+			
+			@compacting = false
 		end
 		
 		def signal_do_destroy
@@ -263,12 +294,10 @@ module Cpg
 		def signal_do_remove(w)
 			super
 			
-			return if @destroying
-			
 			(@signals[w] || []).each { |s| w.signal_handler_disconnect(s) }
 			@signals.delete(w)
 			
-			compact unless w.is_a?(Placeholder)
+			compact unless @compacting
 		end
 	
 		def find_empty_row_col(last, what)
