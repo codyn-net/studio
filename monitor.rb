@@ -9,6 +9,46 @@ module Cpg
 		type_register
 
 		SAMPLE_WIDTH = 2
+		
+		attr_reader :content
+		
+		class Container < Gtk::EventBox
+			attr_reader :frame, :graph, :close, :merge
+	
+			def initialize(g)
+				super()
+				
+				hbox = Gtk::HBox.new(false, 0)
+				self << hbox
+				@graph = g
+				
+				@frame = Gtk::Frame.new
+				@frame.shadow_type = Gtk::ShadowType::ETCHED_IN
+				@frame << g
+			
+				# FIXME: no scrollbars for now
+				#vs.pack_start(Gtk::HScrollbar.new(g.adjustment), false, false, 0)
+
+				hbox.pack_start(@frame, true, true, 0)
+			
+				@close = Stock.close_button		
+				
+				vbox = Gtk::VBox.new(false, 3)
+				vbox.pack_start(@close, false, false, 0)
+			
+				@merge = Stock.small_button(Gtk::Stock::CONVERT)
+				vbox.pack_start(@merge, false, false, 0)
+		
+				hbox.pack_start(vbox, false, false, 0)
+			end
+			
+			def create_drag_icon
+				a = @frame.allocation
+				
+				pix = Gdk::Pixbuf.from_drawable(nil, @frame.window, 0, 0, a.width, a.height)
+				pix.scale(a.width * 0.7, a.height * 0.7, Gdk::Pixbuf::INTERP_HYPER)
+			end
+		end
 	
 		def initialize(dt)
 			super({:title => 'Monitor'})
@@ -43,25 +83,6 @@ module Cpg
 			@uimanager.add_ui(mid, "/menubar/View/ViewBottom", "LinkedAxis", "LinkedAxisAction", Gtk::UIManager::MENUITEM, false)  
 		end
 		
-		def sort_hook(a, b)
-			aw = @content.child_real(a[1][:widget])
-			bw = @content.child_real(b[1][:widget])
-			
-			return 0 if !aw || !bw
-			
-			al = @content.child_get_property(aw, 'left-attach')
-			at = @content.child_get_property(aw, 'top-attach')
-			
-			bl = @content.child_get_property(bw, 'left-attach')
-			bt = @content.child_get_property(bw, 'top-attach')
-			
-			if @content.expand == Table::EXPAND_DOWN
-				at == bt ? al <=> bl : at <=> bt
-			else
-				al == bl ? at <=> bt : al <=> bl
-			end
-		end
-		
 		def set_size(cols, rows)
 			cols = cols.to_i
 			rows = rows.to_i
@@ -76,41 +97,11 @@ module Cpg
 			return [@content.n_columns, @content.n_rows]
 		end
 		
-#		def under_cursor(x, y)
-#			@content.children.find do |child|
-#				alloc = child.allocation
-#				
-#				if x > alloc.x && x < alloc.x + alloc.width &&
-#				   y > alloc.y && y < alloc.y + alloc.height
-#					true
-#				else
-#					false
-#				end
-#			end
-#		end
-		
 		def content_area
 			@content = Table.new(1, 1, true)
 			@content.expand = Table::EXPAND_DOWN
 			@content.row_spacings = 1
 			@content.column_spacings = 1
-			
-#			Gtk::Drag.dest_set(@content, 0, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
-			
-#			@content.signal_connect('drag-motion') do |c, ctx, x, y, time|
-#				if @dragging
-#					other = under_cursor(x, y)
-#					
-#					if other && other != @dragging
-#						@content.reorder_child(@dragging, @content.child_get_property(other, 'position'))
-#					end
-
-#					ctx.drag_status(Gdk::DragContext::ACTION_MOVE, time)
-#					true
-#				else
-#					false
-#				end
-#			end
 			
 			@content
 		end
@@ -228,66 +219,13 @@ module Cpg
 				g.yaxis = @map[@map.keys[0]][0][:graph].yaxis
 			end
 			
-			hbox = Gtk::HBox.new(false, 1)
-			#exp = Gtk::Expander.new(property_name(obj, prop, true))
-		#	vs = Gtk::VBox.new(false, 3)
-			#vs.pack_start(g, true, true, 0)
+			cont = Container.new(g)
 			
-			frame = Gtk::Frame.new
-			frame.shadow_type = Gtk::ShadowType::ETCHED_IN
-			frame << g
-			
-			# FIXME: no scrollbars for now
-			#vs.pack_start(Gtk::HScrollbar.new(g.adjustment), false, false, 0)
-		
-			#exp.add(vs)
-			#exp.expanded = true
-		
-			#hbox.pack_start(exp, true, true, 0)
-			hbox.pack_start(frame, true, true, 0)
-			
-			close = Stock.close_button { |x| remove_all_hooks(obj, prop) }
-		
-			align = Gtk::VBox.new(false, 3)
-			align.pack_start(close, false, false, 0)
-			
-			merge = Stock.small_button(Gtk::Stock::GOTO_TOP) { |x| do_merge(obj, prop, 0, -1) }
-			align.pack_start(merge, false, false, 0)
-			
-			merge = Stock.small_button(Gtk::Stock::GOTO_BOTTOM) { |x| do_merge(obj, prop, 0, 1) }
-			align.pack_start(merge, false, false, 0)
-			
-			merge = Stock.small_button(Gtk::Stock::GOTO_LAST) { |x| do_merge(obj, prop, 1, 0) }
-			align.pack_start(merge, false, false, 0)
-			
-			merge = Stock.small_button(Gtk::Stock::GOTO_FIRST) { |x| do_merge(obj, prop, -1, 0) }
-			align.pack_start(merge, false, false, 0)
-		
-			hbox.pack_start(align, false, false, 0)
-			hbox.show_all
+			cont.close.signal_connect('clicked') { |x| remove_all_hooks(obj, prop) }
+			cont.merge.signal_connect('clicked') { |x| show_merge_menu(obj, prop) }
+			cont.show_all
 
-#			Gtk::Drag.source_set(g, Gdk::Window::ModifierType::BUTTON1_MASK, [['CpgGraph', Gtk::Drag::TARGET_SAME_APP, 1]], Gdk::DragContext::ACTION_MOVE)
-#			
-#			g.signal_connect('drag-begin') do |gr, ctx|
-#				pix = Gdk::Pixbuf.from_drawable(nil, g.window, 0, 0, g.allocation.width, g.allocation.height)
-
-#				Gtk::Drag.set_icon(ctx, pix, g.allocation.width / 2, g.allocation.height / 2)
-#				
-#				@dragging = hbox
-#			end
-#			
-#			g.signal_connect('drag-end') do |gr, ctx|
-#				@dragging = nil
-#			end
-			
-			#@content.pack_start(hbox, true, true, 0)
-			@content << hbox
-		
-			#exp.signal_connect('activate') do |o|
-			#	active = !exp.expanded?
-			
-			#	@content.set_child_packing(hbox, active, active, 0, Gtk::PackType::START)
-			#end
+			@content << cont
 			
 			g.signal_connect_after('motion_notify_event') do |o,ev|
 				do_linkrulers(g, ev) if @linkrulers && g.show_ruler
@@ -300,12 +238,51 @@ module Cpg
 			# register monitoring
 			Simulation.instance.set_monitor(obj, prop)
 
-			container = super(obj, prop, state.merge({:graph => g, :widget => hbox, :plot => (g << [])})) #, :expander => exp}))
+			container = super(obj, prop, state.merge({:graph => g, :widget => cont, :plot => (g << [])}))
 			
 			container[:plot].label = property_name(obj, prop, true)
 			
 			# request resimulate
 			Simulation.instance.resimulate
+		end
+		
+		def monitor_position(obj, prop)
+			h = find_hook(obj, prop)
+			@content.get_position(h[:widget])
+		end
+		
+		def show_merge_menu(obj, prop)
+			h = find_hook(obj, prop)
+			menu = Gtk::Menu.new
+			
+			pos = @content.get_position(h[:widget])
+			
+			spec = [
+				[Gtk::Stock::GOTO_TOP, 'Merge up', 0, -1],
+				[Gtk::Stock::GOTO_BOTTOM, 'Merge Down', 0, 1],
+				[Gtk::Stock::GOTO_LAST, 'Merge right', 1, 0],
+				[Gtk::Stock::GOTO_FIRST, 'Merge left', -1, 0]
+			]
+			
+			spec.each do |s|
+				next if pos[0] + s[2] < 0 || pos[0] + s[2] >= @content.n_columns ||
+					    pos[1] + s[3] < 0 || pos[1] + s[3] >= @content.n_rows
+
+				item = Gtk::ImageMenuItem.new(s[1])
+				item.image = Gtk::Image.new(s[0], Gtk::IconSize::MENU)
+				
+				item.signal_connect('activate') do |i|
+					do_merge(obj, prop, s[2], s[3])
+				end
+				
+				menu << item
+				
+				item.show
+			end
+			
+			if !menu.children.empty?			
+				menu.popup(nil, nil, 1, 0)
+			end
 		end
 		
 		def remove_all_hooks(obj, prop)
@@ -331,17 +308,22 @@ module Cpg
 			res
 		end
 		
-		def do_merge(obj, prop, dx, dy)
+		def set_monitor_position(obj, prop, x, y)
+			h = find_hook(obj, prop)
+			w = @content.at(x, y)
+			
+			if w && w != @content.child_real(h[:widget])
+				merge_with(obj, prop, w)
+			else
+				@content.child_position(h[:widget], x, y)
+			end
+		end
+		
+		def merge_with(obj, prop, to)
 			h = find_hook(obj, prop)
 			
 			return unless h
-			
-			widget = h[:widget]		
-			to = @content.find(widget, dx, dy)
-			
-			return unless to
-			
-			to = to.children.first
+			widget = h[:widget]
 			
 			items = find_for_widget(widget)
 			toitem = find_for_widget(to).first[1]
@@ -351,7 +333,7 @@ module Cpg
 				o = item[0]
 				item = item[1]
 				
-				item[:plot] = toitem[:graph].add(item[:plot].data, item[:plot].color)
+				item[:plot] = toitem[:graph].add(item[:plot].data, item[:plot].color, item[:plot].label)
 				item[:graph] = toitem[:graph]
 				item[:widget] = to
 				
@@ -362,6 +344,18 @@ module Cpg
 			update_title(obj, prop)
 			
 			widget.destroy
+		end
+		
+		def do_merge(obj, prop, dx, dy)
+			h = find_hook(obj, prop)
+			
+			return unless h
+
+			to = @content.find(h[:widget], dx, dy)
+			
+			return unless to
+			
+			merge_with(obj, prop, to)
 		end
 		
 		def do_linkrulers(g, ev)

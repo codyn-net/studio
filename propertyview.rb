@@ -250,7 +250,10 @@ module Cpg
 
 			# see if the property already exists
 			return if @object.properties.include?(s)
-			@object.add_property(s)
+
+			if @object.add_property(s)
+				@object.set_property(s, '')
+			end
 		end
 	
 		def do_remove_property

@@ -35,23 +35,14 @@ module Cpg
 			@content
 		end
 		
-		def sort_hook(a, b)
-			aw = find_child(a[1][:widget])
-			bw = find_child(b[1][:widget])
-			
-			return 0 if !aw || !bw
-			
-			al = @content.child_get_property(aw, 'left-attach')
-			at = @content.child_get_property(aw, 'top-attach')
-			
-			bl = @content.child_get_property(bw, 'left-attach')
-			bt = @content.child_get_property(bw, 'top-attach')
-			
-			if @content.expand == Table::EXPAND_DOWN
-				at == bt ? al <=> bl : at <=> bt
-			else
-				al == bl ? at <=> bt : al <=> bl
-			end
+		def control_position(obj, prop)
+			h = find_hook(obj, prop)
+			@content.get_position(h[:widget])
+		end
+		
+		def set_control_position(obj, prop, x, y)
+			h = find_hook(obj, prop)
+			@content.child_position(h[:widget], x, y)
 		end
 		
 		def set_size(cols, rows)
@@ -171,8 +162,12 @@ module Cpg
 			
 			signal_register(obj, 'property_changed') do |o, p|
 				@map[obj].each do |x|
-					t = property_name(obj, x[:prop])
-					x[:frame].label = t unless x[:frame].label = t
+					if ['display', 'id', 'equation', 'label'].include?(p)
+						t = property_name(obj, x[:prop])
+						x[:frame].label = t
+						
+						x[:frame].set_tooltip_text(property_name(obj, x[:prop], true))
+					end
 					 
 					next if x[:prop] != p
 				
@@ -207,6 +202,8 @@ module Cpg
 	
 		def add_hook_real(obj, prop, state)
 			frame = Gtk::Frame.new(property_name(obj, prop))
+			frame.set_tooltip_text(property_name(obj, prop, true))
+			
 			vbox = Gtk::VBox.new(false, 3)
 			
 			frame << vbox

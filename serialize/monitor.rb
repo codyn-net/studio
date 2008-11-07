@@ -1,9 +1,16 @@
 require 'serialize/object'
 
 module Cpg::Serialize
-	class Monitor
+	class Hook
 		include Object
 		
-		property :id, :name, :ymin, :ymax
+		property :id, :name, :x, :y
+	end
+	
+	class Monitor < Hook
+		property :ymin, :ymax
+	end
+	
+	class Control < Hook
 	end
 end

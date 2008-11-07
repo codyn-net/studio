@@ -43,6 +43,7 @@ module Cpg
 					[0, 0.6, 0.6],
 					[0.6, 0.6, 0],
 					[0.6, 0, 0.6],
+					[0.6, 0.6, 0.6],
 					[0, 0, 0]
 				]
 				
@@ -160,10 +161,10 @@ module Cpg
 			add(data)
 		end
 		
-		def add(data, color = nil)
+		def add(data, color = nil, label = '')
 			color = self.class.next_color unless color
 			
-			d = Data.new(self, data, color)
+			d = Data.new(self, data, color, label)
 			@data << d
 			redraw
 			
@@ -227,7 +228,7 @@ module Cpg
 		# Redraw the whole graph
 		def redraw
 			# create new empty backbuffer
-			return unless window
+			return if destroyed? || !window
 		
 			@backbuffer = nil
 			@recreate = true
@@ -425,7 +426,7 @@ module Cpg
 				t << "<span color='#{hex_color(d.color)}'>#{d.label.to_s}</span>" if d.label && !d.label.to_s.empty?
 			end
 			
-			return if t.empty?	
+			return if t.empty?
 			
 			layout.markup = t.join(' / ')
 			

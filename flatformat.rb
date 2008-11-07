@@ -12,7 +12,7 @@ module Cpg
 			end
 			
 			def fullname
-				parent ? "#{parent.to_s}.#{node.to_s.gsub(/\./, '')}" : node.to_s				
+				parent ? "#{parent.get_property('id')}.#{node.get_property('id').gsub(/\./, '')}" : node.get_property('id')				
 			end
 		end
 		
@@ -119,7 +119,7 @@ module Cpg
 			end
 			
 			res.select { |x| x.is_a?(Link) }.each do |o|
-				s += "link\n#{reformat(map[o.from].fullname)}\n#{reformat(map[o.to].fullname)}\n"
+				s += "link\n#{reformat(o.fullname)}\n#{reformat(map[o.from].fullname)}\n#{reformat(map[o.to].fullname)}\n"
 				
 				o.state.keys.each do |prop|					
 					s += "#{prop}\t#{reformat(o.node.get_property(prop))}\t0\n"

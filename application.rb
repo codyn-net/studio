@@ -21,7 +21,7 @@ module Cpg
 		include SortedArray
 
 		property :allocation, :zoom, :pane_position, :period, :monitors, :controls
-		property :monitors_size, :controls_size
+		property :monitors_size, :controls_size, :monitor_window_size, :control_window_size
 
 		def initialize(objects = nil)
 			super(objects ? objects : 0)
@@ -34,6 +34,9 @@ module Cpg
 			
 			self.monitors_size = Serialize::Array.new([1, 1])
 			self.controls_size = Serialize::Array.new([1, 1])
+			
+			self.monitor_window_size = Serialize::Array.new([-1, -1])
+			self.control_window_size = Serialize::Array.new([-1, -1])
 
 			sort!
 		end
@@ -544,30 +547,47 @@ module Cpg
 			
 			if cpg.monitors && !cpg.monitors.empty?
 				ensure_monitor
+				
+				if cpg.monitor_window_size
+					@monitor.resize(*cpg.monitor_window_size.collect { |x| x.to_i })
+				end
 
 				if cpg.monitors_size && cpg.monitors_size.length == 2
 					s = cpg.monitors_size
 					@monitor.set_size(s[0], s[1])
 				end
+				
+				@monitor.content.compacting = true
 
 				cpg.monitors.each do |monitor|
 					next unless map[monitor.id]
 
 					@monitor.add_hook(map[monitor.id], monitor.name)
 					@monitor.set_yaxis(map[monitor.id], monitor.name, [monitor.ymin.to_f, monitor.ymax.to_f])
+					
+					@monitor.set_monitor_position(map[monitor.id], monitor.name, monitor.x, monitor.y)
 				end
+				
+				@monitor.content.compacting = false
+				@monitor.content.compact
 			end
 			
 			if cpg.controls && !cpg.controls.empty?
 				ensure_control
+
+				if cpg.control_window_size
+					@control.resize(*cpg.control_window_size.collect { |x| x.to_i })
+				end
 				
 				if cpg.controls_size && cpg.controls_size.length == 2
 					s = cpg.controls_size
 					@control.set_size(s[0], s[1])
 				end
-
+				
 				cpg.controls.each do |control|
 					@control.add_hook(map[control.id], control.name) if map[control.id]
+					
+					@control.set_control_position(map[control.id], control.name, control.x, control.y)
 				end
 			end
 		
@@ -630,25 +650,37 @@ module Cpg
 					next unless obj.properties.include?('id')
 
 					yax = @monitor.yaxis(obj, prop)
+					pos = @monitor.monitor_position(obj, prop)
 
 					cpg.monitors << Serialize::Monitor.new.merge!({
 						'id' => obj.get_property('id').to_s,
 						'name' => prop.to_s,
 						'ymin' => yax[0],
-						'ymax' => yax[1]})
+						'ymax' => yax[1],
+						'x' => pos ? pos[0] : 1,
+						'y' => pos ? pos[1] : 1})
 				end
 				
 				cpg.monitors_size = Serialize::Array.new(@monitor.size)
+				cpg.monitor_window_size = Serialize::Array.new([@monitor.allocation.width, @monitor.allocation.height])
 			end
 			
 			if @control && @control.visible?
 				@control.each_hook do |obj, prop|
 					next unless obj.properties.include?('id')
 
-					cpg.controls["#{obj.get_property('id')}"] = prop.to_s
+					pos = @control.control_position(obj, prop)
+					
+					cpg.controls << Serialize::Control.new.merge!({
+						'id' => obj.get_property('id').to_s,
+						'name' => prop.to_s,
+						'x' => pos ? pos[0] : 1,
+						'y' => pos ? pos[1] : 1
+					})
 				end
 				
 				cpg.controls_size = Serialize::Array.new(@control.size)
+				cpg.control_window_size = Serialize::Array.new([@control.allocation.width, @control.allocation.height])
 			end
 			
 			doc = Saver.save(cpg)
@@ -1106,7 +1138,7 @@ module Cpg
 			objs = @grid.selection.dup
 			props = common_properties(objs)
 
-			if !props.empty?
+			if props && !props.empty?
 				['Monitor', 'Control'].each do |type|
 					props.each do |prop|
 						next if prop == 'id'

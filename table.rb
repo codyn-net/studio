@@ -7,7 +7,7 @@ module Cpg
 	
 		include SignalRegistry
 	
-		attr_accessor :expand
+		attr_accessor :expand, :compacting
 
 		EXPAND_RIGHT = 1
 		EXPAND_DOWN = 2
@@ -35,6 +35,8 @@ module Cpg
 		end
 	
 		def child_position(child, left, top)
+			child = child_real(child)
+			
 			child_set_property(child, 'left-attach', left)
 			child_set_property(child, 'right-attach', left + 1)
 			child_set_property(child, 'top-attach', top)
@@ -155,6 +157,12 @@ module Cpg
 			child
 		end
 		
+		def at(x, y)
+			children.find { |c| !c.is_a?(Placeholder) && 
+								child_get_property(c, 'left-attach') == x &&
+								child_get_property(c, 'top-attach') == y }
+		end
+		
 		def find(child, dx, dy)
 			child = child_real(child)
 			
@@ -169,11 +177,22 @@ module Cpg
 				!item.is_a?(Placeholder)
 			end
 		end
+		
+		def get_position(child)
+			child = child_real(child)
+			
+			return nil unless child
+
+			left = child_get_property(child, 'left-attach')
+			top = child_get_property(child, 'top-attach')
+			
+			return [left, top]
+		end
 	
 		def add(child)
 			left, top = find_empty
 		
-			if (child.flags & Gtk::Widget::NO_WINDOW)
+			if !(child.flags & Gtk::Widget::NO_WINDOW).empty?
 				ev = Gtk::EventBox.new
 				child.show
 			
@@ -198,9 +217,14 @@ module Cpg
 		def do_drag_begin(child, context)
 			# create drag icon
 			alloc = child.allocation
-			pix = Gdk::Pixbuf.from_drawable(nil, child.window, 0, 0, alloc.width, alloc.height)
+			
+			if child.respond_to?(:create_drag_icon)
+				pix = child.create_drag_icon
+			else
+				pix = Gdk::Pixbuf.from_drawable(nil, child.window, 0, 0, alloc.width, alloc.height)
+			end
 
-			Gtk::Drag.set_icon(context, pix, alloc.width / 2, alloc.height / 2)
+			Gtk::Drag.set_icon(context, pix, pix.width / 2, pix.height / 2)
 			@dragging = child
 			@swapped = nil
 		

@@ -134,7 +134,7 @@ module Cpg
 			
 			# then all the links
 			res.select { |x| x.is_a?(FlatFormat::Link) }.each do |o|
-				nmap[o] = link = CCpg::Link.new(nmap[map[o.from]], nmap[map[o.to]])
+				nmap[o] = link = CCpg::Link.new(o.fullname, nmap[map[o.from]], nmap[map[o.to]])
 				
 				o.state.keys.each do |prop|
 					v = o.node.initial_value(prop).to_s

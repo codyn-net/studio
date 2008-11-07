@@ -725,8 +725,14 @@ module Cpg
 
 			# add any of the custom properties to the main
 			if obj.main
-				obj.dynamic_properties.each do |prop|
+				obj.custom_properties.each do |prop|
 					obj.main.set_property(prop, obj.get_property(prop))
+					obj.main.set_initial_value(prop, obj.initial_value(prop))
+					obj.main.set_range(prop, obj.get_range(prop))
+					
+					if obj.is_a?(Components::SimulatedObject) && obj.main.is_a?(Components::SimulatedObject)
+						obj.main.set_integrated(prop, obj.integrated?(prop))
+					end
 				end
 			end			
 			
