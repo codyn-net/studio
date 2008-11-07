@@ -7,9 +7,6 @@ module Cpg::Components
 		property :integrate, :allocation
 		read_only :integrate
 		invisible :integrate, :allocation
-
-		read_write :id
-		visible :id
 	
 		def initialize
 			super

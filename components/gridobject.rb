@@ -46,8 +46,8 @@ module Cpg::Components
 
 		attr_accessor :allocation, :selected, :links, :mousein, :focus
 		property :id, :initial, :range
-		read_only :id, :initial, :range
-		invisible :id, :initial, :range
+		read_only :initial, :range
+		invisible :initial, :range
 
 		def initialize
 			super
@@ -194,8 +194,8 @@ module Cpg::Components
 		end
 
 		def set_range(prop, val)
-			if val && !val.empty?
-				val = Cpg::Range.normalize(val)
+			if val && !val.to_s.empty?
+				val = Cpg::Range.normalize(val.to_s)
 			else
 				val = ''
 			end

@@ -299,6 +299,13 @@ module Cpg::Components
 		def save_properties
 			@properties.keys
 		end
+		
+		def custom_properties
+			a = @properties.keys.dup
+			a.delete_if { |x| class_properties.include?(x) }
+			
+			a
+		end
 	
 		def properties
 			if self.__main

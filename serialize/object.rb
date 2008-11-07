@@ -102,6 +102,14 @@ module Cpg::Serialize::Object
 	def class_properties
 		self.class.properties
 	end
+	
+	def custom_properties
+		a = @properties.keys.dup
+		a.delete_if { |x| class_properties.include?(x) }
+		
+		p a
+		a
+	end
 
 	def properties
 		@properties
