@@ -12,7 +12,7 @@ module Cpg
 			end
 			
 			def fullname
-				parent ? "#{parent.get_property('id')}.#{node.get_property('id').gsub(/\./, '')}" : node.get_property('id')				
+				parent ? "#{parent.get_property('id')}.#{node.get_property('id').to_s.gsub(/\./, '')}" : node.get_property('id').to_s
 			end
 		end
 		
