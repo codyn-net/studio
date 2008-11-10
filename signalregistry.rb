@@ -12,7 +12,10 @@ module Cpg
 		end
 	
 		def disconnect(obj)
-			(@signal_registry[obj] || []).each { |s| obj.signal_handler_disconnect(s) unless obj.destroyed? }
+			if !obj.destroyed?
+				(@signal_registry[obj] || []).each { |s| obj.signal_handler_disconnect(s) }
+			end
+			
 			@signal_registry.delete(obj)
 		end
 	
