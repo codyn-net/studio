@@ -828,7 +828,7 @@ module Cpg
 			begin
 				import_from_xml(File.new(filename, 'r').read)
 				
-				status_message("Imported #{@filename} ...")
+				status_message("Imported #{File.basename(filename)} ...")
 			rescue Exception
 				show_message(Gtk::Stock::DIALOG_ERROR, "<b>Error while importing from #{filename}</b>", "<i>#{$!}</i>")
 				STDERR.puts("Error in import: #{$!}\n\t#{$@.join("\n\t")}")
@@ -1049,6 +1049,8 @@ module Cpg
 					@monitor = nil
 					@normal_group.get_action('ViewMonitorAction').active = false
 				end
+				
+				@normal_group.get_action('ViewMonitorAction').active = true
 			end
 		end
 	
@@ -1068,6 +1070,8 @@ module Cpg
 					@control = nil
 					@normal_group.get_action('ViewControlAction').active = false
 				end
+				
+				@normal_group.get_action('ViewControlAction').active = true
 				
 				@control.signal_connect('pause_simulation') do |w|
 					if @simulation.running?
