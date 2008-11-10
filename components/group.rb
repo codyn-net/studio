@@ -92,6 +92,8 @@ module Cpg::Components
 		property :__main, :__klass, :__x, :__y
 		invisible :__klass, :__x, :__y, :__main
 		read_only :__main, :__klass, :__x, :__y
+		
+		FADE_MIN = 0.1
 	
 		def initialize
 			super
@@ -267,8 +269,8 @@ module Cpg::Components
 		def animate(ts)
 			ret = @renderer && @renderer.respond_to?(:animate) && @renderer.animate(self, ts)
 			
-			if (@mousein && @fadetrans > 0.3 && !@waitsource) || (!@mousein && @fadetrans < 1)
-				@fadetrans *= (@mousein ? 1 / 1.15 : 1.15)
+			if (@mousein && @fadetrans > FADE_MIN && !@waitsource) || (!@mousein && @fadetrans < 1)
+				@fadetrans *= (@mousein ? 1 / 1.2 : 1.2)
 				return true
 			end
 			
