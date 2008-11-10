@@ -205,6 +205,18 @@ module Cpg
 			
 			return [-3, 3]
 		end
+		
+		def sort_hooks(a, b)
+			# [obj, container]
+			# make sure to sort correctly
+			if a[1][:graph] != b[1][:graph]
+				0
+			else
+				g = a[1][:graph]
+				
+				g.data.index(a[1][:plot]) <=> g.data.index(b[1][:plot])
+			end
+		end
 	
 		def add_hook_real(obj, prop, state)
 			@map[obj].each do |p|
