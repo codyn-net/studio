@@ -1,10 +1,13 @@
 require 'graph'
 require 'stock'
 require 'objectlist'
+require 'signalregistry'
 
 module Cpg
 	class Hook < Gtk::Window
 		type_register
+	
+		include SignalRegistry
 	
 		def initialize(h = {})
 			super(h)
@@ -42,14 +45,13 @@ module Cpg
 			@vbox_main.pack_start(@vbox_content, true, true, 0)
 
 			@map = {}
-			@signals = {}
 		
 			add(@vbox_main)
 
 			set_default_size(500, 400)
 			@vbox_main.show_all
 			
-			signal_register(Application.instance.grid, 'object_removed') { |g, o| remove_hook(o) }
+			connect(Application.instance.grid, 'object_removed') { |g, o| remove_hook(o) }
 		end
 		
 		def create_objectlist
@@ -79,16 +81,6 @@ module Cpg
 			@objlstsw = sw
 		end
 		
-		def signals_unregister(obj)
-			@signals[obj].each { |x| obj.signal_handler_disconnect(x) } if @signals.include?(obj)
-			@signals.delete(obj)
-		end
-		
-		def signal_register(obj, signal)
-			@signals[obj] ||= []
-			@signals[obj] << obj.signal_connect(signal) { |*args| yield *args }
-		end
-		
 		def content_area
 			# should override
 			Gtk::VBox.new(false, 3)
@@ -97,7 +89,7 @@ module Cpg
 		def signal_do_destroy
 			super
 			
-			@signals.keys.each { |obj| signals_unregister(obj) }
+			cleanup_signals
 			@map.each { |o,v| remove_hook(o) }
 		end
 		
@@ -134,7 +126,7 @@ module Cpg
 		def install_object(obj, prop)
 			@map[obj] = []
 
-			signal_register(obj, 'property_removed') do |o,p|
+			connect(obj, 'property_removed') do |o,p|
 				remove_hook(o, p)
 			end
 		end
@@ -182,7 +174,7 @@ module Cpg
 			end
 
 			if @map[obj].empty?
-				signals_unregister(obj)
+				disconnect(obj)
 				@map.delete(obj)
 			end
 			

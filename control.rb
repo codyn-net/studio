@@ -160,7 +160,7 @@ module Cpg
 		def install_object(obj, prop)
 			super
 			
-			signal_register(obj, 'property_changed') do |o, p|
+			connect(obj, 'property_changed') do |o, p|
 				@map[obj].each do |x|
 					if ['display', 'id', 'equation', 'label'].include?(p)
 						t = property_name(obj, x[:prop])
@@ -184,12 +184,12 @@ module Cpg
 				end
 			end
 
-			signal_register(obj, 'range_changed') do |o, p|
+			connect(obj, 'range_changed') do |o, p|
 				o = @map[obj].find { |x| x[:prop] == p }
 				update_range(obj, o) if o
 			end
 		
-			signal_register(obj, 'initial_changed') do |o, p|
+			connect(obj, 'initial_changed') do |o, p|
 				o = @map[obj].find { |x| x[:prop] == p }
 				update_initial(obj, o) if o
 			end

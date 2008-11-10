@@ -60,9 +60,9 @@ module Cpg
 
 			build
 			
-			signal_register(Simulation.instance, 'step') { |s| update(s.timestep) }
-			signal_register(Simulation.instance, 'period_start') { |s, from, timestep, to| do_period_start(from, timestep, to) }
-			signal_register(Simulation.instance, 'period_stop') { |s| do_period_stop }
+			connect(Simulation.instance, 'step') { |s| update(s.timestep) }
+			connect(Simulation.instance, 'period_start') { |s, from, timestep, to| do_period_start(from, timestep, to) }
+			connect(Simulation.instance, 'period_stop') { |s| do_period_stop }
 		
 			set_default_size(500, 400)
 			
@@ -164,7 +164,7 @@ module Cpg
 		def install_object(obj, prop)
 			super
 			
-			signal_register(obj, 'property_changed') do |o, p| 
+			connect(obj, 'property_changed') do |o, p| 
 				if ['display', 'label', 'equation', 'id'].include?(p)
 					update_title(o, prop)
 				end
@@ -174,7 +174,7 @@ module Cpg
 		def remove_hook_real(obj, container)
 			g = container[:graph]
 			
-			g.signal_handler_disconnect(container[:configure]) if container[:configure]
+			g.signal_handler_disconnect(container[:configure]) if container[:configure] && !g.destroyed?
 
 			if g.num_plots > 1
 				# prevent removal of graph

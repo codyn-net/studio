@@ -1,8 +1,11 @@
 require 'gtk2'
+require 'signalregistry'
 
 module Cpg
 	class ObjectList < Gtk::TreeView
 		type_register
+		
+		include SignalRegistry
 		
 		signal_new('toggled',
 				   GLib::Signal::RUN_LAST,
@@ -22,8 +25,6 @@ module Cpg
 		def initialize
 			super
 			
-			@signals = {}
-
 			build
 		end
 		
@@ -32,7 +33,7 @@ module Cpg
 			
 			if child
 				begin
-					signals_unregister(child[0])
+					disconnect(child[0])
 				end while child.next!
 			end
 			
@@ -121,21 +122,21 @@ module Cpg
 				end
 			end
 			
-			signal_register(Application.instance.grid, 'object_added') do |g, obj|
+			connect(Application.instance.grid, 'object_added') do |g, obj|
 				# check needed because signal is also emitted from objects within
 				# a group, but we don't want to show those
 				add_object(obj) if Application.instance.grid.current.include?(obj)
 			end
 			
-			signal_register(Application.instance.grid, 'object_removed') do |g, obj|
+			connect(Application.instance.grid, 'object_removed') do |g, obj|
 				remove_object(obj)
 			end
 			
-			signal_register(Application.instance.grid, 'level_down') do |g, obj|
+			connect(Application.instance.grid, 'level_down') do |g, obj|
 				init_store
 			end
 			
-			signal_register(Application.instance.grid, 'level_up') do |g, obj|
+			connect(Application.instance.grid, 'level_up') do |g, obj|
 				init_store
 			end
 		end
@@ -144,19 +145,9 @@ module Cpg
 			super
 			
 			# unregister signals
-			@signals.keys.each { |obj| signals_unregister(obj) }
+			cleanup_signals
 		end
 		
-		def signals_unregister(obj)
-			@signals[obj].each { |x| obj.signal_handler_disconnect(x) }
-			@signals.delete(obj)
-		end
-		
-		def signal_register(obj, signal)
-			@signals[obj] ||= []
-			@signals[obj] << obj.signal_connect(signal) { |*args| yield *args }
-		end
-	
 		def find(obj, prop = nil)
 			parent = @store.iter_first
 			return nil unless parent
@@ -200,7 +191,7 @@ module Cpg
 			if parent
 				@store.remove(parent)
 			
-				signals_unregister(obj)
+				disconnect(obj)
 			end
 		end
 		
@@ -216,8 +207,8 @@ module Cpg
 			
 			check_consistency(parent)
 			
-			signal_register(obj, 'property_added') { |o, p| property_added(o, p) }
-			signal_register(obj, 'property_removed') { |o, p| property_removed(o, p) }
+			connect(obj, 'property_added') { |o, p| property_added(o, p) }
+			connect(obj, 'property_removed') { |o, p| property_removed(o, p) }
 
 			self.expand_row(parent.path, false)
 		end

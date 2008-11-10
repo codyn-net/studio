@@ -5,10 +5,13 @@ require 'components/gridobject'
 require 'components/group'
 require 'utils'
 require 'groupproperties'
+require 'signalregistry'
 
 module Cpg
 	class Grid < Gtk::DrawingArea
 		type_register
+		
+		include SignalRegistry
 	
 		signal_new('activated',
 			GLib::Signal::RUN_LAST,
@@ -85,8 +88,7 @@ module Cpg
 			@grid_size = @default_grid_size
 			@hover = []
 			@focus = nil
-			@signals = {}
-		
+
 			@grid_background = [1, 1, 1]
 			@grid_line = [0.9, 0.9, 0.9]
 
@@ -98,24 +100,6 @@ module Cpg
 			end
 		end
 		
-		def signal_register(obj, signal, usewhat = :signal_connect)
-			@signals[obj] ||= []
-			@signals[obj] << obj.send(usewhat, signal) { |*args| yield *args }
-		end
-		
-		def signal_unregister(obj)
-			return unless @signals[obj]
-			@signals[obj].each { |x| obj.signal_handler_disconnect(x) }
-			
-			@signals.delete(obj)
-		end
-		
-		def signal_unregister_all
-			@signals.each do |obj, signals|
-				signals.each { |x| obj.signal_handler_disconnect(x) }
-			end
-		end
-	
 		def current
 			@object_stack.first[:group]
 		end
@@ -1063,19 +1047,19 @@ module Cpg
 		end
 	
 		def signal_do_object_added(obj)
-			signal_unregister(obj)
+			disconnect(obj)
 			
 			['property_changed', 'property_added', 'property_removed'].each do |name|
-				signal_register(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
+				connect(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
 			end
 
 			['initial_changed', 'range_changed'].each do |name|
-				signal_register(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
+				connect(obj, name, :signal_connect_after) { |*args| signal_emit('modified') }
 			end
 		end
 	
 		def signal_do_object_removed(obj)
-			signal_unregister(obj)
+			disconnect(obj)
 		end
 		
 		def do_move(dx, dy, move_canvas = false)
