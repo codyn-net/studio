@@ -37,11 +37,15 @@ module Cpg
 		
 		def control_position(obj, prop)
 			h = find_hook(obj, prop)
+			
+			return unless h
 			@content.get_position(h[:widget])
 		end
 		
 		def set_control_position(obj, prop, x, y)
 			h = find_hook(obj, prop)
+			
+			return unless h
 			@content.child_position(h[:widget], x, y)
 		end
 		

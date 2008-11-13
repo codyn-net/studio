@@ -152,9 +152,14 @@ module Cpg
 			redraw
 		end
 		
-		def set_ticks(width, start)
+		def set_ticks(width, start = 0)
 			# width is the number of pixels per tick unit
 			# start is the tick unit value from the left
+			if width == 0
+				@ticks = nil
+			else
+				@ticks = {:start => start, :width => width}
+			end
 		end
 		
 		def <<(data)
@@ -210,14 +215,33 @@ module Cpg
 			ctx.set_source_rgb(*d.color)
 			ctx.line_width = 2
 		end
+		
+		def draw_tick(ctx, where)
+			ctx.move_to(where, 0)
+			ctx.line_to(where, -5.5)
+			ctx.stroke
+		end
 	
 		def draw_xaxis(ctx, from)
+			w = allocation.width
 			ctx.move_to(from, 0)
 		
 			ctx.set_source_rgb(0, 0, 0)
 			ctx.line_width = 1
-			ctx.line_to(allocation.width, 0)
+			ctx.line_to(w, 0)
 			ctx.stroke
+			
+			# draw ticks
+			return unless @ticks
+			tw = @ticks[:width]
+			ts = @ticks[:start]
+			
+			ms = (ts + from / tw.to_f).ceil
+			
+			while ms < w
+				draw_tick(ctx, ms)
+				ms += tw
+			end
 		end
 	
 		def data_offset
@@ -358,9 +382,11 @@ module Cpg
 			
 			return if @data.empty?
 			
-			# find y position at @ruler[0] in data points		
+			# find y position at @ruler[0] in data points
+			normalize_rule_which
+			data = @data[@rule_which].data	
 			offset = data_offset
-			start = [samples.floor - (@data.first.data.length - offset), 0].max
+			start = [samples.floor - (data.length - offset), 0].max
 			dx, dy = scale
 			
 			dp = (@ruler[0] / dx)
@@ -379,10 +405,10 @@ module Cpg
 			pos1 = dpb + offset - start
 			pos2 = dpe + offset - start
 			
-			cy = (((@data.first.data[pos1] || 0) * factor) + ((@data.first.data[pos2] || 0) * (1 - factor)))
+			cy = (((data[pos1] || 0) * factor) + ((data[pos2] || 0) * (1 - factor)))
 			
 			# draw label first
-			s = format('%.2f', cy)
+			s = format('%.3f', cy)
 			e = ct.text_extents(s)
 			
 			ct.rectangle(@ruler[0] + 3, 1, e.width + 4, e.height + 4)
@@ -428,7 +454,7 @@ module Cpg
 			
 			return if t.empty?
 			
-			layout.markup = t.join(' / ')
+			layout.markup = t.join(', ')
 			
 			e = layout.pixel_size
 			ct.rectangle(1, 1, e[0] + 2 + 1, e[1] + 2 + 1)
@@ -485,20 +511,37 @@ module Cpg
 			# create new backbuffer
 			redraw
 		end
+		
+		def normalize_rule_which
+			@rule_which ||= 0
+
+			if @rule_which >= @data.length
+				@rule_which = 0
+			elsif @rule_which < 0
+				@rule_which = @data.length - 1
+			end
+		end
 	
 		def signal_do_scroll_event(event)
 			super
-		
-			factor = 0.2
-
+			
 			if event.direction == Gdk::EventScroll::UP
-				factor *= -1
+				direction = -1
 			elsif event.direction == Gdk::EventScroll::DOWN
-				factor *= 1
+				direction = 1
 			else
 				return
 			end
 			
+			if event.state.control_mask?
+				@rule_which += direction
+				normalize_rule_which
+				queue_draw
+
+				return
+			end
+		
+			factor = 0.2 * direction
 			dist = (@yaxis[1] - @yaxis[0]) / 2.0
 			
 			ax = [0, 0]

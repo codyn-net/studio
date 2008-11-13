@@ -147,7 +147,7 @@ module Cpg
 			s = "#{obj}.#{prop}"
 			
 			if obj.is_a?(Components::Link) && long
-				s << " #{obj.from} >> #{obj.to}"
+				s << " (#{obj.from} → #{obj.to})"
 			end
 			
 			s

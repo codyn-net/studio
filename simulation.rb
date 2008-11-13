@@ -33,6 +33,7 @@ module Cpg
 				nil)
 	
 		attr_accessor :timestep
+		attr_reader :range
 	
 		def self.new(*args)
 			if !@instance

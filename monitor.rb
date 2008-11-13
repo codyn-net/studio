@@ -142,6 +142,12 @@ module Cpg
 				@linkrulers = x.active?
 			end
 			
+			lbl = Gtk::Label.new('Time: ')
+			hbox.pack_start(lbl, false, false, 0)
+			@timelabel = Gtk::Label.new('')
+			@timelabel.xalign = 0
+			hbox.pack_start(@timelabel, true, true, 0)			
+			
 			but.active = @linkrulers
 			
 			hbox.pack_end(but, false, false, 0)
@@ -241,6 +247,7 @@ module Cpg
 			
 			g.signal_connect_after('motion_notify_event') do |o,ev|
 				do_linkrulers(g, ev) if @linkrulers && g.show_ruler
+				update_time_label(g, ev)
 			end
 			
 			g.signal_connect_after('leave_notify_event') do |o,ev|
@@ -420,7 +427,20 @@ module Cpg
 			data = Simulation.instance.monitor_data_resampled(obj, v[:prop], to)
 			data.collect! { |x| (x.to_f.nan? || x.to_f.infinite?) ? 0.0 : x.to_f } 
 
+			# time difference in seconds
+			d = @range[2] - @range[0]
+			
+			mindw = 10
+			ds = @range[1]
+			dw = numpix / (d / ds).to_f
+			
+			while dw < mindw
+				ds = ds * 10
+				dw = (numpix / (d / ds).to_f)
+			end
+
 			v[:plot].data = data || []
+			v[:graph].set_ticks(dw, @range[0])
 		end
 		
 		def update_monitor_data(obj, v)
@@ -486,6 +506,15 @@ module Cpg
 #					v[:graph] << Simulation.instance.monitor_data(obj, v[:prop])[-1]
 #				end
 #			end
+		end
+		
+		def update_time_label(g, ev)
+			return unless Simulation.instance.range
+			perc = ev.x / (g.allocation.width.to_f - 1)
+			
+			r = Simulation.instance.range
+			t = r[0] + (r[2] - r[0]) * perc
+			@timelabel.text = format('%.3f s', t)
 		end
 	end
 end
