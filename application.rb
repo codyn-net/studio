@@ -174,6 +174,7 @@ module Cpg
 				['PasteAction', Gtk::Stock::PASTE, nil, nil, 'Paste objects', Proc.new { |g,a| do_paste }],
 				['GroupAction', nil, 'Group', '<Control>g', 'Group objects', Proc.new { |g,a| do_group }],
 				['UngroupAction', nil, 'Ungroup', '<Control>u', 'Ungroup object', Proc.new { |g,a| do_ungroup }],
+				['ApplySettingsAction', nil, 'Apply settings', nil, 'Apply settings from a flat format', Proc.new { |g,a| do_apply_settings }],
 			
 				['AddStateAction', Stock::STATE, nil, nil, 'Add state', Proc.new { |g,a| @grid << Components::State }],
 				['AddLinkAction', Stock::LINK, nil, nil, 'Link objects', Proc.new { |g,a| @grid << Components::Link }],
@@ -430,6 +431,8 @@ module Cpg
 			
 			@filename = nil
 			@modified = false
+			@flat = nil
+
 			update_title
 		end
 	
@@ -759,9 +762,11 @@ module Cpg
 				if resp == Gtk::Dialog::RESPONSE_ACCEPT
 					if dlg.filter == filters[:xml] || (dlg.filter == filters[:auto] && !(dlg.filename =~ /\.txt$/))
 						@filename = dlg.filename
+						@flat = nil
 						do_save_xml
 					else
 						do_save_flat(dlg.filename)
+						@flat = dlg.filename
 					end
 				end
 			
@@ -774,7 +779,12 @@ module Cpg
 	
 		def do_save
 			if @filename != nil
-				do_save_xml
+				if !@flat
+					do_save_xml
+				else
+					do_save_flat(@flat)
+				end
+				
 				return
 			end
 		
@@ -1320,6 +1330,64 @@ module Cpg
 				@propertyview.destroy
 				@propertyview = nil
 			end
+		end
+		
+		def apply_settings(settings)
+			settings.split("\n").each do |line|
+				line.strip!
+				next if line.empty?
+				
+				parts = line.split(/\t+/, 3)
+				next if parts.length != 3
+				
+				oname, pname, pval = parts
+				
+				@grid.root.each do |obj|
+					next if obj.id != oname
+
+					obj.set_property(pname, pval)
+					obj.set_initial_value(pname, pval)
+				end
+			end
+		end
+		
+		def do_apply_settings
+			if @settings_dlg
+				@settings_dlg.present
+				return
+			end
+			
+			@settings_dlg = Gtk::Dialog.new(
+				'Apply settings',
+				self,
+				Gtk::Dialog::DESTROY_WITH_PARENT,
+				[Gtk::Stock::APPLY, Gtk::Dialog::RESPONSE_ACCEPT],
+				[Gtk::Stock::CLOSE, Gtk::Dialog::RESPONSE_CLOSE]
+			)
+			
+			sw = Gtk::ScrolledWindow.new
+			sw.set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC)
+			sw.shadow_type = Gtk::SHADOW_ETCHED_IN
+			tv = Gtk::TextView.new
+			
+			tv.wrap_mode = Gtk::TextTag::WRAP_WORD_CHAR
+			sw << tv 
+
+			@settings_dlg.vbox << sw
+			@settings_dlg.has_separator = false
+			
+			@settings_dlg.signal_connect('response') do |d, r|
+				if r == Gtk::Dialog::RESPONSE_ACCEPT
+					apply_settings(tv.buffer.text)
+				end
+				
+				d.destroy
+				@settings_dlg = nil
+			end
+			
+			@settings_dlg.set_default_size(400, 300)
+			
+			@settings_dlg.show_all
 		end
 		
 		def signal_do_configure_event(ev)

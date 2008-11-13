@@ -21,6 +21,8 @@
       <separator/>
       <menuitem name="Group" action="GroupAction" />
       <menuitem name="Ungroup" action="UngroupAction" />
+      <separator/>
+      <menuitem name="ApplySettings" action="ApplySettingsAction" />
     </menu>
     <menu name="ViewMenu" action="ViewMenuAction">
       <menuitem name="Center" action="CenterAction" />
