@@ -1,4 +1,5 @@
 require 'components/simulatedobject'
+require 'simulation'
 require 'cairo'
 require 'mathcontext'
 
@@ -27,12 +28,24 @@ module Cpg::Components
 		end
 		
 		def display_s
-			v = Cpg::MathContext.new(Cpg::Simulation.instance.state).eval(self.display.to_s)
+			sim = Cpg::Simulation.instance
+			v = Cpg::MathContext.new(sim ? sim.state : nil, self.state).eval(self.display.to_s)
 			
 			if v.is_a?(Float)
 				format('%.2f', v)
 			else
 				v.to_s
+			end
+		end
+		
+		def draw_display(ct)
+			ds = display_s
+			
+			if !ds.empty?
+				e = ct.text_extents(ds)
+				ct.set_source_rgb(0, 0, 0)
+				ct.move_to((allocation.width - e.width) / 2.0, (allocation.height + e.height) / 2.0)
+				ct.show_text(ds)
 			end
 		end
 
@@ -55,14 +68,7 @@ module Cpg::Components
 			ct.set_source(@patinner)
 			ct.fill
 			
-			ds = display_s
-			
-			if !ds.empty?
-				e = ct.text_extents(ds)
-				ct.set_source_rgb(0, 0, 0)
-				ct.move_to((allocation.width - e.width) / 2.0, (allocation.height + e.height) / 2.0)
-				ct.show_text(ds)
-			end
+			draw_display(ct)
 			
 			ct.restore
 		

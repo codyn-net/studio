@@ -127,9 +127,11 @@ module Cpg::Components
 		end
 		
 		alias :main :__main
+		alias :main= :__main=
 		alias :x :__x
 		alias :y :__y
 		alias :klass :__klass
+		alias :klass= :__klass=
 		alias :x= :__x=
 		alias :y= :__y=
 	
@@ -404,7 +406,7 @@ module Cpg::Components
 			return super if (my_property(prop) or (self.__main && !self.__main.properties.include?(prop)))
 			self.__main.set_property(prop, val) if self.__main
 		end
-
+		
 		def self.propagate(func)
 			send :define_method, func do |*a|
 				return super if (my_property(a[0]) or (self.__main && !self.__main.properties.include?(a[0])))
@@ -422,5 +424,6 @@ module Cpg::Components
 		propagate :integrated?
 		propagate :set_range
 		propagate :get_range
+		propagate :class_property?
 	end
 end

@@ -426,6 +426,10 @@ module Cpg
 			ct.set_source_rgb(0, 0, 1)
 			ct.stroke
 		end
+		
+		def export(ct)
+			draw_objects(ct)
+		end
 
 		def signal_do_expose_event(event)
 			ct = window.create_cairo_context
@@ -434,8 +438,8 @@ module Cpg
 		
 			draw_background(ct)
 			draw_grid(ct)
-			draw_objects(ct)
-		
+			
+			export(ct)
 			draw_selection_rect(ct)
 		
 			true

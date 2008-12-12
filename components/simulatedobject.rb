@@ -1,8 +1,16 @@
 require 'components/gridobject'
+require 'serialize/hash'
+require 'serialize/array'
 
 module Cpg::Components
 	class SimulatedObject < GridObject
 		type_register
+		
+		signal_new('integrated_changed',
+			GLib::Signal::RUN_LAST,
+			nil,
+			nil,
+			String)
 
 		property :integrate, :allocation
 		read_only :integrate
@@ -44,10 +52,15 @@ module Cpg::Components
 			else
 				self.integrate.delete(name) if self.integrate.include?(name)
 			end
+			
+			signal_emit('integrated_changed', name)
 		end
 		
 		def integrated?(name)
 			self.integrate.include?(name)
+		end
+		
+		def signal_do_integrated_changed(prop)
 		end
 	end
 end

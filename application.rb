@@ -118,7 +118,7 @@ module Cpg
 					name = "#{pname}#{f.capitalize}Menu"
 					
 					group.add_actions([
-						["#{name}Action", nil, f.capitalize, nil, nil, nil]
+						["#{name}Action", nil, f.capitalize.gsub('_', '__'), nil, nil, nil]
 					])
 					
 					uiman.add_ui(mid, "/menubar/InsertMenu/#{parent}", name, "#{name}Action", Gtk::UIManager::MENU, false)
@@ -131,7 +131,7 @@ module Cpg
 				next unless File.file?(full)
 				next unless f =~ /\.cpg$/
 
-				name = f.gsub(/\.cpg$/, '').gsub(/[\s.-:]+/, '').capitalize
+				name = f.gsub(/\.cpg$/, '').gsub(/[.-:]+/, '').capitalize.gsub('_', '__')
 
 				group.add_actions([
 					["#{pname}#{name}Action", nil, name, nil, '', Proc.new { |g,a| import_from_file(full)}]
@@ -168,6 +168,8 @@ module Cpg
 				['ImportAction', nil, 'Import', nil, 'Import CPG network objects', Proc.new { |g,a| do_import }],
 				['ExportAction', nil, 'Export', '<Control>e', 'Export CPG network objects', Proc.new { |g,a| do_export }],
 				
+				['ExportGridAction', nil, 'Export grid', nil, 'Export grid view', Proc.new { |g,a| do_export_grid }],
+				
 				['QuitAction', Gtk::Stock::QUIT, nil, nil, 'Quit', Proc.new { |g,a| do_quit }],
 				
 				['EditMenuAction', nil, '_Edit', nil, nil, nil],
@@ -178,6 +180,8 @@ module Cpg
 			
 				['AddStateAction', Stock::STATE, nil, nil, 'Add state', Proc.new { |g,a| @grid << Components::State }],
 				['AddLinkAction', Stock::LINK, nil, nil, 'Link objects', Proc.new { |g,a| @grid << Components::Link }],
+				['AddSensorAction', Stock::SENSOR, nil, nil, 'Add sensor', Proc.new { |g,a| @grid << Components::Sensor }],
+				
 				['ViewMenuAction', nil, '_View', nil, nil, nil],
 				['CenterAction', Gtk::Stock::JUSTIFY_CENTER, nil, '<Control>h', 'Center view', Proc.new { |g,a| do_center_view }],
 				['InsertMenuAction', nil, '_Insert', nil, nil, nil],
@@ -880,7 +884,7 @@ module Cpg
 							 Gtk::FileChooser::ACTION_SAVE,
 							 nil,
 							 [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
-							 [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
+							 [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
 		
 			dlg.current_folder = File.dirname(@filename) if @filename
 			filters = add_save_filters(dlg)
@@ -954,13 +958,15 @@ module Cpg
 			
 			# start simulate period
 			t = Time.now
-			@simulation.simulate_period(from, step, to)
 			
-			status_message("Simulation finished in #{format('%.2f', Time.now - t)}s")
-			
-			# check if any of the values in any of the objects are invalid
-			if !check_object_values(@grid.current)
-				show_message(Gtk::Stock::DIALOG_ERROR, '<b>Unstable simulation</b>', '<i>NaN or Inifinite values were detected after the simulation. This generally means that the simulation was not numerically stable.</i>')
+			if (!@simulation.simulate_period(from, step, to))
+				show_message(Gtk::Stock::DIALOG_ERROR, '<b>Invalid Network</b>', '<i>Could not build network, please check if all your equations are valid.</i>')
+			else
+				status_message("Simulation finished in #{format('%.2f', Time.now - t)}s")
+				# check if any of the values in any of the objects are invalid
+				if !check_object_values(@grid.current)
+					show_message(Gtk::Stock::DIALOG_ERROR, '<b>Unstable simulation</b>', '<i>NaN or Inifinite values were detected after the simulation. This generally means that the simulation was not numerically stable.</i>')
+				end
 			end
 		end
 		
@@ -1135,7 +1141,7 @@ module Cpg
 			sets = objs.collect { |x| x.properties.keys.select { |p| !x.invisible?(p) }.to_set }
 			
 			# intersect on all sets
-			sets.inject { |v, a| v & a }
+			sets.inject { |v, a| v & a }.to_a
 		end
 	
 		def do_popup(button, time)
@@ -1151,15 +1157,17 @@ module Cpg
 			# merge monitor and control
 			objs = @grid.selection.dup
 			props = common_properties(objs)
+			
+			props.sort! { |a, b| ::Cpg.sort_properties(objs.first, a, b) }
 
-			if props && !props.empty?
+			if !props.empty?
 				['Monitor', 'Control'].each do |type|
 					props.each do |prop|
 						next if prop == 'id'
 						name = "#{type}#{prop}"
 						
 						@popupactiongroup.add_actions([
-							["#{name}Action", nil, prop.to_s, nil, nil, Proc.new { |g,a| send("start_#{type.downcase}", objs, prop) }]
+							["#{name}Action", nil, prop.to_s.gsub('_', '__'), nil, nil, Proc.new { |g,a| send("start_#{type.downcase}", objs, prop) }]
 						])
 						
 						@uimanager.add_ui(@popupmergeid, "/popup/#{type}Menu/#{type}Placeholder", name, "#{name}Action", Gtk::UIManager::MENUITEM, false) 
@@ -1335,7 +1343,7 @@ module Cpg
 		def apply_settings(settings)
 			settings.split("\n").each do |line|
 				line.strip!
-				next if line.empty?
+				next if line.empty? || line[0] == ?#
 				
 				parts = line.split(/\t+/, 3)
 				next if parts.length != 3
@@ -1379,10 +1387,10 @@ module Cpg
 			@settings_dlg.signal_connect('response') do |d, r|
 				if r == Gtk::Dialog::RESPONSE_ACCEPT
 					apply_settings(tv.buffer.text)
+				else
+					d.destroy
+					@settings_dlg = nil
 				end
-				
-				d.destroy
-				@settings_dlg = nil
 			end
 			
 			@settings_dlg.set_default_size(400, 300)
@@ -1396,6 +1404,58 @@ module Cpg
 			if @vpaned.position == 0
 				@vpaned.position = (@vpaned.allocation.height * 0.7).to_i
 			end
+		end
+		
+		def create_filter(pattern, name)
+			f = Gtk::FileFilter.new
+			f.add_pattern(pattern)
+			f.name = name
+			
+			f
+		end
+		
+		def do_export_grid
+			dlg = Gtk::FileChooserDialog.new('Export grid as image',
+					 self, 
+					 Gtk::FileChooser::ACTION_SAVE,
+					 nil,
+					 [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
+					 [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
+			
+			filters = [
+				{:class => nil, :filter => create_filter('*.*', 'Detect automatically')},
+				{:class => Cairo::PDFSurface, :filter => create_filter('*.pdf', 'PDF file')},
+				{:class => Cairo::PSSurface, :filter => create_filter('*.ps', 'PostScript file')},
+				{:class => Cairo::SVGSurface, :filter => create_filter('*.svg', 'SVG file')}
+			]
+			
+			filters.each { |f| dlg.add_filter(f[:filter]) }
+
+			return if dlg.run != Gtk::Dialog::RESPONSE_ACCEPT
+			fname = dlg.filename
+			
+			filter = filters.find { |x| x[:filter] == dlg.filter }
+			dlg.destroy
+			
+			klass = filter[:class]
+			
+			if klass == nil
+				# autodetect, fallback to pdf
+				if fname.downcase =~ /\.ps$/
+					klass = Cairo::PSSurface
+				elsif fname.downcase =~ /\.eps$/
+					klass = Cairo::PSSurface
+				elsif fname.downcase =~ /\.svg$/
+					klass = Cairo::SVGSurface
+				else
+					klass = Cairo::PDFSurface
+				end
+			end
+			
+			surface = klass.new(fname, @grid.allocation.width, @grid.allocation.height)
+			ct = Cairo::Context.new(surface)
+
+			@grid.export(ct)			
 		end
 	end
 end

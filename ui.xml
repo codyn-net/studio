@@ -1,53 +1,56 @@
 <ui>
   <menubar>
     <menu name="FileMenu" action="FileMenuAction">
-      <menuitem name="New" action="NewAction" />
-      <menuitem name="Open" action="OpenAction" />
+      <menuitem name="New" action="NewAction"/>
+      <menuitem name="Open" action="OpenAction"/>
       <separator/>
-      <menuitem name="Revert" action="RevertAction" />
+      <menuitem name="Revert" action="RevertAction"/>
       <separator/>
-      <menuitem name="Save" action="SaveAction" />
-      <menuitem name="SaveAs" action="SaveAsAction" />
+      <menuitem name="Save" action="SaveAction"/>
+      <menuitem name="SaveAs" action="SaveAsAction"/>
       <separator/>
-      <menuitem name="Import" action="ImportAction" />
-      <menuitem name="Export" action="ExportAction" />
+      <menuitem name="Import" action="ImportAction"/>
+      <menuitem name="Export" action="ExportAction"/>
       <separator/>
-      <menuitem name="Quit" action="QuitAction" />
+      <menuitem name="ExportGrid" action="ExportGridAction"/>
+      <separator/>
+      <menuitem name="Quit" action="QuitAction"/>
     </menu>
     <menu name="EditMenu" action="EditMenuAction">
-      <menuitem name="Cut" action="CutAction" />
-      <menuitem name="Copy" action="CopyAction" />
-      <menuitem name="Paste" action="PasteAction" />
+      <menuitem name="Cut" action="CutAction"/>
+      <menuitem name="Copy" action="CopyAction"/>
+      <menuitem name="Paste" action="PasteAction"/>
       <separator/>
-      <menuitem name="Group" action="GroupAction" />
-      <menuitem name="Ungroup" action="UngroupAction" />
+      <menuitem name="Group" action="GroupAction"/>
+      <menuitem name="Ungroup" action="UngroupAction"/>
       <separator/>
-      <menuitem name="ApplySettings" action="ApplySettingsAction" />
+      <menuitem name="ApplySettings" action="ApplySettingsAction"/>
     </menu>
     <menu name="ViewMenu" action="ViewMenuAction">
-      <menuitem name="Center" action="CenterAction" />
+      <menuitem name="Center" action="CenterAction"/>
       <separator/>
       <menuitem name="ViewMonitor" action="ViewMonitorAction"/>
       <menuitem name="ViewControl" action="ViewControlAction"/>
       <separator/>
-      <menuitem name="PropertyEditor" action="PropertyEditorAction" />
+      <menuitem name="PropertyEditor" action="PropertyEditorAction"/>
     </menu>
     <menu name="InsertMenu" action="InsertMenuAction">
-      <menuitem name="AddState" action="AddStateAction" />
-      <menuitem name="AddLink" action="AddLinkAction" />
+      <menuitem name="AddState" action="AddStateAction"/>
+      <menuitem name="AddLink" action="AddLinkAction"/>
+      <menuitem name="AddSensor" action="AddSensorAction"/>
       <separator/>
       <placeholder name="InsertTemplates"/>
     </menu>
   </menubar>
   <popup>
     <menu name="InsertMenu" action="InsertMenuAction">
-      <menuitem name="AddState" action="AddStateAction" />
-      <menuitem name="AddLink" action="AddLinkAction" />
+      <menuitem name="AddState" action="AddStateAction"/>
+      <menuitem name="AddLink" action="AddLinkAction"/>
       <separator/>
       <placeholder name="InsertTemplates"/>
     </menu>
     <separator/>
-    <menuitem name="Properties" action="PropertiesAction" />
+    <menuitem name="Properties" action="PropertiesAction"/>
     <separator/>
     <menu name="MonitorMenu" action="MonitorMenuAction">
    	  <placeholder name="MonitorPlaceholder"/>
@@ -65,14 +68,15 @@
     <toolitem name="Open" action="OpenAction"/>
     <toolitem name="Save" action="SaveAction"/>
     <separator/>
-    <toolitem name="Cut" action="CutAction" />
-    <toolitem name="Copy" action="CopyAction" />
-    <toolitem name="Paste" action="PasteAction" />
+    <toolitem name="Cut" action="CutAction"/>
+    <toolitem name="Copy" action="CopyAction"/>
+    <toolitem name="Paste" action="PasteAction"/>
     <separator/>
     <toolitem name="Delete" action="DeleteAction"/>
     <separator/>
     <toolitem name="AddState" action="AddStateAction"/>
     <toolitem name="AddLink" action="AddLinkAction"/>
+    <toolitem name="AddSensor" action="AddSensorAction"/>
     <separator/>
     <placeholder name="ToolItems"/>
   </toolbar>

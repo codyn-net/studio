@@ -148,6 +148,21 @@ module Cpg
 			end
 		end
 	end
+	
+	def self.sort_properties(obj, a, b)
+		if a == 'id'
+			-1
+		elsif b == 'id'
+			1
+		elsif obj.class_property?(a) && !obj.class_property?(b)
+			-1
+		elsif !obj.class_property?(a) && obj.class_property?(b)
+			1
+		else
+			ret = a.downcase <=> b.downcase
+			ret == 0 ? a <=> b : ret
+		end
+	end
 
 	class Array < ::Array
 		include SortedArray

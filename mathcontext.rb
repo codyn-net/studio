@@ -14,7 +14,7 @@ module Cpg
 		include Math
 		
 		def merge(state)
-			@state.merge!(state)
+			@state.merge!(state) if state
 		end
 
 		def initialize(*vars)

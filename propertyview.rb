@@ -1,4 +1,5 @@
 require 'gtk2'
+require 'utils'
 
 module Cpg
 	class PropertyView < Gtk::VBox
@@ -35,13 +36,7 @@ module Cpg
 			tv = Gtk::TreeView.new(@store)
 
 			@store.set_sort_func(1) do |a, b|
-				if a[0] == 'id'
-					-1
-				elsif b[0] == 'id'
-					1
-				else
-					a[0] <=> b[0]
-				end
+				::Cpg.sort_properties(@object, a[0], b[0])
 			end
 			
 			@store.set_sort_column_id(1, Gtk::SORT_ASCENDING)

@@ -32,13 +32,18 @@ module Cpg
 				if @map.include?(obj)
 					@handlemodified = false
 					
-					# set property value we can do					
-					if obj.initial_value(prop).to_s.empty?
-						@network.set_initial(@map[obj], prop, obj.get_property(prop).to_s)
+					if obj.is_a?(Components::Link)
+						@network = nil				
 						queue_resimulate
-					else
-						@network.set_value(@map[obj], prop.to_s, obj.get_property(prop).to_s)
-					end
+					elsif @network
+						# set property value we can do				
+						if obj.initial_value(prop).to_s.strip.empty?
+							@handlemodified = false
+							@network.set_initial(@map[obj], prop, obj.get_property(prop).to_s)
+						else
+							@network.set_value(@map[obj], prop, obj.get_property(prop).to_s)
+						end
+					end				
 				end
 			end
 			
@@ -51,16 +56,22 @@ module Cpg
 					v = obj.get_property(prop).to_s if v.empty?
 					@map[obj].add_property(prop, v, obj.is_a?(Components::SimulatedObject) ? obj.integrated?(prop) : false)
 					# make sure to taint the network so it recompiles
-					@network.taint
+					@network.taint if @network
 				end
 			end
 
 			obj.signal_connect('initial_changed') do |obj, prop|
 				if @map.include?(obj)
 					@handlemodified = false
-				
-					# handle initial changed we can do
-					@network.set_initial(@map[obj], prop, obj.initial_value(prop).to_s)
+					
+					if obj.is_a?(Components::Link)
+						@network = nil
+						
+						queue_resimulate
+					elsif @network				
+						# handle initial changed we can do
+						@network.set_initial(@map[obj], prop, obj.initial_value(prop).to_s)
+					end
 					
 					queue_resimulate
 				end
@@ -69,6 +80,14 @@ module Cpg
 			obj.signal_connect('range_changed') do |obj, prop|
 				# do not handle modified because we don't care about the range
 				@handlemodified = false
+			end
+			
+			if obj.is_a?(Components::SimulatedObject)
+				obj.signal_connect('integrated_changed') do |obj, prop|
+					# sorry, need to rebuild
+					@network = nil
+					queue_resimulate
+				end
 			end
 		end
 		
@@ -146,12 +165,19 @@ module Cpg
 				vars = o.node.act_on.to_s.split(/\s*,\s*/)
 				eq = o.node.equation.to_s.split(/\s*,\s*/, vars.length)
 				
+				if vars.length != eq.length
+					@network = nil
+					break
+				end
+				
 				eq.each_with_index do |e, idx|
 					link.add_action(vars[idx], e)
 				end
 				
 				@network << link
 			end
+			
+			return unless @network
 			
 			# make sure to complete the mapping from real obj -> cobj
 			@map = {}
@@ -190,7 +216,7 @@ module Cpg
 		
 		def resimulate
 			return unless @range and !@monitors.empty?
-			
+
 			reset
 			simulate_period(*@range)
 		end
@@ -201,7 +227,7 @@ module Cpg
 			if !@network
 				build_network
 				
-				return unless @network
+				return false unless @network
 			end
 			
 			@simulation_source = true
@@ -219,6 +245,8 @@ module Cpg
 
 			signal_emit('period_stop')			
 			@simulation_source = nil
+			
+			true
 		end
 		
 		alias :orig_set_monitor :set_monitor

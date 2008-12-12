@@ -135,6 +135,7 @@ module Cpg
 			range[1] = 3 unless range[1]
 						
 			dist = (range[1] - range[0]) / 2.0
+			
 			self.yaxis = [range[0] - dist * 0.2, range[1] + dist * 0.2]
 		end
 	
@@ -145,8 +146,8 @@ module Cpg
 				@yaxis[0] = -1
 				@yaxis[1] = 1
 			elsif @yaxis[0] == @yaxis[1]
-				@yaxis[0] -= 0.2 * @yaxis[0]
-				@yaxis[1] += 0.2 * @yaxis[1]
+				@yaxis[0] -= 0.2 * @yaxis[0].abs
+				@yaxis[1] += 0.2 * @yaxis[1].abs
 			end
 			
 			redraw

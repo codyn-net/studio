@@ -1,0 +1,135 @@
+<?xml version='1.0'?>
+<cpg>
+  <property name='controls'>
+    <array/>
+  </property>
+  <property name='pane_position' value='276'/>
+  <property name='controls_size'>
+    <array>
+      <property name='1' value=''/>
+      <property name='1' value=''/>
+    </array>
+  </property>
+  <property name='monitor_window_size'>
+    <array>
+      <property name='-1' value=''/>
+      <property name='-1' value=''/>
+    </array>
+  </property>
+  <property name='period' value='0:0.001:6'/>
+  <property name='allocation'>
+    <allocation>
+      <property name='x' value='132'/>
+      <property name='y' value='37'/>
+      <property name='height' value='697'/>
+      <property name='width' value='700'/>
+    </allocation>
+  </property>
+  <property name='control_window_size'>
+    <array>
+      <property name='-1' value=''/>
+      <property name='-1' value=''/>
+    </array>
+  </property>
+  <property name='monitors'>
+    <array/>
+  </property>
+  <property name='monitors_size'>
+    <array>
+      <property name='1' value=''/>
+      <property name='1' value=''/>
+    </array>
+  </property>
+  <property name='zoom' value='80.0'/>
+  <group id='phase'>
+    <property name='__x' value='-274.568421052632'/>
+    <property name='__y' value='-115.236842105263'/>
+    <property name='__klass' value='Oscillator'/>
+    <property name='__main' ref='phase'/>
+    <property name='allocation'>
+      <allocation>
+        <property name='x' value='6'/>
+        <property name='y' value='2'/>
+        <property name='height' value='1'/>
+        <property name='width' value='1'/>
+      </allocation>
+    </property>
+    <property name='range'>
+      <hash/>
+    </property>
+    <property name='integrate'>
+      <array/>
+    </property>
+    <property name='initial'>
+      <hash>
+        <property name='P' value='0'/>
+      </hash>
+    </property>
+    <state id='phase'>
+      <property name='g_c' value='1'/>
+      <property name='w' value='2 * PI'/>
+      <property name='x' value='r * cos(p) + c'/>
+      <property name='c' value='C'/>
+      <property name='C' value='0'/>
+      <property name='y' value='r * sin(p)'/>
+      <property name='g_r' value='1'/>
+      <property name='p' value='P'/>
+      <property name='P' value='0'/>
+      <property name='allocation'>
+        <allocation>
+          <property name='x' value='6'/>
+          <property name='y' value='2'/>
+          <property name='height' value='1'/>
+          <property name='width' value='1'/>
+        </allocation>
+      </property>
+      <property name='r' value='R'/>
+      <property name='R' value='1'/>
+      <property name='range'>
+        <hash>
+          <property name='x' value=''/>
+        </hash>
+      </property>
+      <property name='integrate'>
+        <array>
+          <property name='phase' value=''/>
+          <property name='r' value=''/>
+          <property name='p' value=''/>
+          <property name='xs' value=''/>
+          <property name='c' value=''/>
+        </array>
+      </property>
+      <property name='initial'>
+        <hash>
+          <property name='w' value='2 * PI'/>
+          <property name='r' value='R'/>
+          <property name='x' value='r * cos(p) + c'/>
+          <property name='p' value='P'/>
+          <property name='R' value='1'/>
+          <property name='y' value='r * sin(p)'/>
+          <property name='g_r' value='1'/>
+          <property name='C' value='0'/>
+          <property name='c' value='C'/>
+          <property name='g_c' value='1'/>
+          <property name='P' value='0'/>
+        </hash>
+      </property>
+    </state>
+    <link id='update'>
+      <property name='eq_r' value='g_r * (R ** 2 - r ** 2) * r'/>
+      <property name='label' value='update'/>
+      <property name='equation' value='eq_r, eq_p, eq_c'/>
+      <property name='from' ref='phase'/>
+      <property name='act_on' value='r, p, c'/>
+      <property name='to' ref='phase'/>
+      <property name='eq_c' value='g_c * (C - c)'/>
+      <property name='range'>
+        <hash/>
+      </property>
+      <property name='eq_p' value='w'/>
+      <property name='initial'>
+        <hash/>
+      </property>
+    </link>
+  </group>
+</cpg>
