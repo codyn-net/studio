@@ -269,14 +269,16 @@ module Cpg::Components
 		end
 		
 		def animate(ts)
-			ret = @renderer && @renderer.respond_to?(:animate) && @renderer.animate(self, ts)
+			return false
 			
-			if (@mousein && @fadetrans > FADE_MIN && !@waitsource) || (!@mousein && @fadetrans < 1)
-				@fadetrans *= (@mousein ? 1 / 1.2 : 1.2)
-				return true
-			end
-			
-			return ret
+#			ret = @renderer && @renderer.respond_to?(:animate) && @renderer.animate(self, ts)
+#			
+#			if (@mousein && @fadetrans > FADE_MIN && !@waitsource) || (!@mousein && @fadetrans < 1)
+#				@fadetrans *= (@mousein ? 1 / 1.2 : 1.2)
+#				return true
+#			end
+#			
+#			return ret
 		end
 		
 		def set_klass_real(klass)

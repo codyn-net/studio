@@ -142,9 +142,7 @@ module Cpg
 				nmap[o] = state = (o.is_a?(FlatFormat::Relay) ? CCpg::Relay : CCpg::State).new(o.fullname)
 								
 				o.state.keys.each do |prop|
-					v = o.node.initial_value(prop).to_s
-					v = o.node.get_property(prop).to_s if v.empty?
-
+					v = FlatFormat.property_value(o.node, prop)
 					state.add_property(prop.to_s, v, o.node.integrated?(prop) ? true : false)
 				end
 				
@@ -156,8 +154,7 @@ module Cpg
 				nmap[o] = link = CCpg::Link.new(o.fullname, nmap[map[o.from]], nmap[map[o.to]])
 				
 				o.state.keys.each do |prop|
-					v = o.node.initial_value(prop).to_s
-					v = o.node.get_property(prop).to_s if v.empty?
+					v = FlatFormat.property_value(o.node, prop)
 					 
 					link.add_property(prop.to_s, v, false)
 				end

@@ -122,9 +122,9 @@ module Cpg::Components
 			end
 		
 			if @selected	
-				ct.set_source_rgb(0.8, 0.8, 1)
+				ct.set_source_rgba(0.6, 0.6, 1, 0.6)
 			else
-				ct.set_source_rgb(0.8, 0.8, 0.8)
+				ct.set_source_rgba(0.7, 0.7, 0.7, 0.6)
 			end
 			
 			if @focus

@@ -102,6 +102,12 @@ module Cpg
 		def self.reformat(name)
 			name.to_s.gsub(/\t+/, ' ')
 		end
+		
+		def self.property_value(node, prop)
+			initial = node.initial_value(prop).to_s
+			
+			initial.empty? ? node.get_property(prop) : initial
+		end
 
 		def self.format(objects)
 			s = "# CPG Network File\n"
@@ -118,7 +124,7 @@ module Cpg
 				s += "#{o.is_a?(Relay) ? "relay" : "state"}\n#{reformat(o.fullname)}\n"
 				
 				o.state.keys.each do |prop|
-					s += "#{prop}\t#{reformat(o.node.initial_value(prop))}\t#{o.node.integrated?(prop) ? '1' : '0'}\n"
+					s += "#{prop}\t#{reformat(property_value(o.node, prop))}\t#{o.node.integrated?(prop) ? '1' : '0'}\n"
 				end
 				
 				s += "\n"
@@ -128,7 +134,7 @@ module Cpg
 				s += "link\n#{reformat(o.fullname)}\n#{reformat(map[o.from].fullname)}\n#{reformat(map[o.to].fullname)}\n"
 				
 				o.state.keys.each do |prop|					
-					s += "#{prop}\t#{reformat(o.node.get_property(prop))}\t0\n"
+					s += "#{prop}\t#{reformat(property_value(o.node, prop))}\t0\n"
 				end
 				
 				s += "\n"
