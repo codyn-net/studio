@@ -181,6 +181,7 @@ module Cpg
 				['AddStateAction', Stock::STATE, nil, nil, 'Add state', Proc.new { |g,a| @grid << Components::State }],
 				['AddLinkAction', Stock::LINK, nil, nil, 'Link objects', Proc.new { |g,a| @grid << Components::Link }],
 				['AddSensorAction', Stock::SENSOR, nil, nil, 'Add sensor', Proc.new { |g,a| @grid << Components::Sensor }],
+				['AddRelayAction', Stock::RELAY, nil, nil, 'Add relay', Proc.new { |g,a| @grid << Components::Relay }],
 				
 				['ViewMenuAction', nil, '_View', nil, nil, nil],
 				['CenterAction', Gtk::Stock::JUSTIFY_CENTER, nil, '<Control>h', 'Center view', Proc.new { |g,a| do_center_view }],

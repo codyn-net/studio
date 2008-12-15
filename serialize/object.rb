@@ -151,7 +151,7 @@ module Cpg::Serialize::Object
 			end
 		end
 
-		# Get children if object supports it		
+		# Get children if object supports it
 		if self.is_a?(Enumerable)
 			each do |item|
 				elem << item.to_xml if item.is_a?(Cpg::Serialize::Object)

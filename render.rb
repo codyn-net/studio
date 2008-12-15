@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 
 require 'cairo'
-require 'components/sensor'
+require 'components/relay'
 
 surface = Cairo::SVGSurface.new("icon.svg", 22, 22)
 ct = Cairo::Context.new(surface)
@@ -14,5 +14,5 @@ ct.line_width = 1 / 22.0
 ct.font_size = ct.font_matrix.xx / 22.0
 
 ct.scale(22, 22)
-sensor = Cpg::Components::Sensor.new
+sensor = Cpg::Components::Relay.new
 sensor.draw(ct)

@@ -39,6 +39,9 @@ module Cpg
 			end
 		end
 		
+		class Relay < State
+		end
+		
 		class Link < Object
 			attr_accessor :from, :to
 
@@ -75,9 +78,12 @@ module Cpg
 				map[node] = Link.new(node, parent)
 				res << map[node]
 			else
-				# group or state
+				# group or state or relay
 				if parent && parent.main == node
 					merge_with_parent(map, node, parent)
+				elsif node.is_a?(Components::Relay)
+					map[node] = Relay.new(node, parent)
+					res << map[node]
 				else
 					map[node] = State.new(node, parent)
 					res << map[node]
@@ -109,7 +115,7 @@ module Cpg
 			
 			# map should now contain the full flattened structure
 			res.select { |x| !x.is_a?(Link) }.each do |o|
-				s += "state\n#{reformat(o.fullname)}\n"
+				s += "#{o.is_a?(Relay) ? "relay" : "state"}\n#{reformat(o.fullname)}\n"
 				
 				o.state.keys.each do |prop|
 					s += "#{prop}\t#{reformat(o.node.initial_value(prop))}\t#{o.node.integrated?(prop) ? '1' : '0'}\n"

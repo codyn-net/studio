@@ -38,6 +38,7 @@
       <menuitem name="AddState" action="AddStateAction"/>
       <menuitem name="AddLink" action="AddLinkAction"/>
       <menuitem name="AddSensor" action="AddSensorAction"/>
+      <menuitem name="AddRelay" action="AddRelayAction"/>
       <separator/>
       <placeholder name="InsertTemplates"/>
     </menu>
@@ -77,6 +78,7 @@
     <toolitem name="AddState" action="AddStateAction"/>
     <toolitem name="AddLink" action="AddLinkAction"/>
     <toolitem name="AddSensor" action="AddSensorAction"/>
+    <toolitem name="AddRelay" action="AddRelayAction"/>
     <separator/>
     <placeholder name="ToolItems"/>
   </toolbar>

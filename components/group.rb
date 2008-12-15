@@ -403,7 +403,7 @@ module Cpg::Components
 				return super
 			end
 		
-			return super if (my_property(prop) or (self.__main && !self.__main.properties.include?(prop)))
+			return super if (my_property(prop) or !self.__main or !self.__main.properties.include?(prop))
 			self.__main.set_property(prop, val) if self.__main
 		end
 		

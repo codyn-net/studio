@@ -48,6 +48,10 @@ module Cpg::Components
 				ct.show_text(ds)
 			end
 		end
+		
+		def line_color
+			[26 / 255.0, 80 / 255.0, 130 / 255.0]
+		end
 
 		def draw(ct)
 			ct.save
@@ -59,7 +63,7 @@ module Cpg::Components
 			ct.fill
 		
 			ct.line_width = uw * 2
-			ct.set_source_rgb(26 / 255.0, 80 / 255.0, 130 / 255.0)
+			ct.set_source_rgb(*line_color)
 		
 			off = uw * 2 + allocation.width * 0.1
 		

@@ -139,7 +139,7 @@ module Cpg
 			
 			# first add all the states
 			res.select { |x| !x.is_a?(FlatFormat::Link) }.each do |o|
-				nmap[o] = state = CCpg::State.new(o.fullname)
+				nmap[o] = state = (o.is_a?(FlatFormat::Relay) ? CCpg::Relay : CCpg::State).new(o.fullname)
 								
 				o.state.keys.each do |prop|
 					v = o.node.initial_value(prop).to_s

@@ -3,8 +3,6 @@ require 'utils'
 
 module Cpg::Components
 	class Sensor < State
-		include Enumerable
-		
 		def initialize
 			super
 			

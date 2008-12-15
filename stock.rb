@@ -3,6 +3,7 @@ require 'gtk2'
 module Cpg
 	class Stock
 		STATE = :"cpg-state"
+		RELAY = :"cpg-relay"
 		LINK = :"cpg-link"
 		SENSOR = :"cpg-sensor"
 		CHAIN = :"cpg-chain"
@@ -17,6 +18,7 @@ module Cpg
 		end
 
 		Gtk::Stock.add(Stock::STATE, 'State')
+		Gtk::Stock.add(Stock::RELAY, 'Relay')
 		Gtk::Stock.add(Stock::LINK, 'Link')
 		Gtk::Stock.add(Stock::SENSOR, 'Sensor')
 		
@@ -25,6 +27,7 @@ module Cpg
 	
 		@factory = Gtk::IconFactory.new
 		@factory.add(Cpg::Stock::STATE.to_s, Gtk::IconSet.new(Gdk::Pixbuf.new(icon_path('state.png'))))
+		@factory.add(Cpg::Stock::RELAY.to_s, Gtk::IconSet.new(Gdk::Pixbuf.new(icon_path('relay.png'))))
 		@factory.add(Cpg::Stock::LINK.to_s, Gtk::IconSet.new(Gdk::Pixbuf.new(icon_path('link.png'))))
 		@factory.add(Cpg::Stock::SENSOR.to_s, Gtk::IconSet.new(Gdk::Pixbuf.new(icon_path('sensor.png'))))
 		
