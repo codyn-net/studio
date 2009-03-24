@@ -1,9 +1,0 @@
-<ui>
-  <menubar>
-    <menu name="File" action="FileMenuAction">
-      <menuitem name="Select" action="SelectAction"/>
-      <separator/>
-      <menuitem name="Close" action="CloseAction"/>
-    </menu>
-  </menubar>
-</ui>
