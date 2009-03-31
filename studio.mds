@@ -1,0 +1,16 @@
+<Combine name="studio" fileversion="2.0">
+  <Configurations active="Debug">
+    <Configuration name="Debug" ctype="CombineConfiguration">
+      <Entry build="True" name="studio" configuration="Debug" />
+    </Configuration>
+    <Configuration name="Release" ctype="CombineConfiguration">
+      <Entry build="True" name="studio" configuration="Release" />
+    </Configuration>
+  </Configurations>
+  <StartMode startupentry="studio" single="True">
+    <Execute type="None" entry="studio" />
+  </StartMode>
+  <Entries>
+    <Entry filename="studio.mdp" />
+  </Entries>
+</Combine>

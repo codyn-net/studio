@@ -1,0 +1,53 @@
+<Project name="studio" fileversion="2.0" DefaultNamespace="Cpg.Studio" language="C#" clr-version="Net_2_0" ctype="DotNetProject">
+  <Configurations active="Debug">
+    <Configuration name="Debug" ctype="DotNetProjectConfiguration">
+      <Output directory="bin/Debug" assembly="studio" />
+      <Build debugmode="True" target="Exe" />
+      <Execution runwithwarnings="True" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
+      <CodeGeneration compiler="Mcs" warninglevel="4" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
+    </Configuration>
+    <Configuration name="Release" ctype="DotNetProjectConfiguration">
+      <Output directory="bin/Release" assembly="studio" />
+      <Build debugmode="False" target="Exe" />
+      <Execution runwithwarnings="True" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
+      <CodeGeneration compiler="Mcs" warninglevel="4" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
+    </Configuration>
+  </Configurations>
+  <Contents>
+    <File name="gtk-gui/generated.cs" subtype="Code" buildaction="Compile" />
+    <File name="Window.cs" subtype="Code" buildaction="Compile" />
+    <File name="Application.cs" subtype="Code" buildaction="Compile" />
+    <File name="AssemblyInfo.cs" subtype="Code" buildaction="Compile" />
+    <File name="app.desktop" subtype="Code" buildaction="FileCopy" DeployService.TargetDirectoryId="Linux.DesktopApplications" />
+    <File name="ui.xml" subtype="Code" buildaction="EmbedAsResource" />
+    <File name="Stock.cs" subtype="Code" buildaction="Compile" />
+    <File name="Grid.cs" subtype="Code" buildaction="Compile" />
+    <File name="icons/chain.png" subtype="Code" buildaction="EmbedAsResource" />
+    <File name="icons/chain-broken.png" subtype="Code" buildaction="EmbedAsResource" />
+    <File name="icons/link.png" subtype="Code" buildaction="EmbedAsResource" />
+    <File name="icons/relay.png" subtype="Code" buildaction="EmbedAsResource" />
+    <File name="icons/sensor.png" subtype="Code" buildaction="EmbedAsResource" />
+    <File name="icons/state.png" subtype="Code" buildaction="EmbedAsResource" />
+    <File name="gtk-gui/gui.stetic" subtype="Code" buildaction="EmbedAsResource" />
+    <File name="components" subtype="Directory" buildaction="Compile" />
+    <File name="components/Group.cs" subtype="Code" buildaction="Compile" />
+    <File name="components/Object.cs" subtype="Code" buildaction="Compile" />
+    <File name="components/State.cs" subtype="Code" buildaction="Compile" />
+    <File name="components/Link.cs" subtype="Code" buildaction="Compile" />
+    <File name="Allocation.cs" subtype="Code" buildaction="Compile" />
+    <File name="components/Relay..cs" subtype="Code" buildaction="Compile" />
+    <File name="components/Simulated.cs" subtype="Code" buildaction="Compile" />
+    <File name="components/Network.cs" subtype="Code" buildaction="Compile" />
+  </Contents>
+  <References>
+    <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <ProjectReference type="Gac" localcopy="True" refto="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <ProjectReference type="Gac" localcopy="True" refto="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <ProjectReference type="Gac" localcopy="True" refto="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <ProjectReference type="Gac" localcopy="True" refto="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <ProjectReference type="Gac" localcopy="True" refto="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
+    <ProjectReference type="Assembly" localcopy="True" refto="../cpg-network-sharp/cpg-network/cpg-network-sharp-1.0.dll" />
+  </References>
+  <GtkDesignInfo gtkVersion="2.12.1" />
+</Project>
