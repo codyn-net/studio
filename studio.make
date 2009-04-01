@@ -12,6 +12,7 @@ COMPILE_TARGET = exe
 PROJECT_REFERENCES = 
 BUILD_DIR = bin/Debug
 
+CPG_NETWORK_SHARP_1_0_DLL_SOURCE=../cpg-network-sharp/cpg-network/cpg-network-sharp-1.0.dll
 STUDIO_DESKTOP_SOURCE=app.desktop
 
 endif
@@ -25,12 +26,16 @@ COMPILE_TARGET = exe
 PROJECT_REFERENCES = 
 BUILD_DIR = bin/Release
 
+CPG_NETWORK_SHARP_1_0_DLL_SOURCE=../cpg-network-sharp/cpg-network/cpg-network-sharp-1.0.dll
 STUDIO_DESKTOP_SOURCE=app.desktop
 
 endif
 
 AL=al2
-SATELLITE_ASSEMBLY_NAME=Cpg.resources.dll
+SATELLITE_ASSEMBLY_NAME=Cpg.Studio.resources.dll
+
+PROGRAMFILES = \
+	$(CPG_NETWORK_SHARP_1_0_DLL)  
 
 LINUX_DESKTOPAPPLICATIONS = \
 	$(STUDIO_DESKTOP)  
@@ -40,20 +45,34 @@ BINARIES = \
 
 
 	
-all: $(ASSEMBLY) $(LINUX_DESKTOPAPPLICATIONS) $(BINARIES) 
+all: $(ASSEMBLY) $(PROGRAMFILES) $(LINUX_DESKTOPAPPLICATIONS) $(BINARIES) 
 
 FILES = \
-	gtk-gui/generated.cs \
-	MainWindow.cs \
-	gtk-gui/MainWindow.cs \
-	Main.cs \
-	AssemblyInfo.cs 
+	Window.cs \
+	Application.cs \
+	AssemblyInfo.cs \
+	Stock.cs \
+	Grid.cs \
+	components/Group.cs \
+	components/Object.cs \
+	components/State.cs \
+	components/Link.cs \
+	Allocation.cs \
+	components/Relay..cs \
+	components/Simulated.cs \
+	components/Network.cs 
 
 DATA_FILES = \
 	app.desktop 
 
 RESOURCES = \
-	gtk-gui/gui.stetic 
+	ui.xml \
+	icons/chain.png \
+	icons/chain-broken.png \
+	icons/link.png \
+	icons/relay.png \
+	icons/sensor.png \
+	icons/state.png 
 
 EXTRAS = \
 	studio.in 
@@ -65,16 +84,19 @@ REFERENCES =  \
 	System \
 	Mono.Posix
 
-DLL_REFERENCES = 
+DLL_REFERENCES =  \
+	../cpg-network-sharp/cpg-network/cpg-network-sharp-1.0.dll
 
-CLEANFILES = $(LINUX_DESKTOPAPPLICATIONS) $(BINARIES) 
+CLEANFILES = $(PROGRAMFILES) $(LINUX_DESKTOPAPPLICATIONS) $(BINARIES) 
 
 include $(top_srcdir)/Makefile.include
 
 STUDIO = $(BUILD_DIR)/studio
+CPG_NETWORK_SHARP_1_0_DLL = $(BUILD_DIR)/cpg-network-sharp-1.0.dll
 STUDIO_DESKTOP = $(BUILD_DIR)/studio.desktop
 
 $(eval $(call emit-deploy-wrapper,STUDIO,studio,x))
+$(eval $(call emit-deploy-target,CPG_NETWORK_SHARP_1_0_DLL))
 $(eval $(call emit-deploy-target,STUDIO_DESKTOP))
 
 

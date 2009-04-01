@@ -64,5 +64,10 @@ namespace Cpg.Studio.Components
 				return d_to;
 			}
 		}
+		
+		public bool HitTest(System.Drawing.Rectangle rect, int gridSize)
+		{
+			return false;
+		}
 	}
 }

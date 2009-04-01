@@ -19,10 +19,12 @@ namespace Cpg.Studio
 		}
 		
 		public delegate void ObjectEventHandler(object source, Components.Object obj);
+		public delegate void PopupEventHandler(object source, int button, long time); 
 		
 		public event ObjectEventHandler Activated;
 		public event ObjectEventHandler ObjectAdded;
 		public event ObjectEventHandler ObjectRemoved;
+		public event PopupEventHandler Popup;
 		public event ObjectEventHandler LevelUp;
 		public event ObjectEventHandler LevelDown;
 		public event EventHandler SelectionChanged;
@@ -33,6 +35,9 @@ namespace Cpg.Studio
 		private int d_minSize;
 		private int d_defaultGridSize;
 		private int d_gridSize;
+		private System.Drawing.Rectangle d_mouseRect;
+		private System.Drawing.Point d_origPosition;
+		private System.Drawing.Point d_buttonPress;
 		
 		private Components.Object d_focus;
 		
@@ -108,11 +113,51 @@ namespace Cpg.Studio
 			AddObject(link);
 		}
 		
+		public void Attach()
+		{
+			Attach(d_selection.ToArray() as Components.Simulated[]);
+		}
+		
+		public Components.Link[] Attach(Components.Simulated[] objs)
+		{
+			List<Components.Simulated> objects = new List<Components.Simulated>(objs);
+			
+			/* Remove links */
+			objects.RemoveAll(delegate (Components.Simulated obj) { return obj is Components.Link; });
+
+			List<Components.Link> added = new List<Components.Link>();
+			
+			if (objects.Count < 2)
+				return added.ToArray();
+			
+			for (int i = 1; i < objects.Count; ++i)
+			{
+				Cpg.Link orig = new Cpg.Link("", objects[0].Object, objects[i].Object);
+				
+				d_network.AddObject(orig);
+
+				Components.Link link = new Components.Link(orig);
+				AddLink(link);
+				
+				added.Add(link);
+			}
+			
+			return added.ToArray();
+		}
+		
 		private Components.Group Container
 		{
 			get
 			{
 				return d_objectStack.Peek().Group;
+			}
+		}
+		
+		private System.Drawing.Point Position
+		{
+			get
+			{
+				return new System.Drawing.Point((int)Container.X, (int)Container.Y);
 			}
 		}
 		
@@ -190,7 +235,7 @@ namespace Cpg.Studio
 		
 		public void Add(Components.Object obj, int x, int y, int width, int height)
 		{
-			obj.Allocation.Assign(x, y, width, height);
+			obj.Allocation = new System.Drawing.Rectangle(x, y, width, height);
 			AddObject(obj);
 		}
 		
@@ -208,6 +253,21 @@ namespace Cpg.Studio
 		{
 			if (!Container.Children.Remove(obj))
 				return;
+
+			if (!(obj is Components.Link) && obj is Components.Simulated)
+			{
+				/* Remove any associated links */
+				foreach (Components.Object other in Container.Children)
+				{
+					if (!(other is Components.Link))
+						continue;
+				
+					Components.Link link = other as Components.Link;
+					
+					if (link.From == other || link.To == other)
+						Remove(link);
+				}
+			}
 			
 			ObjectRemoved(this, obj);
 			obj.Removed();
@@ -249,10 +309,195 @@ namespace Cpg.Studio
 			QueueDraw();
 		}
 		
+		delegate double ScaledPredicate(double val);
+		private int Scaled(double pos, ScaledPredicate predicate)
+		{
+			return (int)predicate(pos / d_gridSize);
+		}
+
+		private int Scaled(double pos)
+		{
+			return Scaled(pos, new ScaledPredicate(Math.Floor));
+		}
+		
+		private System.Drawing.Point ScaledPosition(System.Drawing.Point position, ScaledPredicate predicate)
+		{
+			return new System.Drawing.Point(Scaled(position.X, predicate), Scaled(position.Y, predicate));
+		}
+		
+		private System.Drawing.Point ScaledPosition(System.Drawing.Point position)
+		{
+			return ScaledPosition(position, new ScaledPredicate(Math.Floor));
+		}
+		
+		private System.Drawing.Point ScaledPosition(int x, int y)
+		{
+			return ScaledPosition(new System.Drawing.Point(x, y));
+		}
+		
+		private Components.Object[] SortedObjects()
+		{
+			List<Components.Object> objects = new List<Components.Object>();
+			List<Components.Object> links = new List<Components.Object>();
+			
+			foreach (Components.Object obj in Container.Children)
+			{
+				if (obj is Components.Link)
+					links.Add(obj);
+				else
+					objects.Add(obj);
+			}
+			
+			links.Reverse();
+			objects.Reverse();
+			
+			objects.AddRange(links);
+			return objects.ToArray();
+		}
+		
+		private Components.Object[] HitTest(System.Drawing.Rectangle rect)
+		{
+			List<Components.Object> res = new List<Components.Object>();
+			
+			rect.X += Container.Allocation.X;
+			rect.Y += Container.Allocation.Y;
+			
+			rect.X = Scaled(rect.X);
+			rect.Y = Scaled(rect.Y);
+			rect.Width = Scaled(rect.Width);
+			rect.Height = Scaled(rect.Height);
+			
+			foreach (Components.Object obj in SortedObjects())
+			{
+				if (!(obj is Components.Link))
+				{
+					if (rect.Contains(obj.Allocation) && obj.HitTest(rect))
+						res.Add(obj);
+				}
+				else
+				{
+					if ((obj as Components.Link).HitTest(rect, d_gridSize))
+						res.Add(obj);
+				}
+			}
+			
+			return res.ToArray();
+		}
+		
+		private double[] MeanPosition(Components.Object[] objects)
+		{
+			double[] res = new double[] {0, 0};
+			int num = 0;
+			
+			foreach (Components.Object obj in objects)
+			{
+				res[0] += obj.Allocation.X + obj.Allocation.Width / 2.0;
+				res[1] += obj.Allocation.Y + obj.Allocation.Height / 2.0;
+				
+				num += 1;
+			}
+			
+			if (num != 0)
+			{
+				res[0] = res[0] / num;
+				res[1] = res[1] / num;
+			}
+			
+			return res;
+		}
+		
+		public void CenterView()
+		{
+			double[] pos = MeanPosition(Container.Children.ToArray());
+			
+			pos[0] *= d_gridSize;
+			pos[1] *= d_gridSize;
+			
+			Container.X = (int)(pos[0] - (Allocation.Width / 2.0));
+			Container.Y = (int)(pos[1] - (Allocation.Height / 2.0));
+			
+			ModifiedView(this, new EventArgs());
+			QueueDraw();
+		}
+		
+		private bool Selected(Components.Object obj)
+		{
+			return d_selection.IndexOf(obj) != -1;
+		}
+		
+		private void UpdateDragState(System.Drawing.Point position)
+		{
+		}
+		
 		/* Callbacks */
 		private void OnRequestRedraw(object source, EventArgs e)
 		{
 			QueueDrawObject(source as Components.Object);
 		}
+		
+		protected override bool OnButtonPressEvent(Gdk.EventButton evnt)
+		{
+			base.OnButtonPressEvent(evnt);
+			
+			GrabFocus();
+			
+			if (evnt.Button < 1 || evnt.Button > 3)
+				return false;
+			
+			Components.Object[] objects = HitTest(new System.Drawing.Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
+			Components.Object first = objects.Length > 0 ? objects[0] : null;
+
+			if (evnt.Type == Gdk.EventType.TwoButtonPress)
+			{
+				if (first == null)
+					return false;
+				
+				Activated(this, first);
+				return true;
+			}
+			
+			if (evnt.Button != 2)
+			{
+				if (Selected(first) && (evnt.State & (Gdk.ModifierType.ControlMask | Gdk.ModifierType.ShiftMask)) != 0)
+				{
+					Unselect(first);
+					first = null;
+				}
+				
+				if (!(Selected(first) || (evnt.State & (Gdk.ModifierType.ControlMask | Gdk.ModifierType.ShiftMask)) != 0))
+				{
+					foreach (Components.Object obj in d_selection)
+						Unselect(obj);
+				}
+			}
+			
+			if (evnt.Button != 2 && first != null)
+			{
+				Select(first);
+				
+				if (evnt.Button == 1)
+				{
+					System.Drawing.Point res = ScaledPosition((int)evnt.X, (int)evnt.Y);
+					UpdateDragState(res);
+				}
+			}
+			
+			if (evnt.Button == 3)
+			{
+				Popup(this, (int)evnt.Button, evnt.Time);
+			}
+			else if (evnt.Button == 2)
+			{
+				d_buttonPress = new System.Drawing.Point((int)evnt.X, (int)evnt.Y);
+				d_origPosition = Position;
+			}
+			else
+			{
+				d_mouseRect = new System.Drawing.Rectangle((int)evnt.X, (int)evnt.Y, 1, 1);
+			}				
+			
+			return true;
+		}
+
 	}
 }

@@ -12,14 +12,14 @@ namespace Cpg.Studio.Components
 		public event PropertyHandler PropertyRemoved;
 		public event PropertyHandler PropertyChanged;
 
-		private Allocation d_allocation;
+		private System.Drawing.Rectangle d_allocation;
 		private Dictionary<string, object> d_properties;
 		
 		private bool d_selected;
 		
 		public Object()
 		{
-			d_allocation = new Cpg.Studio.Allocation();
+			d_allocation = new System.Drawing.Rectangle(0, 0, 1, 1);
 			d_properties = new Dictionary<string, object>();
 		}
 				
@@ -35,11 +35,15 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		public Allocation Allocation
+		public System.Drawing.Rectangle Allocation
 		{
 			get
 			{
 				return d_allocation;
+			}
+			set
+			{
+				d_allocation = value;
 			}
 		}
 		
@@ -94,6 +98,11 @@ namespace Cpg.Studio.Components
 		
 		public virtual void Removed()
 		{
+		}
+		
+		public virtual bool HitTest(System.Drawing.Rectangle rect)
+		{
+			return true;
 		}
 	}
 }
