@@ -38,6 +38,8 @@ namespace Cpg.Studio
 		private System.Drawing.Rectangle d_mouseRect;
 		private System.Drawing.Point d_origPosition;
 		private System.Drawing.Point d_buttonPress;
+		private System.Drawing.Point d_dragState;
+		private bool d_isDragging;
 		
 		private Components.Object d_focus;
 		
@@ -355,7 +357,7 @@ namespace Cpg.Studio
 			return objects.ToArray();
 		}
 		
-		private Components.Object[] HitTest(System.Drawing.Rectangle rect)
+		private List<Components.Object> HitTest(System.Drawing.Rectangle rect)
 		{
 			List<Components.Object> res = new List<Components.Object>();
 			
@@ -381,7 +383,7 @@ namespace Cpg.Studio
 				}
 			}
 			
-			return res.ToArray();
+			return res;
 		}
 		
 		private double[] MeanPosition(Components.Object[] objects)
@@ -429,6 +431,69 @@ namespace Cpg.Studio
 		{
 		}
 		
+		private System.Drawing.Point ScaledFromDragState(Components.Object obj)
+		{
+			System.Drawing.Rectangle rect = d_selection[0].Allocation;
+			System.Drawing.Rectangle aobj = obj.Allocation;
+			
+			return new System.Drawing.Point(d_dragState.X - (rect.X - aobj.X), d_dragState.Y - (rect.Y - aobj.Y));
+		}
+		
+		private void DoDragRect(Gdk.EventMotion evnt)
+		{
+			d_mouseRect.Width = (int)evnt.X;
+			d_mouseRect.Height = (int)evnt.Y;
+			
+			List<Components.Object> objects = HitTest(d_mouseRect);
+		
+			foreach (Components.Object obj in d_selection)
+			{
+				if (objects.IndexOf(obj) == -1)
+					Unselect(obj);
+			}
+			
+			foreach (Components.Object obj in objects)
+			{
+				if (!Selected(obj))
+					Select(obj);
+			}
+		}
+		
+		private void DoMoveCanvas(Gdk.EventMotion evnt)
+		{
+			int dx = (int)(evnt.X - d_buttonPress.X);
+			int dy = (int)(evnt.Y - d_buttonPress.Y);
+			
+			Container.X = (int)(d_origPosition.X - dx);
+			Container.Y = (int)(d_origPosition.Y - dy);
+			
+			ModifiedView(this, new EventArgs());
+			QueueDraw();
+		}
+		
+		private void DoMouseInOut(Gdk.EventMotion evnt)
+		{
+			List<Components.Object> objects = HitTest(new System.Drawing.Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
+			
+			if (objects.Count == 0)
+				return;
+			
+			foreach (Components.Object obj in d_hover)
+			{
+				if (obj != objects[0])
+				{
+					obj.MouseExit();
+					d_hover.Remove(obj);
+				}				
+			}
+			
+			if (d_hover.IndexOf(objects[0]) != -1)
+			{
+				objects[0].MouseEnter();
+				d_hover.Add(objects[0]);
+			}
+		}
+		
 		/* Callbacks */
 		private void OnRequestRedraw(object source, EventArgs e)
 		{
@@ -444,8 +509,8 @@ namespace Cpg.Studio
 			if (evnt.Button < 1 || evnt.Button > 3)
 				return false;
 			
-			Components.Object[] objects = HitTest(new System.Drawing.Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
-			Components.Object first = objects.Length > 0 ? objects[0] : null;
+			List<Components.Object> objects = HitTest(new System.Drawing.Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
+			Components.Object first = objects.Count > 0 ? objects[0] : null;
 
 			if (evnt.Type == Gdk.EventType.TwoButtonPress)
 			{
@@ -497,6 +562,50 @@ namespace Cpg.Studio
 			}				
 			
 			return true;
+		}
+
+		protected override bool OnButtonReleaseEvent(Gdk.EventButton evnt)
+		{
+			base.OnButtonReleaseEvent(evnt);
+			
+			d_isDragging = false;
+			
+			if (evnt.Type == Gdk.EventType.ButtonRelease)
+			{
+				List<Components.Object> objects = HitTest(new System.Drawing.Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
+				Components.Object first = objects.Count > 0 ? objects[0] : null;
+				
+				if (first != null)
+				{
+					System.Drawing.Point pos = ScaledPosition((int)evnt.X, (int)evnt.Y);
+					first.Clicked(pos);
+				}
+			}
+			
+			QueueDraw();
+			return false;
+		}
+
+		protected override bool OnMotionNotifyEvent(Gdk.EventMotion evnt)
+		{
+			base.OnMotionNotifyEvent(evnt);
+			
+			if ((evnt.Staaate & Gdk.ModifierType.Button2Mask) != 0)
+			{
+				DoMoveCanvas(evnt);
+				return true;
+			}
+			
+			if (!d_dragging)
+			{
+				DoMouseInOut(evnt);
+				return true;
+			}
+			
+			if (!d_dragging)
+			{
+				
+			}
 		}
 
 	}

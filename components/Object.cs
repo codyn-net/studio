@@ -104,5 +104,17 @@ namespace Cpg.Studio.Components
 		{
 			return true;
 		}
+		
+		public virtual void Clicked(System.Drawing.Point position)
+		{
+		}
+		
+		public virtual void MouseExit()
+		{
+		}
+		
+		public virtual void MouseEnter()
+		{
+		}
 	}
 }
