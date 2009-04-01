@@ -12,23 +12,17 @@ namespace Cpg.Studio.Components
 		public event PropertyHandler PropertyRemoved;
 		public event PropertyHandler PropertyChanged;
 
-		private Grid d_grid;
 		private Allocation d_allocation;
 		private Dictionary<string, object> d_properties;
 		
 		private bool d_selected;
 		
-		public Object(Grid grid)
+		public Object()
 		{
-			d_grid = grid;
 			d_allocation = new Cpg.Studio.Allocation();
 			d_properties = new Dictionary<string, object>();
 		}
-		
-		public Object() : this(null)
-		{
-		}
-		
+				
 		public bool Selected
 		{
 			get
@@ -38,22 +32,6 @@ namespace Cpg.Studio.Components
 			set
 			{
 				d_selected = value;
-			}
-		}
-		
-		public Grid Grid
-		{
-			get
-			{
-				return d_grid;
-			}
-			set
-			{
-				if (d_grid == value)
-					return;
-
-				Removed();
-				d_grid = value;
 			}
 		}
 		
@@ -114,7 +92,7 @@ namespace Cpg.Studio.Components
 			SetProperty(name, null);
 		}
 		
-		protected virtual void Removed()
+		public virtual void Removed()
 		{
 		}
 	}

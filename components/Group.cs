@@ -7,7 +7,7 @@ namespace Cpg.Studio.Components
 	{
 		List<Components.Object> d_children;
 		
-		public Group(Grid grid) : base(grid)
+		public Group(Cpg.State obj) : base(obj)
 		{
 			d_children = new List<Components.Object>();
 		}

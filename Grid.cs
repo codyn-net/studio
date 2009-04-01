@@ -91,6 +91,21 @@ namespace Cpg.Studio
 		
 		private void AddLink(Components.Link link)
 		{
+			// Check if link has no objects
+			if (link.Empty())
+				return;
+				
+			int offset = -1; 
+			
+			// Calculate offset
+			foreach (Components.Link other in Links)
+			{
+				if (link.SameObjects(other) && other.Offset > offset)
+					offset = other.Offset;
+			}
+			
+			link.Offset = offset;
+			AddObject(link);
 		}
 		
 		private Components.Group Container
@@ -157,14 +172,30 @@ namespace Cpg.Studio
 			}
 		}
 		
+		public List<Components.Link> Links
+		{
+			get
+			{
+				List<Components.Link> res = new List<Components.Link>();
+				
+				foreach (Components.Object obj in Container.Children)
+				{
+					if (obj is Components.Link)
+						res.Add(obj as Components.Link);
+				}
+				
+				return res;
+			}
+		}
+		
 		public void Add(Components.Object obj, int x, int y, int width, int height)
 		{
-			if (obj.Grid != null)
-				obj.Grid.Remove(obj);
-
-			obj.Grid = this;
 			obj.Allocation.Assign(x, y, width, height);
-			
+			AddObject(obj);
+		}
+		
+		private void AddObject(Components.Object obj)
+		{
 			EnsureUniqueId(obj, obj["id"]);
 			
 			Container.Add(obj);
@@ -177,9 +208,9 @@ namespace Cpg.Studio
 		{
 			if (!Container.Children.Remove(obj))
 				return;
-				
+			
 			ObjectRemoved(this, obj);
-			obj.Grid = null;
+			obj.Removed();
 
 			Unselect(obj);
 			

@@ -6,8 +6,9 @@ namespace Cpg.Studio.Components
 	{
 		protected Cpg.Object d_object;
 
-		public Simulated(Grid grid) : base(grid)
+		public Simulated(Cpg.Object obj) : base()
 		{
+			d_object = obj;
 		}
 		
 		public Simulated() : this(null)
@@ -54,6 +55,10 @@ namespace Cpg.Studio.Components
 			get
 			{
 				return d_object;
+			}
+			protected set
+			{
+				d_object = value;
 			}
 		}
 	}
