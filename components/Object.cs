@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Collections.Generic;
 
 namespace Cpg.Studio.Components
@@ -16,11 +17,15 @@ namespace Cpg.Studio.Components
 		private Dictionary<string, object> d_properties;
 		
 		private bool d_selected;
+		private bool d_focus;
 		
 		public Object()
 		{
 			d_allocation = new System.Drawing.Rectangle(0, 0, 1, 1);
 			d_properties = new Dictionary<string, object>();
+			
+			d_selected = false;
+			d_focus = false;
 		}
 				
 		public bool Selected
@@ -32,6 +37,20 @@ namespace Cpg.Studio.Components
 			set
 			{
 				d_selected = value;
+				RequestRedraw(this, new EventArgs());
+			}
+		}
+		
+		public bool Focus
+		{
+			get
+			{
+				return d_focus;
+			}
+			set
+			{
+				d_focus = value;
+				RequestRedraw(this, new EventArgs());
 			}
 		}
 		
@@ -114,6 +133,10 @@ namespace Cpg.Studio.Components
 		}
 		
 		public virtual void MouseEnter()
+		{
+		}
+		
+		public virtual void Draw(Graphics graphics)
 		{
 		}
 	}
