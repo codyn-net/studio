@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace Cpg.Studio
 {
@@ -31,6 +32,25 @@ namespace Cpg.Studio
 		public static int Min(IEnumerable<int> list)
 		{
 			return Select<int>(list, new SelectHandler<int>(Math.Min));
+		}
+		
+		public static Rectangle RectRegion(System.Drawing.Rectangle rect)
+		{
+			if (rect.Width < rect.X)
+			{
+				int tmp = rect.Width;
+				rect.Width = rect.X;
+				rect.X = tmp;
+			}
+			
+			if (rect.Height < rect.Y)
+			{
+				int tmp = rect.Height;
+				rect.Height = rect.Y;
+				rect.Y = tmp;
+			}
+			
+			return new Rectangle(rect.X, rect.Y, rect.Width - rect.X, rect.Height - rect.Y);
 		}
 	}
 }

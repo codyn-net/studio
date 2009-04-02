@@ -8,10 +8,10 @@ namespace Cpg.Studio.Components
 	{
 		public delegate void PropertyHandler(Components.Object source, string name);
 		
-		public event EventHandler RequestRedraw;
-		public event PropertyHandler PropertyAdded;
-		public event PropertyHandler PropertyRemoved;
-		public event PropertyHandler PropertyChanged;
+		public event EventHandler RequestRedraw = delegate {};
+		public event PropertyHandler PropertyAdded = delegate {};
+		public event PropertyHandler PropertyRemoved = delegate {};
+		public event PropertyHandler PropertyChanged = delegate {};
 
 		private System.Drawing.Rectangle d_allocation;
 		private Dictionary<string, object> d_properties;

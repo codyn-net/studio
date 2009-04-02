@@ -23,15 +23,15 @@ namespace Cpg.Studio
 		public delegate void ObjectEventHandler(object source, Components.Object obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
 		
-		public event ObjectEventHandler Activated;
-		public event ObjectEventHandler ObjectAdded;
-		public event ObjectEventHandler ObjectRemoved;
-		public event PopupEventHandler Popup;
-		public event ObjectEventHandler LevelUp;
-		public event ObjectEventHandler LevelDown;
-		public event EventHandler SelectionChanged;
-		public event EventHandler Modified;
-		public event EventHandler ModifiedView;
+		public event ObjectEventHandler Activated = delegate {};
+		public event ObjectEventHandler ObjectAdded = delegate {};
+		public event ObjectEventHandler ObjectRemoved = delegate {};
+		public event PopupEventHandler Popup = delegate {};
+		public event ObjectEventHandler LevelUp = delegate {};
+		public event ObjectEventHandler LevelDown = delegate {};
+		public event EventHandler SelectionChanged = delegate {};
+		public event EventHandler Modified = delegate {};
+		public event EventHandler ModifiedView = delegate {};
 		
 		private int d_maxSize;
 		private int d_minSize;
@@ -63,7 +63,7 @@ namespace Cpg.Studio
 					  Gdk.EventMask.KeyPressMask |
 					  Gdk.EventMask.KeyReleaseMask |
 					  Gdk.EventMask.LeaveNotifyMask));
-			
+
 			CanFocus = true;
 			
 			LevelUp += OnLevelUp;
@@ -98,7 +98,7 @@ namespace Cpg.Studio
 			
 			SelectionChanged(this, new EventArgs());
 			
-			if (changed && Modified != null)
+			if (changed)
 				Modified(this, new EventArgs());
 		}
 		
@@ -451,7 +451,7 @@ namespace Cpg.Studio
 		{
 			d_mouseRect.Width = (int)evnt.X;
 			d_mouseRect.Height = (int)evnt.Y;
-			
+
 			List<Components.Object> objects = HitTest(d_mouseRect);
 		
 			foreach (Components.Object obj in d_selection)
@@ -465,6 +465,8 @@ namespace Cpg.Studio
 				if (!Selected(obj))
 					Select(obj);
 			}
+			
+			QueueDraw();
 		}
 		
 		private void DoMoveCanvas(Gdk.EventMotion evnt)
@@ -710,11 +712,13 @@ namespace Cpg.Studio
 		
 		private void DrawSelectionRect(Graphics graphics)
 		{
-			if (d_mouseRect.Width <= 1 || d_mouseRect.Height <= 1)
+			Rectangle rect = Utils.RectRegion(d_mouseRect);
+			
+			if (rect.Width <= 1 || rect.Height <= 1)
 				return;
 			
-			graphics.FillRectangle(new SolidBrush(Color.FromArgb(30, 0, 0, 255)), d_mouseRect);
-			graphics.DrawRectangle(new Pen(Color.Blue, 2), d_mouseRect);
+			graphics.FillRectangle(new SolidBrush(Color.FromArgb(30, 0, 0, 255)), rect);
+			graphics.DrawRectangle(new Pen(Color.Blue, 2), rect);
 		}
 		
 		/* Callbacks */
@@ -781,7 +785,7 @@ namespace Cpg.Studio
 			}
 			else
 			{
-				d_mouseRect = new Rectangle((int)evnt.X, (int)evnt.Y, 1, 1);
+				d_mouseRect = new Rectangle((int)evnt.X, (int)evnt.Y, (int)evnt.X, (int)evnt.Y);
 			}				
 			
 			return true;
@@ -792,6 +796,7 @@ namespace Cpg.Studio
 			base.OnButtonReleaseEvent(evnt);
 			
 			d_isDragging = false;
+			d_mouseRect = new Rectangle(0, 0, 0, 0);
 			
 			if (evnt.Type == Gdk.EventType.ButtonRelease)
 			{
@@ -822,7 +827,9 @@ namespace Cpg.Studio
 			if (!d_isDragging)
 			{
 				DoMouseInOut(evnt);
-				DoDragRect(evnt);
+				
+				if (d_mouseRect.Width != 0 && d_mouseRect.Height != 0)
+					DoDragRect(evnt);
 				
 				return true;
 			}
