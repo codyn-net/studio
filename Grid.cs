@@ -27,8 +27,8 @@ namespace Cpg.Studio
 		public event ObjectEventHandler ObjectAdded = delegate {};
 		public event ObjectEventHandler ObjectRemoved = delegate {};
 		public event PopupEventHandler Popup = delegate {};
-		public event ObjectEventHandler LevelUp = delegate {};
-		public event ObjectEventHandler LevelDown = delegate {};
+		public event ObjectEventHandler LeveledUp = delegate {};
+		public event ObjectEventHandler LeveledDown = delegate {};
 		public event EventHandler SelectionChanged = delegate {};
 		public event EventHandler Modified = delegate {};
 		public event EventHandler ModifiedView = delegate {};
@@ -66,8 +66,8 @@ namespace Cpg.Studio
 
 			CanFocus = true;
 			
-			LevelUp += OnLevelUp;
-			LevelDown += OnLevelDown;
+			LeveledUp += OnLevelUp;
+			LeveledDown += OnLevelDown;
 			SelectionChanged += OnSelectionChanged;
 			
 			d_maxSize = 120;
@@ -102,6 +102,16 @@ namespace Cpg.Studio
 				Modified(this, new EventArgs());
 		}
 		
+		public void LevelUp(Components.Object obj)
+		{
+			LeveledUp(this, obj);
+		}
+		
+		public void LevelDown(Components.Object obj)
+		{
+			LeveledDown(this, obj);
+		}
+		
 		private void AddLink(Components.Link link)
 		{
 			// Check if link has no objects
@@ -119,6 +129,22 @@ namespace Cpg.Studio
 			
 			link.Offset = offset;
 			AddObject(link);
+		}
+		
+		public Components.Object Root
+		{
+			get
+			{
+				return d_objectStack[d_objectStack.Count - 1].Group;
+			}
+		}
+		
+		public Components.Object[] Selection
+		{
+			get
+			{
+				return d_selection.ToArray();
+			}
 		}
 		
 		public void Attach()
@@ -254,6 +280,9 @@ namespace Cpg.Studio
 		{
 			EnsureUniqueId(obj, obj["id"]);
 			
+			if (obj is Components.Simulated)
+				d_network.AddObject((obj as Components.Simulated).Object);
+
 			Container.Add(obj);
 			DoObjectAdded(obj);
 		}
@@ -514,14 +543,14 @@ namespace Cpg.Studio
 			{
 				if (obj != objects[0])
 				{
-					obj.MouseExit();
+					obj.MouseFocus = false;
 					d_hover.Remove(obj);
 				}				
 			}
 			
 			if (d_hover.IndexOf(objects[0]) != -1)
 			{
-				objects[0].MouseEnter();
+				objects[0].MouseFocus = true;
 				d_hover.Add(objects[0]);
 			}
 		}
@@ -564,14 +593,14 @@ namespace Cpg.Studio
 					grp.X = (int)(pos[0] * d_defaultGridSize - where.X);
 					grp.Y = (int)(pos[1] * d_defaultGridSize - where.Y);
 					
-					LevelDown(this, grp);
+					LevelDown(grp);
 					return;
 				}
 			}
 			
 			if (lowerReached && d_objectStack.Count > 1)
 			{
-				LevelUp(this, d_objectStack[1].Group);
+				LevelUp(d_objectStack[1].Group);
 				return;
 			}
 			
@@ -592,7 +621,7 @@ namespace Cpg.Studio
 			DoZoom(zoomIn, new Point((int)(Allocation.Width / 2), (int)(Allocation.Height / 2)));
 		}
 		
-		private void DeleteSelected()
+		public void DeleteSelected()
 		{
 			foreach (Components.Object obj in d_selection.ToArray())
 				Remove(obj);
@@ -627,7 +656,7 @@ namespace Cpg.Studio
 				Components.Object o = d_focus;
 				d_focus = null;
 				
-				o.Focus = false;
+				o.KeyFocus = false;
 			}
 		}
 		
@@ -665,7 +694,7 @@ namespace Cpg.Studio
 		private void FocusSet(Components.Object obj)
 		{
 			d_focus = obj;
-			obj.Focus = true;
+			obj.KeyFocus = true;
 		}
 		
 		private void DrawBackground(Graphics graphics)
@@ -685,10 +714,10 @@ namespace Cpg.Studio
 			
 			Pen pen = new Pen(d_gridLine, 1 / (float)d_gridSize);
 			
-			for (int i = 1; i <= pt.X; ++i)
+			for (int i = 0; i <= pt.X; ++i)
 				graphics.DrawLine(pen, new PointF(i - ox, 0), new PointF(i - ox, pt.Y)); 
 			
-			for (int i = 1; i <= pt.Y; ++i)
+			for (int i = 0; i <= pt.Y; ++i)
 				graphics.DrawLine(pen, new PointF(0, i - oy), new PointF(pt.X, i - oy));
 			
 			graphics.Restore(state);
@@ -943,7 +972,7 @@ namespace Cpg.Studio
 			base.OnLeaveNotifyEvent(evnt);
 			
 			foreach (Components.Object obj in d_hover)
-				obj.MouseExit();
+				obj.MouseFocus = false;
 		
 			d_hover.Clear();
 			return true;
@@ -1048,7 +1077,7 @@ namespace Cpg.Studio
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
 			
-			LevelUp(source, obj);
+			LevelUp(obj);
 		}
 		
 		private void OnSelectionChanged(object source, EventArgs args)
@@ -1059,7 +1088,7 @@ namespace Cpg.Studio
 		protected override bool OnFocusOutEvent(Gdk.EventFocus evnt)
 		{
 			foreach (Components.Object obj in d_hover)
-				obj.MouseExit();
+				obj.MouseFocus = false;
 			
 			d_hover.Clear();
 			FocusRelease();

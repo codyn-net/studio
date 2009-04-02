@@ -10,6 +10,8 @@ namespace Cpg.Studio.Components
 
 		public Link(Cpg.Link obj) : base(obj)
 		{
+			d_from = Components.Object.FromCpg(obj.From);
+			d_to = Components.Object.FromCpg(obj.To);
 		}
 		
 		public Link() : this(null)

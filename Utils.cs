@@ -52,5 +52,13 @@ namespace Cpg.Studio
 			
 			return new Rectangle(rect.X, rect.Y, rect.Width - rect.X, rect.Height - rect.Y);
 		}
+		
+		public static string Capitalize(string s)
+		{
+			if (s == String.Empty)
+				return s;
+			else
+				return s.Substring(0, 1).ToUpper() + s.Substring(1);
+		}
 	}
 }

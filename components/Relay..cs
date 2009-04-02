@@ -8,7 +8,7 @@ namespace Cpg.Studio.Components
 		{
 		}
 		
-		public Relay() : this(null)
+		public Relay() : this(new Cpg.Relay(""))
 		{
 		}
 	}

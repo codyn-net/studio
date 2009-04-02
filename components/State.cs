@@ -8,7 +8,7 @@ namespace Cpg.Studio.Components
 		{
 		}
 		
-		public State() : this(null)
+		public State() : this(new Cpg.State(""))
 		{
 		}
 	}
