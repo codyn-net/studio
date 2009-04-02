@@ -436,7 +436,29 @@ namespace Cpg.Studio
 		
 		private void UpdateDragState(Point position)
 		{
-			// TODO
+			if (d_selection.Count == 0)
+			{
+				d_isDragging = false;
+				return;
+			}
+			
+			/* The drag state contains the relative offset of the mouse to the first
+			 * object in the selection. x and y are in unit coordinates */
+			Components.Object first = d_selection.Find(delegate (Components.Object obj) { return !(obj is Components.Link); });
+			
+			if (first == null)
+			{
+				d_isDragging = false;
+				return;
+			}
+			
+			Rectangle alloc = first.Allocation;
+			
+			d_selection.Remove(first);
+			d_selection.Insert(0, first);
+			
+			d_dragState.X = alloc.X - position.X;
+			d_dragState.Y = alloc.Y - position.Y;
 		}
 		
 		private Point ScaledFromDragState(Components.Object obj)
