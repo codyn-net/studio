@@ -22,7 +22,7 @@ namespace Cpg.Studio.Components
 		public event PropertyHandler PropertyRemoved = delegate {};
 		public event PropertyHandler PropertyChanged = delegate {};
 
-		private System.Drawing.Rectangle d_allocation;
+		private Rectangle d_allocation;
 		private Dictionary<string, object> d_properties;
 		
 		private State d_state;
@@ -105,7 +105,7 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		public System.Drawing.Rectangle Allocation
+		public Rectangle Allocation
 		{
 			get
 			{
@@ -126,6 +126,17 @@ namespace Cpg.Studio.Components
 			set
 			{
 				SetProperty(name, value);
+			}
+		}
+		
+		public virtual string[] Properties
+		{
+			get
+			{
+				string[] ret = new string[d_properties.Count];
+				d_properties.Keys.CopyTo(ret, 0);
+				
+				return ret;
 			}
 		}
 		
@@ -171,6 +182,24 @@ namespace Cpg.Studio.Components
 			SetProperty(name, null);
 		}
 		
+		public bool IsPermanent(string name)
+		{
+			// TODO
+			return false;
+		}
+		
+		public bool IsReadOnly(string name)
+		{
+			// TODO
+			return false;
+		}
+		
+		public bool IsInvisible(string name)
+		{
+			// TODO
+			return false;
+		}
+		
 		public virtual void Removed()
 		{
 		}
@@ -190,8 +219,10 @@ namespace Cpg.Studio.Components
 			SolidBrush br = new SolidBrush(Color.FromArgb(50, 0, 0, 255));
 			graphics.FillRectangle(br, 0, 0, Allocation.Width, Allocation.Height);
 			
-			Pen pen = new Pen(Color.FromArgb(50, 0, 0, 0));
-			graphics.DrawRectangle(pen, 0, 0, Allocation.Width, Allocation.Height);
+			float scale = Utils.TransformScale(graphics.Transform);
+			
+			Pen pen = new Pen(Color.FromArgb(50, 0, 0, 0), 1 / scale);
+			graphics.DrawRectangle(pen, 1, 1, Allocation.Width, Allocation.Height);
 		}
 		
 		protected virtual void DrawFocus(Graphics graphics)

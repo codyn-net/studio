@@ -4,6 +4,7 @@ using System.Reflection;
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Cpg.Studio.GtkGui;
 
 namespace Cpg.Studio
 {
@@ -18,6 +19,7 @@ namespace Cpg.Studio
 		private Entry d_periodEntry;
 		private Statusbar d_statusbar;
 		private ToggleButton d_simulateButton;
+		private PropertyView d_propertyView;
 		
 		private bool d_modified;
 		private string d_filename;
@@ -111,10 +113,10 @@ namespace Cpg.Studio
 			
 			d_grid = new Grid();
 			d_vpaned = new VPaned();
-			d_vpaned.Position = 0;
+			d_vpaned.Position = 300;
 			d_vpaned.Pack1(d_grid, true, true);
 			
-			//do_property_editor(@normal_group.get_action("PropertyEditorAction"))
+			OnPropertyEditorActivated(d_normalGroup.GetAction("PropertyEditorAction"), new EventArgs());
 			
 			d_vboxContents.PackStart(d_vpaned, true, true, 0);
 			
@@ -491,6 +493,27 @@ namespace Cpg.Studio
 		
 		private void OnPropertyEditorActivated(object sender, EventArgs args)
 		{
+			ToggleAction action = sender as ToggleAction;
+			
+			if (action.Active)
+			{
+				if (d_propertyView == null)
+				{
+					Components.Object[] selection = d_grid.Selection;
+					d_propertyView = new PropertyView(selection.Length == 1 ? selection[0] : null);
+					
+					d_vpaned.Pack2(d_propertyView, false, false);
+				}
+				
+				d_propertyView.ShowAll();
+			}
+			else
+			{
+				if (d_propertyView != null)
+					d_propertyView.Destroy();
+				
+				d_propertyView = null;
+			}
 		}
 		
 		private void OnToggleMonitorActivated(object sender, EventArgs args)

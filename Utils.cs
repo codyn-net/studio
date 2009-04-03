@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace Cpg.Studio
 {
@@ -59,6 +60,21 @@ namespace Cpg.Studio
 				return s;
 			else
 				return s.Substring(0, 1).ToUpper() + s.Substring(1);
+		}
+		
+		public static int SortProperties(string first, string second)
+		{
+			if (first == "id")
+				return -1;
+			else if (second == "id")
+				return 1;
+			else
+				return first.ToLower().CompareTo(second.ToLower());
+		}
+		
+		public static float TransformScale(Matrix matrix)
+		{
+			return matrix.Elements[0];
 		}
 	}
 }

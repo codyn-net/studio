@@ -285,6 +285,8 @@ namespace Cpg.Studio
 
 			Container.Add(obj);
 			DoObjectAdded(obj);
+			
+			QueueDraw();
 		}
 		
 		public void Remove(Components.Object obj)
@@ -396,17 +398,17 @@ namespace Cpg.Studio
 		private List<Components.Object> HitTest(Rectangle rect)
 		{
 			List<Components.Object> res = new List<Components.Object>();
-			
+
 			rect.X += Container.Allocation.X;
 			rect.Y += Container.Allocation.Y;
 			
 			rect.X = Scaled(rect.X);
 			rect.Y = Scaled(rect.Y);
-			rect.Width = Scaled(rect.Width);
-			rect.Height = Scaled(rect.Height);
+			rect.Width = Math.Max(1, Scaled(rect.Width));
+			rect.Height = Math.Max(1, Scaled(rect.Height));
 			
 			foreach (Components.Object obj in SortedObjects())
-			{
+			{				
 				if (!(obj is Components.Link))
 				{
 					if (rect.IntersectsWith(obj.Allocation) && obj.HitTest(rect))
@@ -504,8 +506,11 @@ namespace Cpg.Studio
 			d_mouseRect.Height = (int)evnt.Y;
 
 			List<Components.Object> objects = HitTest(d_mouseRect);
+			
+			Components.Object[] selection = new Components.Object[d_selection.Count];
+			d_selection.CopyTo(selection, 0);
 		
-			foreach (Components.Object obj in d_selection)
+			foreach (Components.Object obj in selection)
 			{
 				if (objects.IndexOf(obj) == -1)
 					Unselect(obj);
@@ -809,7 +814,10 @@ namespace Cpg.Studio
 				
 				if (!(Selected(first) || (evnt.State & (Gdk.ModifierType.ControlMask | Gdk.ModifierType.ShiftMask)) != 0))
 				{
-					foreach (Components.Object obj in d_selection)
+					Components.Object[] selection = new Components.Object[d_selection.Count];
+					d_selection.CopyTo(selection, 0);
+					
+					foreach (Components.Object obj in selection)
 						Unselect(obj);
 				}
 			}
@@ -1101,6 +1109,7 @@ namespace Cpg.Studio
 			Graphics graphics = Gtk.DotNet.Graphics.FromDrawable(GdkWindow);
 			
 			graphics.Clip = new Region(new Rectangle(evnt.Area.X, evnt.Area.Y, evnt.Area.Width, evnt.Area.Height));
+			graphics.SmoothingMode = SmoothingMode.AntiAlias;
 			
 			DrawBackground(graphics);
 			DrawGrid(graphics);

@@ -51,6 +51,38 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
+		public override string[] Properties
+		{
+			get
+			{
+				Property[] props = d_object.Properties;
+				string[] ret = new string[props.Length];
+				
+				for (int i = 0; i < props.Length; ++i)
+					ret[i] = props[i].Name;
+				
+				return ret;
+			}
+		}
+		
+		public bool GetIntegrated(string name)
+		{
+			Property prop = d_object.Property(name);
+			
+			if (prop != null)
+				return prop.Integrated;
+			else
+				return false;
+		}
+		
+		public void SetIntegrated(string name, bool integrated)
+		{
+			Property prop = d_object.Property(name);
+			
+			if (prop != null)
+				prop.Integrated = integrated;
+		}
+		
 		public Cpg.Object Object
 		{
 			get
