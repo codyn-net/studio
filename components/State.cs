@@ -34,7 +34,7 @@ namespace Cpg.Studio.Components
 			float off = 0.1f * Allocation.Width;
 			
 			RectangleF rect = new RectangleF(off, off, Allocation.Width - 2 * off, Allocation.Height - 2 * off);
-			Console.WriteLine(rect);
+
 			graphics.FillRectangle(d_inner, rect);
 			graphics.DrawRectangle(d_border, rect.X + 1, rect.Y + 1, rect.Width, rect.Height);
 			

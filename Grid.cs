@@ -541,19 +541,19 @@ namespace Cpg.Studio
 		{
 			List<Components.Object> objects = HitTest(new Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
 			
-			if (objects.Count == 0)
-				return;
-			
-			foreach (Components.Object obj in d_hover)
-			{
-				if (obj != objects[0])
+			d_hover.RemoveAll(delegate (Components.Object obj) {
+				if (objects.Count == 0 || obj != objects[0])
 				{
 					obj.MouseFocus = false;
-					d_hover.Remove(obj);
-				}				
-			}
-			
-			if (d_hover.IndexOf(objects[0]) != -1)
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			});
+
+			if (objects.Count != 0 && d_hover.IndexOf(objects[0]) == -1)
 			{
 				objects[0].MouseFocus = true;
 				d_hover.Add(objects[0]);
