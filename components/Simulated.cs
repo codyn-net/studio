@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Cpg.Studio.Components
 {
@@ -18,7 +19,7 @@ namespace Cpg.Studio.Components
 		
 		public override bool HasProperty(string name)
 		{
-			return d_object.HasProperty(name);
+			return d_object.HasProperty(name) || base.HasProperty(name);
 		}
 		
 		public override object GetProperty(string name)
@@ -31,16 +32,25 @@ namespace Cpg.Studio.Components
 			if (prop != null)
 				return prop.ValueExpression.AsString;
 			else
-				return null;
+				return base.GetProperty(name);
 		}
 		
 		protected override void SetPropertyReal(string name, object val)
 		{
+			PropertyInfo info;
+			PropertyAttribute attr = FindPropertyAttribute(name, out info);
+			
+			if (attr != null)
+			{
+				info.GetSetMethod().Invoke(this, new object[] {val == null ? "" : val});
+				return;
+			}
+			
 			Cpg.Property prop = d_object.Property(name);
 			
 			if (prop != null)
 			{
-				if (val == null)
+				if (val != null)
 					prop.SetValueExpression((string)val);
 				else
 					d_object.RemoveProperty(name);
@@ -55,11 +65,15 @@ namespace Cpg.Studio.Components
 		{
 			get
 			{
+				string[] orig = base.Properties;
 				Property[] props = d_object.Properties;
-				string[] ret = new string[props.Length];
+
+				string[] ret = new string[props.Length + orig.Length];
+
+				orig.CopyTo(ret, 0);
 				
 				for (int i = 0; i < props.Length; ++i)
-					ret[i] = props[i].Name;
+					ret[i + orig.Length] = props[i].Name;
 				
 				return ret;
 			}
@@ -93,6 +107,26 @@ namespace Cpg.Studio.Components
 			{
 				d_object = value;
 			}
+		}
+		
+		[Property("id")]
+		public string Id
+		{
+			get
+			{
+				return d_object.Id;
+			}
+			
+			set
+			{
+				d_object.Id = value;
+				QueueDraw();
+			}
+		}
+		
+		public override string ToString()
+		{
+			return d_object.Id;
 		}
 	}
 }

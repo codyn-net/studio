@@ -374,13 +374,19 @@ namespace Cpg.Studio
 		
 		private void DoSelectionChanged(object source, EventArgs args)
 		{
-			/*if @propertyview
-				if @grid.selection.length == 1
-					@propertyview.init(@grid.selection.first)
+			if (d_propertyView != null)
+			{
+				Components.Object[] selection = d_grid.Selection;
+				
+				if (selection.Length == 1)
+				{
+					d_propertyView.Initialize(selection[0]);
+				}
 				else
-					@propertyview.init(nil)
-				end
-			end*/
+				{
+					d_propertyView.Initialize(null);
+				}
+			}
 			
 			UpdateSensitivity();
 		}

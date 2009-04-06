@@ -37,10 +37,10 @@ namespace Cpg.Studio
 		private int d_minSize;
 		private int d_defaultGridSize;
 		private int d_gridSize;
-		private Rectangle d_mouseRect;
-		private Point d_origPosition;
-		private Point d_buttonPress;
-		private Point d_dragState;
+		private Allocation d_mouseRect;
+		private PointF d_origPosition;
+		private PointF d_buttonPress;
+		private PointF d_dragState;
 		private bool d_isDragging;
 		
 		private Components.Object d_focus;
@@ -82,6 +82,7 @@ namespace Cpg.Studio
 			d_objectStack = new List<StackItem>();
 			d_hover = new List<Components.Object>();
 			d_selection = new List<Components.Object>();
+			d_mouseRect = new Allocation(0f, 0f, 0f, 0f);
 			
 			d_network = new Components.Network();
 			
@@ -197,8 +198,8 @@ namespace Cpg.Studio
 		
 		public void Add(Components.Object obj)
 		{
-			int cx = (int)Math.Round((Container.Allocation.X + Allocation.Width / 2.0) / (double)d_gridSize);
-			int cy = (int)Math.Round((Container.Allocation.Y + Allocation.Height / 2.0) / (double)d_gridSize);
+			int cx = (int)Math.Round((Container.X + Allocation.Width / 2.0) / (double)d_gridSize);
+			int cy = (int)Math.Round((Container.Y + Allocation.Height / 2.0) / (double)d_gridSize);
 			
 			if (obj is Components.Link)
 			{
@@ -272,7 +273,7 @@ namespace Cpg.Studio
 		
 		public void Add(Components.Object obj, int x, int y, int width, int height)
 		{
-			obj.Allocation = new System.Drawing.Rectangle(x, y, width, height);
+			obj.Allocation.Assign(x, y, width, height);
 			AddObject(obj);
 		}
 		
@@ -350,29 +351,34 @@ namespace Cpg.Studio
 		}
 		
 		delegate double ScaledPredicate(double val);
-		private int Scaled(double pos, ScaledPredicate predicate)
+		private float Scaled(double pos, ScaledPredicate predicate)
 		{
-			return (int)predicate(pos / d_gridSize);
+			return (float)(predicate != null ? predicate(pos / d_gridSize) : pos / d_gridSize);
 		}
 
-		private int Scaled(double pos)
+		private float Scaled(double pos)
 		{
-			return Scaled(pos, new ScaledPredicate(Math.Floor));
+			return Scaled(pos, null);
 		}
 		
-		private Point ScaledPosition(Point position, ScaledPredicate predicate)
+		private PointF ScaledPosition(PointF position, ScaledPredicate predicate)
 		{
-			return new Point(Scaled(position.X, predicate), Scaled(position.Y, predicate));
+			return new PointF(Scaled(position.X, predicate), Scaled(position.Y, predicate));
 		}
 		
-		private Point ScaledPosition(Point position)
+		private PointF ScaledPosition(PointF position)
 		{
-			return ScaledPosition(position, new ScaledPredicate(Math.Floor));
+			return ScaledPosition(position, null);
 		}
 		
-		private Point ScaledPosition(int x, int y)
+		private PointF ScaledPosition(double x, double y, ScaledPredicate predicate)
 		{
-			return ScaledPosition(new Point(x, y));
+			return ScaledPosition(new PointF((float)x, (float)y), predicate);
+		}
+		
+		private PointF ScaledPosition(double x, double y)
+		{
+			return ScaledPosition(x, y, null);
 		}
 		
 		private Components.Object[] SortedObjects()
@@ -395,23 +401,24 @@ namespace Cpg.Studio
 			return objects.ToArray();
 		}
 		
-		private List<Components.Object> HitTest(Rectangle rect)
+		private List<Components.Object> HitTest(Allocation allocation)
 		{
 			List<Components.Object> res = new List<Components.Object>();
-
-			rect.X += Container.Allocation.X;
-			rect.Y += Container.Allocation.Y;
+			Allocation rect = new Allocation(allocation);
+			
+			rect.X += Container.X;
+			rect.Y += Container.Y;
 			
 			rect.X = Scaled(rect.X);
 			rect.Y = Scaled(rect.Y);
-			rect.Width = Math.Max(1, Scaled(rect.Width));
-			rect.Height = Math.Max(1, Scaled(rect.Height));
+			rect.Width = Scaled(rect.Width);
+			rect.Height = Scaled(rect.Height);
 			
 			foreach (Components.Object obj in SortedObjects())
 			{				
 				if (!(obj is Components.Link))
 				{
-					if (rect.IntersectsWith(obj.Allocation) && obj.HitTest(rect))
+					if (obj.Allocation.Intersects(rect) && obj.HitTest(rect))
 						res.Add(obj);
 				}
 				else
@@ -465,7 +472,7 @@ namespace Cpg.Studio
 			return d_selection.IndexOf(obj) != -1;
 		}
 		
-		private void UpdateDragState(Point position)
+		private void UpdateDragState(PointF position)
 		{
 			if (d_selection.Count == 0)
 			{
@@ -483,21 +490,23 @@ namespace Cpg.Studio
 				return;
 			}
 			
-			Rectangle alloc = first.Allocation;
+			Allocation alloc = first.Allocation;
 			
 			d_selection.Remove(first);
 			d_selection.Insert(0, first);
 			
 			d_dragState.X = alloc.X - position.X;
 			d_dragState.Y = alloc.Y - position.Y;
+			
+			d_isDragging = true;
 		}
 		
-		private Point ScaledFromDragState(Components.Object obj)
+		private PointF ScaledFromDragState(Components.Object obj)
 		{
-			Rectangle rect = d_selection[0].Allocation;
-			Rectangle aobj = obj.Allocation;
+			Allocation rect = d_selection[0].Allocation;
+			Allocation aobj = obj.Allocation;
 			
-			return new Point(d_dragState.X - (rect.X - aobj.X), d_dragState.Y - (rect.Y - aobj.Y));
+			return new PointF(d_dragState.X - (rect.X - aobj.X), d_dragState.Y - (rect.Y - aobj.Y));
 		}
 		
 		private void DoDragRect(Gdk.EventMotion evnt)
@@ -505,7 +514,7 @@ namespace Cpg.Studio
 			d_mouseRect.Width = (int)evnt.X;
 			d_mouseRect.Height = (int)evnt.Y;
 
-			List<Components.Object> objects = HitTest(d_mouseRect);
+			List<Components.Object> objects = HitTest(d_mouseRect.FromRegion());
 			
 			Components.Object[] selection = new Components.Object[d_selection.Count];
 			d_selection.CopyTo(selection, 0);
@@ -539,7 +548,7 @@ namespace Cpg.Studio
 		
 		private void DoMouseInOut(Gdk.EventMotion evnt)
 		{
-			List<Components.Object> objects = HitTest(new Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
+			List<Components.Object> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
 			
 			d_hover.RemoveAll(delegate (Components.Object obj) {
 				if (objects.Count == 0 || obj != objects[0])
@@ -560,10 +569,10 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private Point UnitSize()
+		private PointF UnitSize()
 		{
-			return new Point(Scaled(Allocation.Width, new ScaledPredicate(Math.Ceiling)),
-			                 Scaled(Allocation.Height, new ScaledPredicate(Math.Ceiling)));
+			return new PointF(Scaled(Allocation.Width, new ScaledPredicate(Math.Ceiling)),
+			                  Scaled(Allocation.Height, new ScaledPredicate(Math.Ceiling)));
 		}
 		
 		private void DoZoom(bool zoomIn, Point where)
@@ -585,7 +594,7 @@ namespace Cpg.Studio
 			
 			if (upperReached)
 			{
-				List<Components.Object> objects = HitTest(new Rectangle(where.X, where.Y, 1, 1));
+				List<Components.Object> objects = HitTest(new Allocation(where.X, where.Y, 1f, 1f));
 				
 				foreach (Components.Object obj in objects)
 				{
@@ -652,6 +661,8 @@ namespace Cpg.Studio
 				if (d_selection.Count > 0)
 					Modified(this, new EventArgs());
 			}
+			
+			QueueDraw();
 		}
 		
 		private void FocusRelease()
@@ -709,7 +720,7 @@ namespace Cpg.Studio
 		
 		private void DrawGrid(Graphics graphics)
 		{
-			Point pt = UnitSize();
+			PointF pt = UnitSize();
 			
 			GraphicsState state = graphics.Save();
 			graphics.ScaleTransform(d_gridSize, d_gridSize);
@@ -728,7 +739,7 @@ namespace Cpg.Studio
 			graphics.Restore(state);
 		}
 		
-		private void DrawObject(Graphics graphics, Components.Object obj)
+		private void DrawObject(Graphics graphics, Font font, Components.Object obj)
 		{
 			if (obj == null)
 				return;
@@ -737,8 +748,8 @@ namespace Cpg.Studio
 			
 			GraphicsState state = graphics.Save();
 			
-			graphics.TranslateTransform((float)alloc.X, (float)alloc.Y);
-			obj.Draw(graphics);
+			graphics.TranslateTransform(alloc.X, alloc.Y);
+			obj.Draw(graphics, font);
 			
 			graphics.Restore(state);
 		}
@@ -749,6 +760,9 @@ namespace Cpg.Studio
 
 			graphics.TranslateTransform(-Container.X, -Container.Y);
 			graphics.ScaleTransform(d_gridSize, d_gridSize);
+			
+			Font font = System.Drawing.SystemFonts.DefaultFont;
+			font = new Font(font.FontFamily, font.Size / d_gridSize); 
 
 			List<Components.Object> objects = new List<Components.Object>();
 			
@@ -757,24 +771,24 @@ namespace Cpg.Studio
 				if (!(obj is Components.Link))
 					objects.Add(obj);
 				else
-					DrawObject(graphics, obj);
+					DrawObject(graphics, font, obj);
 			}
 			
 			foreach (Components.Object obj in objects)
-				DrawObject(graphics, obj);
+				DrawObject(graphics, font, obj);
 
 			graphics.Restore(state);
 		}
 		
 		private void DrawSelectionRect(Graphics graphics)
 		{
-			Rectangle rect = Utils.RectRegion(d_mouseRect);
+			Allocation rect = d_mouseRect.FromRegion();
 			
 			if (rect.Width <= 1 || rect.Height <= 1)
 				return;
 			
-			graphics.FillRectangle(new SolidBrush(Color.FromArgb(30, 0, 0, 255)), rect);
-			graphics.DrawRectangle(new Pen(Color.Blue, 2), rect);
+			graphics.FillRectangle(new SolidBrush(Color.FromArgb(50, 200, 220, 200)), rect);
+			graphics.DrawRectangle(new Pen(Color.Blue, 1), rect);
 		}
 		
 		/* Callbacks */
@@ -792,7 +806,7 @@ namespace Cpg.Studio
 			if (evnt.Button < 1 || evnt.Button > 3)
 				return false;
 			
-			List<Components.Object> objects = HitTest(new Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
+			List<Components.Object> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
 			Components.Object first = objects.Count > 0 ? objects[0] : null;
 
 			if (evnt.Type == Gdk.EventType.TwoButtonPress)
@@ -828,7 +842,7 @@ namespace Cpg.Studio
 				
 				if (evnt.Button == 1)
 				{
-					Point res = ScaledPosition((int)evnt.X, (int)evnt.Y);
+					PointF res = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
 					UpdateDragState(res);
 				}
 			}
@@ -844,7 +858,7 @@ namespace Cpg.Studio
 			}
 			else
 			{
-				d_mouseRect = new Rectangle((int)evnt.X, (int)evnt.Y, (int)evnt.X, (int)evnt.Y);
+				d_mouseRect = new Allocation(evnt.X, evnt.Y, evnt.X, evnt.Y);
 			}				
 			
 			return true;
@@ -855,16 +869,16 @@ namespace Cpg.Studio
 			base.OnButtonReleaseEvent(evnt);
 			
 			d_isDragging = false;
-			d_mouseRect = new Rectangle(0, 0, 0, 0);
+			d_mouseRect = new Allocation(0, 0, 0, 0);
 			
 			if (evnt.Type == Gdk.EventType.ButtonRelease)
 			{
-				List<Components.Object> objects = HitTest(new Rectangle((int)evnt.X, (int)evnt.Y, 1, 1));
+				List<Components.Object> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
 				Components.Object first = objects.Count > 0 ? objects[0] : null;
 				
 				if (first != null)
 				{
-					Point pos = ScaledPosition((int)evnt.X, (int)evnt.Y);
+					PointF pos = ScaledPosition(evnt.X, evnt.Y);
 					first.Clicked(pos);
 				}
 			}
@@ -893,17 +907,17 @@ namespace Cpg.Studio
 				return true;
 			}
 			
-			Point position = ScaledPosition((int)evnt.X, (int)evnt.Y);
-			Point size = UnitSize();
+			PointF position = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
+			PointF size = UnitSize();
 			
 			int pxn = (int)Math.Floor((double)(Container.X / d_gridSize));
 			int pyn = (int)Math.Floor((double)(Container.Y / d_gridSize));
 			
-			List<int> maxx = new List<int>();
-			List<int> minx = new List<int>();
-			List<int> maxy = new List<int>();
-			List<int> miny = new List<int>();
-			List<KeyValuePair<Components.Object, Point>> translation = new List<KeyValuePair<Components.Object, Point>>(); 
+			List<float> maxx = new List<float>();
+			List<float> minx = new List<float>();
+			List<float> maxy = new List<float>();
+			List<float> miny = new List<float>();
+			List<KeyValuePair<Components.Object, PointF>> translation = new List<KeyValuePair<Components.Object, PointF>>(); 
 			
 			maxx.Add(size.X - 1 + pxn);
 			minx.Add(position.X);
@@ -913,15 +927,15 @@ namespace Cpg.Studio
 			/* Check boundaries */
 			foreach (Components.Object obj in d_selection)
 			{
-				Point pt = ScaledFromDragState(obj);
-				Rectangle alloc = obj.Allocation;
+				PointF pt = ScaledFromDragState(obj);
+				Allocation alloc = obj.Allocation;
 				
 				minx.Add(-pt.X + pxn);
 				maxx.Add(size.X - pt.X + pxn - alloc.Width);
 				miny.Add(-pt.Y + pyn);
 				maxy.Add(size.Y - pt.Y + pyn - alloc.Height);
 				
-				translation.Add(new KeyValuePair<Components.Object, Point>(obj, pt));
+				translation.Add(new KeyValuePair<Components.Object, PointF>(obj, pt));
 			}
 			
 			if (position.X < Utils.Max(minx))
@@ -938,13 +952,13 @@ namespace Cpg.Studio
 			
 			bool changed = false;
 			
-			foreach (KeyValuePair<Components.Object, Point> item in translation)
+			foreach (KeyValuePair<Components.Object, PointF> item in translation)
 			{
-				Rectangle alloc = item.Key.Allocation;
+				Allocation alloc = item.Key.Allocation;
 				
 				if (alloc.X != item.Value.X + position.X || alloc.Y != item.Value.Y + position.Y)
 				{
-					alloc.Offset(item.Value.X + position.X, item.Value.Y + position.Y);
+					alloc.Move(item.Value.X + position.X, item.Value.Y + position.Y);
 					changed = true;
 				}
 			}

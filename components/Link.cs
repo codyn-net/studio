@@ -67,7 +67,7 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		public bool HitTest(System.Drawing.Rectangle rect, int gridSize)
+		public bool HitTest(Allocation rect, int gridSize)
 		{
 			return false;
 		}

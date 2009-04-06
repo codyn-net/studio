@@ -69,15 +69,14 @@ namespace Cpg.Studio.GtkGui
 		
 		public PropertyView(Components.Object obj) : base(false, 3)
 		{
-			Init(obj);
-			ShowAll();
+			Initialize(obj);
 		}
 		
 		public PropertyView() : this(null)
 		{
 		}
 		
-		private void Init(Components.Object obj)
+		public void Initialize(Components.Object obj)
 		{
 			Clear();
 			
@@ -87,7 +86,7 @@ namespace Cpg.Studio.GtkGui
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			
 			d_store = new NodeStore();
-			d_treeview = new NodeView(d_store);			
+			d_treeview = new NodeView(d_store);		
 			
 			vw.Add(d_treeview);
 			
@@ -106,11 +105,12 @@ namespace Cpg.Studio.GtkGui
 			if (d_object != null)
 				renderer.Edited += DoValueEdited;
 				
-			column = new TreeViewColumn("Value", renderer);
+			column = new TreeViewColumn("Value", renderer, new object[] {"text", 1});
 			column.Resizable = true;
 			column.SetCellDataFunc(renderer, delegate (TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter) {
-				(cell as CellRendererText).Text = (d_store.GetNode(model.GetPath(piter)) as Node).Name;
-				(cell as CellRendererText).Editable = d_object != null && !(d_object.IsReadOnly(model.GetValue(piter, 0).ToString()));
+				Node node = d_store.GetNode(model.GetPath(piter)) as Node;
+				(cell as CellRendererText).Text = node.Value;
+				(cell as CellRendererText).Editable = d_object != null && !d_object.IsReadOnly(node.Name);
 			});
 			
 			column.MinWidth = 100;
@@ -130,17 +130,21 @@ namespace Cpg.Studio.GtkGui
 				column.SetCellDataFunc(toggle, delegate (TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter) {
 					(cell as CellRendererToggle).Active = (d_object as Components.Simulated).GetIntegrated(model.GetValue(piter, 0).ToString());
 				});
+				
+				column.MinWidth = 10;
+				d_treeview.AppendColumn(column);
 			}
 			
 			if (d_object != null)
 			{
 				HBox hbox = new HBox(false, 3);
+				
 				PackStart(hbox, false, false, 0);
 				
 				d_entry = new Entry();
 				hbox.PackStart(d_entry, true, true, 0);
 				
-				d_entry.KeyPressEvent += DoEntryKeyPress;
+				d_entry.Activated += DoEntryActivated;
 				d_treeview.KeyPressEvent += DoTreeViewKeyPress;
 				
 				ToolButton but = new ToolButton(Gtk.Stock.Add);
@@ -161,6 +165,8 @@ namespace Cpg.Studio.GtkGui
 				InitStore();
 				Sensitive = true;
 			}
+			
+			ShowAll();
 		}
 		
 		private void InitStore()
@@ -182,13 +188,10 @@ namespace Cpg.Studio.GtkGui
 			d_removeButton.Sensitive = node != null && !d_object.IsPermanent(node.Name);
 		}
 		
-		private void DoEntryKeyPress(object source, KeyPressEventArgs args)
+		private void DoEntryActivated(object source, EventArgs args)
 		{
-			if (args.Event.Key == Gdk.Key.Return)
-			{
-				DoAddProperty(source, new EventArgs());
-				(source as Entry).SelectRegion(0, -1);
-			}
+			DoAddProperty(source, new EventArgs());
+			d_entry.SelectRegion(0, -1);
 		}
 		
 		private void DoTreeViewKeyPress(object source, KeyPressEventArgs args)
@@ -226,7 +229,10 @@ namespace Cpg.Studio.GtkGui
 			foreach (Node node in nodes)
 			{
 				if (!d_object.IsPermanent(node.Name))
+				{
+					d_object.RemoveProperty(node.Name);
 					d_store.RemoveNode(node);
+				}
 			}
 		}
 		
@@ -235,45 +241,28 @@ namespace Cpg.Studio.GtkGui
 			AddProperty(name);
 		}
 		
-		private TreePath FindProperty(string name)
+		private Node FindProperty(string name)
 		{
-			TreeModel model = d_store as TreeModel;
-			TreePath ret = null;
-			
-			model.Foreach(delegate (TreeModel mod, TreePath path, TreeIter piter)
+			foreach (Node node in d_store)
 			{
-				if ((d_store.GetNode(path) as Node).Name == name)
-				{
-					ret = path;
-					return false;
-				}
-				
-				return true;
-			});
+				if (node.Name == name)
+					return node;
+			}
 			
-			return ret;
+			return null;
 		}
 		
 		private void DoPropertyChanged(Components.Object obj, string name)
 		{
-			TreePath path = FindProperty(name);
-			
-			if (path != null)
-			{
-				TreeModel model = d_store as TreeModel;
-				TreeIter piter;
-			
-				model.GetIter(out piter, path);
-				model.EmitRowChanged(path, piter);
-			}
+			// TODO
 		}
 		
 		private void DoPropertyRemoved(Components.Object obj, string name)
 		{
-			TreePath path = FindProperty(name);
+			Node node = FindProperty(name);
 			
-			if (path != null)
-				d_store.RemoveNode(d_store.GetNode(path));
+			if (node != null)
+				d_store.RemoveNode(node);
 		}
 		
 		private void Clear()

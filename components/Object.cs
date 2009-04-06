@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Cpg.Studio.Components
 {
@@ -22,14 +23,14 @@ namespace Cpg.Studio.Components
 		public event PropertyHandler PropertyRemoved = delegate {};
 		public event PropertyHandler PropertyChanged = delegate {};
 
-		private Rectangle d_allocation;
+		private Allocation d_allocation;
 		private Dictionary<string, object> d_properties;
 		
 		private State d_state;
 		
 		public Object()
 		{
-			d_allocation = new System.Drawing.Rectangle(0, 0, 1, 1);
+			d_allocation = new Allocation(0f, 0f, 1f, 1f);
 			d_properties = new Dictionary<string, object>();
 			
 			d_state = State.None;
@@ -105,7 +106,7 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		public Rectangle Allocation
+		public Allocation Allocation
 		{
 			get
 			{
@@ -129,12 +130,28 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
+		private List<string> FixedProperties()
+		{
+			List<string> lst = new List<string>();
+			
+			foreach (PropertyInfo info in GetType().GetProperties())
+			{
+				foreach (object attr in info.GetCustomAttributes(typeof(PropertyAttribute), true))
+					lst.Add((attr as PropertyAttribute).Name);
+			}
+			
+			return lst;
+		}
+		
 		public virtual string[] Properties
 		{
 			get
 			{
-				string[] ret = new string[d_properties.Count];
-				d_properties.Keys.CopyTo(ret, 0);
+				List<string> props = FixedProperties();
+				
+				string[] ret = new string[d_properties.Count + props.Count];
+				props.CopyTo(ret, 0);
+				d_properties.Keys.CopyTo(ret, props.Count);
 				
 				return ret;
 			}
@@ -142,12 +159,20 @@ namespace Cpg.Studio.Components
 		
 		public virtual bool HasProperty(string name)
 		{
-			return d_properties.ContainsKey(name);
+			return d_properties.ContainsKey(name) || FindPropertyAttribute(name) != null;
 		}
 		
 		public virtual object GetProperty(string name)
 		{
-			return d_properties[name];
+			PropertyInfo info;
+			PropertyAttribute attr = FindPropertyAttribute(name, out info);
+			
+			if (attr != null)
+				return info.GetGetMethod().Invoke(this, new object[] {});
+			else if (d_properties.ContainsKey(name))
+				return d_properties[name];
+			else
+				return null;
 		}
 		
 		protected virtual void SetPropertyReal(string name, object val)
@@ -182,34 +207,67 @@ namespace Cpg.Studio.Components
 			SetProperty(name, null);
 		}
 		
+		public PropertyAttribute FindPropertyAttribute(string name, out PropertyInfo info)
+		{
+			Type type = GetType();
+			
+			PropertyInfo[] infos = type.GetProperties();
+			
+			foreach (PropertyInfo inf in infos)
+			{
+				object[] attributes = inf.GetCustomAttributes(typeof(PropertyAttribute), true);
+				
+				foreach (object attr in attributes)
+				{
+					PropertyAttribute prop = attr as PropertyAttribute;
+					
+					if (prop.Name == name)
+					{
+						info = inf;
+						return prop;
+					}
+				}
+			}
+			
+			info = null;
+			return null;
+		}
+		
+		public PropertyAttribute FindPropertyAttribute(string name)
+		{
+			PropertyInfo info;
+			
+			return FindPropertyAttribute(name, out info);
+		}
+		
 		public bool IsPermanent(string name)
 		{
-			// TODO
-			return false;
+			PropertyAttribute prop = FindPropertyAttribute(name);
+			return prop != null;
 		}
 		
 		public bool IsReadOnly(string name)
 		{
-			// TODO
-			return false;
+			PropertyAttribute prop = FindPropertyAttribute(name);
+			return prop != null && prop.ReadOnly;
 		}
 		
 		public bool IsInvisible(string name)
 		{
-			// TODO
-			return false;
+			PropertyAttribute prop = FindPropertyAttribute(name);
+			return prop != null && prop.Invisible;
 		}
 		
 		public virtual void Removed()
 		{
 		}
 		
-		public virtual bool HitTest(System.Drawing.Rectangle rect)
+		public virtual bool HitTest(Allocation rect)
 		{
 			return true;
 		}
 		
-		public virtual void Clicked(System.Drawing.Point position)
+		public virtual void Clicked(PointF position)
 		{
 			// NOOP
 		}
@@ -230,18 +288,16 @@ namespace Cpg.Studio.Components
 			// TODO
 		}
 		
-		public virtual void Draw(Graphics graphics)
+		public virtual void Draw(Graphics graphics, Font font)
 		{
 			string s = ToString();
 
 			if (s != String.Empty)
 			{
-				Font font = SystemFonts.DefaultFont;
-				SizeF size = graphics.MeasureString(s, font);
-
-				graphics.DrawString(s, font, SystemBrushes.ControlText, 
-				                    (Allocation.Width - size.Width) / 2.0f,
-				                    (Allocation.Height - size.Height) / 2.0f);
+				StringFormat format = new StringFormat();
+				format.Alignment = StringAlignment.Center;
+				
+				graphics.DrawString(s, font, SystemBrushes.ControlText, Allocation.Width / 2, font.GetHeight(), format); 
 			}
 			
 			if (Selected)
@@ -249,6 +305,11 @@ namespace Cpg.Studio.Components
 		
 			if (KeyFocus)
 				DrawFocus(graphics);
+		}
+		
+		protected void QueueDraw()
+		{
+			RequestRedraw(this, new EventArgs());
 		}
 	}
 }
