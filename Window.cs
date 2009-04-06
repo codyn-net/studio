@@ -470,6 +470,7 @@ namespace Cpg.Studio
 		
 		private void OnAddLinkActivated(object sender, EventArgs args)
 		{
+			d_grid.Attach();
 		}
 		
 		private void OnAddSensorActivated(object sender, EventArgs args)

@@ -128,7 +128,7 @@ namespace Cpg.Studio
 					offset = other.Offset;
 			}
 			
-			link.Offset = offset;
+			link.Offset = offset + 1;
 			AddObject(link);
 		}
 		
@@ -150,7 +150,15 @@ namespace Cpg.Studio
 		
 		public void Attach()
 		{
-			Attach(d_selection.ToArray() as Components.Simulated[]);
+			if (d_selection.Count == 0)
+				return;
+			
+			Components.Simulated[] selection = new Components.Simulated[d_selection.Count];
+			
+			for (int i = 0; i < d_selection.Count; ++i)
+				selection[i] = d_selection[i] as Components.Simulated;
+
+			Attach(selection);
 		}
 		
 		public Components.Link[] Attach(Components.Simulated[] objs)
@@ -171,7 +179,7 @@ namespace Cpg.Studio
 				
 				d_network.AddObject(orig);
 
-				Components.Link link = new Components.Link(orig);
+				Components.Link link = new Components.Link(orig, objects[0], objects[i]);
 				AddLink(link);
 				
 				added.Add(link);
@@ -365,12 +373,7 @@ namespace Cpg.Studio
 		{
 			return new PointF(Scaled(position.X, predicate), Scaled(position.Y, predicate));
 		}
-		
-		private PointF ScaledPosition(PointF position)
-		{
-			return ScaledPosition(position, null);
-		}
-		
+				
 		private PointF ScaledPosition(double x, double y, ScaledPredicate predicate)
 		{
 			return ScaledPosition(new PointF((float)x, (float)y), predicate);
