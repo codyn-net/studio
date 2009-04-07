@@ -797,6 +797,102 @@ namespace Cpg.Studio
 			graphics.DrawRectangle(new Pen(Color.Blue, 1), rect);
 		}
 		
+		public Components.Object[] NormalizeGroup(Components.Object[] objects, out Components.Object[] removed)
+		{
+			List<Components.Object> orig = new List<Components.Object>(objects);
+			List<Components.Object> rm = new List<Components.Object>();
+			
+			/* Remove any links with objects not within the group */
+			orig.RemoveAll(delegate (Components.Object obj) {
+				if ((obj is Components.Link))
+				{
+					Components.Link link = obj as Components.Link;
+					
+					if (orig.IndexOf(link.From) == -1 || orig.IndexOf(link.To) == -1)
+					{
+						rm.Add(obj);
+						return true;
+					}
+				}
+				
+				return false;
+			});
+			
+			/* Add any links that are fully within the group, wrt from and to */
+			foreach (Components.Object obj in Container.Children)
+			{
+				if (!(obj is Components.Link) || orig.IndexOf(obj) != -1 || rm.IndexOf(obj) != -1)
+					continue;
+				
+				Components.Link link = obj as Components.Link;
+				
+				if (orig.IndexOf(link.From) != -1 && orig.IndexOf(link.To) != -1)
+					orig.Add(obj);
+			}
+			
+			removed = rm.ToArray();
+			return orig.ToArray();
+		}
+		
+		private void DoGroupReal(Components.Object[] objects, Components.Simulated main, Type renderer)
+		{
+			
+		}
+		
+		private void NewGroup(Components.Object[] objects)
+		{
+			Gtk.Dialog dlg = new Gtk.Dialog("Group properties", Toplevel as Window, 
+			                                DialogFlags.DestroyWithParent,
+			                                Gtk.Stock.Cancel, Gtk.ResponseType.Close,
+			                                Gtk.Stock.Ok, Gtk.ResponseType.Ok);
+
+			dlg.HasSeparator = false;
+			GtkGui.GroupProperties widget = new GtkGui.GroupProperties(objects);
+			
+			dlg.VBox.PackStart(widget, true, true, 0);
+			
+			dlg.Response += delegate(object o, ResponseArgs args) {
+				if (args.ResponseId == ResponseType.Ok)
+					DoGroupReal(objects, widget.Main, widget.Klass);
+				
+				dlg.Destroy();
+			};
+		}
+		
+		public bool Group(Components.Object[] objects)
+		{
+			/* Check if everything is in the group */
+			Components.Object[] res;
+			Components.Object[] removed;
+
+			res = NormalizeGroup(objects, out removed);
+			
+			/* Check if there were removals and actual objects */
+			if (removed.Length != 0)
+				return false;
+		
+			/* Check if there is at least one non-link simulated object */
+			bool hassim = false;
+			
+			foreach (Components.Object obj in res)
+			{
+				if (obj is Components.Simulated && !(obj is Components.Link))
+					hassim = true;
+			}
+			
+			if (!hassim)
+				return false;
+			
+			/* Ask for main object etc */
+			NewGroup(res);
+			return true;
+		}
+		
+		public bool Group()
+		{
+			return Group(d_selection.ToArray());
+		}
+		
 		/* Callbacks */
 		private void OnRequestRedraw(object source, EventArgs e)
 		{
