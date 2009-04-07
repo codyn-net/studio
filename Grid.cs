@@ -306,14 +306,15 @@ namespace Cpg.Studio
 			if (!(obj is Components.Link) && obj is Components.Simulated)
 			{
 				/* Remove any associated links */
-				foreach (Components.Object other in Container.Children)
+				Components.Object[] children = Container.Children.ToArray();
+				foreach (Components.Object other in children)
 				{
 					if (!(other is Components.Link))
 						continue;
 				
 					Components.Link link = other as Components.Link;
 					
-					if (link.From == other || link.To == other)
+					if (link.From == obj || link.To == obj)
 						Remove(link);
 				}
 			}
@@ -325,6 +326,8 @@ namespace Cpg.Studio
 			
 			if (obj is Components.Simulated)
 				d_network.RemoveObject((obj as Components.Simulated).Object);
+			
+			QueueDraw();
 		}
 		
 		public void Unselect(Components.Object obj)
