@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Collections.Generic;
 
 namespace Cpg.Studio.Components
 {
@@ -78,9 +79,95 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
+		private bool RectHittest(PointF p1, PointF p2, PointF p3, PointF p4, Allocation rect, float gridSize)
+		{
+			Allocation other = new Allocation(0, 0, 1f / gridSize, 1f / gridSize);
+			
+			for (int i = 0; i < 5; ++i)
+			{
+				other.X = EvaluateBezier(p1.X, p2.X, p3.X, p4.X, (float)i / 5);
+				other.Y = EvaluateBezier(p1.Y, p2.Y, p3.Y, p4.Y, (float)i / 5);
+				
+				if (rect.Intersects(other))
+					return true;
+			}
+			
+			return false;
+		}
+		
+		private float DistanceToLine(PointF start, PointF stop, PointF point)
+		{
+			PointF dx = new PointF(point.X - start.X, stop.X - start.X);
+			PointF dy = new PointF(point.Y - start.Y, stop.Y - start.Y);
+			
+			float dot = dx.X * dx.Y + dy.X * dy.Y;
+			float len_sq = dx.Y * dx.Y + dy.Y * dy.Y;
+			float param = dot / len_sq;
+			
+			PointF res = new PointF(0, 0);
+			
+			if (param < 0)
+			{
+				res = start;
+			}
+			else if (param > 1)
+			{
+				res = stop;
+			}
+			else
+			{
+				res.X = start.X + param * dx.Y;
+				res.Y = start.Y + param * dy.Y;
+			}
+			
+			return (float)Math.Sqrt((point.X - res.X) * (point.X - res.X) + (point.Y - res.Y) * (point.Y - res.Y));
+		}
+		
 		public bool HitTest(Allocation rect, int gridSize)
 		{
-			return false;
+			Allocation a1 = d_from.Allocation;
+			Allocation a2 = d_to.Allocation;
+			
+			PointF from = new PointF(a1.X + a1.Width / 2, a1.Y + a1.Height / 2);
+			PointF to = new PointF(a2.X + a2.Width / 2, a2.Y + a2.Height / 2);
+			
+			PointF control = CalculateControl(from, to);
+			
+			// Piece wise linearization
+			int num = 5;
+			List<float> dist = new List<float>();
+			
+			PointF prevp = from;
+			PointF p2;
+			PointF p3;
+			
+			if (from.X == to.X && from.Y == to.Y)
+			{
+				p2 = new PointF(to.X - 2, to.Y - ((d_offset + 1) + 0.5f));
+				p3 = new PointF(to.X + 2, to.Y - ((d_offset + 1) + 0.5f));
+			}
+			else
+			{
+				p2 = control;
+				p3 = control;
+			}
+			
+			if (rect.Width > 1 || rect.Height > 1)
+			{
+				return RectHittest(from, p2, p3, to, rect, gridSize);
+			}
+			
+			for (int i = 1; i < num; ++i)
+			{
+				float px = EvaluateBezier(from.X, p2.X, p3.X, to.X, (float)i / num);
+				float py = EvaluateBezier(from.Y, p2.Y, p3.Y, to.Y, (float)i / num);
+				
+				dist.Add(DistanceToLine(prevp, new PointF(px, py), new PointF(rect.X, rect.Y)));
+				
+				prevp = new PointF(px, py);
+			}
+
+			return (Utils.Min(dist) < 10.0f / gridSize);
 		}
 		
 		private PointF CalculateControl(PointF from, PointF to)
