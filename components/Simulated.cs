@@ -120,7 +120,7 @@ namespace Cpg.Studio.Components
 			set
 			{
 				d_object.Id = value;
-				QueueDraw();
+				DoRequestRedraw();
 			}
 		}
 		

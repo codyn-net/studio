@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Gtk;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Reflection;
 
 namespace Cpg.Studio
 {
@@ -437,23 +438,23 @@ namespace Cpg.Studio
 			return res;
 		}
 		
-		private double[] MeanPosition(Components.Object[] objects)
+		private PointF MeanPosition(Components.Object[] objects)
 		{
-			double[] res = new double[] {0, 0};
+			PointF res = new PointF(0, 0);
 			int num = 0;
 			
 			foreach (Components.Object obj in objects)
 			{
-				res[0] += obj.Allocation.X + obj.Allocation.Width / 2.0;
-				res[1] += obj.Allocation.Y + obj.Allocation.Height / 2.0;
+				res.X += obj.Allocation.X + obj.Allocation.Width / 2.0f;
+				res.Y += obj.Allocation.Y + obj.Allocation.Height / 2.0f;
 				
 				num += 1;
 			}
 			
 			if (num != 0)
 			{
-				res[0] = res[0] / num;
-				res[1] = res[1] / num;
+				res.X = res.X / num;
+				res.Y = res.Y / num;
 			}
 			
 			return res;
@@ -461,13 +462,13 @@ namespace Cpg.Studio
 		
 		public void CenterView()
 		{
-			double[] pos = MeanPosition(Container.Children.ToArray());
+			PointF pos = MeanPosition(Container.Children.ToArray());
 			
-			pos[0] *= d_gridSize;
-			pos[1] *= d_gridSize;
+			pos.X *= d_gridSize;
+			pos.Y *= d_gridSize;
 			
-			Container.X = (int)(pos[0] - (Allocation.Width / 2.0));
-			Container.Y = (int)(pos[1] - (Allocation.Height / 2.0));
+			Container.X = (int)(pos.X - (Allocation.Width / 2.0f));
+			Container.Y = (int)(pos.Y - (Allocation.Height / 2.0f));
 			
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
@@ -608,10 +609,10 @@ namespace Cpg.Studio
 						continue;
 
 					Components.Group grp = obj as Components.Group;
-					double[] pos = MeanPosition(grp.Children.ToArray());
+					PointF pos = MeanPosition(grp.Children.ToArray());
 					
-					grp.X = (int)(pos[0] * d_defaultGridSize - where.X);
-					grp.Y = (int)(pos[1] * d_defaultGridSize - where.Y);
+					grp.X = (int)(pos.X * d_defaultGridSize - where.X);
+					grp.Y = (int)(pos.Y * d_defaultGridSize - where.Y);
 					
 					LevelDown(grp);
 					return;
@@ -834,9 +835,34 @@ namespace Cpg.Studio
 			return orig.ToArray();
 		}
 		
-		private void DoGroupReal(Components.Object[] objects, Components.Simulated main, Type renderer)
+		private bool DoGroupReal(Components.Object[] objects, Components.Simulated main, Type renderer)
 		{
+			/* Check if any objects have links to objects not in the group, except
+			 * for the main object */
+			List<Components.Object> objs = new List<Components.Object>(objects);
+
+			foreach (Components.Object obj in Container.Children)
+			{
+				if (!(obj is Components.Link))
+					continue;
+				
+				Components.Link link = obj as Components.Link;
+				
+				if (link.To == main as Components.Object || link.From == main as Components.Object)
+					continue;
+				
+				if (objs.IndexOf(link.From) == -1 && objs.IndexOf(link.To) == -1 && objs.IndexOf(link) == -1)
+					return false;
+			}
 			
+			PointF pt = MeanPosition(objects);
+
+			Components.Group group = new Components.Group(main);
+			ConstructorInfo info = renderer.GetConstructor(new Type[] {typeof(Components.Group) });
+			
+			group.Renderer = info.Invoke(new object[] { group }) as Components.Renderers.Renderer;
+			
+			return true;
 		}
 		
 		private void NewGroup(Components.Object[] objects)
@@ -857,6 +883,8 @@ namespace Cpg.Studio
 				
 				dlg.Destroy();
 			};
+			
+			dlg.ShowAll();
 		}
 		
 		public bool Group(Components.Object[] objects)
@@ -891,6 +919,10 @@ namespace Cpg.Studio
 		public bool Group()
 		{
 			return Group(d_selection.ToArray());
+		}
+		
+		public void Ungroup(Components.Group group)
+		{
 		}
 		
 		/* Callbacks */

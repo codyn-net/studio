@@ -73,6 +73,10 @@ namespace Cpg.Studio.GtkGui
 				store.GetIter(out it, path);
 				cmb.SetActiveIter(it);
 			}
+			else
+			{
+				cmb.Active = 0;
+			}
 			
 			d_comboMain = cmb;
 			Attach(cmb, 1, 2, 0, 1);
@@ -85,14 +89,25 @@ namespace Cpg.Studio.GtkGui
 			
 			foreach (Type type in asm.GetTypes())
 			{
-				if (!type.IsSubclassOf(typeof(Components.Renderer)))
+				if (!type.IsSubclassOf(typeof(Components.Renderers.Renderer)))
 					continue;
+
+				object[] attributes = type.GetCustomAttributes(typeof(Components.Renderers.NameAttribute), true);
+				string name;
 				
-				object name = type.InvokeMember("Name", BindingFlags.InvokeMethod | BindingFlags.Static, null, type, new object[] {});
+				if (attributes.Length != 0)
+				{
+					name = (attributes[0] as Components.Renderers.NameAttribute).Name;
+				}
+				else
+				{
+					name = "None";	
+				}
+
 				TreeIter iter = store.Append();
 				
 				store.SetValue(iter, 0, new GLib.Value(type));
-				store.SetValue(iter, 1, new GLib.Value(name as string));
+				store.SetValue(iter, 1, new GLib.Value(name));
 				
 				if (type == defklass)
 					path = store.GetPath(iter);
@@ -107,6 +122,10 @@ namespace Cpg.Studio.GtkGui
 				TreeIter it;
 				store.GetIter(out it, path);
 				cmb.SetActiveIter(it);
+			}
+			else
+			{
+				cmb.Active = 0;	
 			}
 			
 			d_comboKlass = cmb;

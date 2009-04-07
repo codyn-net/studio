@@ -130,7 +130,7 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		private List<string> FixedProperties()
+		public virtual List<string> FixedProperties()
 		{
 			List<string> lst = new List<string>();
 			
@@ -183,7 +183,7 @@ namespace Cpg.Studio.Components
 				d_properties[name] = val;
 		}
 		
-		public void SetProperty(string name, object val)
+		public virtual void SetProperty(string name, object val)
 		{
 			bool newprop = !HasProperty(name);
 			
@@ -202,12 +202,12 @@ namespace Cpg.Studio.Components
 			return "";
 		}
 		
-		public void RemoveProperty(string name)
+		public virtual void RemoveProperty(string name)
 		{
 			SetProperty(name, null);
 		}
 		
-		public PropertyAttribute FindPropertyAttribute(string name, out PropertyInfo info)
+		public virtual PropertyAttribute FindPropertyAttribute(string name, out PropertyInfo info)
 		{
 			Type type = GetType();
 			
@@ -307,9 +307,24 @@ namespace Cpg.Studio.Components
 				DrawFocus(graphics);
 		}
 		
-		protected void QueueDraw()
+		protected void DoRequestRedraw()
 		{
 			RequestRedraw(this, new EventArgs());
+		}
+		
+		protected void DoPropertyAdded(string name)
+		{
+			PropertyAdded(this, name);
+		}
+		
+		protected void DoPropertyChanged(string name)
+		{
+			PropertyChanged(this, name);
+		}
+		
+		protected void DoPropertyRemoved(string name)
+		{
+			PropertyRemoved(this, name);
 		}
 	}
 }

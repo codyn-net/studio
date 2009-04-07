@@ -457,10 +457,18 @@ namespace Cpg.Studio
 		
 		private void OnGroupActivated(object sender, EventArgs args)
 		{
+			d_grid.Group();
 		}
 		
 		private void OnUngroupActivated(object sender, EventArgs args)
 		{
+			Components.Object[] objects = d_grid.Selection;
+
+			foreach (Components.Object obj in objects)
+			{
+				if (obj is Components.Group)
+					d_grid.Ungroup(obj as Components.Group);
+			}
 		}
 		
 		private void OnAddStateActivated(object sender, EventArgs args)
