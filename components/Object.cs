@@ -36,20 +36,6 @@ namespace Cpg.Studio.Components
 			d_state = State.None;
 		}
 		
-		public static Components.Object FromCpg(Cpg.Object obj)
-		{
-			Type type = obj.GetType();
-			
-			if (type == typeof(Cpg.Relay))
-				return new Components.Relay(obj as Cpg.Relay);
-			else if (type == typeof(Cpg.State))
-				return new Components.State(obj as Cpg.State);
-			else if (type == typeof(Cpg.Link))
-				return new Components.Link(obj as Cpg.Link);
-			else
-				return null;
-		}
-		
 		private bool FromState(State field)
 		{
 			return (d_state & field) != State.None;

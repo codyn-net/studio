@@ -861,6 +861,47 @@ namespace Cpg.Studio
 			ConstructorInfo info = renderer.GetConstructor(new Type[] {typeof(Components.Group) });
 			
 			group.Renderer = info.Invoke(new object[] { group }) as Components.Renderers.Renderer;
+
+			/* Copy positioning from current group */
+			group.X = Container.X;
+			group.Y = Container.Y;
+			group.Allocation.X = (int)Math.Floor(pt.X);
+			group.Allocation.Y = (int)Math.Floor(pt.Y);
+			
+			/* Reroute links going to main to the group (but not internally) */
+			foreach (Components.Object obj in Container.Children)
+			{
+				if (!(obj is Components.Link))
+					continue;
+				
+				Components.Link link = obj as Components.Link;
+				
+				if (link.From == group.Main)
+					link.From = group;
+				
+				if (link.To == group.Main)
+					link.To = group;
+			}
+			
+			/* Remove objects from the grid and add them to the group */
+			foreach (Components.Object obj in objects)
+			{
+				Container.Remove(obj);
+				
+				ObjectRemoved(this, obj);
+				Unselect(obj);
+				
+				group.Add(obj);
+			}
+			
+			/* Add group to current */
+			Rectangle r = group.Allocation;
+			
+			Add(group, r.X, r.Y, r.Width, r.Height);
+			Select(group);
+			
+			Modified(this, new EventArgs());
+			QueueDraw();
 			
 			return true;
 		}
@@ -923,6 +964,24 @@ namespace Cpg.Studio
 		
 		public void Ungroup(Components.Group group)
 		{
+			/* Reconnect attachments to main object */
+			foreach (Components.Object obj in Container.Children)
+			{
+				if (!(obj is Components.Link))
+					continue;
+			
+				Components.Link link = obj as Components.Link;
+				
+				if (link.From == group as Components.Simulated)
+					link.From = group.Main;
+				
+				if (link.To == group as Components.Simulated)
+					link.To = group.Main;
+			}
+			
+			// TODO
+			// CheckLinkOffsets(group.Main);
+			
 		}
 		
 		/* Callbacks */

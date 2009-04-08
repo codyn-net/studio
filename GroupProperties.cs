@@ -136,8 +136,12 @@ namespace Cpg.Studio.GtkGui
 		{
 			get
 			{
-				// TODO
-				return null;	
+				TreeIter iter;
+				
+				if (d_comboMain.GetActiveIter(out iter))
+					return d_comboMain.Model.GetValue(iter, 0) as Components.Simulated;
+				else
+					return null;
 			}
 		}
 		
@@ -145,8 +149,12 @@ namespace Cpg.Studio.GtkGui
 		{
 			get
 			{
-				// TODO
-				return null;
+				TreeIter iter;
+				
+				if (d_comboKlass.GetActiveIter(out iter))
+					return d_comboKlass.Model.GetValue(iter, 0) as Type;
+				else
+					return null;
 			}
 		}
 	}

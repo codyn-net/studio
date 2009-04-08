@@ -7,16 +7,16 @@ namespace Cpg.Studio.Components
 {
 	public class Link : Simulated
 	{
-		Components.Object d_from;
-		Components.Object d_to;
+		Components.Simulated d_from;
+		Components.Simulated d_to;
 		int d_offset;
 		Brush d_selectedBrush;
 		Brush d_normalBrush;
 
 		public Link(Cpg.Link obj, Components.Simulated from, Components.Simulated to) : base(obj)
 		{
-			d_from = from != null ? from : Components.Object.FromCpg(obj.From);
-			d_to = to != null ? to : Components.Object.FromCpg(obj.To);
+			d_from = from != null ? from : Components.Simulated.FromCpg(obj.From);
+			d_to = to != null ? to : Components.Simulated.FromCpg(obj.To);
 			
 			d_selectedBrush = new SolidBrush(Color.FromArgb(150, 150, 150, 255));
 			d_normalBrush = new SolidBrush(Color.FromArgb(150, 180, 180, 180));
@@ -63,19 +63,27 @@ namespace Cpg.Studio.Components
 			return (other.d_from == d_from && other.d_to == d_to);
 		}
 		
-		public Components.Object From
+		public Components.Simulated From
 		{
 			get
 			{
 				return d_from;
 			}
+			set
+			{
+				d_from = value;
+			}
 		}
 		
-		public Components.Object To
+		public Components.Simulated To
 		{
 			get
 			{
 				return d_to;
+			}
+			set
+			{
+				d_to = value;
 			}
 		}
 		

@@ -8,6 +8,20 @@ namespace Cpg.Studio.Components
 	{
 		protected Cpg.Object d_object;
 
+		public static Components.Simulated FromCpg(Cpg.Object obj)
+		{
+			Type type = obj.GetType();
+			
+			if (type == typeof(Cpg.Relay))
+				return new Components.Relay(obj as Cpg.Relay);
+			else if (type == typeof(Cpg.State))
+				return new Components.State(obj as Cpg.State);
+			else if (type == typeof(Cpg.Link))
+				return new Components.Link(obj as Cpg.Link);
+			else
+				return null;
+		}
+		
 		public Simulated(Cpg.Object obj) : base()
 		{
 			d_object = obj;
@@ -97,13 +111,13 @@ namespace Cpg.Studio.Components
 				prop.Integrated = integrated;
 		}
 		
-		public Cpg.Object Object
+		public virtual Cpg.Object Object
 		{
 			get
 			{
 				return d_object;
 			}
-			protected set
+			set
 			{
 				d_object = value;
 			}

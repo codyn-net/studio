@@ -45,6 +45,18 @@ namespace Cpg.Studio.Components
 		{
 		}
 		
+		public override Cpg.Object Object
+		{
+			get
+			{
+				return d_main.Object;
+			}
+			set
+			{
+				d_main.Object = value;
+			}
+		}
+		
 		public List<Components.Object> Children
 		{
 			get
@@ -58,6 +70,11 @@ namespace Cpg.Studio.Components
 			d_children.Add(obj);
 		}
 		
+		public void Remove(Components.Object obj)
+		{
+			d_children.Remove(obj);
+		}
+		
 		public Renderers.Renderer Renderer
 		{
 			get
@@ -67,6 +84,18 @@ namespace Cpg.Studio.Components
 			set
 			{
 				d_renderer = value;	
+			}
+		}
+		
+		public Components.Simulated Main
+		{
+			get
+			{
+				return d_main;
+			}
+			set
+			{
+				d_main = value;
 			}
 		}
 		
