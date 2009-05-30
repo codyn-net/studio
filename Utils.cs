@@ -20,6 +20,8 @@ namespace Cpg.Studio
 					best = item;
 				else
 					best = handler(best, item);
+				
+				hasitem = true;
 			}
 			
 			return best;
