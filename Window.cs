@@ -71,6 +71,9 @@ namespace Cpg.Studio
 				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
 				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "<Control>h", "Center view", new EventHandler(OnCenterViewActivated)),
 				new ActionEntry("InsertMenuAction", null, "_Insert", null, null, null),
+				new ActionEntry("ZoomDefaultAction", Gtk.Stock.Zoom100, null, "<Control>1", null, new EventHandler(OnZoomDefaultActivated)),
+				new ActionEntry("ZoomInAction", Gtk.Stock.ZoomIn, null, "<Control>plus", null, new EventHandler(OnZoomInActivated)),
+				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, new EventHandler(OnZoomOutActivated)),
 
 				new ActionEntry("MonitorMenuAction", null, "Monitor", null, null, null),
 				new ActionEntry("ControlMenuAction", null, "Control", null, null, null),
@@ -124,14 +127,15 @@ namespace Cpg.Studio
 			d_periodEntry.SetSizeRequest(75, -1);
 			d_periodEntry.Activated += new EventHandler(OnSimulationRunPeriod);
 
-			HBox hbox = new HBox(false, 6);			
+			HBox hbox = new HBox(false, 3);
+			hbox.BorderWidth = 3;
 			BuildButtonBar(hbox);
 			
 			d_vboxContents.PackStart(hbox, false, false, 0);
 			
 			d_statusbar = new Statusbar();
 			d_statusbar.Show();
-			vbox.PackStart(d_statusbar, false, false, 3);
+			vbox.PackStart(d_statusbar, false, false, 0);
 			
 			Add(vbox);
 			
@@ -529,6 +533,21 @@ namespace Cpg.Studio
 				
 				d_propertyView = null;
 			}
+		}
+					
+		private void OnZoomInActivated(object sender, EventArgs args)
+		{
+			d_grid.ZoomIn();
+		}
+					
+		private void OnZoomOutActivated(object sender, EventArgs args)
+		{
+			d_grid.ZoomOut();
+		}
+					
+		private void OnZoomDefaultActivated(object sender, EventArgs args)
+		{
+			d_grid.ZoomDefault();
 		}
 		
 		private void OnToggleMonitorActivated(object sender, EventArgs args)

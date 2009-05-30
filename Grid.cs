@@ -582,6 +582,20 @@ namespace Cpg.Studio
 			                  Scaled(Allocation.Height, new ScaledPredicate(Math.Ceiling)));
 		}
 		
+		private void SetGridSize(int size, System.Drawing.Point where)
+		{
+			Container.X += (int)(((where.X + Container.X) * (double)size / d_gridSize) - (where.X + Container.X));
+			Container.Y += (int)(((where.Y + Container.Y) * (double)size / d_gridSize) - (where.Y + Container.Y));
+			
+			bool changed = (size != d_gridSize);
+			d_gridSize = size;
+			
+			if (changed)
+				ModifiedView(this, new EventArgs());
+			
+			QueueDraw();
+		}
+		
 		private void DoZoom(bool zoomIn, System.Drawing.Point where)
 		{
 			int nsize = d_gridSize + (int)Math.Floor(d_gridSize * 0.2 * (zoomIn ? 1 : -1));
@@ -625,21 +639,28 @@ namespace Cpg.Studio
 				return;
 			}
 			
-			Container.X += (int)(((where.X + Container.X) * (double)nsize / d_gridSize) - (where.X + Container.X));
-			Container.Y += (int)(((where.Y + Container.Y) * (double)nsize / d_gridSize) - (where.Y + Container.Y));
-			
-			bool changed = (nsize != d_gridSize);
-			d_gridSize = nsize;
-			
-			if (changed)
-				ModifiedView(this, new EventArgs());
-			
-			QueueDraw();
+			SetGridSize(nsize, where);
 		}
 		
 		private void DoZoom(bool zoomIn)
 		{
 			DoZoom(zoomIn, new Point((int)(Allocation.Width / 2), (int)(Allocation.Height / 2)));
+		}
+		
+		public void ZoomIn()
+		{
+			DoZoom(true);
+		}
+		
+		public void ZoomOut()
+		{
+			DoZoom(false);
+		}
+		
+		public void ZoomDefault()
+		{
+			System.Drawing.Point pt = new Point((int)(Allocation.Width / 2), (int)(Allocation.Height / 2));
+			SetGridSize(d_defaultGridSize,pt);
 		}
 		
 		public void DeleteSelected()
@@ -1246,17 +1267,17 @@ namespace Cpg.Studio
 			{
 				DoMove(1, 0, (evnt.State & Gdk.ModifierType.Mod1Mask) != 0);
 			}
-			else if (evnt.Key == Gdk.Key.plus || evnt.Key == Gdk.Key.KP_Add)
-			{
-				DoZoom(true);
-			}
-			else if (evnt.Key == Gdk.Key.minus || evnt.Key == Gdk.Key.KP_Subtract)
-			{
-				DoZoom(false);
-			}
 			else if (evnt.Key == Gdk.Key.Tab || evnt.Key == Gdk.Key.ISO_Left_Tab)
 			{
 				FocusNext((evnt.State & Gdk.ModifierType.ShiftMask) != 0 ? -1 : 1);
+			}
+			else if (evnt.Key == Gdk.Key.KP_Add && (evnt.State & Gdk.ModifierType.ControlMask) != 0)
+			{
+				ZoomIn();
+			}
+			else if (evnt.Key == Gdk.Key.KP_Subtract && (evnt.State & Gdk.ModifierType.ControlMask) != 0)
+			{
+				ZoomOut();
 			}
 			else if (evnt.Key == Gdk.Key.space)
 			{

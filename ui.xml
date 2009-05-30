@@ -33,6 +33,10 @@
       <menuitem name="ViewControl" action="ViewControlAction"/>
       <separator/>
       <menuitem name="PropertyEditor" action="PropertyEditorAction"/>
+      <separator/>
+      <menuitem name="ZoomDefault" action="ZoomDefaultAction"/>
+      <menuitem name="ZoomIn" action="ZoomInAction"/>
+      <menuitem name="ZoomOut" action="ZoomOutAction"/>
     </menu>
     <menu name="InsertMenu" action="InsertMenuAction">
       <menuitem name="AddState" action="AddStateAction"/>
