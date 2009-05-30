@@ -11,7 +11,7 @@ namespace Cpg.Studio.Components.Renderers
 			d_group = obj;
 		}
 		
-		public virtual void Draw(System.Drawing.Graphics graphics, System.Drawing.Font font)
+		public virtual void Draw(Cairo.Context graphics)
 		{
 		}
 	}

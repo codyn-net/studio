@@ -10,16 +10,18 @@ namespace Cpg.Studio.Components
 		Components.Simulated d_from;
 		Components.Simulated d_to;
 		int d_offset;
-		Brush d_selectedBrush;
-		Brush d_normalBrush;
+		double[] d_selectedColor;
+		double[] d_normalColor;
+		double[] d_hoverColor;
 
 		public Link(Cpg.Link obj, Components.Simulated from, Components.Simulated to) : base(obj)
 		{
 			d_from = from != null ? from : Components.Simulated.FromCpg(obj.From);
 			d_to = to != null ? to : Components.Simulated.FromCpg(obj.To);
 			
-			d_selectedBrush = new SolidBrush(Color.FromArgb(150, 150, 150, 255));
-			d_normalBrush = new SolidBrush(Color.FromArgb(150, 180, 180, 180));
+			d_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
+			d_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
+			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
 		}
 		
 		public Link(Cpg.Link obj) : this(obj, null, null)
@@ -160,11 +162,11 @@ namespace Cpg.Studio.Components
 				p3 = control;
 			}
 			
-			if (rect.Width > 1 || rect.Height > 1)
+			if (rect.Width * gridSize > 1.5 || rect.Height * gridSize > 1.5)
 			{
 				return RectHittest(from, p2, p3, to, rect, gridSize);
 			}
-			
+					
 			for (int i = 1; i < num; ++i)
 			{
 				float px = EvaluateBezier(from.X, p2.X, p3.X, to.X, (float)i / num);
@@ -200,7 +202,23 @@ namespace Cpg.Studio.Components
 			return (float)Math.Pow(1 - t, 3) * p0 + 3 * t * (float)Math.Pow(1 - t, 2) * p1 + 3 * (float)Math.Pow(t, 2) * (1 - t) * p2 + (float)Math.Pow(t, 3) * p3;
 		}
 		
-		public override void Draw(Graphics graphics, Font font)
+		private double[] StateColor()
+		{
+			if (Selected)
+			{
+				return d_selectedColor;
+			}
+			else if (MouseFocus)
+			{
+				return d_hoverColor;
+			}
+			else
+			{
+				return d_normalColor;
+			}
+		}
+		
+		public override void Draw(Cairo.Context graphics)
 		{
 			if (d_from == null || d_to == null)
 				return;
@@ -212,9 +230,17 @@ namespace Cpg.Studio.Components
 			PointF to = new PointF(a2.X + a2.Width / 2, a2.Y + a2.Height / 2);
 			
 			PointF control = CalculateControl(from, to);
-			Pen pen = new Pen(Selected ? d_selectedBrush : d_normalBrush, 2 / Utils.TransformScale(graphics.Transform));
+			double[] color = StateColor();
 			
 			PointF pts = new PointF(0, 0);
+			
+			graphics.Save();			
+			graphics.MoveTo(from.X, from.Y);
+			
+			if (MouseFocus)
+			{
+				graphics.LineWidth *= 2;
+			}
 			
 			if (from.X == to.X && from.Y == to.Y)
 			{
@@ -222,12 +248,20 @@ namespace Cpg.Studio.Components
 				pts.X = 2;
 				pts.Y = (d_offset + 1) + 0.5f;
 				
-				graphics.DrawBezier(pen, from.X, from.Y, to.X - pts.X, to.Y - pts.Y, to.X + pts.X, to.Y - pts.Y, to.X, to.Y);
+				graphics.CurveTo(to.X - pts.X, to.Y - pts.Y, to.X + pts.X, to.Y - pts.Y, to.X, to.Y);
 			}
 			else
 			{
-				graphics.DrawBezier(pen, from.X, from.Y, control.X, control.Y, control.X, control.Y, to.X, to.Y);
+				graphics.CurveTo(control.X, control.Y, control.X, control.Y, to.X, to.Y);
 			}
+
+			if (KeyFocus)
+			{
+				graphics.SetDash(new double[] {graphics.LineWidth * 5, graphics.LineWidth * 5}, 0);
+			}
+			
+			graphics.SetSourceRGBA(color[0], color[1], color[2], color[3]);
+			graphics.Stroke();
 			
 			PointF xy = new PointF(0, 0);
 			float pos;
@@ -264,15 +298,20 @@ namespace Cpg.Studio.Components
 				pos += 0.5f * (float)Math.PI;
 			}
 			
-			graphics.TranslateTransform(xy.X, xy.Y);
-			graphics.RotateTransform(pos / (float)Math.PI * 180);
+			graphics.Translate(xy.X, xy.Y);
+			graphics.MoveTo(0, 0);
+			graphics.Rotate(pos);
 			
-			GraphicsPath path = new GraphicsPath();
 			float size = 0.15f;
-			path.AddLines(new PointF[] { new PointF(0, 0), new PointF(-size, 0), new PointF(0, -size), new PointF(size, 0) });
-			path.CloseFigure();
+			graphics.RelLineTo(-size, 0);
+			graphics.RelLineTo(size, -size);
+			graphics.RelLineTo(size, size);
+			graphics.RelLineTo(-size, 0);
 			
-			graphics.FillPath(Selected ? d_selectedBrush : d_normalBrush, path);
+			graphics.Fill();
+			graphics.Restore();
+			
+			// TODO: draw text
 		}
 
 	}

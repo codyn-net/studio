@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Gtk;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Reflection;
 
 namespace Cpg.Studio
@@ -51,8 +50,8 @@ namespace Cpg.Studio
 		private List<StackItem> d_objectStack;
 		private List<Components.Object> d_selection;
 		
-		private SolidBrush d_gridBackground;
-		private SolidBrush d_gridLine;
+		private float[] d_gridBackground;
+		private float[] d_gridLine;
 		
 		public Grid() : base()
 		{
@@ -77,8 +76,8 @@ namespace Cpg.Studio
 			d_gridSize = d_defaultGridSize;
 			d_focus = null;
 			
-			d_gridBackground = new SolidBrush(Color.FromArgb(255, 255, 255));
-			d_gridLine = new SolidBrush(Color.FromArgb(230, 230, 230));
+			d_gridBackground = new float[] {1f, 1f, 1f};
+			d_gridLine = new float[] {0.9f, 0.9f, 0.9f};
 			
 			d_objectStack = new List<StackItem>();
 			d_hover = new List<Components.Object>();
@@ -119,7 +118,7 @@ namespace Cpg.Studio
 			// Check if link has no objects
 			if (link.Empty())
 				return;
-				
+			
 			int offset = -1; 
 			
 			// Calculate offset
@@ -197,7 +196,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private Point Position
+		private System.Drawing.Point Position
 		{
 			get
 			{
@@ -553,9 +552,9 @@ namespace Cpg.Studio
 			QueueDraw();
 		}
 		
-		private void DoMouseInOut(Gdk.EventMotion evnt)
+		private void DoMouseInOut(double x, double y)
 		{
-			List<Components.Object> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
+			List<Components.Object> objects = HitTest(new Allocation(x, y, 1, 1));
 			
 			d_hover.RemoveAll(delegate (Components.Object obj) {
 				if (objects.Count == 0 || obj != objects[0])
@@ -582,7 +581,7 @@ namespace Cpg.Studio
 			                  Scaled(Allocation.Height, new ScaledPredicate(Math.Ceiling)));
 		}
 		
-		private void DoZoom(bool zoomIn, Point where)
+		private void DoZoom(bool zoomIn, System.Drawing.Point where)
 		{
 			int nsize = d_gridSize + (int)Math.Floor(d_gridSize * 0.2 * (zoomIn ? 1 : -1));
 			bool upperReached = false;
@@ -720,56 +719,69 @@ namespace Cpg.Studio
 			obj.KeyFocus = true;
 		}
 		
-		private void DrawBackground(Graphics graphics)
+		private void DrawBackground(Cairo.Context graphics)
 		{
-			graphics.FillRectangle(d_gridBackground, graphics.ClipBounds);
+			graphics.Rectangle(0, 0, Allocation.Width, Allocation.Height);
+			graphics.SetSourceRGB(d_gridBackground[0], d_gridBackground[1], d_gridBackground[2]);
+			graphics.Fill();
 		}
 		
-		private void DrawGrid(Graphics graphics)
+		private void DrawGrid(Cairo.Context graphics)
 		{
 			PointF pt = UnitSize();
 			
-			GraphicsState state = graphics.Save();
-			graphics.ScaleTransform(d_gridSize, d_gridSize);
-			
+			graphics.Save();
+			graphics.Scale(d_gridSize, d_gridSize);
+
 			float ox = (Container.X / (float)d_gridSize) % 1;
 			float oy = (Container.Y / (float)d_gridSize) % 1;
 			
-			Pen pen = new Pen(d_gridLine, 1 / (float)d_gridSize);
+			graphics.LineWidth = 1 / (float)d_gridSize;
+			
+			double offset = graphics.LineWidth / 2;
+			
+			graphics.SetSourceRGB(d_gridLine[0], d_gridLine[1], d_gridLine[2]);
 			
 			for (int i = 0; i <= pt.X; ++i)
-				graphics.DrawLine(pen, new PointF(i - ox, 0), new PointF(i - ox, pt.Y)); 
+			{
+				graphics.MoveTo(i - ox + offset, offset);
+				graphics.LineTo(i - ox + offset, pt.Y +offset);
+				graphics.Stroke();
+			}
 			
 			for (int i = 0; i <= pt.Y; ++i)
-				graphics.DrawLine(pen, new PointF(0, i - oy), new PointF(pt.X, i - oy));
+			{
+					graphics.MoveTo(0 + offset, i - oy + offset);
+					graphics.LineTo(pt.X + offset, i - oy + offset);
+					graphics.Stroke();
+			}
 			
-			graphics.Restore(state);
+			graphics.Restore();
 		}
 		
-		private void DrawObject(Graphics graphics, Font font, Components.Object obj)
+		private void DrawObject(Cairo.Context graphics, Components.Object obj)
 		{
 			if (obj == null)
 				return;
 			
 			Rectangle alloc = obj.Allocation;
+			graphics.Save();
 			
-			GraphicsState state = graphics.Save();
+			graphics.Translate(alloc.X, alloc.Y);
+			graphics.LineWidth = 1.0f / d_gridSize;
+			graphics.SetFontSize(10 / (double)d_gridSize);
 			
-			graphics.TranslateTransform(alloc.X, alloc.Y);
-			obj.Draw(graphics, font);
+			obj.Draw(graphics);
 			
-			graphics.Restore(state);
+			graphics.Restore();
 		}
 		
-		private void DrawObjects(Graphics graphics)
+		private void DrawObjects(Cairo.Context graphics)
 		{
-			GraphicsState state = graphics.Save();
-
-			graphics.TranslateTransform(-Container.X, -Container.Y);
-			graphics.ScaleTransform(d_gridSize, d_gridSize);
+			graphics.Save();
 			
-			Font font = System.Drawing.SystemFonts.DefaultFont;
-			font = new Font(font.FontFamily, font.Size / d_gridSize); 
+			graphics.Translate(-Container.X, -Container.Y);
+			graphics.Scale(d_gridSize, d_gridSize);
 
 			List<Components.Object> objects = new List<Components.Object>();
 			
@@ -778,24 +790,28 @@ namespace Cpg.Studio
 				if (!(obj is Components.Link))
 					objects.Add(obj);
 				else
-					DrawObject(graphics, font, obj);
+					DrawObject(graphics, obj);
 			}
 			
 			foreach (Components.Object obj in objects)
-				DrawObject(graphics, font, obj);
+				DrawObject(graphics, obj);
 
-			graphics.Restore(state);
+			graphics.Restore();
 		}
 		
-		private void DrawSelectionRect(Graphics graphics)
+		private void DrawSelectionRect(Cairo.Context graphics)
 		{
 			Allocation rect = d_mouseRect.FromRegion();
 			
 			if (rect.Width <= 1 || rect.Height <= 1)
 				return;
 			
-			graphics.FillRectangle(new SolidBrush(Color.FromArgb(50, 200, 220, 200)), rect);
-			graphics.DrawRectangle(new Pen(Color.Blue, 1), rect);
+			graphics.Rectangle(rect.X + 0.5, rect.Y + 0.5, rect.Width, rect.Height);
+			graphics.SetSourceRGBA(0.7, 0.8, 0.7, 0.3);
+			graphics.FillPreserve();
+			
+			graphics.SetSourceRGBA(0, 0.3, 0, 0.6);
+			graphics.Stroke();
 		}
 		
 		public Components.Object[] NormalizeGroup(Components.Object[] objects, out Components.Object[] removed)
@@ -1313,17 +1329,19 @@ namespace Cpg.Studio
 		
 		protected override bool OnExposeEvent(Gdk.EventExpose evnt)
 		{
-			Graphics graphics = Gtk.DotNet.Graphics.FromDrawable(GdkWindow);
-			
-			graphics.Clip = new Region(new Rectangle(evnt.Area.X, evnt.Area.Y, evnt.Area.Width, evnt.Area.Height));
-			graphics.SmoothingMode = SmoothingMode.AntiAlias;
-			
-			DrawBackground(graphics);
-			DrawGrid(graphics);
-
-			DrawObjects(graphics);
-			DrawSelectionRect(graphics);
-			
+			using ( Cairo.Context graphics = Gdk.CairoHelper.Create(evnt.Window) )
+			{
+				graphics.Rectangle(evnt.Area.X, evnt.Area.Y, evnt.Area.Width, evnt.Area.Height);
+				graphics.Clip();
+				
+				graphics.LineWidth = 1;
+				
+				DrawBackground(graphics);
+				DrawGrid(graphics);
+	
+				DrawObjects(graphics);
+				DrawSelectionRect(graphics);
+			}
 			
 			return true;
 		}

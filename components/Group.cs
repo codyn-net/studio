@@ -167,12 +167,12 @@ namespace Cpg.Studio.Components
 			return d_main.FixedProperties();
 		}
 		
-		public override void Draw(System.Drawing.Graphics graphics, System.Drawing.Font font)
+		public override void Draw(Cairo.Context graphics)
 		{
 			if (d_renderer != null)
-				d_renderer.Draw(graphics, font);
+				d_renderer.Draw(graphics);
 			else
-				base.Draw(graphics, font);
+				base.Draw(graphics);
 		}
 
 	}

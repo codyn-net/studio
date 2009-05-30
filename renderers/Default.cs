@@ -7,59 +7,79 @@ namespace Cpg.Studio.Components.Renderers
 	[Name("Default")]
 	public class Default : Renderer
 	{
-		private SolidBrush[] d_brushes;
+		private double[][] d_colors;
 		
 		public Default(Components.Group group) : base(group)
 		{
-			d_brushes = new SolidBrush[5];
+			d_colors = new double[5][];
 			
-			d_brushes[0] = new SolidBrush(Color.FromArgb(52, 160, 255));
-			d_brushes[1] = new SolidBrush(Color.FromArgb(160, 52, 255));
-			d_brushes[2] = new SolidBrush(Color.FromArgb(52, 255, 160));
-			d_brushes[3] = new SolidBrush(Color.FromArgb(255, 160, 52));
-			d_brushes[4] = new SolidBrush(Color.FromArgb(160, 255, 52));
+			d_colors[0] = new double[] {26 / 125.0, 80 / 125.0, 130 / 125.0};
+			d_colors[1] = new double[] {80 / 125.0, 26 / 125.0, 130 / 125.0};
+			d_colors[2] = new double[] {26 / 125.0, 130 / 125.0, 80 / 125.0};
+			d_colors[3] = new double[] {130 / 125.0, 80 / 125.0, 26 / 125.0};
+			d_colors[4] = new double[] {80.0 / 125.0, 130.0 / 125.0, 26.0 / 125.0};
 		}
 		
-		private SolidBrush Darken(SolidBrush other)
+		private double[] Darken(double[] color)
 		{
-			Color o = other.Color;
-			Color clr = Color.FromArgb((int)(o.A * 0.6), 
-			                           (int)(o.R * 0.6), 
-			                           (int)(o.G * 0.6), 
-			                           (int)(o.B * 0.6));
+			double[] ret = new double[4];
 			
-			return new SolidBrush(clr);
+			ret[3] = 0.6;
+			
+			for (int i = 0; i < color.Length; ++i)
+				ret[i] = color[i] * 0.6;
+			
+			return ret;
 		}
 		
-		private void DrawRect(Graphics graphics, RectangleF rect, SolidBrush brush)
+		private void DrawRect(Cairo.Context graphics, double x, double y, double width, double height, double[] color)
 		{
-			graphics.FillRectangle(brush, rect);
-			graphics.DrawRectangle(new Pen(Darken(brush)), rect.X, rect.Y, rect.Width, rect.Height);
+			graphics.Rectangle(x, y, width, height);
+			
+			if (color.Length == 3)
+			{
+				graphics.SetSourceRGB(color[0], color[1], color[2]);
+			}
+			else
+			{
+				graphics.SetSourceRGBA(color[0], color[1], color[2], color[3]);
+			}
+			
+			graphics.FillPreserve();
+			
+			double[] darker = Darken(color);
+			
+			graphics.SetSourceRGBA(darker[0], darker[1], darker[2], darker[3]);
+			graphics.Stroke();
 		}
 		
-		public override void Draw(Graphics graphics, Font font)
+		public override void Draw(Cairo.Context graphics)
 		{
 			Allocation alloc = d_group.Allocation;
 			
-			GraphicsState state = graphics.Save();
+			graphics.Save();
+			double uw = graphics.LineWidth;
 			
-			float scale = 1f / Utils.TransformScale(graphics.Transform);
+			graphics.LineWidth = uw * 2;
 			
-			float off = scale * 2 + alloc.Width * 0.1f;
-			PointF pt = new PointF((alloc.Width - 2 * off) * 0.4f, (alloc.Height - 2 * off) * 0.4f);
+			double off = uw * 2 + alloc.Width * 0.1f;
+			double w = (alloc.Width - 2 * off) * 0.4;
+			double h = (alloc.Height - 2 * off) * 0.4;
 			
-			DrawRect(graphics, new RectangleF(off, off, pt.X, pt.Y), d_brushes[0]);
-			DrawRect(graphics, new RectangleF(off, alloc.Height - pt.Y - off, pt.X, pt.Y), d_brushes[1]);
-			DrawRect(graphics, new RectangleF(alloc.Width - pt.X - off, alloc.Height - pt.Y - off, pt.X, pt.Y), d_brushes[2]);
-			DrawRect(graphics, new RectangleF(alloc.Width - pt.X - off, off, pt.X, pt.Y), d_brushes[3]);
+			DrawRect(graphics, off, off, w, h, d_colors[0]);
+			DrawRect(graphics, off, alloc.Height - h - off, w, h, d_colors[1]);
+			DrawRect(graphics, alloc.Width - w - off, alloc.Height - h - off, w, h, d_colors[2]);
+			DrawRect(graphics, alloc.Width - w - off, off, w, h, d_colors[3]);
 			
-			pt.X = (alloc.Width - 2 * off) * 0.5f;
-			pt.Y = (alloc.Height - 2 * off) * 0.5f;
+			w = (alloc.Width - 2 * off) * 0.5f;
+			h = (alloc.Height - 2 * off) * 0.5f;
 			
-			RectangleF r = new RectangleF((alloc.Width - pt.X) / 2, (alloc.Height - pt.Y) / 2, pt.X, pt.Y);
-			DrawRect(graphics, r, d_brushes[4]);
+			double x = (alloc.Width - w) / 2.0;
+			double y = (alloc.Height - h) / 2.0;
 			
-			graphics.Restore(state);
+			DrawRect(graphics, x, y, w, h, d_colors[4]);
+			
+			graphics.Restore();
 		}
 	}
 }

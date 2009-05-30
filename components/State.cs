@@ -6,39 +6,62 @@ namespace Cpg.Studio.Components
 {
 	public class State : Simulated
 	{
-		private Brush d_outer;
-		private Brush d_inner;
-		private Pen d_border;
+		private Cairo.LinearGradient d_outer;
+		private Cairo.LinearGradient d_inner;
 		
 		public State(Cpg.State obj) : base(obj)
 		{
-			d_outer = new LinearGradientBrush(new PointF(0, Allocation.Height), new PointF(0, 0), Color.FromArgb(127, 200, 127), Color.FromArgb(255, 255, 255));
-			d_inner = new LinearGradientBrush(new PointF(0, Allocation.Height), new PointF(0, 0), Color.FromArgb(193, 255, 217), Color.FromArgb(255, 255, 255));
+			d_outer = new Cairo.LinearGradient(0, 1, 0, 0);
+			d_outer.AddColorStopRgb(0, new Cairo.Color(0.5, 0.8, 0.5));
+			d_outer.AddColorStopRgb(Allocation.Height, new Cairo.Color(1, 1, 1));
 			
-			d_border = new Pen(Color.FromArgb(26, 80, 130));
+			d_inner= new Cairo.LinearGradient(0, 1, 0, 0);
+			d_inner.AddColorStopRgb(0, new Cairo.Color(0.75, 1, 0.85));
+			d_inner.AddColorStopRgb(Allocation.Height * 0.8, new Cairo.Color(1, 1, 1));
 		}
 		
 		public State() : this(new Cpg.State("id"))
 		{
 		}
 		
-		public override void Draw(Graphics graphics, Font font)
+		protected virtual double[] LineColor()
 		{
-			GraphicsState state = graphics.Save();
+			return new double[] {26 / 255.0, 80 / 255.0, 130 / 255.0};
+		}
+		
+		public override void Draw(Cairo.Context graphics)
+		{
+			graphics.Save();
 			
-			float scale = 1 / Utils.TransformScale(graphics.Transform);
-			d_border.Width = scale;
-			
-			graphics.FillRectangle(d_outer, scale, scale, Allocation.Width - 2 * scale, Allocation.Height - 2 * scale);
-			float off = 0.1f * Allocation.Width;
-			
-			RectangleF rect = new RectangleF(off, off, Allocation.Width - 2 * off, Allocation.Height - 2 * off);
+			double uw = graphics.LineWidth;
+			double marg = uw / 2;
 
-			graphics.FillRectangle(d_inner, rect);
-			graphics.DrawRectangle(d_border, rect.X + 1, rect.Y + 1, rect.Width, rect.Height);
+			graphics.Source = d_outer;
+			graphics.Rectangle(marg, marg, Allocation.Width, Allocation.Height);
+			graphics.Fill();
 			
-			graphics.Restore(state);
-			base.Draw(graphics, font);
+			graphics.LineWidth = uw * 2;
+			
+			if (MouseFocus)
+			{
+				graphics.LineWidth *= 2;
+			}
+			
+			marg = uw;
+			
+			double[] color = LineColor();
+			graphics.SetSourceRGB(color[0], color[1], color[2]);
+			
+			double dd = Allocation.Width * 0.1;
+			double off = uw * 2 + (dd - (dd % marg));
+			graphics.Rectangle(off, off, Allocation.Width - off * 2, Allocation.Height - off * 2);
+			graphics.StrokePreserve();
+			
+			graphics.Source = d_inner;
+			graphics.Fill();
+			
+			graphics.Restore();
+			base.Draw(graphics);
 		}
 	}
 }

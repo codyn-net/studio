@@ -258,32 +258,63 @@ namespace Cpg.Studio.Components
 			// NOOP
 		}
 		
-		protected virtual void DrawSelection(Graphics graphics)
+		protected virtual void DrawSelection(Cairo.Context graphics)
 		{
-			SolidBrush br = new SolidBrush(Color.FromArgb(50, 0, 0, 255));
-			graphics.FillRectangle(br, 0, 0, Allocation.Width, Allocation.Height);
+			double alpha = 0.2;
 			
-			float scale = Utils.TransformScale(graphics.Transform);
+			graphics.SetSourceRGBA(0, 0, 1, alpha);
+			graphics.Rectangle(0, 0, Allocation.Width, Allocation.Height);
+			graphics.FillPreserve();
 			
-			Pen pen = new Pen(Color.FromArgb(50, 0, 0, 0), 1 / scale);
-			graphics.DrawRectangle(pen, 1, 1, Allocation.Width, Allocation.Height);
+			graphics.SetSourceRGBA(0, 0, 0, alpha);
+			graphics.Stroke();
 		}
 		
-		protected virtual void DrawFocus(Graphics graphics)
+		protected virtual void DrawFocus(Cairo.Context graphics)
 		{
-			// TODO
+			double uw = graphics.LineWidth;
+			graphics.LineWidth *= 0.5;
+			
+			int fw = 8;
+			int dw = 2;
+			
+			float w = Allocation.Width;
+			float h = Allocation.Height;
+			
+			graphics.SetSourceRGB(0, 0, 0);
+			
+			graphics.MoveTo(-uw * dw, uw * fw);
+			graphics.LineTo(-uw *dw, -uw * dw);
+			graphics.LineTo(uw * fw, -uw * dw);
+			graphics.Stroke();
+			
+			graphics.MoveTo(w - uw * fw, -uw * dw);
+			graphics.LineTo(w + uw * dw, -uw * dw);
+			graphics.LineTo(w + uw * dw, uw * fw);
+			graphics.Stroke();
+			
+			graphics.MoveTo(w + uw * dw, h - uw * fw);
+			graphics.LineTo(w + uw * dw, h + uw * dw);
+			graphics.LineTo(w - uw * fw, h + uw * dw);
+			graphics.Stroke();
+			
+			graphics.MoveTo(uw * fw, h + uw * dw);
+			graphics.LineTo(-uw * dw, h + uw * dw);
+			graphics.LineTo(-uw * dw, h - uw * fw);
+			graphics.Stroke();
 		}
 		
-		public virtual void Draw(Graphics graphics, Font font)
+		public virtual void Draw(Cairo.Context graphics)
 		{
 			string s = ToString();
 
 			if (s != String.Empty)
 			{
-				StringFormat format = new StringFormat();
-				format.Alignment = StringAlignment.Center;
+				Cairo.TextExtents e = graphics.TextExtents(s);
 				
-				graphics.DrawString(s, font, SystemBrushes.ControlText, Allocation.Width / 2, font.GetHeight(), format); 
+				graphics.SetSourceRGB(0, 0, 0);
+				graphics.MoveTo((Allocation.Width - e.Width) / 2, Allocation.Height + 1.5 * e.Height);
+				graphics.ShowText(s);
 			}
 			
 			if (Selected)
