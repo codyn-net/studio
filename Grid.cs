@@ -62,7 +62,8 @@ namespace Cpg.Studio
 					  Gdk.EventMask.ButtonReleaseMask |
 					  Gdk.EventMask.KeyPressMask |
 					  Gdk.EventMask.KeyReleaseMask |
-					  Gdk.EventMask.LeaveNotifyMask));
+					  Gdk.EventMask.LeaveNotifyMask |
+			          Gdk.EventMask.EnterNotifyMask));
 
 			CanFocus = true;
 			
@@ -1108,7 +1109,7 @@ namespace Cpg.Studio
 			
 			if (!d_isDragging)
 			{
-				DoMouseInOut(evnt);
+				DoMouseInOut(evnt.X, evnt.Y);
 				
 				if (d_mouseRect.Width != 0 && d_mouseRect.Height != 0)
 					DoDragRect(evnt);
@@ -1200,13 +1201,21 @@ namespace Cpg.Studio
 		
 		protected override bool OnLeaveNotifyEvent(Gdk.EventCrossing evnt)
 		{
-			base.OnLeaveNotifyEvent(evnt);
+			bool ret = base.OnLeaveNotifyEvent(evnt);
 			
 			foreach (Components.Object obj in d_hover)
 				obj.MouseFocus = false;
 		
 			d_hover.Clear();
-			return true;
+			return ret;
+		}
+		
+		protected override bool OnEnterNotifyEvent(Gdk.EventCrossing evnt)
+		{
+			bool ret = base.OnEnterNotifyEvent(evnt);
+			
+			DoMouseInOut(evnt.X, evnt.Y);
+			return ret;
 		}
 		
 		protected override bool OnKeyPressEvent(Gdk.EventKey evnt)
