@@ -25,6 +25,9 @@ namespace Cpg.Studio.Components
 
 		private Allocation d_allocation;
 		private Dictionary<string, object> d_properties;
+		private Renderers.Renderer d_renderer;
+		private Components.Group d_parent;
+		private string d_id;
 		
 		private State d_state;
 		
@@ -35,7 +38,7 @@ namespace Cpg.Studio.Components
 			
 			d_state = State.None;
 		}
-		
+
 		private bool FromState(State field)
 		{
 			return (d_state & field) != State.None;
@@ -55,7 +58,7 @@ namespace Cpg.Studio.Components
 			
 			return d_state != old;
 		}
-				
+		
 		public bool Selected
 		{
 			get
@@ -104,6 +107,47 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
+		public Renderers.Renderer Renderer
+		{
+			get
+			{
+				return d_renderer;
+			}
+			set
+			{
+				d_renderer = value;
+			}
+		}
+		
+		public Type RendererType
+		{
+			get
+			{
+				return d_renderer.GetType();
+			}
+			set
+			{
+				if (value == null)
+				{
+					d_renderer = null;
+				}
+				else
+				{
+					ConstructorInfo info = value.GetConstructor(new Type[] {typeof(Components.Object) });
+					
+					if (info != null)
+					{
+						d_renderer = info.Invoke(new object[] { this }) as Components.Renderers.Renderer;
+					}
+					else
+					{
+						Console.WriteLine(value);
+						d_renderer = null;
+					}
+				}
+			}
+		}
+		
 		public string this[string name]
 		{
 			get
@@ -143,6 +187,18 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
+		public virtual Components.Group Parent
+		{
+			get
+			{
+				return d_parent;
+			}
+			set
+			{
+				d_parent = value;
+			}
+		}
+		
 		public virtual bool HasProperty(string name)
 		{
 			return d_properties.ContainsKey(name) || FindPropertyAttribute(name) != null;
@@ -173,6 +229,9 @@ namespace Cpg.Studio.Components
 		{
 			bool newprop = !HasProperty(name);
 			
+			if (!newprop && val != null && GetProperty(name).Equals(val))
+				return;
+
 			SetPropertyReal(name, val);
 			
 			if (newprop && val != null)
@@ -182,12 +241,7 @@ namespace Cpg.Studio.Components
 			else if (!newprop && val == null)
 				PropertyRemoved(this, name);
 		}
-		
-		public override string ToString()
-		{
-			return "";
-		}
-		
+
 		public virtual void RemoveProperty(string name)
 		{
 			SetProperty(name, null);
@@ -273,15 +327,15 @@ namespace Cpg.Studio.Components
 		protected virtual void DrawFocus(Cairo.Context graphics)
 		{
 			double uw = graphics.LineWidth;
-			graphics.LineWidth *= 0.5;
+			graphics.LineWidth *= 6;
 			
-			int fw = 8;
-			int dw = 2;
+			int fw = 12;
+			int dw = 0;
 			
 			float w = Allocation.Width;
 			float h = Allocation.Height;
 			
-			graphics.SetSourceRGB(0, 0, 0);
+			graphics.SetSourceRGBA(0.6, 0.6, 0.6, 0.5);
 			
 			graphics.MoveTo(-uw * dw, uw * fw);
 			graphics.LineTo(-uw *dw, -uw * dw);
@@ -306,15 +360,37 @@ namespace Cpg.Studio.Components
 		
 		public virtual void Draw(Cairo.Context graphics)
 		{
+			if (d_renderer != null)
+				d_renderer.Draw(graphics);
+
 			string s = ToString();
 
 			if (s != String.Empty)
 			{
-				Cairo.TextExtents e = graphics.TextExtents(s);
+				if (MouseFocus)
+					graphics.SetSourceRGB(0.3, 0.6, 0.3);
+				else
+					graphics.SetSourceRGB(0.3, 0.3, 0.3);
+							
+				double uw = graphics.LineWidth;
 				
-				graphics.SetSourceRGB(0, 0, 0);
-				graphics.MoveTo((Allocation.Width - e.Width) / 2, Allocation.Height + 1.5 * e.Height);
-				graphics.ShowText(s);
+				graphics.Save();
+				graphics.Scale(uw, uw);
+				
+				Pango.Layout layout = Pango.CairoHelper.CreateLayout(graphics);
+				Pango.CairoHelper.UpdateLayout(graphics, layout);
+				layout.FontDescription = Settings.Font;
+
+				layout.SetText(s);
+				
+				int width, height;
+				layout.GetSize(out width, out height);
+				
+				width = (int)(width / Pango.Scale.PangoScale);
+				
+				graphics.MoveTo((Allocation.Width / uw - width) / 2.0, Allocation.Height / uw + 2);
+				Pango.CairoHelper.ShowLayout(graphics, layout);
+				graphics.Restore();
 			}
 			
 			if (Selected)
@@ -342,6 +418,26 @@ namespace Cpg.Studio.Components
 		protected void DoPropertyRemoved(string name)
 		{
 			PropertyRemoved(this, name);
+		}
+		
+		[Property("id")]
+		public virtual string Id
+		{
+			get
+			{
+				return d_id;
+			}
+			
+			set
+			{
+				d_id = value;
+				DoRequestRedraw();
+			}
+		}
+		
+		public override string ToString()
+		{
+			return Id;
 		}
 	}
 }

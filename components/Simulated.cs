@@ -7,6 +7,7 @@ namespace Cpg.Studio.Components
 	public class Simulated : Components.Object
 	{
 		protected Cpg.Object d_object;
+		protected List<Components.Link> d_links;
 
 		public static Components.Simulated FromCpg(Cpg.Object obj)
 		{
@@ -24,11 +25,29 @@ namespace Cpg.Studio.Components
 		
 		public Simulated(Cpg.Object obj) : base()
 		{
+			d_links = new List<Link>();
 			d_object = obj;
 		}
 		
 		public Simulated() : this(null)
 		{
+		}
+		
+		public string FullId()
+		{
+			List<string> ids = new List<string>();
+			Components.Group group = Parent;
+			
+			while (group != null && group.Parent != null)
+			{
+				ids.Insert(0, group.Main.Id);
+			}
+			
+			ids.Add(Id);
+			string[] all = new string[ids.Count];
+			ids.CopyTo(all, 0);
+			
+			return String.Join(".", all);
 		}
 		
 		public override bool HasProperty(string name)
@@ -39,7 +58,7 @@ namespace Cpg.Studio.Components
 		public override object GetProperty(string name)
 		{
 			if (d_object == null)
-				return null;
+				return base.GetProperty(name);
 			
 			Cpg.Property prop = d_object.Property(name);
 			
@@ -80,7 +99,7 @@ namespace Cpg.Studio.Components
 			get
 			{
 				string[] orig = base.Properties;
-				Property[] props = d_object.Properties;
+				Cpg.Property[] props = d_object.Properties;
 
 				string[] ret = new string[props.Length + orig.Length];
 
@@ -93,9 +112,9 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		public bool GetIntegrated(string name)
+		public virtual bool GetIntegrated(string name)
 		{
-			Property prop = d_object.Property(name);
+			Cpg.Property prop = d_object.Property(name);
 			
 			if (prop != null)
 				return prop.Integrated;
@@ -103,9 +122,9 @@ namespace Cpg.Studio.Components
 				return false;
 		}
 		
-		public void SetIntegrated(string name, bool integrated)
+		public virtual void SetIntegrated(string name, bool integrated)
 		{
-			Property prop = d_object.Property(name);
+			Cpg.Property prop = d_object.Property(name);
 			
 			if (prop != null)
 				prop.Integrated = integrated;
@@ -123,24 +142,39 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		[Property("id")]
-		public string Id
+		public List<Components.Link> Links
 		{
 			get
 			{
-				return d_object.Id;
+				return d_links;
+			}
+		}
+		
+		public void Link(Components.Link link)
+		{
+			d_links.Add(link);
+		}
+		
+		public void Unlink(Components.Link link)
+		{
+			d_links.Remove(link);
+		}
+
+		[Property("id")]
+		public override string Id
+		{
+			get
+			{
+				return d_object != null ? d_object.Id : base.Id;
 			}
 			
 			set
 			{
-				d_object.Id = value;
-				DoRequestRedraw();
+				if (d_object != null)
+					d_object.Id = value;
+
+				base.Id = value;
 			}
-		}
-		
-		public override string ToString()
-		{
-			return d_object.Id;
 		}
 	}
 }

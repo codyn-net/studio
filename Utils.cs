@@ -32,9 +32,19 @@ namespace Cpg.Studio
 			return Select<float>(list, new SelectHandler<float>(Math.Max));
 		}
 		
+		public static int Max(IEnumerable<int> list)
+		{
+			return Select<int>(list, new SelectHandler<int>(Math.Max));
+		}
+		
 		public static float Min(IEnumerable<float> list)
 		{
 			return Select<float>(list, new SelectHandler<float>(Math.Min));
+		}
+		
+		public static int Min(IEnumerable<int> list)
+		{
+			return Select<int>(list, new SelectHandler<int>(Math.Min));
 		}
 		
 		public static string Capitalize(string s)
@@ -55,9 +65,18 @@ namespace Cpg.Studio
 				return first.ToLower().CompareTo(second.ToLower());
 		}
 		
-		public static float TransformScale(Matrix matrix)
+		public static bool In<T>(T val, ICollection<T> collection)
 		{
-			return matrix.Elements[0];
+			if (val == null)
+				return false;
+
+			foreach (T t in collection)
+			{
+				if (t != null && t.Equals(val))
+					return true;
+			}
+			
+			return false;
 		}
 	}
 }

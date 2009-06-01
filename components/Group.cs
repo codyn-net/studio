@@ -8,21 +8,39 @@ namespace Cpg.Studio.Components
 	{
 		private List<Components.Object> d_children;
 		private Components.Simulated d_main;
-		private Renderers.Renderer d_renderer;
 		private int d_x;
 		private int d_y;
 		
 		public Group(Components.Simulated main) : base()
 		{
 			d_children = new List<Components.Object>();
-			d_main = main;
 
 			d_x = 0;
 			d_y = 0;
 			
 			/* Proxy events */
+			SetMain(main);
+		}
+		
+		public void SetMain(Components.Simulated main)
+		{
 			if (d_main != null)
 			{
+				foreach (string prop in d_main.Properties)
+				{
+					if (base.IsPermanent(prop))
+						continue;
+					
+					DoPropertyRemoved(prop);
+				}
+			}
+			
+			d_main = main;
+			
+			if (d_main != null)
+			{
+				Id = d_main.Id;
+				
 				d_main.PropertyAdded += delegate(Object source, string name) {
 					DoPropertyAdded(name);
 				};
@@ -38,6 +56,14 @@ namespace Cpg.Studio.Components
 				d_main.RequestRedraw += delegate(object sender, EventArgs e) {
 					DoRequestRedraw();
 				};
+				
+				foreach (string prop in d_main.Properties)
+				{
+					if (base.IsPermanent(prop))
+						continue;
+					
+					DoPropertyAdded(prop);
+				}
 			}
 		}
 		
@@ -67,24 +93,14 @@ namespace Cpg.Studio.Components
 		
 		public void Add(Components.Object obj)
 		{
+			obj.Parent = this;
 			d_children.Add(obj);
 		}
 		
 		public void Remove(Components.Object obj)
 		{
+			obj.Parent = null;
 			d_children.Remove(obj);
-		}
-		
-		public Renderers.Renderer Renderer
-		{
-			get
-			{
-				return d_renderer;	
-			}
-			set
-			{
-				d_renderer = value;	
-			}
 		}
 		
 		public Components.Simulated Main
@@ -95,7 +111,7 @@ namespace Cpg.Studio.Components
 			}
 			set
 			{
-				d_main = value;
+				SetMain(d_main);
 			}
 		}
 		
@@ -129,11 +145,6 @@ namespace Cpg.Studio.Components
 			return d_main.FindPropertyAttribute(name, out info);
 		}
 		
-		public override string ToString()
-		{
-			return d_main.ToString();
-		}
-		
 		public override bool HasProperty(string name)
 		{
 			return d_main.HasProperty(name);
@@ -141,12 +152,26 @@ namespace Cpg.Studio.Components
 		
 		public override object GetProperty(string name)
 		{
-			return d_main.GetProperty(name);
+			if (base.IsPermanent(name))
+			{
+				return base.GetProperty(name);
+			}
+			else
+			{
+				return d_main.GetProperty(name);
+			}
 		}
 		
 		public override void SetProperty(string name, object val)
 		{
-			d_main.SetProperty(name, val);	
+			if (base.IsPermanent(name))
+			{
+				base.SetProperty(name, val);
+			}
+			else
+			{
+				d_main.SetProperty(name, val);
+			}
 		}
 		
 		public override void RemoveProperty(string name)
@@ -167,13 +192,14 @@ namespace Cpg.Studio.Components
 			return d_main.FixedProperties();
 		}
 		
-		public override void Draw(Cairo.Context graphics)
+		public override bool GetIntegrated(string name)
 		{
-			if (d_renderer != null)
-				d_renderer.Draw(graphics);
-			else
-				base.Draw(graphics);
+			return d_main.GetIntegrated(name);
 		}
 
+		public override void SetIntegrated(string name, bool integrated)
+		{
+			d_main.SetIntegrated(name, integrated);
+		}
 	}
 }

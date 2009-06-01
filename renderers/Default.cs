@@ -5,11 +5,11 @@ using System.Drawing.Drawing2D;
 namespace Cpg.Studio.Components.Renderers
 {
 	[Name("Default")]
-	public class Default : Renderer
+	public class Default : Group
 	{
 		private double[][] d_colors;
 		
-		public Default(Components.Group group) : base(group)
+		public Default(Components.Object obj) : base(obj)
 		{
 			d_colors = new double[5][];
 			
@@ -18,6 +18,10 @@ namespace Cpg.Studio.Components.Renderers
 			d_colors[2] = new double[] {26 / 125.0, 130 / 125.0, 80 / 125.0};
 			d_colors[3] = new double[] {130 / 125.0, 80 / 125.0, 26 / 125.0};
 			d_colors[4] = new double[] {80.0 / 125.0, 130.0 / 125.0, 26.0 / 125.0};
+		}
+		
+		public Default() : this(null)
+		{
 		}
 		
 		private double[] Darken(double[] color)
@@ -55,7 +59,7 @@ namespace Cpg.Studio.Components.Renderers
 		
 		public override void Draw(Cairo.Context graphics)
 		{
-			Allocation alloc = d_group.Allocation;
+			Allocation alloc = d_group != null ? d_group.Allocation : new Allocation(0, 0, 1, 1);
 			
 			graphics.Save();
 			double uw = graphics.LineWidth;

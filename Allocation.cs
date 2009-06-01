@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Xml.Serialization;
 
 namespace Cpg.Studio
 {
@@ -20,24 +21,28 @@ namespace Cpg.Studio
 		{
 		}
 		
+		[XmlAttribute("x")]
 		public float X
 		{
 			get { return d_rectangle.X; }
 			set { d_rectangle.X = value; }
 		}
 		
+		[XmlAttribute("y")]
 		public float Y
 		{
 			get { return d_rectangle.Y; }
 			set { d_rectangle.Y = value; }
 		}
 		
+		[XmlAttribute("width")]
 		public float Width
 		{
 			get { return d_rectangle.Width; }
 			set { d_rectangle.Width = value; }
 		}
 		
+		[XmlAttribute("height")]
 		public float Height
 		{
 			get { return d_rectangle.Height; }

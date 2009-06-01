@@ -3,7 +3,7 @@ using Gtk;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cpg.Studio.GtkGui
+namespace Cpg.Studio
 {
 	public class GroupProperties : Gtk.Table
 	{
@@ -13,8 +13,8 @@ namespace Cpg.Studio.GtkGui
 		
 		public GroupProperties(Components.Object[] objects, Components.Simulated defmain, Type defklass) : base(2, 2, false)
 		{
-			RowSpacing = 3;
-			ColumnSpacing = 3;
+			RowSpacing = 6;
+			ColumnSpacing = 12;
 			
 			/* Get all simulated non-links */
 			d_objects = new List<Components.Simulated>();
@@ -41,12 +41,24 @@ namespace Cpg.Studio.GtkGui
 			return label;
 		}
 		
+		private Gdk.Pixbuf GroupIcon(Type type)
+		{
+			ConstructorInfo info = type.GetConstructor(new Type[] {});
+			
+			if (info == null)
+				return null;
+			
+			Components.Renderers.Group renderer = info.Invoke(new object[] {}) as Components.Renderers.Group;
+			
+			return renderer.Icon(24);
+		}
+		
 		private void Build(Components.Simulated defmain, Type defklass)
 		{
 			Attach(MakeLabel("Relay:"), 0, 1, 0, 1, AttachOptions.Fill, AttachOptions.Fill, 0, 0);
 			Attach(MakeLabel("Class:"), 0, 1, 1, 2, AttachOptions.Fill, AttachOptions.Fill, 0, 0);
 			
-			ListStore store = new ListStore(typeof(Components.Simulated), typeof(String));
+			ListStore store = new ListStore(typeof(Components.Simulated), typeof(String), typeof(Gdk.Pixbuf));
 			TreePath path = null;
 			
 			foreach (Components.Simulated obj in d_objects)
@@ -58,14 +70,22 @@ namespace Cpg.Studio.GtkGui
 				store.SetValue(iter, 0, new GLib.Value(obj));
 				store.SetValue(iter, 1, new GLib.Value(obj.Id));
 				
+				if (obj.Renderer != null)
+					store.SetValue(iter, 2, new GLib.Value(obj.Renderer.Icon(24)));
+				
 				if (obj == defmain)
 					path = store.GetPath(iter);
 			}
 			
 			ComboBox cmb = new ComboBox(store);
-			CellRendererText renderer = new CellRendererText();
-			cmb.PackStart(renderer, true);
-			cmb.AddAttribute(renderer, "text", 1);
+			CellRendererPixbuf iconrenderer = new CellRendererPixbuf();
+			cmb.PackStart(iconrenderer, false);
+			cmb.AddAttribute(iconrenderer, "pixbuf", 2);
+			
+			CellRendererText textrenderer = new CellRendererText();
+			cmb.PackStart(textrenderer, true);
+			cmb.AddAttribute(textrenderer, "text", 1);
+			textrenderer.Yalign = 0.5f;
 			
 			if (path != null)
 			{
@@ -81,7 +101,7 @@ namespace Cpg.Studio.GtkGui
 			d_comboMain = cmb;
 			Attach(cmb, 1, 2, 0, 1);
 			
-			store = new ListStore(typeof(Type), typeof(String));
+			store = new ListStore(typeof(Type), typeof(String), typeof(Gdk.Pixbuf));
 			cmb = new ComboBox(store);
 			path = null;
 			
@@ -89,7 +109,7 @@ namespace Cpg.Studio.GtkGui
 			
 			foreach (Type type in asm.GetTypes())
 			{
-				if (!type.IsSubclassOf(typeof(Components.Renderers.Renderer)))
+				if (!type.IsSubclassOf(typeof(Components.Renderers.Group)))
 					continue;
 
 				object[] attributes = type.GetCustomAttributes(typeof(Components.Renderers.NameAttribute), true);
@@ -108,14 +128,20 @@ namespace Cpg.Studio.GtkGui
 				
 				store.SetValue(iter, 0, new GLib.Value(type));
 				store.SetValue(iter, 1, new GLib.Value(name));
-				
+				store.SetValue(iter, 2, new GLib.Value(GroupIcon(type)));
+
 				if (type == defklass)
 					path = store.GetPath(iter);
 			}
 			
-			renderer = new CellRendererText();
-			cmb.PackStart(renderer, true);
-			cmb.AddAttribute(renderer, "text", 1);
+			iconrenderer = new CellRendererPixbuf();
+			cmb.PackStart(iconrenderer, false);
+			cmb.AddAttribute(iconrenderer, "pixbuf", 2);
+
+			textrenderer = new CellRendererText();
+			cmb.PackStart(textrenderer, true);
+			cmb.AddAttribute(textrenderer, "text", 1);
+			textrenderer.Yalign = 0.5f;
 			
 			if (path != null)
 			{
@@ -155,6 +181,22 @@ namespace Cpg.Studio.GtkGui
 					return d_comboKlass.Model.GetValue(iter, 0) as Type;
 				else
 					return null;
+			}
+		}
+		
+		public ComboBox ComboMain
+		{
+			get
+			{
+				return d_comboMain;
+			}
+		}
+		
+		public ComboBox ComboKlass
+		{
+			get
+			{
+				return d_comboKlass;
 			}
 		}
 	}

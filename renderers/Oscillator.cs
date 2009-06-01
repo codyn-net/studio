@@ -5,15 +5,19 @@ using System.Drawing.Drawing2D;
 namespace Cpg.Studio.Components.Renderers
 {
 	[Name("Oscillator")]
-	public class Oscillator : Renderer
+	public class Oscillator : Group
 	{
 		private float d_height;
 		private Cairo.LinearGradient d_outer;
 		private Cairo.LinearGradient d_inner;
 		
-		public Oscillator(Group group) : base(group)
+		public Oscillator(Components.Object obj) : base(obj)
 		{
 			d_height = 0;
+		}
+		
+		public Oscillator() : this(null)
+		{
 		}
 		
 		private void MakePatterns()
@@ -34,7 +38,7 @@ namespace Cpg.Studio.Components.Renderers
 		
 		public override void Draw(Cairo.Context graphics)
 		{
-			Allocation alloc = d_group.Allocation;
+			Allocation alloc = d_group != null ? d_group.Allocation : new Allocation(0, 0, 1, 1);
 			
 			if (alloc.Height != d_height)
 			{

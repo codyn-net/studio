@@ -4,7 +4,6 @@ using System.Reflection;
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Cpg.Studio.GtkGui;
 
 namespace Cpg.Studio
 {
@@ -20,6 +19,12 @@ namespace Cpg.Studio
 		private Statusbar d_statusbar;
 		private ToggleButton d_simulateButton;
 		private PropertyView d_propertyView;
+		private MessageArea d_messageArea;
+		private uint d_statusTimeout;
+		private uint d_popupMergeId;
+		private UIManager d_uimanager;
+		private ActionGroup d_popupActionGroup;
+		private Dictionary<Components.Object, PropertyDialog> d_propertyEditors;
 		
 		private bool d_modified;
 		private string d_filename;
@@ -33,39 +38,53 @@ namespace Cpg.Studio
 			
 			d_modified = false;
 			UpdateTitle();
+			
+			d_propertyEditors = new Dictionary<Components.Object, PropertyDialog>();
+			
+			Components.State state = new Components.State();
+			Components.Relay relay = new Components.Relay();
+			
+			state["x1"] = "1";
+			relay["x2"] = "2";
+			
+			d_grid.Add(state, 4, 2, 1, 1);
+			d_grid.Add(relay, 6, 2, 1, 1);
+			
+			Components.Link[] l1 = d_grid.Attach(new Components.Simulated[] {state, relay});
+			Components.Link[] l2 = d_grid.Attach(new Components.Simulated[] {relay, state});
+			
+			l1[0].AddAction("x2", "1");
+			l2[0].AddAction("x1", "1");
 		}
 		
 		private void Build()
 		{
 			SetDefaultSize(700, 600);
 			
-			UIManager manager = new UIManager();
+			d_uimanager = new UIManager();
 			d_normalGroup = new ActionGroup("NormalActions");
 
 			d_normalGroup.Add(new ActionEntry[] {
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
-				new ActionEntry("NewAction", Gtk.Stock.New, null, null, "New CPG Network", new EventHandler(OnFileNew)),
-				new ActionEntry("OpenAction", Gtk.Stock.Open, null, null, "Open CPG network", new EventHandler(OnOpenActivated)),
+				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG Network", new EventHandler(OnFileNew)),
+				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", new EventHandler(OnOpenActivated)),
 				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, null, "Revert changes", new EventHandler(OnRevertActivated)),
-				new ActionEntry("SaveAction", Gtk.Stock.Save, null, null, "Save CPG file", new EventHandler(OnSaveActivated)),
+				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG file", new EventHandler(OnSaveActivated)),
 				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG file", new EventHandler(OnSaveAsActivated)),
 
 				new ActionEntry("ImportAction", null, "Import", null, "Import CPG network objects", new EventHandler(OnImportActivated)),
 				new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", new EventHandler(OnExportActivated)),
 
-				new ActionEntry("ExportGridAction", null, "Export grid", null, "Export grid view", new EventHandler(OnExportGridActivated)),
-
-				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, null, "Quit", new EventHandler(OnQuitActivated)),
+				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, "<Control>Q", "Quit", new EventHandler(OnQuitActivated)),
 
 				new ActionEntry("EditMenuAction", null, "_Edit", null, null, null),
-				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, null, "Paste objects", new EventHandler(OnPasteActivated)),
+				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", new EventHandler(OnPasteActivated)),
 				new ActionEntry("GroupAction", null, "Group", "<Control>g", "Group objects", new EventHandler(OnGroupActivated)),
 				new ActionEntry("UngroupAction", null, "Ungroup", "<Control>u", "Ungroup object", new EventHandler(OnUngroupActivated)),
 				new ActionEntry("ApplySettingsAction", null, "Apply settings", null, "Apply settings from a flat format", new EventHandler(OnApplySettingsActivated)),
 
 				new ActionEntry("AddStateAction", Studio.Stock.State, null, null, "Add state", new EventHandler(OnAddStateActivated)),
 				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", new EventHandler(OnAddLinkActivated)),
-				new ActionEntry("AddSensorAction", Studio.Stock.Sensor, null, null, "Add sensor", new EventHandler(OnAddSensorActivated)),
 				new ActionEntry("AddRelayAction", Studio.Stock.Relay, null, null, "Add relay", new EventHandler(OnAddRelayActivated)),
 
 				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
@@ -87,26 +106,26 @@ namespace Cpg.Studio
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", new EventHandler(OnToggleControlActivated), false)		
 			});
 				
-			manager.InsertActionGroup(d_normalGroup, 0);
+			d_uimanager.InsertActionGroup(d_normalGroup, 0);
 			
 			d_selectionGroup = new ActionGroup("SelectionActions");
 			d_selectionGroup.Add(new ActionEntry[] {
-				new ActionEntry("CutAction", Gtk.Stock.Cut, null, null, "Cut objects", new EventHandler(OnCutActivated)),
-				new ActionEntry("CopyAction", Gtk.Stock.Copy, null, null, "Copy objects", new EventHandler(OnCopyActivated)),
+				new ActionEntry("CutAction", Gtk.Stock.Cut, null, "<Control>X", "Cut objects", new EventHandler(OnCutActivated)),
+				new ActionEntry("CopyAction", Gtk.Stock.Copy, null, "<Control>C", "Copy objects", new EventHandler(OnCopyActivated)),
 				new ActionEntry("DeleteAction", Gtk.Stock.Delete, null, null, "Delete object", new EventHandler(OnDeleteActivated))			
 			});
 			
-			manager.InsertActionGroup(d_selectionGroup, 0);
-			manager.AddUiFromResource("ui.xml");
+			d_uimanager.InsertActionGroup(d_selectionGroup, 0);
+			d_uimanager.AddUiFromResource("ui.xml");
 			
-			BuildTemplates(manager);
+			BuildTemplates(d_uimanager);
 			
-			AddAccelGroup(manager.AccelGroup);
+			AddAccelGroup(d_uimanager.AccelGroup);
 			
 			VBox vbox = new VBox(false, 0);
 
-			vbox.PackStart(manager.GetWidget("/menubar"), false, false, 0);
-			vbox.PackStart(manager.GetWidget("/toolbar"), false, false, 0);
+			vbox.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
+			vbox.PackStart(d_uimanager.GetWidget("/toolbar"), false, false, 0);
 			
 			d_hboxPath = new HBox(false, 3);
 			vbox.PackStart(d_hboxPath, false, false, 0);
@@ -148,6 +167,7 @@ namespace Cpg.Studio
 			d_grid.SelectionChanged += DoSelectionChanged;
 			d_grid.FocusInEvent += DoFocusInEvent;
 			d_grid.FocusOutEvent += DoFocusOutEvent;
+			d_grid.Error += DoError;
 		}
 		
 		private void BuildButtonBar(HBox hbox)
@@ -313,37 +333,168 @@ namespace Cpg.Studio
 			d_normalGroup.GetAction("GroupAction").Sensitive = objects.Count > 1 && objects.Find(delegate (Components.Object obj) { return !(obj is Components.Link); }) != null;
 			d_normalGroup.GetAction("EditGroupAction").Sensitive = singlegroup;
 			
-			//d_normalGroup.GetAction("Properties").Sensitive = singleobj;
+			d_normalGroup.GetAction("PropertiesAction").Sensitive = singleobj;
 			d_normalGroup.GetAction("PasteAction").Sensitive = d_grid.HasFocus;
+			
+			// Disable control for now
+			d_normalGroup.GetAction("ControlMenuAction").Visible = false;
+			d_normalGroup.GetAction("ViewControlAction").Visible = false;
+		}
+					
+		public Grid Grid
+		{
+			get
+			{
+				return d_grid;
+			}
+		}
+					
+		public string Period
+		{
+			get
+			{
+				return d_periodEntry.Text;
+			}
+			set
+			{
+				d_periodEntry.Text = value;
+			}
+		}
+		
+		private void PositionWindow(Gtk.Window w)
+		{
+			int root_x, root_y;
+			
+			GetPosition(out root_x, out root_y);
+			
+			int sw = Screen.Width;
+			int sh = Screen.Height;
+			
+			int mw, mh;
+			GetSize(out mw, out mh);
+			
+			int ww, wh;
+			w.GetSize(out ww, out wh);
+			
+			mw += 10;
+			mh += 10;
+			ww += 10;
+			wh += 10;
+			
+			
+			int maxx = Utils.Max(new int[] {root_x, sw - (root_x + mw)});
+			int maxy = Utils.Max(new int[] {root_y, sh - (root_y + mh)});
+			
+			int nx, ny;
+			
+			if (maxx > ww && maxx > maxy)
+			{
+				nx = root_x > sw - (root_x + mw) ? root_x - ww : root_x + mw;
+				ny = root_y;
+			}
+			else if (maxy > wh && maxy > maxx)
+			{
+				nx = root_x;
+				ny = root_y > sh - (root_y + mh) ? root_y - wh : root_y + mh;
+			}
+			else
+			{
+				nx = sw - ww;
+				ny = sh - wh;
+			}
+			
+			w.Move(Utils.Max(new int [] {Utils.Min(new int[] {nx, sw - ww}), 0}),
+			       Utils.Max(new int [] {Utils.Min(new int[] {ny, sh - wh}), 0}));
 		}
 		
 		private void DoObjectActivated(object source, Components.Object obj)
 		{
-			/*
+			if (obj is Components.Group)
+			{
+				d_grid.LevelDown(obj);
+				return;
+			}
 			
-			TODO
+			if (d_propertyEditors.ContainsKey(obj))
+			{
+				d_propertyEditors[obj].Present();
+				return;
+			}
 			
-			if @property_editors.include?(object)
-				@property_editors[object].present
-				return
-			end
+			PropertyDialog dlg = new PropertyDialog(this, obj);
+			PositionWindow(dlg);
+			
+			dlg.Show();
+			
+			d_propertyEditors[obj] = dlg;
+			
+			dlg.Response += delegate(object o, ResponseArgs args) {
+				d_grid.QueueDraw();
+				
+				d_propertyEditors.Remove(obj);
+				dlg.Destroy();
+			};
+		}
 		
-			dlg = PropertyEditor.new(self, object)
-			position_window(dlg)
-			dlg.show
-
-			@property_editors[object] = dlg
+		private string[] VisibleProperties(Components.Object obj)
+		{
+			return Array.FindAll(obj.Properties, delegate (string s) { return !obj.IsInvisible(s); });
+		}
 		
-			dlg.signal_connect('response') do |dlg, res|
-				@grid.queue_draw
-				@property_editors.delete(object)
-				dlg.destroy
-			end*/
+		private string[] CommonProperties(Components.Object[] objects)
+		{
+			if (objects.Length == 0)
+			{
+				return new string[] {};
+			}
+			
+			string[] props = VisibleProperties(objects[0]);
+			int i = 1;
+			
+			while (props.Length > 0 && i < objects.Length)
+			{
+				string[] pp = VisibleProperties(objects[i]);
+				
+				props = Array.FindAll(props, delegate (string s) { return Utils.In(s, pp); });
+				++i;
+			}
+			
+			return props;
 		}
 		
 		private void DoPopup(object source, int button, long time)
 		{
-			// TODO
+			if (d_popupMergeId != 0)
+			{
+				d_uimanager.RemoveUi(d_popupMergeId);
+				d_uimanager.RemoveActionGroup(d_popupActionGroup);
+			}
+			
+			d_popupMergeId = d_uimanager.NewMergeId();
+			d_popupActionGroup = new ActionGroup("PopupDynamic");
+			d_uimanager.InsertActionGroup(d_popupActionGroup, 0);
+			
+			// Merge monitor
+			Components.Object[] selection = d_grid.Selection;
+			string[] props = CommonProperties(selection);
+			
+			for (int i = 0; i < props.Length; ++i)
+			{
+				if (props[i] == "id")
+					continue;
+				
+				string name = "Monitor" + props[i];
+				
+				d_popupActionGroup.Add(new ActionEntry[] {
+					new ActionEntry(name + "Action", null, props[i].Replace("_", "__"), null, null, new EventHandler(OnStartMonitor))
+				});
+				
+				d_uimanager.AddUi(d_popupMergeId, "/popup/MonitorMenu/MonitorPlaceholder", name, name + "Action", UIManagerItemType.Menuitem, false);
+			}
+			
+			Widget menu = d_uimanager.GetWidget("/popup");
+			menu.ShowAll();
+			(menu as Menu).Popup(null, null, null, (uint)button, (uint)time);
 		}
 		
 		private void DoLevelDown(object source, Components.Object obj)
@@ -358,13 +509,10 @@ namespace Cpg.Studio
 		
 		private void DoObjectRemoved(object source, Components.Object obj)
 		{
-			/*
-			
-			TODO
-			
-			if @property_editors.include?(obj)
-				@property_editors[obj].destroy
-			end*/
+			if (d_propertyEditors.ContainsKey(obj))
+			{
+				d_propertyEditors[obj].Destroy();
+			}
 		}
 		
 		private void DoModified(object source, EventArgs args)
@@ -410,44 +558,310 @@ namespace Cpg.Studio
 			// TODO
 		}
 		
+		private void AskUnsavedModified()
+		{
+			if (!d_modified)
+				return;
+			
+			MessageDialog dlg = new MessageDialog(this,
+			                                      DialogFlags.DestroyWithParent | DialogFlags.Modal,
+			                                      MessageType.Warning,
+			                                      ButtonsType.YesNo,
+			                                      "There are unsaved changes in the current network, do you want to save these changes first?");
+		
+			int resp = dlg.Run();
+			
+			if (resp == (int)ResponseType.Yes)
+			{
+				FileChooserDialog d = DoSave();
+				
+				if (d != null)
+					d.Run();
+			}
+			
+			dlg.Destroy();
+		}
+		
 		/* Callbacks */
 		protected override bool OnDeleteEvent(Gdk.Event evt)
 		{
+			AskUnsavedModified();
 			Gtk.Application.Quit();
 			return true;
 		}
 			
 		private void OnFileNew(object obj, EventArgs args)
 		{
+			Clear();
 			
+			d_filename = null;
+			d_modified = false;
+			
+			UpdateTitle();
+		}
+		
+		private void DoLoadXml(string filename)
+		{
+			// TODO
 		}
 		
 		private void OnOpenActivated(object sender, EventArgs args)
 		{
+			FileChooserDialog dlg = new FileChooserDialog("Open",
+			                                              this,
+			                                              FileChooserAction.Open,
+			                                              Gtk.Stock.Cancel, Gtk.ResponseType.Cancel,
+			                                              Gtk.Stock.Open, Gtk.ResponseType.Accept);
+		
+			dlg.Response += delegate(object o, ResponseArgs a) {
+					string filename = dlg.Filename;
+					dlg.Destroy();
+					
+					if (a.ResponseId == ResponseType.Accept)
+						DoLoadXml(filename);		
+			};
+			
+			dlg.Show();
 		}
 		
 		private void OnRevertActivated(object sender, EventArgs args)
 		{
+			// TODO
+		}
+		
+		private FileChooserDialog DoSave()
+		{
+			if (d_filename != null)
+			{
+				DoSaveXml(d_filename);
+				return null;
+			}
+			else
+			{
+				return DoSaveAs();
+			}
 		}
 		
 		private void OnSaveActivated(object sender, EventArgs args)
 		{
+			DoSaveAs();
 		}
+		
+		private bool ExportXml(string filename, List<Components.Object> objects)
+		{
+			Serialization.Saver saver;
+			
+			if (objects == null)
+			{
+				saver = new Serialization.Saver(this, d_grid.Root);
+			}
+			else
+			{
+				saver = new Serialization.Saver(this, objects);
+			}
+			
+			try
+			{
+				saver.Save(filename);
+				return true;
+			}
+			catch (Exception e)
+			{
+				Message(Gtk.Stock.DialogError, "Error while saving network", e.Message);
+				return false;
+			}
+		}
+		
+		private bool ExportXml(string filename)
+		{
+			return ExportXml(filename, null);
+		}
+		
+		public void StatusMessage(string message)
+		{
+			d_statusbar.Push(0, message);
+			
+			if (d_statusTimeout != 0)
+				GLib.Source.Remove(d_statusTimeout);
+			
+			d_statusTimeout = GLib.Timeout.Add(3000, delegate () {
+				d_statusTimeout = 0;
+				d_statusbar.Push(0, "");
+				return false;
+			});
+		}
+		
+		public void Message(string icon, string primary, string secondary, params object[] actions)
+		{
+			if (d_messageArea != null)
+			{
+				d_messageArea.Destroy();
+			}
+			
+			if (actions.Length == 0)
+			{			
+				d_messageArea = MessageArea.Create(icon, primary, secondary, Gtk.Stock.Close, ResponseType.Close);
+			}
+			else
+			{
+				d_messageArea = MessageArea.Create(icon, primary, secondary, actions);
+			}
+			
+			d_messageArea.Response += delegate(object source, ResponseType type) {
+				if (type == ResponseType.DeleteEvent || type == ResponseType.Close)
+				{
+					d_messageArea.Destroy();
+				}
+			};
+			
+			d_messageArea.Destroyed += delegate(object sender, EventArgs e) {
+					d_messageArea = null;
+			};
+			
+			d_vboxContents.PackStart(d_messageArea, false, false, 0);
+			d_vboxContents.ReorderChild(d_messageArea, 0);
+			
+			d_messageArea.Show();
+			
+			d_messageArea.SetDefaultResponse(ResponseType.Close);
+			d_messageArea.GrabFocus();
+		}
+		
+		private bool DoSaveXml(string filename)
+		{
+			if (ExportXml(filename))
+			{
+				StatusMessage("Saved " + filename + "...");
+				
+				d_modified = false;
+				d_filename = filename;
+				
+				UpdateTitle();
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		private FileChooserDialog DoSaveAs()
+		{
+			FileChooserDialog dlg = new FileChooserDialog("Save As",
+			                                              this,
+			                                              FileChooserAction.Save,
+			                                              Gtk.Stock.Cancel, Gtk.ResponseType.Cancel,
+			                                              Gtk.Stock.Save, Gtk.ResponseType.Accept);
+
+			if (d_filename != null)
+				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
+			
+			dlg.Response += delegate(object o, ResponseArgs args) {
+					if (args.ResponseId == ResponseType.Accept)
+					{
+						string filename = dlg.Filename;
+						
+						if (DoSaveXml(filename))
+							d_filename = filename;
+					}
+					
+					dlg.Destroy();		
+			};
+			
+			dlg.Show();
+			
+			return dlg;
+		}
+		
 		
 		private void OnSaveAsActivated(object sender, EventArgs args)
 		{
+			DoSaveAs();
 		}
 		
 		private void OnImportActivated(object sender, EventArgs args)
 		{
+			// TODO
+		}
+		
+		private string ExportToXml(Components.Object[] objects)
+		{
+			Serialization.Saver saver;
+			
+			if (objects.Length != 0)
+			{
+				List<Components.Object> objs = new List<Components.Object>();
+				objs.AddRange(objects);
+				
+				List<Components.Object> normalized = d_grid.Normalize(objs);
+				
+				if (normalized.Count == 0)
+					return null;
+
+				saver = new Serialization.Saver(this, normalized);
+			}
+			else
+			{
+				saver = new Serialization.Saver(this, d_grid.Root);
+			}
+			
+			string doc;
+			
+			try
+			{
+				doc = saver.Save();
+			}
+			catch (Exception e)
+			{
+				Message(Gtk.Stock.DialogError, "Error while exporting network", e.Message);
+				return null;
+			}
+			
+			return doc;
+		}
+		
+		private void ImportFromXml(string xml)
+		{
+			// TODO
 		}
 		
 		private void OnExportActivated(object sender, EventArgs args)
 		{
-		}
-		
-		private void OnExportGridActivated(object sender, EventArgs args)
-		{
+			FileChooserDialog dlg = new FileChooserDialog("Save As",
+			                                              this,
+			                                              FileChooserAction.Save,
+			                                              Gtk.Stock.Cancel, Gtk.ResponseType.Cancel,
+			                                              Gtk.Stock.Save, Gtk.ResponseType.Accept);
+
+			if (d_filename != null)
+				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
+			
+			string doc = ExportToXml(d_grid.Selection);
+			
+			if (doc == null)
+				return;
+			
+			dlg.Response += delegate(object o, ResponseArgs a) {
+					if (a.ResponseId == ResponseType.Accept)
+					{
+						string filename = dlg.Filename;
+						
+						try
+						{
+							Serialization.Saver.SaveToFile(filename, doc);
+							
+							StatusMessage("Exported network to " + filename + "...");
+						}
+						catch (Exception e)
+						{
+							Message(Gtk.Stock.DialogError, "Error while exporting network", e.Message);
+						}
+					}
+					
+					dlg.Destroy();		
+			};
+			
+			dlg.Show();
 		}
 		
 		private void OnQuitActivated(object sender, EventArgs args)
@@ -457,6 +871,11 @@ namespace Cpg.Studio
 		
 		private void OnPasteActivated(object sender, EventArgs args)
 		{
+			Clipboard clip = Clipboard.Get(Gdk.Selection.Clipboard);
+			
+			clip.RequestText(delegate (Clipboard c, string text) {
+				ImportFromXml(text);
+			});
 		}
 		
 		private void OnGroupActivated(object sender, EventArgs args)
@@ -485,16 +904,14 @@ namespace Cpg.Studio
 			d_grid.Attach();
 		}
 		
-		private void OnAddSensorActivated(object sender, EventArgs args)
-		{
-		}
-		
 		private void OnAddRelayActivated(object sender, EventArgs args)
 		{
+			d_grid.Add(new Components.Relay());
 		}
 		
 		private void OnApplySettingsActivated(object sender, EventArgs args)
 		{
+			// TODO
 		}
 		
 		private void OnCenterViewActivated(object sender, EventArgs args)
@@ -504,10 +921,20 @@ namespace Cpg.Studio
 		
 		private void OnEditGroupActivated(object sender, EventArgs args)
 		{
+			Components.Object[] selection = d_grid.Selection;
+			
+			if (selection.Length != 1 || !(selection[0] is Components.Group))
+				return;
+			
+			d_grid.LevelDown(selection[0]);
 		}
 		
 		private void OnPropertiesActivated(object sender, EventArgs args)
 		{
+			Components.Object[] selection = d_grid.Selection;
+			
+			if (selection.Length != 0)
+				DoObjectActivated(sender, selection[0]);
 		}
 		
 		private void OnPropertyEditorActivated(object sender, EventArgs args)
@@ -520,6 +947,7 @@ namespace Cpg.Studio
 				{
 					Components.Object[] selection = d_grid.Selection;
 					d_propertyView = new PropertyView(selection.Length == 1 ? selection[0] : null);
+					d_propertyView.BorderWidth = 3;
 					
 					d_vpaned.Pack2(d_propertyView, false, false);
 				}
@@ -558,17 +986,54 @@ namespace Cpg.Studio
 		{
 		}
 		
+		private bool DoCopy()
+		{
+			Components.Object[] objects = d_grid.Selection;
+			
+			if (objects.Length == 0)
+				return false;
+			
+			string doc = ExportToXml(objects);
+			
+			if (doc == null)
+				return false;
+			
+			Clipboard clip = Clipboard.Get(Gdk.Selection.Clipboard);
+			clip.Text = doc;
+			
+			return true;
+		}
+		
+		private void DoDelete()
+		{
+			d_grid.DeleteSelected();
+		}
+		
 		private void OnCutActivated(object sender, EventArgs args)
 		{
+			if (!DoCopy())
+				return;
+			
+			DoDelete();
 		}
 		
 		private void OnCopyActivated(object sender, EventArgs args)
 		{
+			DoCopy();
 		}
 		
 		private void OnDeleteActivated(object sender, EventArgs args)
 		{
-			d_grid.DeleteSelected();
+			DoDelete();
+		}
+		
+		private void DoError(object sender, string error, string message)
+		{
+			Message(Gtk.Stock.DialogError, error, message);
+		}
+		
+		private void OnStartMonitor(object send, EventArgs args)
+		{
 		}
 		
 		private void OnSimulationRunPeriod(object sender, EventArgs args)

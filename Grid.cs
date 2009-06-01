@@ -22,6 +22,7 @@ namespace Cpg.Studio
 		
 		public delegate void ObjectEventHandler(object source, Components.Object obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
+		public delegate void ErrorHandler(object source, string error, string message);
 		
 		public event ObjectEventHandler Activated = delegate {};
 		public event ObjectEventHandler ObjectAdded = delegate {};
@@ -32,6 +33,7 @@ namespace Cpg.Studio
 		public event EventHandler SelectionChanged = delegate {};
 		public event EventHandler Modified = delegate {};
 		public event EventHandler ModifiedView = delegate {};
+		public event ErrorHandler Error = delegate {};
 		
 		private int d_maxSize;
 		private int d_minSize;
@@ -106,6 +108,9 @@ namespace Cpg.Studio
 		
 		public void LevelUp(Components.Object obj)
 		{
+			if (!(obj is Components.Group) || d_objectStack.Count <= 1 || Container.Equals(obj))
+				return;
+
 			LeveledUp(this, obj);
 		}
 		
@@ -133,7 +138,7 @@ namespace Cpg.Studio
 			AddObject(link);
 		}
 		
-		public Components.Object Root
+		public Components.Group Root
 		{
 			get
 			{
@@ -149,17 +154,17 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public void Attach()
+		public Components.Link[] Attach()
 		{
 			if (d_selection.Count == 0)
-				return;
+				return null;
 			
 			Components.Simulated[] selection = new Components.Simulated[d_selection.Count];
 			
 			for (int i = 0; i < d_selection.Count; ++i)
 				selection[i] = d_selection[i] as Components.Simulated;
 
-			Attach(selection);
+			return Attach(selection);
 		}
 		
 		public Components.Link[] Attach(Components.Simulated[] objs)
@@ -176,7 +181,7 @@ namespace Cpg.Studio
 			
 			for (int i = 1; i < objects.Count; ++i)
 			{
-				Cpg.Link orig = new Cpg.Link("", objects[0].Object, objects[i].Object);
+				Cpg.Link orig = new Cpg.Link("link", objects[0].Object, objects[i].Object);
 				
 				d_network.AddObject(orig);
 
@@ -227,7 +232,7 @@ namespace Cpg.Studio
 			foreach (Components.Object o in Container.Children)
 			{
 				if (o != obj)
-					ids.Add(o["id"]);
+					ids.Add(o.Id);
 			}
 			
 			string newid = id;
@@ -240,7 +245,7 @@ namespace Cpg.Studio
 			}
 			
 			if (newid != id)
-				obj["id"] = newid;
+				obj.Id = newid;
 		}
 		
 		private void DoObjectAdded(Components.Object obj)
@@ -288,7 +293,7 @@ namespace Cpg.Studio
 		
 		private void AddObject(Components.Object obj)
 		{
-			EnsureUniqueId(obj, obj["id"]);
+			EnsureUniqueId(obj, obj.Id);
 			
 			if (obj is Components.Simulated)
 				d_network.AddObject((obj as Components.Simulated).Object);
@@ -317,6 +322,23 @@ namespace Cpg.Studio
 					
 					if (link.From == obj || link.To == obj)
 						Remove(link);
+				}
+			}
+			else if (obj is Components.Link)
+			{
+				/* Reoffset links */
+				int offset = 0;
+				Components.Link link = obj as Components.Link;
+				
+				foreach (Components.Object child in Container.Children)
+				{
+					if (child == obj || !(child is Components.Link))
+						continue;
+				
+					if (link.SameObjects(child as Components.Link))
+					{
+						(child as Components.Link).Offset = offset++;
+					}
 				}
 			}
 			
@@ -445,6 +467,9 @@ namespace Cpg.Studio
 			
 			foreach (Components.Object obj in objects)
 			{
+				if (obj is Components.Link)
+					continue;
+
 				res.X += obj.Allocation.X + obj.Allocation.Width / 2.0f;
 				res.Y += obj.Allocation.Y + obj.Allocation.Height / 2.0f;
 				
@@ -684,7 +709,10 @@ namespace Cpg.Studio
 			else
 			{
 				foreach (Components.Object obj in d_selection)
-					obj.Allocation.Offset(dx, dy);
+				{
+					if (!(obj is Components.Link))
+						obj.Allocation.Offset(dx, dy);
+				}
 				
 				if (d_selection.Count > 0)
 					Modified(this, new EventArgs());
@@ -788,13 +816,9 @@ namespace Cpg.Studio
 			
 			Rectangle alloc = obj.Allocation;
 			graphics.Save();
-			
 			graphics.Translate(alloc.X, alloc.Y);
-			graphics.LineWidth = 1.0f / d_gridSize;
-			graphics.SetFontSize(10 / (double)d_gridSize);
-			
+
 			obj.Draw(graphics);
-			
 			graphics.Restore();
 		}
 		
@@ -804,6 +828,7 @@ namespace Cpg.Studio
 			
 			graphics.Translate(-Container.X, -Container.Y);
 			graphics.Scale(d_gridSize, d_gridSize);
+			graphics.LineWidth = 1.0 / d_gridSize;
 
 			List<Components.Object> objects = new List<Components.Object>();
 			
@@ -836,18 +861,34 @@ namespace Cpg.Studio
 			graphics.Stroke();
 		}
 		
-		public Components.Object[] NormalizeGroup(Components.Object[] objects, out Components.Object[] removed)
+		public List<Components.Object> Normalize(List<Components.Object> objects)
+		{
+			Components.Object[] objs = new Components.Object[objects.Count];
+			objects.CopyTo(objs, 0);
+
+			Components.Object[] ret = Normalize(objs);			
+			return new List<Components.Object>(ret);
+		}
+		
+		public Components.Object[] Normalize(Components.Object[] objects)
+		{
+			Components.Object[] removed;
+			
+			return Normalize(objects, out removed);
+		}
+				
+		public Components.Object[] Normalize(Components.Object[] objects, out Components.Object[] removed)
 		{
 			List<Components.Object> orig = new List<Components.Object>(objects);
 			List<Components.Object> rm = new List<Components.Object>();
-			
+						
 			/* Remove any links with objects not within the group */
 			orig.RemoveAll(delegate (Components.Object obj) {
 				if ((obj is Components.Link))
 				{
 					Components.Link link = obj as Components.Link;
 					
-					if (orig.IndexOf(link.From) == -1 || orig.IndexOf(link.To) == -1)
+					if (!Utils.In(link.From, orig) || !Utils.In(link.To, orig))
 					{
 						rm.Add(obj);
 						return true;
@@ -860,13 +901,15 @@ namespace Cpg.Studio
 			/* Add any links that are fully within the group, wrt from and to */
 			foreach (Components.Object obj in Container.Children)
 			{
-				if (!(obj is Components.Link) || orig.IndexOf(obj) != -1 || rm.IndexOf(obj) != -1)
+				if (!(obj is Components.Link) || Utils.In(obj, orig) || Utils.In(obj, rm))
 					continue;
 				
 				Components.Link link = obj as Components.Link;
 				
-				if (orig.IndexOf(link.From) != -1 && orig.IndexOf(link.To) != -1)
+				if (Utils.In(link.From, orig) && Utils.In(link.To, orig))
+				{
 					orig.Add(obj);
+				}
 			}
 			
 			removed = rm.ToArray();
@@ -886,19 +929,17 @@ namespace Cpg.Studio
 				
 				Components.Link link = obj as Components.Link;
 				
-				if (link.To == main as Components.Object || link.From == main as Components.Object)
+				if (link.To.Equals(main) || link.From.Equals(main))
 					continue;
 				
-				if (objs.IndexOf(link.From) == -1 && objs.IndexOf(link.To) == -1 && objs.IndexOf(link) == -1)
+				if (Utils.In(link.From, objs) != Utils.In(link.To, objs))
 					return false;
 			}
 			
 			PointF pt = MeanPosition(objects);
 
 			Components.Group group = new Components.Group(main);
-			ConstructorInfo info = renderer.GetConstructor(new Type[] {typeof(Components.Group) });
-			
-			group.Renderer = info.Invoke(new object[] { group }) as Components.Renderers.Renderer;
+			group.RendererType = renderer;
 
 			/* Copy positioning from current group */
 			group.X = Container.X;
@@ -914,10 +955,10 @@ namespace Cpg.Studio
 				
 				Components.Link link = obj as Components.Link;
 				
-				if (link.From == group.Main)
+				if (link.From.Equals(group.Main) && Array.IndexOf(objects, link.To) == -1)
 					link.From = group;
 				
-				if (link.To == group.Main)
+				if (link.To.Equals(group.Main) && Array.IndexOf(objects, link.From) == -1)
 					link.To = group;
 			}
 			
@@ -946,19 +987,29 @@ namespace Cpg.Studio
 		
 		private void NewGroup(Components.Object[] objects)
 		{
-			Gtk.Dialog dlg = new Gtk.Dialog("Group properties", Toplevel as Window, 
+			Gtk.Dialog dlg = new Gtk.Dialog("Group", Toplevel as Window, 
 			                                DialogFlags.DestroyWithParent,
 			                                Gtk.Stock.Cancel, Gtk.ResponseType.Close,
 			                                Gtk.Stock.Ok, Gtk.ResponseType.Ok);
 
 			dlg.HasSeparator = false;
-			GtkGui.GroupProperties widget = new GtkGui.GroupProperties(objects);
+			dlg.BorderWidth = 12;
 			
-			dlg.VBox.PackStart(widget, true, true, 0);
+			dlg.SetDefaultSize(300, 100);
+
+			GroupProperties widget = new GroupProperties(objects);
+			
+			dlg.VBox.PackStart(widget, false, false, 0);
+			dlg.VBox.Spacing = 12;
 			
 			dlg.Response += delegate(object o, ResponseArgs args) {
 				if (args.ResponseId == ResponseType.Ok)
-					DoGroupReal(objects, widget.Main, widget.Klass);
+				{
+					if (!DoGroupReal(objects, widget.Main, widget.Klass))
+					{
+						Error(this, "Error while grouping", "There are still links connected from outside the group");
+					}
+				}
 				
 				dlg.Destroy();
 			};
@@ -972,7 +1023,7 @@ namespace Cpg.Studio
 			Components.Object[] res;
 			Components.Object[] removed;
 
-			res = NormalizeGroup(objects, out removed);
+			res = Normalize(objects, out removed);
 			
 			/* Check if there were removals and actual objects */
 			if (removed.Length != 0)
@@ -1000,26 +1051,83 @@ namespace Cpg.Studio
 			return Group(d_selection.ToArray());
 		}
 		
+		private void CheckLinkOffsets(Components.Simulated obj)
+		{
+			foreach (Components.Link l1 in obj.Links)
+			{
+				int idx = 0;
+
+				foreach (Components.Link l2 in obj.Links)
+				{
+					if (l1.SameObjects(l2))
+					{
+						l2.Offset = idx++;
+					}
+				}
+			}
+		}
+		
 		public void Ungroup(Components.Group group)
 		{
-			/* Reconnect attachments to main object */
-			foreach (Components.Object obj in Container.Children)
+			// Reconnect attachments to main object
+			foreach (Components.Object obj in group.Parent.Children)
 			{
 				if (!(obj is Components.Link))
 					continue;
 			
 				Components.Link link = obj as Components.Link;
 				
-				if (link.From == group as Components.Simulated)
+				if (link.From.Equals(group))
 					link.From = group.Main;
 				
-				if (link.To == group as Components.Simulated)
+				if (link.To.Equals(group))
 					link.To = group.Main;
 			}
 			
-			// TODO
-			// CheckLinkOffsets(group.Main);
+			if (group.Main != null)
+				CheckLinkOffsets(group.Main);
+
+			group.Links.Clear();
 			
+			// Preserve layout and center
+			int x = (int)group.Allocation.X;
+			int y = (int)group.Allocation.Y;
+			PointF pos = MeanPosition(group.Children.ToArray());
+			
+			// Remove the group
+			Remove(group);
+			
+			// Change id of main to resemble id of the group
+			if (group.Main != null)
+			{
+				string pid = group.Id;
+				
+				if (pid != String.Empty)
+					group.Main.Id = pid;
+			}
+			
+			foreach (Components.Object obj in group.Children)
+			{
+				if (!(obj is Components.Link))
+				{
+					obj.Allocation.X = (int)Math.Round((x + (obj.Allocation.X - pos.X) + 0.00001));
+					obj.Allocation.Y = (int)Math.Round((y + (obj.Allocation.Y - pos.Y) + 0.00001));
+				}
+				
+				Add(obj, (int)obj.Allocation.X, (int)obj.Allocation.Y, (int)obj.Allocation.Width, (int)obj.Allocation.Height);
+				Select(obj);
+			}
+			
+			ModifiedView(this, new EventArgs());
+			QueueDraw();
+		}
+		
+		public int GridSize
+		{
+			get
+			{
+				return d_gridSize;
+			}
 		}
 		
 		/* Callbacks */
@@ -1158,6 +1266,9 @@ namespace Cpg.Studio
 			/* Check boundaries */
 			foreach (Components.Object obj in d_selection)
 			{
+				if (obj is Components.Link)
+					continue;
+
 				PointF pt = ScaledFromDragState(obj);
 				Allocation alloc = obj.Allocation;
 				
@@ -1267,7 +1378,7 @@ namespace Cpg.Studio
 			{
 				DoMove(1, 0, (evnt.State & Gdk.ModifierType.Mod1Mask) != 0);
 			}
-			else if (evnt.Key == Gdk.Key.Tab || evnt.Key == Gdk.Key.ISO_Left_Tab)
+			else if ((evnt.Key == Gdk.Key.Tab || evnt.Key == Gdk.Key.ISO_Left_Tab) && (evnt.State & Gdk.ModifierType.ControlMask) == 0)
 			{
 				FocusNext((evnt.State & Gdk.ModifierType.ShiftMask) != 0 ? -1 : 1);
 			}
@@ -1312,6 +1423,14 @@ namespace Cpg.Studio
 			
 			return true;
 		}
+		
+		public void UnselectAll()
+		{
+			List<Components.Object> copy = new List<Components.Object>(d_selection);
+			
+			foreach (Components.Object o in copy)
+				Unselect(o);
+		}
 
 		private void OnLevelDown(object source, Components.Object obj)
 		{
@@ -1321,23 +1440,24 @@ namespace Cpg.Studio
 			d_objectStack.Insert(0, new StackItem(obj as Components.Group, d_gridSize));
 			d_gridSize = d_defaultGridSize;
 			
+			UnselectAll();
+
 			ModifiedView(this, new EventArgs());
 			QueueDraw();			
 		}
 		
 		private void OnLevelUp(object source, Components.Object obj)
 		{
-			if (!(obj is Components.Group) || d_objectStack.Count <= 1 || Container == (obj as Components.Group))
-				return;
-
 			StackItem item = d_objectStack[0];
 			d_objectStack.RemoveAt(0);
 			
 			d_gridSize = item.GridSize;
 			
+			UnselectAll();
+
 			ModifiedView(this, new EventArgs());
-			QueueDraw();
 			
+			QueueDraw();
 			LevelUp(obj);
 		}
 		
@@ -1365,7 +1485,6 @@ namespace Cpg.Studio
 				graphics.Clip();
 				
 				graphics.LineWidth = 1;
-				
 				DrawBackground(graphics);
 				DrawGrid(graphics);
 	
@@ -1375,5 +1494,13 @@ namespace Cpg.Studio
 			
 			return true;
 		}
+		
+		protected override void OnStyleSet(Gtk.Style previous_style)
+		{
+			base.OnStyleSet(previous_style);
+			
+			Cpg.Studio.Settings.Font = Style.FontDescription;
+		}
+
 	}
 }

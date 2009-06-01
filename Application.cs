@@ -26,6 +26,14 @@ namespace Cpg.Studio
 		public static void Main(string[] args)
 		{
 			Gtk.Application.Init("Cpg Studio", ref args);
+			Components.Renderers.Oscillator renderer = new Components.Renderers.Oscillator();
+			Gtk.Window.DefaultIconList = new Gdk.Pixbuf[] {
+				renderer.Icon(16),
+				renderer.Icon(24),
+				renderer.Icon(48),
+				renderer.Icon(128),
+			};
+
 			Studio.Application instance = new Studio.Application();
 			
 			instance.run();

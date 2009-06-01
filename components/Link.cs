@@ -1,19 +1,68 @@
 using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace Cpg.Studio.Components
 {
 	public class Link : Simulated
 	{
+		public class Action
+		{
+			Link d_link;
+			LinkAction d_action;
+			
+			public Action(Link link, LinkAction action)
+			{
+				d_link = link;
+				d_action = action;
+			}
+			
+			public Action() : this(null, null)
+			{
+			}
+
+			public string Target
+			{
+				get
+				{
+					return d_action.Target.Name;
+				}
+				set
+				{
+					d_action = d_link.UpdateAction(this, value, Equation);
+				}
+			}
+			
+			public LinkAction LinkAction
+			{
+				get
+				{
+					return d_action;
+				}
+			}
+
+			public string Equation
+			{
+				get
+				{
+					return d_action.Expression.AsString;
+				}
+				set
+				{
+					d_action = d_link.UpdateAction(this, Target, value);
+				}
+			}
+		}
+		
 		Components.Simulated d_from;
 		Components.Simulated d_to;
+		
 		int d_offset;
+		
 		double[] d_selectedColor;
 		double[] d_normalColor;
 		double[] d_hoverColor;
-
+		
 		public Link(Cpg.Link obj, Components.Simulated from, Components.Simulated to) : base(obj)
 		{
 			d_from = from != null ? from : Components.Simulated.FromCpg(obj.From);
@@ -22,6 +71,9 @@ namespace Cpg.Studio.Components
 			d_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			d_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
 			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
+			
+			if (d_to != null)
+				d_to.Link(this);
 		}
 		
 		public Link(Cpg.Link obj) : this(obj, null, null)
@@ -85,10 +137,78 @@ namespace Cpg.Studio.Components
 			}
 			set
 			{
+				if (d_to != null)
+					d_to.Unlink(this);
+					
 				d_to = value;
+				
+				if (d_to != null)
+					d_to.Link(this);
 			}
 		}
 		
+		public Action[] Actions
+		{
+			get
+			{
+				List<Action> actions = new List<Action>();
+				
+				foreach (LinkAction action in (d_object as Cpg.Link).Actions)
+				{
+					actions.Add(new Action(this, action));
+				}
+				
+				return actions.ToArray();
+			}
+		}
+		
+		public Action AddAction(string property, string expression)
+		{
+			Cpg.Property prop = d_to.Object.Property(property);
+			
+			if (prop != null)
+				return new Action(this, (d_object as Cpg.Link).AddAction(prop, expression));
+			else
+				return null;
+		}
+		
+		public bool RemoveAction(string property)
+		{
+			Cpg.Property prop = d_to.Object.Property(property);
+			
+			if (prop != null)
+			{
+				(d_object as Cpg.Link).RemoveAction(prop);
+				return true;
+			}
+			
+			return false;
+		}
+		
+		public bool RemoveAction(Action action)
+		{
+			return RemoveAction(action.Target);
+		}
+		
+		public Cpg.LinkAction UpdateAction(Action action, string target, string expression)
+		{
+			Cpg.Property prop = d_to.Object.Property(target);
+			
+			if (prop == null)
+				return action.LinkAction;
+			
+			RemoveAction(action.Target);
+			return (d_object as Cpg.Link).AddAction(prop, expression);
+		}
+		
+		public override void Removed()
+		{
+			if (d_to != null)
+				d_to.Unlink(this);
+
+			base.Removed();
+		}
+
 		private bool RectHittest(PointF p1, PointF p2, PointF p3, PointF p4, Allocation rect, float gridSize)
 		{
 			Allocation other = new Allocation(0, 0, 1f / gridSize, 1f / gridSize);
@@ -167,7 +287,7 @@ namespace Cpg.Studio.Components
 				return RectHittest(from, p2, p3, to, rect, gridSize);
 			}
 					
-			for (int i = 1; i < num; ++i)
+			for (int i = 1; i <= num; ++i)
 			{
 				float px = EvaluateBezier(from.X, p2.X, p3.X, to.X, (float)i / num);
 				float py = EvaluateBezier(from.Y, p2.Y, p3.Y, to.Y, (float)i / num);
@@ -237,7 +357,13 @@ namespace Cpg.Studio.Components
 			graphics.Save();			
 			graphics.MoveTo(from.X, from.Y);
 			
-			if (MouseFocus)
+			double uw = graphics.LineWidth;
+			
+			if (KeyFocus)
+			{
+				graphics.LineWidth *= 4;
+			}
+			else if (MouseFocus)
 			{
 				graphics.LineWidth *= 2;
 			}
@@ -257,7 +383,7 @@ namespace Cpg.Studio.Components
 
 			if (KeyFocus)
 			{
-				graphics.SetDash(new double[] {graphics.LineWidth * 5, graphics.LineWidth * 5}, 0);
+				graphics.SetDash(new double[] {graphics.LineWidth, graphics.LineWidth}, 0);
 			}
 			
 			graphics.SetSourceRGBA(color[0], color[1], color[2], color[3]);
@@ -266,6 +392,8 @@ namespace Cpg.Studio.Components
 			PointF xy = new PointF(0, 0);
 			float pos;
 			
+			float size = 0.15f;
+
 			// Draw the arrow, first move to the center, then rotate, then draw the arrow
 			if (from.X == to.X && from.Y == to.Y)
 			{
@@ -299,19 +427,51 @@ namespace Cpg.Studio.Components
 			}
 			
 			graphics.Translate(xy.X, xy.Y);
-			graphics.MoveTo(0, 0);
+			graphics.MoveTo((pos <= Math.PI ? -1 : 1) * size / 2, 0);
 			graphics.Rotate(pos);
-			
-			float size = 0.15f;
+
 			graphics.RelLineTo(-size, 0);
 			graphics.RelLineTo(size, -size);
 			graphics.RelLineTo(size, size);
 			graphics.RelLineTo(-size, 0);
 			
 			graphics.Fill();
-			graphics.Restore();
 			
-			// TODO: draw text
+			string s = ToString();
+			
+			if (s == String.Empty)
+			{
+				graphics.Restore();
+				return;
+			}
+		
+			graphics.Rotate(0.5 * Math.PI);
+			
+			if (from.X < to.X)
+				graphics.Rotate(Math.PI);
+		
+			graphics.Scale(uw, uw);
+			Pango.Layout layout = Pango.CairoHelper.CreateLayout(graphics);
+			
+			layout.FontDescription = Settings.Font;
+			layout.SetText(s);
+			
+			if (MouseFocus)
+				graphics.SetSourceRGB(d_hoverColor[0], d_hoverColor[1], d_hoverColor[2]);
+			else
+				graphics.SetSourceRGB(0.3, 0.3, 0.3);
+			
+			int width, height;
+			
+			layout.GetSize(out width, out height);
+			width = (int)(width / Pango.Scale.PangoScale);
+			height = (int)(height / Pango.Scale.PangoScale);
+			
+			graphics.MoveTo(-width / 2.0, -height * 1.5);
+			
+			Pango.CairoHelper.ShowLayout(graphics, layout);
+
+			graphics.Restore();
 		}
 
 	}

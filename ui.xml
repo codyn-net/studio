@@ -12,8 +12,6 @@
       <menuitem name="Import" action="ImportAction"/>
       <menuitem name="Export" action="ExportAction"/>
       <separator/>
-      <menuitem name="ExportGrid" action="ExportGridAction"/>
-      <separator/>
       <menuitem name="Quit" action="QuitAction"/>
     </menu>
     <menu name="EditMenu" action="EditMenuAction">
@@ -41,7 +39,6 @@
     <menu name="InsertMenu" action="InsertMenuAction">
       <menuitem name="AddState" action="AddStateAction"/>
       <menuitem name="AddLink" action="AddLinkAction"/>
-      <menuitem name="AddSensor" action="AddSensorAction"/>
       <menuitem name="AddRelay" action="AddRelayAction"/>
       <separator/>
       <placeholder name="InsertTemplates"/>
@@ -51,6 +48,7 @@
     <menu name="InsertMenu" action="InsertMenuAction">
       <menuitem name="AddState" action="AddStateAction"/>
       <menuitem name="AddLink" action="AddLinkAction"/>
+      <menuitem name="AddRelay" action="AddRelayAction"/>
       <separator/>
       <placeholder name="InsertTemplates"/>
     </menu>
@@ -81,7 +79,6 @@
     <separator/>
     <toolitem name="AddState" action="AddStateAction"/>
     <toolitem name="AddLink" action="AddLinkAction"/>
-    <toolitem name="AddSensor" action="AddSensorAction"/>
     <toolitem name="AddRelay" action="AddRelayAction"/>
     <separator/>
     <placeholder name="ToolItems"/>
