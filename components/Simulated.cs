@@ -26,33 +26,17 @@ namespace Cpg.Studio.Components
 		public Simulated(Cpg.Object obj) : base()
 		{
 			d_links = new List<Link>();
-			d_object = obj;
+
+			Object = obj;
 		}
 		
 		public Simulated() : this(null)
 		{
 		}
-		
-		public string FullId()
-		{
-			List<string> ids = new List<string>();
-			Components.Group group = Parent;
-			
-			while (group != null && group.Parent != null)
-			{
-				ids.Insert(0, group.Main.Id);
-			}
-			
-			ids.Add(Id);
-			string[] all = new string[ids.Count];
-			ids.CopyTo(all, 0);
-			
-			return String.Join(".", all);
-		}
-		
+
 		public override bool HasProperty(string name)
 		{
-			return d_object.HasProperty(name) || base.HasProperty(name);
+			return (d_object != null && d_object.HasProperty(name)) || base.HasProperty(name);
 		}
 		
 		public override object GetProperty(string name)
@@ -99,7 +83,7 @@ namespace Cpg.Studio.Components
 			get
 			{
 				string[] orig = base.Properties;
-				Cpg.Property[] props = d_object.Properties;
+				Cpg.Property[] props = d_object != null ? d_object.Properties : new Cpg.Property[0];
 
 				string[] ret = new string[props.Length + orig.Length];
 
@@ -139,6 +123,17 @@ namespace Cpg.Studio.Components
 			set
 			{
 				d_object = value;
+				
+				if (d_object != null)
+				{
+					d_object.AddNotification("id", delegate (object source, GLib.NotifyArgs args)
+					{
+						if (base.Id != d_object.Id)
+						{
+							base.Id = d_object.Id;
+						}
+					});
+				}
 			}
 		}
 		
@@ -159,22 +154,67 @@ namespace Cpg.Studio.Components
 		{
 			d_links.Remove(link);
 		}
+		
+		private string GetNamespace()
+		{
+			Components.Group group = Parent;
+			List<string> ns = new List<string>();
+			
+			while (group != null && group.Parent != null)
+			{
+				ns.Insert(0, group.Id);
+				group = group.Parent;
+			}
+			
+			return String.Join(".", ns.ToArray());
+		}
 
 		[Property("id")]
 		public override string Id
 		{
 			get
 			{
-				return d_object != null ? d_object.Id : base.Id;
+				return d_object != null ? d_object.LocalId : base.Id;
 			}
 			
 			set
 			{
 				if (d_object != null)
-					d_object.Id = value;
+				{
+					// Check namespace
+					string ns = GetNamespace();
+					string v = value;
+					
+					if (ns != String.Empty && !v.StartsWith(ns + "."))
+						v = ns + "." + v;
 
-				base.Id = value;
+					d_object.Id = v;					
+					base.Id = d_object.Id;
+				}
+				else
+				{
+					base.Id = value;
+				}
 			}
+		}
+		
+		public string FullId
+		{
+			get
+			{
+				return d_object != null ? d_object.Id : base.Id;
+			}
+		}
+		
+		public override void DoRequestRedraw()
+		{
+			foreach (Components.Link link in d_links)
+				link.DoRequestRedraw();
+				
+			base.DoRequestRedraw();
+			
+			foreach (Components.Link link in d_links)
+				link.DoRequestRedraw();
 		}
 	}
 }
