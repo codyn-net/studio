@@ -9,6 +9,7 @@ namespace Cpg.Studio
 		private VBox d_actionArea;
 		private bool d_changingStyle;
 		private Widget d_contents;
+		private Label d_secondary;
 		
 		public delegate void ResponseHandler(object source, ResponseType type);
 		public event ResponseHandler Response = delegate {};
@@ -68,6 +69,9 @@ namespace Cpg.Studio
 			Label sec = new Label(secondary);
 			sec.Xalign = 0;
 			sec.UseUnderline = false;
+			sec.Wrap = true;
+			
+			ret.d_secondary = sec;
 			
 			vbox.PackStart(sec, false, true, 0);
 			
@@ -177,9 +181,19 @@ namespace Cpg.Studio
 			Style = style;
 			d_changingStyle = false;
 			
-			QueueDraw();			
+			QueueDraw();
 		}
 		
+		protected override void OnSizeAllocated(Gdk.Rectangle allocation)
+		{
+			base.OnSizeAllocated(allocation);
+
+			if (d_secondary != null)
+			{
+				d_secondary.SetSizeRequest((int)(allocation.Width * 0.6), -1);
+			}
+		}
+
 		protected override bool OnExposeEvent(Gdk.EventExpose evnt)
 		{
 			Gtk.Style.PaintFlatBox(Style,
