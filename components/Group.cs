@@ -111,7 +111,7 @@ namespace Cpg.Studio.Components
 			}
 			set
 			{
-				SetMain(d_main);
+				SetMain(value);
 			}
 		}
 		
