@@ -176,7 +176,8 @@ namespace Cpg.Studio
 			
 			foreach (string prop in link.To.Properties)
 			{
-				d_comboStore.AppendValues(prop);
+				if (prop != "id")
+					d_comboStore.AppendValues(prop);
 			}
 			
 			foreach (Components.Link.Action action in link.Actions)
@@ -189,7 +190,8 @@ namespace Cpg.Studio
 
 		private void DoTargetPropertyAdded(Components.Object obj, string prop)
 		{
-			d_comboStore.AppendValues(prop);
+			if (prop != "id")
+				d_comboStore.AppendValues(prop);
 		}
 		
 		private void DoTargetPropertyRemoved(Components.Object obj, string prop)
