@@ -25,12 +25,15 @@ namespace Cpg.Studio
 		private UIManager d_uimanager;
 		private ActionGroup d_popupActionGroup;
 		private Dictionary<Components.Object, PropertyDialog> d_propertyEditors;
+		private Components.Network d_network;
 		
 		private bool d_modified;
 		private string d_filename;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
+			d_network = new Components.Network();
+
 			Build();
 			ShowAll();
 			

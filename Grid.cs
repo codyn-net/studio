@@ -55,7 +55,7 @@ namespace Cpg.Studio
 		private float[] d_gridBackground;
 		private float[] d_gridLine;
 		
-		public Grid() : base()
+		public Grid(Components.Network network) : base()
 		{
 			AddEvents((int)(Gdk.EventMask.Button1MotionMask |
 					  Gdk.EventMask.Button3MotionMask |
@@ -68,7 +68,9 @@ namespace Cpg.Studio
 			          Gdk.EventMask.EnterNotifyMask));
 
 			CanFocus = true;
-			
+
+			d_network = network;
+
 			LeveledUp += OnLevelUp;
 			LeveledDown += OnLevelDown;
 			SelectionChanged += OnSelectionChanged;
@@ -86,9 +88,7 @@ namespace Cpg.Studio
 			d_hover = new List<Components.Object>();
 			d_selection = new List<Components.Object>();
 			d_mouseRect = new Allocation(0f, 0f, 0f, 0f);
-			
-			d_network = new Components.Network();
-			
+		
 			Clear();
 		}
 		
@@ -99,6 +99,8 @@ namespace Cpg.Studio
 			d_objectStack.Clear();
 			d_objectStack.Insert(0, new StackItem(new Components.Group(), d_gridSize));
 			QueueDraw();
+
+			d_network.Clear();
 			
 			SelectionChanged(this, new EventArgs());
 			
