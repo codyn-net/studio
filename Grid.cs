@@ -210,7 +210,7 @@ namespace Cpg.Studio
 			return added.ToArray();
 		}
 		
-		private Components.Group Container
+		public Components.Group Container
 		{
 			get
 			{
