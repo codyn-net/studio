@@ -1,4 +1,4 @@
-<Combine fileversion="2.0" name="studio">
+<Combine name="studio" fileversion="2.0">
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="CombineConfiguration">
       <Entry build="True" name="studio" configuration="Debug" />

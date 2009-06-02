@@ -33,6 +33,8 @@ namespace Cpg.Studio
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
 			d_network = new Components.Network();
+			
+			d_network.CompileError += OnCompileError;
 
 			Build();
 			ShowAll();
@@ -1246,6 +1248,41 @@ namespace Cpg.Studio
 		private void OnSimulationReset(object sender, EventArgs args)
 		{
 			d_network.Reset();
+		}
+		
+		private void OnCompileError(object sender, Cpg.CompileErrorArgs args)
+		{
+			string title;
+			string expression;
+			
+			title = args.Error.Object.Id;
+			
+			if (args.Error.Property != null)
+			{
+				title += "." + args.Error.Property.Name;
+				expression = args.Error.Property.ValueExpression.AsString;
+			}
+			else
+			{
+				title += "->" + args.Error.LinkAction.Target.Name;
+				expression = args.Error.LinkAction.Expression.AsString;
+			}
+		
+			if (d_grid.Select(args.Error.Object) && d_propertyView != null)
+			{
+				if (args.Error.Property != null)
+				{
+					d_propertyView.Select(args.Error.Property);
+				}
+				else
+				{
+					d_propertyView.Select(args.Error.LinkAction);
+				}
+			}
+		
+			Message(Gtk.Stock.DialogError, 
+			        "Error while compiling " + title,
+			        args.Error.String() + ": " + args.Error.Message + "\nExpression: \"" + expression + "\"");
 		}
 	}
 }
