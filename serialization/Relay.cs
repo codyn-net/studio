@@ -10,7 +10,7 @@ namespace Cpg.Studio.Serialization
 		{
 		}
 		
-		public Relay() : this(null)
+		public Relay() : this (new Components.Relay())
 		{
 		}
 	}

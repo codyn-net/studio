@@ -100,7 +100,7 @@ namespace Cpg.Studio.Serialization
 			Ignore<Cpg>(overrides, "Project");
 			Ignore<Object>(overrides, "Allocation");
 			Ignore<Group>(overrides);
-			
+
 			return overrides;
 		}
 		
@@ -111,7 +111,6 @@ namespace Cpg.Studio.Serialization
 			Ignore<Cpg>(overrides, "Network");
 			Ignore<Simulated>(overrides, "Properties");
 			Ignore<Link>(overrides, "From", "To", "Actions");
-			Ignore<Group>(overrides, "Id", "Allocation");
 			
 			return overrides;
 		}
@@ -169,7 +168,7 @@ namespace Cpg.Studio.Serialization
 		{
 			string tmp = Path.GetTempFileName();
 			
-			FileStream f = new FileStream(tmp, FileMode.OpenOrCreate);
+			FileStream f = new FileStream(tmp, FileMode.OpenOrCreate, FileAccess.Write);
 			WriteToStream(f, doc);
 			f.Close();
 
@@ -186,7 +185,7 @@ namespace Cpg.Studio.Serialization
 			
 			try
 			{
-				f = new FileStream(filename, FileMode.CreateNew);
+				f = new FileStream(filename, FileMode.CreateNew, FileAccess.Write);
 			}
 			catch (IOException)
 			{
@@ -194,8 +193,8 @@ namespace Cpg.Studio.Serialization
 				return;
 			}
 			
-			Console.WriteLine("Write stream");
 			WriteToStream(f, doc);
+			f.Close();
 		}
 		
 		public void Save(string filename)

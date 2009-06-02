@@ -44,20 +44,7 @@ namespace Cpg.Studio
 			
 			d_propertyEditors = new Dictionary<Components.Object, PropertyDialog>();
 			
-			Components.State state = new Components.State();
-			Components.Relay relay = new Components.Relay();
-			
-			state["x1"] = "1";
-			relay["x2"] = "2";
-			
-			d_grid.Add(state, 4, 2, 1, 1);
-			d_grid.Add(relay, 6, 2, 1, 1);
-			
-			Components.Link[] l1 = d_grid.Attach(new Components.Simulated[] {state, relay});
-			Components.Link[] l2 = d_grid.Attach(new Components.Simulated[] {relay, state});
-			
-			l1[0].AddAction("x2", "1");
-			l2[0].AddAction("x1", "1");
+			DoLoadXml("text.cpg");
 		}
 		
 		private void Build()
@@ -136,7 +123,7 @@ namespace Cpg.Studio
 			d_vboxContents = new VBox(false, 3);
 			vbox.PackStart(d_vboxContents, true, true, 0);
 			
-			d_grid = new Grid();
+			d_grid = new Grid(d_network);
 			d_vpaned = new VPaned();
 			d_vpaned.Position = 300;
 			d_vpaned.Pack1(d_grid, true, true);
@@ -306,9 +293,15 @@ namespace Cpg.Studio
 			string extra = d_modified ? "*" : "";
 			
 			if (!String.IsNullOrEmpty(d_filename))
+			{
 				Title = extra + System.IO.Path.GetFileName(d_filename) + " - CPG Studio";
+				d_normalGroup.GetAction("RevertAction").Sensitive = d_modified;
+			}
 			else
+			{
 				Title = extra + "New Network - CPG Studio";
+				d_normalGroup.GetAction("RevertAction").Sensitive = false;
+			}
 		}
 		
 		private void UpdateSensitivity()
@@ -556,9 +549,68 @@ namespace Cpg.Studio
 			UpdateSensitivity();
 		}
 		
+		private void ImportSuccess(Serialization.Cpg cpg, bool centerPosition)
+		{			
+			// Merge C network
+			d_network.Merge(cpg.Network.CNetwork);
+
+			// Add wrappers to grid, position them if necessary
+			List<Components.Object> objects = new List<Components.Object>();
+			
+			foreach (Serialization.Object obj in cpg.Project.Root.Children)
+			{
+				objects.Add(obj.Obj);
+			}
+			
+			double x, y;
+			Utils.MeanPosition(objects, out x, out y);
+			
+			double cx = (d_grid.Container.X + (d_grid.Allocation.Width / 2.0)) / (float)d_grid.GridSize;
+			double cy = (d_grid.Container.Y + (d_grid.Allocation.Height / 2.0)) / (float)d_grid.GridSize;
+			
+			foreach (Components.Object obj in objects)
+			{
+				if (!(obj is Components.Link) && centerPosition)
+				{
+					obj.Allocation.X = (float)Math.Round(cx + (obj.Allocation.X - x) + 0.00001);
+					obj.Allocation.Y = (float)Math.Round(cy + (obj.Allocation.Y - y) + 0.00001);
+				}
+			
+				d_grid.AddObject(obj);
+			}
+		}
+		
+		private void ImportFail(Exception e)
+		{
+			Message(Gtk.Stock.DialogError, "Error while importing network", e);
+		}
+
+		private void ImportFromXml(string xml)
+		{
+			try
+			{
+				Serialization.Loader loader = new Serialization.Loader();
+				ImportSuccess(loader.LoadXml(xml), true);
+			}
+			catch (Exception e)
+			{
+				ImportFail(e);
+			}
+		}
+
 		private void ImportFromFile(string file)
 		{
-			// TODO
+			try
+			{
+				Serialization.Loader loader = new Serialization.Loader();
+				ImportSuccess(loader.Load(file), true);
+				
+				StatusMessage("Imported network from " + file + "...");
+			}
+			catch (Exception e)
+			{
+				ImportFail(e);
+			}			
 		}
 		
 		private void AskUnsavedModified()
@@ -585,6 +637,18 @@ namespace Cpg.Studio
 			dlg.Destroy();
 		}
 		
+		public int PanePosition
+		{
+			get
+			{
+				return d_propertyView != null ? d_vpaned.Allocation.Height - d_vpaned.Position : -1;
+			}
+			set
+			{
+				d_vpaned.Position = value;
+			}
+		}
+		
 		/* Callbacks */
 		protected override bool OnDeleteEvent(Gdk.Event evt)
 		{
@@ -605,7 +669,79 @@ namespace Cpg.Studio
 		
 		private void DoLoadXml(string filename)
 		{
-			// TODO
+			AskUnsavedModified();
+			
+			Serialization.Cpg cpg;
+			
+			try
+			{
+				Serialization.Loader loader = new Serialization.Loader();
+				cpg = loader.Load(filename);
+			}
+			catch (Exception e)
+			{
+				Message(Gtk.Stock.DialogError, "Error while loading network", e);
+
+				return;
+			}
+			
+			Clear();
+			d_filename = filename;
+			
+			try
+			{
+				ImportSuccess(cpg, false);
+			}
+			catch (Exception e)
+			{
+				Message(Gtk.Stock.DialogError, "Error while loading network", e);
+				
+				Clear();
+
+				d_modified = false;
+				d_filename = null;
+
+				UpdateTitle();
+				return;
+			}
+			
+			// Load project settings
+			Allocation alloc = cpg.Project.Allocation;
+			
+			d_grid.GridSize = cpg.Project.Zoom;
+			
+			d_grid.Container.X = cpg.Project.Root.X;
+			d_grid.Container.Y = cpg.Project.Root.Y;
+			
+			d_periodEntry.Text = cpg.Project.Period;
+			
+			if (alloc != null)
+			{
+				if (!Visible)
+				{
+					Move((int)alloc.X, (int)alloc.Y);
+				}
+				
+				Resize((int)alloc.Width, (int)alloc.Height);
+			}
+			
+			ToggleAction action = d_normalGroup.GetAction("PropertyEditorAction") as ToggleAction;
+			
+			if (cpg.Project.PanePosition == -1)
+			{
+				action.Active = false;
+			}
+			else
+			{
+				action.Active = true;
+
+				d_vpaned.Position = d_vpaned.Allocation.Height - cpg.Project.PanePosition;
+			}
+			
+			d_modified = false;
+			UpdateTitle();
+			
+			StatusMessage("Loaded network from " + filename + "...");
 		}
 		
 		private void OnOpenActivated(object sender, EventArgs args)
@@ -629,7 +765,13 @@ namespace Cpg.Studio
 		
 		private void OnRevertActivated(object sender, EventArgs args)
 		{
-			// TODO
+			string filename = d_filename;
+			
+			Clear();
+			d_modified = false;
+			
+			if (filename != null)
+				DoLoadXml(filename);
 		}
 		
 		private FileChooserDialog DoSave()
@@ -647,7 +789,7 @@ namespace Cpg.Studio
 		
 		private void OnSaveActivated(object sender, EventArgs args)
 		{
-			DoSaveAs();
+			DoSave();
 		}
 		
 		private bool ExportXml(string filename, List<Components.Object> objects)
@@ -670,7 +812,7 @@ namespace Cpg.Studio
 			}
 			catch (Exception e)
 			{
-				Message(Gtk.Stock.DialogError, "Error while saving network", e.Message);
+				Message(Gtk.Stock.DialogError, "Error while saving network", e);
 				return false;
 			}
 		}
@@ -730,6 +872,17 @@ namespace Cpg.Studio
 			d_messageArea.GrabFocus();
 		}
 		
+		public void Message(string icon, string primary, Exception exception)
+		{
+			while (exception.InnerException != null)
+				exception = exception.InnerException;
+			
+			Message(icon, primary, exception.Message);
+			
+			if (d_messageArea != null)
+				d_messageArea.TooltipText = exception.StackTrace;
+		}
+		
 		private bool DoSaveXml(string filename)
 		{
 			if (ExportXml(filename))
@@ -784,7 +937,27 @@ namespace Cpg.Studio
 		
 		private void OnImportActivated(object sender, EventArgs args)
 		{
-			// TODO
+			FileChooserDialog dlg = new FileChooserDialog("Import network",
+			                                              this,
+			                                              FileChooserAction.Open,
+			                                              Gtk.Stock.Cancel, ResponseType.Cancel,
+			                                              Gtk.Stock.Open, ResponseType.Accept);
+
+			if (d_filename != null)
+			{
+				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
+			}
+
+			dlg.Response += delegate(object o, ResponseArgs a) {
+				if (a.ResponseId == ResponseType.Accept)
+				{
+					ImportFromFile(dlg.Filename);
+				}
+				
+				dlg.Destroy();
+			};
+			
+			dlg.Show();
 		}
 		
 		private string ExportToXml(Components.Object[] objects)
@@ -816,16 +989,11 @@ namespace Cpg.Studio
 			}
 			catch (Exception e)
 			{
-				Message(Gtk.Stock.DialogError, "Error while exporting network", e.Message);
+				Message(Gtk.Stock.DialogError, "Error while exporting network", e);
 				return null;
 			}
 			
 			return doc;
-		}
-		
-		private void ImportFromXml(string xml)
-		{
-			// TODO
 		}
 		
 		private void OnExportActivated(object sender, EventArgs args)
@@ -857,7 +1025,7 @@ namespace Cpg.Studio
 						}
 						catch (Exception e)
 						{
-							Message(Gtk.Stock.DialogError, "Error while exporting network", e.Message);
+							Message(Gtk.Stock.DialogError, "Error while exporting network", e);
 						}
 					}
 					
@@ -1038,13 +1206,37 @@ namespace Cpg.Studio
 		private void OnStartMonitor(object send, EventArgs args)
 		{
 		}
-		
+
 		private void OnSimulationRunPeriod(object sender, EventArgs args)
 		{
+			Range r = new Range(d_periodEntry.Text);
+			
+			if (r.From > r.To)
+			{
+				Message(Gtk.Stock.DialogInfo, "Invalid simulation range", "The start of the simulation range is larger than the end");
+			}
+			else if (r.Step <= 0)
+			{
+				Message(Gtk.Stock.DialogInfo, "Invalid step size", "The step size for the simulation is invalid");
+			}
+			else
+			{
+				d_network.Run(r.From, r.Step, r.To);
+			}
 		}
 		
 		private void OnSimulationStep(object sender, EventArgs args)
 		{
+			Range r = new Range(d_periodEntry.Text);
+			
+			if (r.Step > 0)
+			{
+				d_network.Step(r.Step);
+			}
+			else
+			{
+				Message(Gtk.Stock.DialogInfo, "Invalid step size", "The step size for the simulation is invalid");
+			}
 		}
 		
 		private void OnSimulationRun(object sender, EventArgs args)
@@ -1053,6 +1245,7 @@ namespace Cpg.Studio
 		
 		private void OnSimulationReset(object sender, EventArgs args)
 		{
+			d_network.Reset();
 		}
 	}
 }

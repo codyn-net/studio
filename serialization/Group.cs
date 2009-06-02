@@ -6,12 +6,14 @@ namespace Cpg.Studio.Serialization
 {
 	[XmlType("group")]
 	public class Group : Simulated
-	{		
+	{
+		List<Serialization.Object> d_children;
+		
 		public Group(Components.Group group) : base(group)
 		{
 		}
 		
-		public Group() : this(null)
+		public Group() : this(new Components.Group(new Components.Simulated()))
 		{
 		}
 		
@@ -26,7 +28,8 @@ namespace Cpg.Studio.Serialization
 			}
 			set
 			{
-				// TODO
+				Components.Group group = As<Components.Group>();
+				group.X = value;
 			}
 		}
 		
@@ -41,6 +44,28 @@ namespace Cpg.Studio.Serialization
 			}
 			set
 			{
+				Components.Group group = As<Components.Group>();
+				group.Y = value;
+			}
+		}
+		
+		[XmlAttribute("main"),
+		 System.ComponentModel.DefaultValue("")]
+		public string Main
+		{
+			get
+			{
+				Components.Group group = As<Components.Group>();
+				
+				if (group.Main != null)
+					return group.Main.FullId;
+				else
+					return "";
+			}
+			set
+			{
+				Components.Group group = As<Components.Group>();
+				group.Main.Id = value;
 			}
 		}
 		
@@ -52,6 +77,9 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
+				if (d_children != null)
+					return d_children;
+					
 				Components.Group group = As<Components.Group>();
 				
 				List<Object> children = new List<Object>();
@@ -64,11 +92,18 @@ namespace Cpg.Studio.Serialization
 						children.Add(o);
 				}
 				
-				return children;
+				d_children = children;
+				return d_children;
 			}
-			set
+		}
+		
+		public void Transfer()
+		{
+			Components.Group group = As<Components.Group>();
+			
+			foreach (Serialization.Object obj in Children)
 			{
-				// TODO
+				group.Add(obj.Obj);
 			}
 		}
 	}

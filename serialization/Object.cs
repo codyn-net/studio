@@ -12,7 +12,7 @@ namespace Cpg.Studio.Serialization
 			d_object = obj;
 		}
 		
-		public Object() : this(null)
+		public Object() : this (new Components.Object())
 		{
 		}
 		
@@ -41,11 +41,41 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				return new Allocation(d_object.Allocation);
+				return d_object.Allocation;
 			}
 			set
 			{
-				// TODO
+				d_object.Allocation = value;
+			}
+		}
+		
+				
+		[XmlAttribute("id")]
+		public string Id
+		{
+			get
+			{
+				if (d_object is Components.Simulated)
+				{
+					return (d_object as Components.Simulated).FullId;
+				}
+				else
+				{
+					return d_object.Id;
+				}
+			}
+			set
+			{
+				d_object.Id = value;
+			}
+		}
+		
+		[XmlIgnore()]
+		public Components.Object Obj
+		{
+			get
+			{
+				return d_object;
 			}
 		}
 		

@@ -1,6 +1,7 @@
 using System;
 using System.Xml.Serialization;
 using System.Collections.Generic;
+using CCpg = Cpg;
 
 namespace Cpg.Studio.Serialization
 {
@@ -8,6 +9,7 @@ namespace Cpg.Studio.Serialization
 	public class Network
 	{
 		private List<Simulated> d_objects;
+		private CCpg.Network d_network;
 		
 		public Network()
 		{
@@ -26,6 +28,19 @@ namespace Cpg.Studio.Serialization
 			set
 			{
 				d_objects = value;
+			}
+		}
+		
+		[XmlIgnore()]
+		public CCpg.Network CNetwork
+		{
+			get
+			{
+				return d_network;
+			}
+			set
+			{
+				d_network = value;
 			}
 		}
 	}

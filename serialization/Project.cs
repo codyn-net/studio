@@ -7,12 +7,20 @@ namespace Cpg.Studio.Serialization
 	[XmlType("project")]
 	public class Project
 	{
-		Window d_window;
-		Group d_root;
+		private Window d_window;
+		private Group d_root;
+		private int d_zoom;
+		private Allocation d_allocation;
+		private string d_period;
+		private int d_panePosition;
 
 		public Project(Window window)
 		{
 			d_window = window;
+			
+			d_zoom = 50;
+			d_period = "";
+			d_panePosition = 200;
 		}
 		
 		public Project() : this(null)
@@ -37,11 +45,11 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				return d_window.Grid.GridSize;
+				return d_window != null ? d_window.Grid.GridSize : d_zoom;
 			}
 			set
 			{
-				// TODO
+				d_zoom = value;
 			}
 		}
 		
@@ -50,6 +58,12 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
+				if (d_allocation != null)
+					return d_allocation;
+				
+				if (d_window == null)
+					return null;
+				
 				int root_x;
 				int root_y;
 				int width;
@@ -62,7 +76,7 @@ namespace Cpg.Studio.Serialization
 			}
 			set
 			{
-				// TODO
+				d_allocation = value;
 			}
 		}
 		
@@ -72,11 +86,11 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				return d_window.Period;
+				return d_window != null ? d_window.Period : d_period;
 			}
 			set
 			{
-				// TODO
+				d_period = value;
 			}
 		}
 
@@ -90,6 +104,19 @@ namespace Cpg.Studio.Serialization
 			set
 			{
 				d_root = value;
+			}
+		}
+		
+		[XmlElement("panePosition")]
+		public int PanePosition
+		{
+			get
+			{
+				return d_window != null ? d_window.PanePosition : d_panePosition;
+			}
+			set
+			{
+				d_panePosition = value;
 			}
 		}
 	}

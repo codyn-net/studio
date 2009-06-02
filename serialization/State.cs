@@ -10,7 +10,7 @@ namespace Cpg.Studio.Serialization
 		{
 		}
 		
-		public State() : this(null)
+		public State() : this (new Components.State())
 		{
 		}
 	}

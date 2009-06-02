@@ -10,21 +10,8 @@ namespace Cpg.Studio.Serialization
 		{
 		}
 		
-		public Simulated()
+		public Simulated() : this (new Components.Simulated())
 		{
-		}
-		
-		[XmlAttribute("id")]
-		public string Id
-		{
-			get
-			{
-				return As<Components.Simulated>().FullId();
-			}
-			set
-			{
-				// TODO
-			}
 		}
 		
 		[XmlElement("property")]

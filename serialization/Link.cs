@@ -30,7 +30,7 @@ namespace Cpg.Studio.Serialization
 				}
 				set
 				{
-					// TODO
+					// NOOP
 				}
 			}
 			
@@ -43,7 +43,7 @@ namespace Cpg.Studio.Serialization
 				}
 				set
 				{
-					// TODO
+					// NOOP
 				}
 			}
 		}
@@ -52,8 +52,20 @@ namespace Cpg.Studio.Serialization
 		{
 		}
 		
-		public Link() : this(null)
+		public Link() : this (new Components.Link())
 		{
+		}
+		
+		private string FlattenedId(Components.Simulated obj)
+		{
+			if (obj is Components.Group)
+			{
+				return FlattenedId((obj as Components.Group).Main);
+			}
+			else
+			{
+				return obj.FullId;
+			}
 		}
 		
 		[XmlAttribute("from")]
@@ -62,11 +74,12 @@ namespace Cpg.Studio.Serialization
 			get
 			{
 				Components.Link link = As<Components.Link>();
-				return link.From.FullId();
+				
+				return FlattenedId(link.From);
 			}
 			set
 			{
-				// TODO
+				// NOOP
 			}
 		}
 		
@@ -76,11 +89,11 @@ namespace Cpg.Studio.Serialization
 			get
 			{
 				Components.Link link = As<Components.Link>();
-				return link.To.FullId();
+				return FlattenedId(link.To);
 			}
 			set
 			{
-				// TODO
+				// NOOP
 			}
 		}
 		
@@ -101,7 +114,7 @@ namespace Cpg.Studio.Serialization
 			}
 			set
 			{
-				// TODO
+				// NOOP
 			}
 		}
 	}
