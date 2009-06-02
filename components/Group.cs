@@ -76,7 +76,7 @@ namespace Cpg.Studio.Components
 		{
 			get
 			{
-				return d_main.Object;
+				return d_main != null ? d_main.Object : null;
 			}
 			set
 			{
