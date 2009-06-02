@@ -52,10 +52,17 @@ namespace Cpg.Studio.Components.Renderers
 				Draw(ct);
 				
 				byte[] data = ConvertColorSpace(surface.Data);
-				ret = new Gdk.Pixbuf(data, Gdk.Colorspace.Rgb, true, 8, size, size, surface.Stride);
 				
-				//ret.Save("/home/jesse/Desktop/" + GetType().Name + size + ".png", "png");
-			}			
+				try
+				{
+					ret = new Gdk.Pixbuf(data, Gdk.Colorspace.Rgb, true, 8, size, size, surface.Stride);
+				}
+				catch
+				{
+					ret = new Gdk.Pixbuf(Gdk.Colorspace.Rgb, true, 8, size, size);
+					ret.Fill(0);
+				}
+			}	
 			
 			return ret;
 		}
