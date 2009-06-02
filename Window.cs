@@ -119,7 +119,8 @@ namespace Cpg.Studio
 			vbox.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
 			vbox.PackStart(d_uimanager.GetWidget("/toolbar"), false, false, 0);
 			
-			d_hboxPath = new HBox(false, 3);
+			d_hboxPath = new HBox(false, 0);
+			d_hboxPath.BorderWidth = 1;
 			vbox.PackStart(d_hboxPath, false, false, 0);
 			
 			d_vboxContents = new VBox(false, 3);
@@ -254,6 +255,13 @@ namespace Cpg.Studio
 		
 		private void PushPath(Components.Object obj, PathHandler handler)
 		{
+			if (obj != null)
+			{
+				Arrow arrow = new Arrow(ArrowType.Right, ShadowType.None);
+				arrow.Show();
+				d_hboxPath.PackStart(arrow, false, false, 0);
+			}
+			
 			Button but = new Button(obj != null ? obj.ToString() : "(cpg)");
 			but.Relief = ReliefStyle.None;
 			but.Show();
@@ -273,6 +281,7 @@ namespace Cpg.Studio
 		
 		private void PopPath()
 		{
+			d_hboxPath.Children[d_hboxPath.Children.Length - 1].Destroy();
 			d_hboxPath.Children[d_hboxPath.Children.Length - 1].Destroy();
 		}
 		
