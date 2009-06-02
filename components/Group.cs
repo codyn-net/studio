@@ -80,7 +80,8 @@ namespace Cpg.Studio.Components
 			}
 			set
 			{
-				d_main.Object = value;
+				if (d_main != null)
+					d_main.Object = value;
 			}
 		}
 		
