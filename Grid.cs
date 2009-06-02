@@ -161,12 +161,29 @@ namespace Cpg.Studio
 			if (d_selection.Count == 0)
 				return null;
 			
-			Components.Simulated[] selection = new Components.Simulated[d_selection.Count];
+			List<Components.Simulated> selection = new List<Components.Simulated>();
 			
-			for (int i = 0; i < d_selection.Count; ++i)
-				selection[i] = d_selection[i] as Components.Simulated;
+			foreach (Components.Object obj in d_selection)
+			{
+				if (obj is Components.Simulated && !(obj is Components.Link))
+				{
+					selection.Add(obj as Components.Simulated);
+				}
+			}
 
-			return Attach(selection);
+			return Attach(selection.ToArray());
+		}
+		
+		private Components.Link Attach(Components.Simulated from, Components.Simulated to)
+		{
+			Cpg.Link orig = new Cpg.Link("link", from.Object, to.Object);
+				
+			d_network.AddObject(orig);
+
+			Components.Link link = new Components.Link(orig, from, to);
+			AddLink(link);
+			
+			return link;
 		}
 		
 		public Components.Link[] Attach(Components.Simulated[] objs)
@@ -178,19 +195,16 @@ namespace Cpg.Studio
 
 			List<Components.Link> added = new List<Components.Link>();
 			
-			if (objects.Count < 2)
-				return added.ToArray();
-			
-			for (int i = 1; i < objects.Count; ++i)
+			if (objects.Count == 0)
 			{
-				Cpg.Link orig = new Cpg.Link("link", objects[0].Object, objects[i].Object);
-				
-				d_network.AddObject(orig);
-
-				Components.Link link = new Components.Link(orig, objects[0], objects[i]);
-				AddLink(link);
-				
-				added.Add(link);
+				return added.ToArray();
+			}
+			
+			int start = objects.Count == 1 ? 0 : 1;
+			
+			for (int i = start; i < objects.Count; ++i)
+			{
+				added.Add(Attach(objects[0], objects[i]));
 			}
 			
 			return added.ToArray();
