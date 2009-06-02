@@ -241,29 +241,6 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void EnsureUniqueId(Components.Object obj, string id)
-		{
-			List<string> ids = new List<string>();
-			
-			foreach (Components.Object o in Container.Children)
-			{
-				if (o != obj)
-					ids.Add(o.Id);
-			}
-			
-			string newid = id;
-			int num = 1;
-			
-			while (ids.IndexOf(newid) != -1)
-			{
-				newid = id + " (" + num + ")";
-				num++;
-			}
-			
-			if (newid != id)
-				obj.Id = newid;
-		}
-		
 		private void DoObjectAdded(Components.Object obj)
 		{
 			ObjectAdded(this, obj);
@@ -307,13 +284,8 @@ namespace Cpg.Studio
 			AddObject(obj);
 		}
 		
-		private void AddObject(Components.Object obj)
+		public void AddObject(Components.Object obj)
 		{
-			EnsureUniqueId(obj, obj.Id);
-			
-			if (obj is Components.Simulated)
-				d_network.AddObject((obj as Components.Simulated).Object);
-
 			Container.Add(obj);
 			DoObjectAdded(obj);
 			
@@ -366,6 +338,7 @@ namespace Cpg.Studio
 			if (obj is Components.Simulated)
 				d_network.RemoveObject((obj as Components.Simulated).Object);
 			
+			Modified(this, new EventArgs());
 			QueueDraw();
 		}
 		
@@ -483,40 +456,16 @@ namespace Cpg.Studio
 			return res;
 		}
 		
-		private PointF MeanPosition(Components.Object[] objects)
-		{
-			PointF res = new PointF(0, 0);
-			int num = 0;
-			
-			foreach (Components.Object obj in objects)
-			{
-				if (obj is Components.Link)
-					continue;
-
-				res.X += obj.Allocation.X + obj.Allocation.Width / 2.0f;
-				res.Y += obj.Allocation.Y + obj.Allocation.Height / 2.0f;
-				
-				num += 1;
-			}
-			
-			if (num != 0)
-			{
-				res.X = res.X / num;
-				res.Y = res.Y / num;
-			}
-			
-			return res;
-		}
-		
 		public void CenterView()
 		{
-			PointF pos = MeanPosition(Container.Children.ToArray());
+			double x, y;
+			Utils.MeanPosition(Container.Children, out x, out y);
 			
-			pos.X *= d_gridSize;
-			pos.Y *= d_gridSize;
+			x *= d_gridSize;
+			y *= d_gridSize;
 			
-			Container.X = (int)(pos.X - (Allocation.Width / 2.0f));
-			Container.Y = (int)(pos.Y - (Allocation.Height / 2.0f));
+			Container.X = (int)(x - (Allocation.Width / 2.0f));
+			Container.Y = (int)(y - (Allocation.Height / 2.0f));
 			
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
@@ -677,10 +626,12 @@ namespace Cpg.Studio
 						continue;
 
 					Components.Group grp = obj as Components.Group;
-					PointF pos = MeanPosition(grp.Children.ToArray());
+					double x, y;
 					
-					grp.X = (int)(pos.X * d_defaultGridSize - where.X);
-					grp.Y = (int)(pos.Y * d_defaultGridSize - where.Y);
+					Utils.MeanPosition(grp.Children, out x, out y);
+					
+					grp.X = (int)(x * d_defaultGridSize - where.X);
+					grp.Y = (int)(y * d_defaultGridSize - where.Y);
 					
 					LevelDown(grp);
 					return;
@@ -965,7 +916,8 @@ namespace Cpg.Studio
 					return false;
 			}
 			
-			PointF pt = MeanPosition(objects);
+			double x, y;
+			Utils.MeanPosition(objs, out x, out y);
 
 			Components.Group group = new Components.Group(main);
 			group.RendererType = renderer;
@@ -973,8 +925,8 @@ namespace Cpg.Studio
 			/* Copy positioning from current group */
 			group.X = Container.X;
 			group.Y = Container.Y;
-			group.Allocation.X = (int)Math.Floor(pt.X);
-			group.Allocation.Y = (int)Math.Floor(pt.Y);
+			group.Allocation.X = (int)Math.Floor(x);
+			group.Allocation.Y = (int)Math.Floor(y);
 			
 			/* Reroute links going to main to the group (but not internally) */
 			foreach (Components.Object obj in Container.Children)
@@ -1121,7 +1073,9 @@ namespace Cpg.Studio
 			// Preserve layout and center
 			int x = (int)group.Allocation.X;
 			int y = (int)group.Allocation.Y;
-			PointF pos = MeanPosition(group.Children.ToArray());
+			
+			double xx, yy;
+			Utils.MeanPosition(group.Children, out xx, out yy);
 			
 			// Remove the group
 			Remove(group);
@@ -1139,8 +1093,8 @@ namespace Cpg.Studio
 			{
 				if (!(obj is Components.Link))
 				{
-					obj.Allocation.X = (int)Math.Round((x + (obj.Allocation.X - pos.X) + 0.00001));
-					obj.Allocation.Y = (int)Math.Round((y + (obj.Allocation.Y - pos.Y) + 0.00001));
+					obj.Allocation.X = (int)Math.Round((x + (obj.Allocation.X - xx) + 0.00001));
+					obj.Allocation.Y = (int)Math.Round((y + (obj.Allocation.Y - yy) + 0.00001));
 				}
 				
 				Add(obj, (int)obj.Allocation.X, (int)obj.Allocation.Y, (int)obj.Allocation.Width, (int)obj.Allocation.Height);

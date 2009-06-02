@@ -78,5 +78,29 @@ namespace Cpg.Studio
 			
 			return false;
 		}
+		
+		public static void MeanPosition(ICollection<Components.Object> objects, out double x, out double y)
+		{
+			x = 0;
+			y = 0;
+			int num = 0;
+			
+			foreach (Components.Object obj in objects)
+			{
+				if (obj is Components.Link)
+					continue;
+
+				x += obj.Allocation.X + obj.Allocation.Width / 2.0f;
+				y += obj.Allocation.Y + obj.Allocation.Height / 2.0f;
+				
+				num += 1;
+			}
+			
+			if (num != 0)
+			{
+				x = x / num;
+				y = y / num;
+			}
+		}
 	}
 }
