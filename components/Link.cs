@@ -65,8 +65,15 @@ namespace Cpg.Studio.Components
 		
 		public Link(Cpg.Link obj, Components.Simulated from, Components.Simulated to) : base(obj)
 		{
-			d_from = from != null ? from : Components.Simulated.FromCpg(obj.From);
-			d_to = to != null ? to : Components.Simulated.FromCpg(obj.To);
+			if (from == null && obj != null)
+				From = Components.Simulated.FromCpg(obj.From);
+			else
+				From = from;
+			
+			if (to == null && obj != null)
+				To = Components.Simulated.FromCpg(obj.To);
+			else
+				To = to;
 			
 			d_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			d_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
