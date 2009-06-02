@@ -91,6 +91,30 @@ namespace Cpg.Studio
 			return d_rectangle.IntersectsWith(other.d_rectangle);
 		}
 		
+		public void Scale(float scale)
+		{
+			d_rectangle.X *= scale;
+			d_rectangle.Y *= scale;
+			d_rectangle.Width *= scale;
+			d_rectangle.Height *= scale;
+		}
+		
+		public void GrowBorder(float num)
+		{
+			d_rectangle.X -= num;
+			d_rectangle.Y -= num;
+			d_rectangle.Width += num * 2;
+			d_rectangle.Height += num * 2;
+		}
+		
+		public void Round()
+		{
+			Math.Round(d_rectangle.X);
+			Math.Round(d_rectangle.Y);
+			Math.Round(d_rectangle.Width);
+			Math.Round(d_rectangle.Height);
+		}
+		
 		public override string ToString()
 		{
 			return d_rectangle.ToString();
