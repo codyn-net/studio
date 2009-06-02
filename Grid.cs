@@ -360,7 +360,7 @@ namespace Cpg.Studio
 			
 			obj.Selected = false;
 			
-			QueueDrawObject(obj);
+			obj.DoRequestRedraw();
 			SelectionChanged(this, new EventArgs());
 		}
 		
@@ -372,7 +372,7 @@ namespace Cpg.Studio
 			d_selection.Add(obj);
 			obj.Selected = true;
 			
-			QueueDrawObject(obj);
+			obj.DoRequestRedraw();
 			SelectionChanged(this, new EventArgs());
 		}
 		
@@ -381,7 +381,14 @@ namespace Cpg.Studio
 			if (Container.Children.IndexOf(obj) == -1)
 				return;
 			
-			QueueDraw();
+			using (Cairo.Context graphics = Gdk.CairoHelper.Create(GdkWindow))
+			{
+				Allocation alloc = obj.Extents(d_gridSize, graphics);
+				alloc.Round();
+				
+				alloc.Offset(-Container.X, -Container.Y);			
+				QueueDrawArea((int)alloc.X, (int)alloc.Y, (int)alloc.Width, (int)alloc.Height);				
+			};
 		}
 		
 		delegate double ScaledPredicate(double val);
@@ -543,6 +550,10 @@ namespace Cpg.Studio
 		
 		private void DoDragRect(Gdk.EventMotion evnt)
 		{
+			Allocation rect = d_mouseRect.FromRegion();
+			rect.GrowBorder(2);
+			QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
+			
 			d_mouseRect.Width = (int)evnt.X;
 			d_mouseRect.Height = (int)evnt.Y;
 
@@ -563,7 +574,9 @@ namespace Cpg.Studio
 					Select(obj);
 			}
 			
-			QueueDraw();
+			rect = d_mouseRect.FromRegion();
+			rect.GrowBorder(2);
+			QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 		}
 		
 		private void DoMoveCanvas(Gdk.EventMotion evnt)
@@ -711,7 +724,7 @@ namespace Cpg.Studio
 				foreach (Components.Object obj in d_selection)
 				{
 					if (!(obj is Components.Link))
-						obj.Allocation.Offset(dx, dy);
+						obj.MoveRel(dx, dy);
 				}
 				
 				if (d_selection.Count > 0)
@@ -1300,7 +1313,10 @@ namespace Cpg.Studio
 				
 				if (alloc.X != item.Value.X + position.X || alloc.Y != item.Value.Y + position.Y)
 				{
-					alloc.Move(item.Value.X + position.X, item.Value.Y + position.Y);
+					item.Key.DoRequestRedraw();
+					item.Key.Move(item.Value.X + position.X, item.Value.Y + position.Y);
+					item.Key.DoRequestRedraw();
+
 					changed = true;
 				}
 			}
@@ -1308,7 +1324,6 @@ namespace Cpg.Studio
 			if (changed)
 				ModifiedView(this, new EventArgs());
 			
-			QueueDraw();
 			return true;
 		}
 
