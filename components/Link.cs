@@ -267,50 +267,46 @@ namespace Cpg.Studio.Components
 		}
 		
 		public bool HitTest(Allocation rect, int gridSize)
-		{
-			Allocation a1 = d_from.Allocation;
-			Allocation a2 = d_to.Allocation;
-			
-			PointF from = new PointF(a1.X + a1.Width / 2, a1.Y + a1.Height / 2);
-			PointF to = new PointF(a2.X + a2.Width / 2, a2.Y + a2.Height / 2);
-			
-			PointF control = CalculateControl(from, to);
+		{			
+			PointF[] points = ControlPoints();
 			
 			// Piece wise linearization
 			int num = 5;
 			List<float> dist = new List<float>();
 			
-			PointF prevp = from;
-			PointF p2;
-			PointF p3;
-			
-			if (from.X == to.X && from.Y == to.Y)
-			{
-				p2 = new PointF(to.X - 2, to.Y - ((d_offset + 1) + 0.5f));
-				p3 = new PointF(to.X + 2, to.Y - ((d_offset + 1) + 0.5f));
-			}
-			else
-			{
-				p2 = control;
-				p3 = control;
-			}
-			
 			if (rect.Width * gridSize > 1.5 || rect.Height * gridSize > 1.5)
 			{
-				return RectHittest(from, p2, p3, to, rect, gridSize);
+				return RectHittest(points[0], points[1], points[2], points[3], rect, gridSize);
 			}
-					
+
+			PointF prevp = points[0];
+
 			for (int i = 1; i <= num; ++i)
 			{
-				float px = EvaluateBezier(from.X, p2.X, p3.X, to.X, (float)i / num);
-				float py = EvaluateBezier(from.Y, p2.Y, p3.Y, to.Y, (float)i / num);
+				PointF pt = EvaluateBezier(points[0], points[1], points[2], points[3], (float)i / num);
+				dist.Add(DistanceToLine(prevp, pt, new PointF(rect.X, rect.Y)));
 				
-				dist.Add(DistanceToLine(prevp, new PointF(px, py), new PointF(rect.X, rect.Y)));
-				
-				prevp = new PointF(px, py);
+				prevp = pt;
 			}
 
 			return (Utils.Min(dist) < 10.0f / gridSize);
+		}
+		
+		
+		private double[] StateColor()
+		{
+			if (Selected)
+			{
+				return d_selectedColor;
+			}
+			else if (MouseFocus)
+			{
+				return d_hoverColor;
+			}
+			else
+			{
+				return d_normalColor;
+			}
 		}
 		
 		private PointF CalculateControl(PointF from, PointF to)
@@ -335,92 +331,86 @@ namespace Cpg.Studio.Components
 			return (float)Math.Pow(1 - t, 3) * p0 + 3 * t * (float)Math.Pow(1 - t, 2) * p1 + 3 * (float)Math.Pow(t, 2) * (1 - t) * p2 + (float)Math.Pow(t, 3) * p3;
 		}
 		
-		private double[] StateColor()
+		public PointF EvaluateBezier(PointF p0, PointF p1, PointF p2, PointF p3, float t)
 		{
-			if (Selected)
-			{
-				return d_selectedColor;
-			}
-			else if (MouseFocus)
-			{
-				return d_hoverColor;
-			}
-			else
-			{
-				return d_normalColor;
-			}
+			return new PointF(
+				EvaluateBezier(p0.X, p1.X, p2.X, p3.X, t),
+				EvaluateBezier(p0.Y, p1.Y, p2.Y, p3.Y, t)
+			);
 		}
 		
-		public override void Draw(Cairo.Context graphics)
+		private PointF[] ControlPoints()
 		{
 			if (d_from == null || d_to == null)
-				return;
-		
+				return null;
+
 			Allocation a1 = d_from.Allocation;
 			Allocation a2 = d_to.Allocation;
 			
 			PointF from = new PointF(a1.X + a1.Width / 2, a1.Y + a1.Height / 2);
 			PointF to = new PointF(a2.X + a2.Width / 2, a2.Y + a2.Height / 2);
-			
 			PointF control = CalculateControl(from, to);
-			double[] color = StateColor();
 			
-			PointF pts = new PointF(0, 0);
+			if (from.X == to.X && from.Y == to.Y)
+			{
+				PointF pts = new PointF(2, (d_offset + 1) + 0.5f);
+
+				return new PointF[] {
+					from,
+					new PointF(to.X - pts.X, to.Y - pts.Y),
+					new PointF(to.X + pts.X, to.Y - pts.Y),
+					to
+				};
+			}
+			else
+			{
+				return new PointF[] {from, control, control, to};
+			}
+		}
+		
+		public override void Draw(Cairo.Context graphics)
+		{			
+			PointF[] points = ControlPoints();
+			
+			if (points == null)
+				return;
 			
 			graphics.Save();			
-			graphics.MoveTo(from.X, from.Y);
-			
+
+			double[] color = StateColor();
 			double uw = graphics.LineWidth;
 			
 			if (KeyFocus)
 			{
 				graphics.LineWidth *= 4;
+				graphics.SetDash(new double[] {graphics.LineWidth, graphics.LineWidth}, 0);
 			}
 			else if (MouseFocus)
 			{
 				graphics.LineWidth *= 2;
 			}
-			
-			if (from.X == to.X && from.Y == to.Y)
-			{
-				// Draw pretty one
-				pts.X = 2;
-				pts.Y = (d_offset + 1) + 0.5f;
-				
-				graphics.CurveTo(to.X - pts.X, to.Y - pts.Y, to.X + pts.X, to.Y - pts.Y, to.X, to.Y);
-			}
-			else
-			{
-				graphics.CurveTo(control.X, control.Y, control.X, control.Y, to.X, to.Y);
-			}
 
-			if (KeyFocus)
-			{
-				graphics.SetDash(new double[] {graphics.LineWidth, graphics.LineWidth}, 0);
-			}
-			
+			graphics.MoveTo(points[0].X, points[0].Y);
+			graphics.CurveTo(points[1].X, points[1].Y, points[2].X, points[2].Y, points[3].X, points[3].Y);
 			graphics.SetSourceRGBA(color[0], color[1], color[2], color[3]);
+
 			graphics.Stroke();
 			
-			PointF xy = new PointF(0, 0);
+			PointF xy;
 			float pos;
 			
 			float size = 0.15f;
 
 			// Draw the arrow, first move to the center, then rotate, then draw the arrow
-			if (from.X == to.X && from.Y == to.Y)
+			xy = EvaluateBezier(points[0], points[1], points[2], points[3], 0.5f);
+
+			if (points[0] == points[3])
 			{
-				xy.X = EvaluateBezier(to.X, to.X - pts.X, to.X + pts.X, to.X, 0.5f);
-				xy.Y = EvaluateBezier(to.Y, to.Y - pts.Y, to.Y + pts.Y, to.Y, 0.5f);
-				
-				pos = -0.5f * (float)Math.PI;
+				pos = 1.5f * (float)Math.PI;
 			}
 			else
 			{
-				xy.X = EvaluateBezier(from.X, control.X, control.X, to.X, 0.5f);
-				xy.Y = EvaluateBezier(from.Y, control.Y, control.Y, to.Y, 0.5f);
-				
-				PointF diff = new PointF(to.X - from.X, to.Y - from.Y);
+				PointF diff = new PointF(points[3].X - points[0].X, points[3].Y - points[0].Y);
 				
 				if (diff.X == 0)
 				{
@@ -460,7 +450,7 @@ namespace Cpg.Studio.Components
 		
 			graphics.Rotate(0.5 * Math.PI);
 			
-			if (from.X < to.X)
+			if (points[0].X < points[3].X)
 				graphics.Rotate(Math.PI);
 		
 			graphics.Scale(uw, uw);
