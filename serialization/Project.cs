@@ -13,6 +13,7 @@ namespace Cpg.Studio.Serialization
 		private Allocation d_allocation;
 		private string d_period;
 		private int d_panePosition;
+		private string d_container;
 
 		public Project(Window window)
 		{
@@ -50,6 +51,20 @@ namespace Cpg.Studio.Serialization
 			set
 			{
 				d_zoom = value;
+			}
+		}
+		
+		[XmlElement("container"),
+		 System.ComponentModel.DefaultValue("")]
+		public string Container
+		{
+			get
+			{
+				return d_window != null ? d_window.Grid.Container.FullId : d_container;
+			}
+			set
+			{
+				d_container = value;
 			}
 		}
 		
