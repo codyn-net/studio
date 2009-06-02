@@ -551,6 +551,33 @@ namespace Cpg.Studio
 			Sensitive = false;
 		}
 		
+		public void Select(Cpg.Property property)
+		{
+			Node node = FindProperty(property.Name);
+			
+			if (node != null)
+				d_treeview.NodeSelection.SelectNode(node);
+		}
+		
+		public void Select(Cpg.LinkAction action)
+		{
+			TreeIter iter;
+			
+			if (!d_actionStore.GetIterFirst(out iter))
+				return;
+			
+			do
+			{
+				Components.Link.Action o = d_actionStore.GetValue(iter, 0) as Components.Link.Action;
+				
+				if (o.LinkAction.Handle == action.Handle)
+				{
+					d_actionView.Selection.SelectIter(iter);
+					return;
+				}
+			} while (d_actionStore.IterNext(ref iter));
+		}
+		
 		protected override void OnRealized ()
 		{
 			base.OnRealized();
