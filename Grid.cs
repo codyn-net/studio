@@ -353,6 +353,46 @@ namespace Cpg.Studio
 			SelectionChanged(this, new EventArgs());
 		}
 		
+		private bool Select(Components.Simulated sim, Cpg.Object obj)
+		{
+			if (sim.Object == obj)
+			{
+				Components.Group container = sim.Parent;
+
+				if (container != Container)
+				{
+					LevelUp(Root);
+					LevelDown(container);
+				}
+				
+				Select(sim);
+				return true;
+			}
+			
+			if (!(sim is Components.Group))
+				return false;
+			
+			Components.Group group = sim as Components.Group;
+			
+			foreach (Components.Object o in group.Children)
+			{
+				if (!(o is Components.Simulated))
+					continue;
+				
+				if (Select(o as Components.Simulated, obj))
+				{
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		
+		public bool Select(Cpg.Object obj)
+		{
+			return Select(Container, obj);
+		}
+		
 		public void Select(Components.Object obj)
 		{
 			if (d_selection.IndexOf(obj) != -1)
