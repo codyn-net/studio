@@ -22,6 +22,7 @@ namespace Cpg.Studio.Components
 		public event PropertyHandler PropertyAdded = delegate {};
 		public event PropertyHandler PropertyRemoved = delegate {};
 		public event PropertyHandler PropertyChanged = delegate {};
+		public event EventHandler Moved = delegate {};
 
 		private Allocation d_allocation;
 		private Dictionary<string, object> d_properties;
@@ -119,17 +120,17 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		public Type RendererType
+		public virtual Type RendererType
 		{
 			get
 			{
-				return d_renderer.GetType();
+				return Renderer.GetType();
 			}
 			set
 			{
 				if (value == null)
 				{
-					d_renderer = null;
+					Renderer = null;
 				}
 				else
 				{
@@ -137,12 +138,12 @@ namespace Cpg.Studio.Components
 					
 					if (info != null)
 					{
-						d_renderer = info.Invoke(new object[] { this }) as Components.Renderers.Renderer;
+						Renderer = info.Invoke(new object[] { this }) as Components.Renderers.Renderer;
 					}
 					else
 					{
 						Console.WriteLine(value);
-						d_renderer = null;
+						Renderer = null;
 					}
 				}
 			}
@@ -360,8 +361,8 @@ namespace Cpg.Studio.Components
 		
 		public virtual void Draw(Cairo.Context graphics)
 		{
-			if (d_renderer != null)
-				d_renderer.Draw(graphics);
+			if (Renderer != null)
+				Renderer.Draw(graphics);
 
 			string s = ToString();
 
@@ -400,7 +401,7 @@ namespace Cpg.Studio.Components
 				DrawFocus(graphics);
 		}
 		
-		protected void DoRequestRedraw()
+		public virtual void DoRequestRedraw()
 		{
 			RequestRedraw(this, new EventArgs());
 		}
@@ -434,10 +435,57 @@ namespace Cpg.Studio.Components
 				DoRequestRedraw();
 			}
 		}
-		
+	
 		public override string ToString()
 		{
 			return Id;
+		}
+		
+		public void MoveRel(float x, float y)
+		{
+			Move(d_allocation.X + x, d_allocation.Y + y);
+		}
+		
+		public void Move(float x, float y)
+		{
+			Moved(this, new EventArgs());
+			d_allocation.Move(x, y);
+			Moved(this, new EventArgs());
+		}
+		
+		protected void MeasureString(Cairo.Context graphics, string s, out int width, out int height)
+		{
+			Pango.FontDescription font = Settings.Font;
+			Pango.Layout layout = Pango.CairoHelper.CreateLayout(graphics);
+			
+			layout.FontDescription = font;
+			layout.SetText(s);
+
+			layout.GetSize(out width, out height);
+			
+			height = (int)(height / Pango.Scale.PangoScale);
+			width = (int)(width / Pango.Scale.PangoScale);
+		}
+		
+		public virtual Allocation Extents(float scale, Cairo.Context graphics)
+		{
+			Allocation alloc = new Allocation(d_allocation);
+			alloc.Scale(scale);
+			alloc.GrowBorder(3);
+		
+			int width, height;
+			MeasureString(graphics, ToString(), out width, out height);
+			
+			alloc.Height += height + 3;
+			
+			if (width > alloc.Width)
+			{
+				int off = (int)(width - alloc.Width / 2);
+				alloc.X -= off;
+				alloc.Width += off;
+			}
+
+			return alloc;
 		}
 	}
 }

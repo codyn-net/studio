@@ -477,5 +477,31 @@ namespace Cpg.Studio.Components
 			graphics.Restore();
 		}
 
+		public override Allocation Extents(float scale, Cairo.Context graphics)
+		{
+			PointF[] points = ControlPoints();
+			
+			if (points == null)
+				return new Allocation(0, 0, 0, 0);
+			
+			List<float> xx = new List<float>();
+			List<float> yy = new List<float>();
+			
+			for (int i = 0; i < points.Length; ++i)
+			{
+				xx.Add(points[i].X * scale);
+				yy.Add(points[i].Y * scale);
+			}
+			
+			float minx = Utils.Min(xx);
+			float maxx = Utils.Max(xx);
+			float miny = Utils.Min(yy);
+			float maxy = Utils.Max(yy);
+			
+			int width, height;
+			MeasureString(graphics, ToString(), out width, out height);
+
+			return new Allocation(minx - height, miny - height, maxx - minx + height * 2, maxy - miny + height * 2);
+		}
 	}
 }
