@@ -1120,6 +1120,11 @@ namespace Cpg.Studio
 			{
 				return d_gridSize;
 			}
+			set
+			{
+				d_gridSize = Math.Max(Math.Min(value, d_maxSize), d_minSize);
+				QueueDraw();
+			}
 		}
 		
 		/* Callbacks */
