@@ -78,9 +78,6 @@ namespace Cpg.Studio.Components
 			d_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			d_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
 			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
-			
-			if (d_to != null)
-				d_to.Link(this);
 		}
 		
 		public Link(Cpg.Link obj) : this(obj, null, null)
@@ -133,6 +130,13 @@ namespace Cpg.Studio.Components
 			set
 			{
 				d_from = value;
+				
+				if (d_from != null)
+				{
+					d_from.Moved += delegate(object sender, EventArgs e) {
+						DoRequestRedraw();
+					};
+				}
 			}
 		}
 		
@@ -150,7 +154,9 @@ namespace Cpg.Studio.Components
 				d_to = value;
 				
 				if (d_to != null)
+				{
 					d_to.Link(this);
+				}
 			}
 		}
 		
