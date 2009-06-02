@@ -107,7 +107,7 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		public Renderers.Renderer Renderer
+		public virtual Renderers.Renderer Renderer
 		{
 			get
 			{

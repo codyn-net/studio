@@ -141,6 +141,20 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
+		public override Renderers.Renderer Renderer
+		{
+			get 
+			{
+				Renderers.Renderer renderer = base.Renderer;
+				
+				return renderer == null ? new Renderers.Default(this) : renderer;
+			}
+			set
+			{
+				base.Renderer = value;
+			}
+		}
+		
 		/* Proxy to d_main */		
 		public override PropertyAttribute FindPropertyAttribute(string name, out PropertyInfo info)
 		{
