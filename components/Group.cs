@@ -39,7 +39,8 @@ namespace Cpg.Studio.Components
 			
 			if (d_main != null)
 			{
-				Id = d_main.Id;
+				if (String.IsNullOrEmpty(Id))
+					Id = d_main.Id;
 				
 				d_main.PropertyAdded += delegate(Object source, string name) {
 					DoPropertyAdded(name);
