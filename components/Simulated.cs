@@ -187,8 +187,8 @@ namespace Cpg.Studio.Components
 					
 					if (ns != String.Empty && !v.StartsWith(ns + "."))
 						v = ns + "." + v;
-
-					d_object.Id = v;					
+					
+					d_object.Id = v;
 					base.Id = d_object.Id;
 				}
 				else
@@ -203,6 +203,16 @@ namespace Cpg.Studio.Components
 			get
 			{
 				return d_object != null ? d_object.Id : base.Id;
+			}
+		}
+		
+		public override void Rename()
+		{
+			string ns = GetNamespace();
+			
+			if (ns != "")
+			{
+				d_object.Id = ns + "." + d_object.LocalId;
 			}
 		}
 		
