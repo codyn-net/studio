@@ -36,7 +36,7 @@ namespace Cpg.Studio
 					d_to = float.Parse(parts[2]);
 				}
 			}
-			catch (InvalidOperationException)
+			catch (FormatException)
 			{
 				d_from = 0;
 				d_step = 0;
