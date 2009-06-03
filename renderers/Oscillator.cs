@@ -56,7 +56,7 @@ namespace Cpg.Studio.Components.Renderers
 			
 			graphics.LineWidth = uw * 2;
 			graphics.SetSourceRGB(26 / 255.0, 80 / 255.0, 130 / 255.0);
-			DrawCircle(graphics, radius * 0.9 - uw * 2, alloc);
+			DrawCircle(graphics, radius * 0.85 - uw * 2, alloc);
 			graphics.StrokePreserve();
 			
 			graphics.Source = d_inner;
