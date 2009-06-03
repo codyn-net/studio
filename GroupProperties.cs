@@ -112,18 +112,7 @@ namespace Cpg.Studio
 				if (!type.IsSubclassOf(typeof(Components.Renderers.Group)))
 					continue;
 
-				object[] attributes = type.GetCustomAttributes(typeof(Components.Renderers.NameAttribute), true);
-				string name;
-				
-				if (attributes.Length != 0)
-				{
-					name = (attributes[0] as Components.Renderers.NameAttribute).Name;
-				}
-				else
-				{
-					name = "None";	
-				}
-
+				string name = Components.Renderers.Renderer.GetName(type);
 				TreeIter iter = store.Append();
 				
 				store.SetValue(iter, 0, new GLib.Value(type));
