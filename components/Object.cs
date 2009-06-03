@@ -117,6 +117,7 @@ namespace Cpg.Studio.Components
 			set
 			{
 				d_renderer = value;
+				DoRequestRedraw();
 			}
 		}
 		
