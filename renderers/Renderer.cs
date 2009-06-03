@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 
 namespace Cpg.Studio.Components.Renderers
 {
@@ -65,6 +66,41 @@ namespace Cpg.Studio.Components.Renderers
 			}	
 			
 			return ret;
+		}
+		
+		public static string GetName(Type type)
+		{
+			object[] attributes = type.GetCustomAttributes(typeof(Components.Renderers.NameAttribute), true);
+			
+			if (attributes.Length != 0)
+			{
+				return (attributes[0] as Components.Renderers.NameAttribute).Name;
+			}
+			else
+			{
+				return "None";	
+			}
+		}
+		
+		public static Type FindByName(string name, Type subclassof)
+		{
+			Assembly asm = Assembly.GetEntryAssembly();
+			
+			foreach (Type type in asm.GetTypes())
+			{
+				if (subclassof != null && !type.IsSubclassOf(subclassof))
+					continue;
+
+				if (GetName(type) == name)
+					return type;
+			}
+			
+			return null;
+		}
+		
+		public static Type FindByName(string name)
+		{
+			return FindByName(name, null);
 		}
 	}
 	
