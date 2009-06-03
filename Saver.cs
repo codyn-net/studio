@@ -42,6 +42,7 @@ namespace Cpg.Studio.Serialization
 
 			settings.Indent = true;
 			settings.NewLineOnAttributes = false;
+			settings.Encoding = Encoding.UTF8;
 			
 			return settings;
 		}
@@ -115,41 +116,39 @@ namespace Cpg.Studio.Serialization
 			return overrides;
 		}
 		
-		public string Save()
+		private XmlDocument MakeDocument(XmlAttributeOverrides overrides)
 		{
 			XmlWriterSettings settings = WriterSettings();
 			
-			/* Network */
-			StringWriter networkStream = new StringWriter();
 			XmlWriter writer;
 			XmlSerializer serializer;
+			MemoryStream memstream;
+			StreamWriter stream;
 			
-			writer = XmlTextWriter.Create(networkStream, settings);
-			serializer = new XmlSerializer(typeof(Cpg), OverrideNetwork());
-
+			memstream = new MemoryStream();
+			stream = new StreamWriter(memstream);
+			
+			writer = XmlWriter.Create(stream, settings);
+			serializer = new XmlSerializer(typeof(Cpg), overrides);
 			serializer.Serialize(writer, d_cpg, Namespace());
 			
-			/* Project */
-			StringWriter projectStream = new StringWriter();
-			writer = XmlTextWriter.Create(projectStream, settings);
-			serializer = new XmlSerializer(typeof(Cpg), OverrideProject());
-
-			serializer.Serialize(writer, d_cpg, Namespace());
+			XmlDocument doc = new XmlDocument();
+			memstream.Position = 0;
+			doc.Load(new StreamReader(memstream));
 			
-			/* Create Document for network */
-			XmlDocument network = new XmlDocument();
-			network.LoadXml(networkStream.ToString());
-			
-			/* Create Document for project */
-			XmlDocument project = new XmlDocument();
-			project.LoadXml(projectStream.ToString());
+			return doc;
+		}
+		
+		public string Save()
+		{
+			XmlDocument network = MakeDocument(OverrideNetwork());
+			XmlDocument project = MakeDocument(OverrideProject());
 			
 			XmlNode node = network.ImportNode(project.SelectSingleNode("//cpg/project"), true);
 			network.SelectSingleNode("//cpg").AppendChild(node);
 			
 			StringWriter stream = new StringWriter();
-			writer = XmlTextWriter.Create(stream, settings);
-			
+			XmlWriter writer = XmlTextWriter.Create(stream, WriterSettings());
 			network.Save(writer);
 			
 			return stream.ToString();
