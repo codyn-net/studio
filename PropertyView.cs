@@ -523,7 +523,6 @@ namespace Cpg.Studio
 			
 			if (node != null)
 			{
-				node.Value = obj[name];
 				TreeIter iter;
 				
 				if (d_treeview.Model.GetIter(out iter, path))
