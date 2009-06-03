@@ -27,6 +27,11 @@ namespace Cpg.Studio
 			return best;
 		}
 		
+		public static double Max(IEnumerable<double> list)
+		{
+			return Select<double>(list, new SelectHandler<double>(Math.Max));
+		}
+		
 		public static float Max(IEnumerable<float> list)
 		{
 			return Select<float>(list, new SelectHandler<float>(Math.Max));
@@ -35,6 +40,11 @@ namespace Cpg.Studio
 		public static int Max(IEnumerable<int> list)
 		{
 			return Select<int>(list, new SelectHandler<int>(Math.Max));
+		}
+		
+		public static double Min(IEnumerable<double> list)
+		{
+			return Select<double>(list, new SelectHandler<double>(Math.Min));
 		}
 		
 		public static float Min(IEnumerable<float> list)
