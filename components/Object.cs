@@ -313,6 +313,10 @@ namespace Cpg.Studio.Components
 			// NOOP
 		}
 		
+		public virtual void Rename()
+		{
+		}
+		
 		protected virtual void DrawSelection(Cairo.Context graphics)
 		{
 			double alpha = 0.2;
@@ -431,8 +435,11 @@ namespace Cpg.Studio.Components
 			
 			set
 			{
-				d_id = value;
-				DoRequestRedraw();
+				if (!String.IsNullOrEmpty(value))
+				{
+					d_id = value;
+					DoRequestRedraw();
+				}
 			}
 		}
 	

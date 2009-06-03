@@ -158,6 +158,19 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
+		public override string Id
+		{
+			get 
+			{
+				return base.Id;
+			}
+			set 
+			{
+				base.Id = value;
+				Rename();
+			}
+		}
+		
 		/* Proxy to d_main */		
 		public override PropertyAttribute FindPropertyAttribute(string name, out PropertyInfo info)
 		{
@@ -203,6 +216,33 @@ namespace Cpg.Studio.Components
 			get
 			{
 				return d_main.Properties;
+			}
+		}
+		
+		public override void Rename ()
+		{
+			// Rename all children
+			Stack<Components.Object> renamer = new Stack<Components.Object>();
+			Queue<Components.Group> groups = new Queue<Components.Group>();
+			
+			groups.Enqueue(this);
+
+			while (groups.Count != 0)
+			{
+				Components.Group group = groups.Dequeue();
+				
+				foreach (Components.Object obj in group.Children)
+				{
+					if (obj is Components.Group)
+						groups.Enqueue(obj as Components.Group);
+					else
+						renamer.Push(obj);
+				}
+			}
+			
+			while (renamer.Count > 0)
+			{
+				renamer.Pop().Rename();
 			}
 		}
 		
