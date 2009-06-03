@@ -26,6 +26,8 @@ namespace Cpg.Studio
 				SetDefaultSize(400, 300);
 			}
 			
+			VBox.Spacing = 6;
+			
 			if (obj is Components.Group)
 			{
 				Components.Group group = obj as Components.Group;
