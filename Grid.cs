@@ -116,6 +116,31 @@ namespace Cpg.Studio
 			LeveledUp(this, obj);
 		}
 		
+		private bool LevelDown(Components.Group group, string objectid)
+		{
+			if (group.FullId == objectid)
+			{
+				LevelDown(group);
+				return true;
+			}
+			
+			foreach (Components.Object obj in group.Children)
+			{
+				if (obj is Components.Group)
+				{
+					if (LevelDown(obj as Components.Group, objectid))
+						return true;
+				}
+			}
+			
+			return false;
+		}
+		
+		public void LevelDown(string objectid)
+		{
+			LevelDown(Root, objectid);			
+		}
+		
 		public void LevelDown(Components.Object obj)
 		{
 			LeveledDown(this, obj);
@@ -680,7 +705,18 @@ namespace Cpg.Studio
 			
 			if (lowerReached && d_objectStack.Count > 1)
 			{
-				LevelUp(d_objectStack[1].Group);
+				Components.Group group = d_objectStack[1].Group;
+				LevelUp(group);
+				
+				if (Container == group)
+				{
+					double x, y;
+					Utils.MeanPosition(group.Children, out x, out y);
+					
+					group.X = (int)(x * d_gridSize - where.X);
+					group.Y = (int)(y * d_gridSize - where.Y);
+				}
+				
 				return;
 			}
 			
