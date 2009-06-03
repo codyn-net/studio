@@ -415,13 +415,7 @@ namespace Cpg.Studio
 		}
 		
 		private void DoObjectActivated(object source, Components.Object obj)
-		{
-			if (obj is Components.Group)
-			{
-				d_grid.LevelDown(obj);
-				return;
-			}
-			
+		{			
 			if (d_propertyEditors.ContainsKey(obj))
 			{
 				d_propertyEditors[obj].Present();
