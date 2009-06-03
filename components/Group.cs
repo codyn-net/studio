@@ -147,7 +147,10 @@ namespace Cpg.Studio.Components
 			{
 				Renderers.Renderer renderer = base.Renderer;
 				
-				return renderer == null ? new Renderers.Default(this) : renderer;
+				if (renderer == null)
+					Renderer = new Renderers.Default(this);
+				
+				return base.Renderer;
 			}
 			set
 			{
