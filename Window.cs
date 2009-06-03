@@ -712,12 +712,15 @@ namespace Cpg.Studio
 			
 			// Load project settings
 			Allocation alloc = cpg.Project.Allocation;
-			
-			d_grid.GridSize = cpg.Project.Zoom;
-			
+
 			d_grid.Container.X = cpg.Project.Root.X;
 			d_grid.Container.Y = cpg.Project.Root.Y;
-			
+						
+			/* Select container */
+			if (!String.IsNullOrEmpty(cpg.Project.Container))
+				d_grid.LevelDown(cpg.Project.Container);
+
+			d_grid.GridSize = cpg.Project.Zoom;
 			d_periodEntry.Text = cpg.Project.Period;
 			
 			if (alloc != null)
