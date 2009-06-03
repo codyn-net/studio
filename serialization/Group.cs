@@ -69,6 +69,26 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
+		[XmlAttribute("renderer"),
+		 System.ComponentModel.DefaultValue("Default")]
+		public string Renderer
+		{
+			get
+			{
+				Components.Group group = As<Components.Group>();
+				
+				if (group.Renderer != null)
+					return Components.Renderers.Renderer.GetName(group.Renderer.GetType());
+				else
+					return "Default";
+			}
+			set
+			{
+				Components.Group group = As<Components.Group>();
+				group.RendererType = Components.Renderers.Renderer.FindByName(value, typeof(Components.Renderers.Group));
+			}
+		}
+		
 		[XmlElement(typeof(State)),
 		 XmlElement(typeof(Link)),
 		 XmlElement(typeof(Relay)),
