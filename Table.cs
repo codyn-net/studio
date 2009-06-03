@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace Cpg.Studio.GtkGui
+namespace Cpg.Studio
 {
 	public class Table : Gtk.Table
 	{
@@ -38,6 +38,18 @@ namespace Cpg.Studio.GtkGui
 		
 		public Table() : this(1, 1, false)
 		{
+		}
+		
+		public Expand Expand
+		{
+			get
+			{
+				return d_expand;
+			}
+			set
+			{
+				d_expand = value;
+			}
 		}
 		
 		private Gtk.Widget RealChild(Gtk.Widget child)
