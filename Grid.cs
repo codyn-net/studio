@@ -1043,6 +1043,9 @@ namespace Cpg.Studio
 			Rectangle r = group.Allocation;
 			
 			Add(group, r.X, r.Y, r.Width, r.Height);
+			
+			group.Rename();
+			
 			Select(group);
 			
 			Modified(this, new EventArgs());
