@@ -1,22 +1,28 @@
 using System;
 using System.Xml.Serialization;
+using CCpg = Cpg;
 
 namespace Cpg.Studio.Serialization
 {
 	[XmlRoot("cpg")]
 	public class Cpg
 	{
-		private Network d_network;
+		private Serialization.Network d_network;
 		private Project d_project;
 		
 		public Cpg()
 		{
-			d_network = new Network();
+			d_project = new Project();
+		}
+		
+		public Cpg(CCpg.Network network)
+		{
+			d_network = new Serialization.Network(network);
 			d_project = new Project();
 		}
 
 		[XmlElement("network")]
-		public Network Network
+		public Serialization.Network Network
 		{
 			get
 			{

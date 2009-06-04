@@ -22,7 +22,7 @@
       <menuitem name="Group" action="GroupAction"/>
       <menuitem name="Ungroup" action="UngroupAction"/>
       <separator/>
-      <menuitem name="ApplySettings" action="ApplySettingsAction"/>
+      <menuitem name="EditGlobals" action="EditGlobalsAction"/>
     </menu>
     <menu name="ViewMenu" action="ViewMenuAction">
       <menuitem name="Center" action="CenterAction"/>

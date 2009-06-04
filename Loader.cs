@@ -148,7 +148,7 @@ namespace Cpg.Studio.Serialization
 				throw new Exception("Could not construct project");
 			}
 			
-			Cpg cpg = new Cpg();
+			Cpg cpg = new Cpg(network);
 			
 			// Set network
 			cpg.Network.CNetwork = network;

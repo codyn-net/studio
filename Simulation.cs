@@ -52,7 +52,7 @@ namespace Cpg.Studio
 			d_inPeriod = true;
 			
 			d_network.Reset();
-			
+
 			OnPeriodBegin(this, args);
 			
 			d_network.Run(from, timestep, to);
@@ -94,7 +94,9 @@ namespace Cpg.Studio
 		public void Resimulate()
 		{
 			if (d_range != null)
+			{
 				RunPeriod(d_range.From, d_range.Step, d_range.To);
+			}
 		}
 	}
 }

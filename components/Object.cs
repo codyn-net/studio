@@ -166,7 +166,7 @@ namespace Cpg.Studio.Components
 		{
 			List<string> lst = new List<string>();
 			
-			foreach (PropertyInfo info in GetType().GetProperties())
+			foreach (PropertyInfo info in GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
 			{
 				foreach (object attr in info.GetCustomAttributes(typeof(PropertyAttribute), true))
 					lst.Add((attr as PropertyAttribute).Name);
@@ -253,8 +253,8 @@ namespace Cpg.Studio.Components
 		{
 			Type type = GetType();
 			
-			PropertyInfo[] infos = type.GetProperties();
-			
+			PropertyInfo[] infos = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
 			foreach (PropertyInfo inf in infos)
 			{
 				object[] attributes = inf.GetCustomAttributes(typeof(PropertyAttribute), true);
@@ -297,6 +297,7 @@ namespace Cpg.Studio.Components
 		public bool IsInvisible(string name)
 		{
 			PropertyAttribute prop = FindPropertyAttribute(name);
+			
 			return prop != null && prop.Invisible;
 		}
 		

@@ -96,6 +96,11 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
+		public bool SimulatedProperty(string name)
+		{
+			return Object.Property(name) != null;
+		}
+		
 		public virtual bool GetIntegrated(string name)
 		{
 			Cpg.Property prop = d_object.Property(name);
@@ -209,11 +214,19 @@ namespace Cpg.Studio.Components
 		public override void Rename()
 		{
 			string ns = GetNamespace();
+			string newid;
 			
 			if (ns != "")
 			{
-				d_object.Id = ns + "." + d_object.LocalId;
+				newid = ns + "." + d_object.LocalId;
 			}
+			else
+			{
+				newid = d_object.LocalId;
+			}
+			
+			if (d_object.Id != newid)
+				d_object.Id = newid;
 		}
 		
 		public override void DoRequestRedraw()
@@ -225,6 +238,14 @@ namespace Cpg.Studio.Components
 			
 			foreach (Components.Link link in d_links)
 				link.DoRequestRedraw();
+		}
+		
+		public virtual bool CanIntegrate
+		{
+			get
+			{
+				return true;
+			}
 		}
 	}
 }

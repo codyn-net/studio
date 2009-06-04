@@ -51,6 +51,12 @@ namespace Cpg.Studio
 			d_grid.ObjectRemoved += HandleObjectRemoved;
 			d_grid.LeveledUp += HandleLeveledUp;
 			d_grid.LeveledDown += HandleLeveledDown;
+			d_grid.Cleared += HandleCleared;
+		}
+		
+		private void HandleCleared(object source, EventArgs args)
+		{
+			InitStore();
 		}
 
 		private void HandleToggled(object o, ToggledArgs args)
@@ -230,7 +236,10 @@ namespace Cpg.Studio
 			
 			foreach (string property in obj.Properties)
 			{
-				AddProperty(parent, obj, property);
+				if ((obj as Components.Simulated).SimulatedProperty(property))
+				{
+					AddProperty(parent, obj, property);
+				}
 			}
 			
 			CheckConsistency(parent);
@@ -296,8 +305,11 @@ namespace Cpg.Studio
 			
 			if (Find(source as Components.Object, out parent))
 			{
-				AddProperty(parent, source as Components.Object, name);
-				CheckConsistency(parent);
+				if ((source as Components.Simulated).SimulatedProperty(name))
+				{
+					AddProperty(parent, source as Components.Object, name);
+					CheckConsistency(parent);
+				}
 			}
 		}
 		
@@ -305,6 +317,7 @@ namespace Cpg.Studio
 		{
 			d_store.AppendValues(parent, obj, property, 0);
 			
+			ExpandRow(d_store.GetPath(parent), false);
 			PropertyAdded(this, obj, property);
 		}
 		
@@ -346,11 +359,13 @@ namespace Cpg.Studio
 				
 				renderer.Markup = "<b>" + System.Security.SecurityElement.Escape(s) + "</b>";
 				renderer.CellBackgroundGdk = Style.Base(StateType.Active);
+				renderer.ForegroundGdk = Style.Text(StateType.Active);
 			}
 			else
 			{
 				renderer.Text = st;
 				cell.CellBackgroundGdk = Style.Base(this.State);
+				renderer.ForegroundGdk = Style.Text(this.State);
 			}
 		}
 
@@ -400,6 +415,16 @@ namespace Cpg.Studio
 					ToggleProperty(iter, active == 1);
 				}
 			} while (d_store.IterNext(ref iter));
+		}
+		
+		protected override void OnDestroyed()
+		{
+			base.OnDestroyed();
+			
+			d_grid.ObjectAdded -= HandleObjectAdded;
+			d_grid.ObjectRemoved -= HandleObjectRemoved;
+			d_grid.LeveledUp -= HandleLeveledUp;
+			d_grid.LeveledDown -= HandleLeveledDown;
 		}
 	}
 }

@@ -34,6 +34,7 @@ namespace Cpg.Studio
 		public event EventHandler Modified = delegate {};
 		public event EventHandler ModifiedView = delegate {};
 		public event ErrorHandler Error = delegate {};
+		public event EventHandler Cleared = delegate {};
 		
 		private int d_maxSize;
 		private int d_minSize;
@@ -101,8 +102,10 @@ namespace Cpg.Studio
 			QueueDraw();
 
 			d_network.Clear();
+			d_selection.Clear();
 			
 			SelectionChanged(this, new EventArgs());
+			Cleared(this, new EventArgs());
 			
 			if (changed)
 				Modified(this, new EventArgs());
@@ -283,6 +286,8 @@ namespace Cpg.Studio
 				foreach (Components.Object child in (obj as Components.Group).Children)
 					DoObjectAdded(child);
 			}
+			
+			obj.Rename();
 			
 			Modified(this, new EventArgs());
 		}
@@ -793,6 +798,9 @@ namespace Cpg.Studio
 			Components.Object pf = d_focus;
 			
 			FocusRelease();
+			
+			if (Container.Children.Count == 0)
+				return false;
 			
 			if (pf == null)
 			{

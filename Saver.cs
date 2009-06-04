@@ -29,7 +29,7 @@ namespace Cpg.Studio.Serialization
 		
 		public void Initialize(Window window, Components.Group group)
 		{
-			d_cpg = new Cpg();
+			d_cpg = new Cpg(window.Network);
 
 			d_cpg.Network.Objects.AddRange(Collect(group));
 			d_cpg.Project.Window = window;
@@ -101,6 +101,7 @@ namespace Cpg.Studio.Serialization
 			Ignore<Cpg>(overrides, "Project");
 			Ignore<Object>(overrides, "Allocation");
 			Ignore<Group>(overrides);
+			Ignore<Globals>(overrides, "id");
 
 			return overrides;
 		}
@@ -130,6 +131,7 @@ namespace Cpg.Studio.Serialization
 			
 			writer = XmlWriter.Create(stream, settings);
 			serializer = new XmlSerializer(typeof(Cpg), overrides);
+
 			serializer.Serialize(writer, d_cpg, Namespace());
 			
 			XmlDocument doc = new XmlDocument();

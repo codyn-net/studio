@@ -33,6 +33,14 @@ namespace Cpg.Studio.Components
 				}
 			}
 			
+			public Cpg.Property Property
+			{
+				get
+				{
+					return d_action.Target;
+				}
+			}
+			
 			public LinkAction LinkAction
 			{
 				get
@@ -49,7 +57,7 @@ namespace Cpg.Studio.Components
 				}
 				set
 				{
-					d_action = d_link.UpdateAction(this, Target, value);
+					d_action = d_link.UpdateAction(this, d_action.Target.Name, value);
 				}
 			}
 		}
@@ -185,33 +193,23 @@ namespace Cpg.Studio.Components
 				return null;
 		}
 		
-		public bool RemoveAction(string property)
-		{
-			Cpg.Property prop = d_to.Object.Property(property);
-			
-			if (prop != null)
-			{
-				(d_object as Cpg.Link).RemoveAction(prop);
-				return true;
-			}
-			
-			return false;
-		}
-		
 		public bool RemoveAction(Action action)
 		{
-			return RemoveAction(action.Target);
+			return (d_object as Cpg.Link).RemoveAction(action.LinkAction);
 		}
 		
-		public Cpg.LinkAction UpdateAction(Action action, string target, string expression)
+		public Cpg.LinkAction UpdateAction(Action action, string property, string expression)
 		{
-			Cpg.Property prop = d_to.Object.Property(target);
-			
+			Cpg.Link link = d_object as Cpg.Link;
+			Cpg.Property prop = link.To.Property(property); 
+
 			if (prop == null)
 				return action.LinkAction;
-			
-			RemoveAction(action.Target);
-			return (d_object as Cpg.Link).AddAction(prop, expression);
+				
+			if (!RemoveAction(action))
+				return action.LinkAction;
+
+			return link.AddAction(prop, expression);
 		}
 		
 		public override void Removed()
@@ -502,6 +500,14 @@ namespace Cpg.Studio.Components
 			MeasureString(graphics, ToString(), out width, out height);
 
 			return new Allocation(minx - height, miny - height, maxx - minx + height * 2, maxy - miny + height * 2);
+		}
+		
+		public override bool CanIntegrate
+		{
+			get
+			{
+				return false;
+			}
 		}
 	}
 }

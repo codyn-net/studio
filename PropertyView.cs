@@ -67,6 +67,10 @@ namespace Cpg.Studio
 			}
 		}
 		
+		public delegate void ErrorHandler(object source, Exception exception);
+		
+		public event ErrorHandler Error = delegate {};
+		
 		private Components.Object d_object;
 		private NodeStore d_store;
 		private NodeView d_treeview;
@@ -90,7 +94,7 @@ namespace Cpg.Studio
 		private void AddEquationsUI()
 		{
 			Gtk.VBox vbox = new Gtk.VBox(false, 3);
-			Add1(vbox);
+			Add2(vbox);
 			
 			Gtk.Label label = new Label("<b>Actions</b>");
 			label.Xalign = 0;
@@ -225,7 +229,7 @@ namespace Cpg.Studio
 			}
 			
 			Gtk.VBox vbox = new Gtk.VBox(false, 3);
-			Add2(vbox);
+			Add1(vbox);
 			
 			Gtk.Label label = new Label("<b>Properties</b>");
 			label.Xalign = 0;
@@ -276,10 +280,10 @@ namespace Cpg.Studio
 				(cell as CellRendererText).Editable = d_object != null && !d_object.IsReadOnly(node.Name);
 			});
 			
-			column.MinWidth = 100;
+			column.MinWidth = 200;
 			d_treeview.AppendColumn(column);
 			
-			if (d_object != null && d_object is Components.Simulated)
+			if (d_object != null && d_object is Components.Simulated && (d_object as Components.Simulated).CanIntegrate)
 			{
 				CellRendererToggle toggle = new CellRendererToggle();
 				
@@ -390,7 +394,7 @@ namespace Cpg.Studio
 		
 		private void AddProperty(string name)
 		{
-			if (PropertyExists(name))
+			if (PropertyExists(name) || d_object.IsInvisible(name))
 				return;
 
 			Node node = new Node(d_object, name);
@@ -441,8 +445,16 @@ namespace Cpg.Studio
 			{
 				if (!d_object.IsPermanent(node.Name))
 				{
-					d_object.RemoveProperty(node.Name);
-					d_store.RemoveNode(node);
+					try
+					{
+						d_object.RemoveProperty(node.Name);
+						d_store.RemoveNode(node);
+					}
+					catch (GLib.GException err)
+					{
+						// Display could not remove, or something
+						Error(this, err);
+					}
 				}
 			}
 		}

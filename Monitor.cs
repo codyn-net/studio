@@ -59,10 +59,8 @@ namespace Cpg.Studio
 			{
 				Gdk.Rectangle a = d_frame.Allocation;
 				
-				Gdk.Pixbuf pix = Gdk.Pixbuf.FromDrawable(d_frame.GdkWindow, null, 0, 0, 0, 0, a.Width, a.Height);
-				pix.ScaleSimple((int)(a.Width * 0.7), (int)(a.Height * 0.7), Gdk.InterpType.Hyper);
-				
-				return pix;
+				Gdk.Pixbuf pix = Gdk.Pixbuf.FromDrawable(d_frame.GdkWindow, d_frame.GdkWindow.Colormap, 0, 0, 0, 0, a.Width, a.Height);
+				return pix.ScaleSimple((int)(a.Width * 0.7), (int)(a.Height * 0.7), Gdk.InterpType.Hyper);
 			}
 		}
 		
@@ -84,25 +82,26 @@ namespace Cpg.Studio
 			}
 		}
 		
-		Simulation d_simulation;
-		Grid d_grid;
+		private Simulation d_simulation;
+		private Grid d_grid;
 		
-		bool d_linkRulers;
-		bool d_linkAxis;
-		UIManager d_uimanager;
-		HPaned d_hpaned;
-		bool d_configured;
+		private bool d_linkRulers;
+		private bool d_linkAxis;
+		private UIManager d_uimanager;
+		private HPaned d_hpaned;
+		private bool d_configured;
 		
-		ObjectView d_objectView;
-		ScrolledWindow d_objectViewScrolledWindow;
-		Dictionary<Components.Object, List<State>> d_map;
-		Cpg.Studio.Table d_content;
-		Range d_range;
+		private ObjectView d_objectView;
+		private ScrolledWindow d_objectViewScrolledWindow;
+		private Dictionary<Components.Object, List<State>> d_map;
+		private Cpg.Studio.Table d_content;
+		private Range d_range;
+		private uint d_configureSourceId;
 		
 		const int SampleWidth = 2;
 		
-		Gtk.Label d_timeLabel;
-		Gtk.CheckButton d_showRulers;
+		private Gtk.Label d_timeLabel;
+		private Gtk.CheckButton d_showRulers;
 		
 		public Monitor(Grid grid, Simulation simulation) : base("Monitor")
 		{
@@ -117,10 +116,44 @@ namespace Cpg.Studio
 			d_map = new Dictionary<Components.Object, List<State>>();
 			
 			d_grid = grid;
+			d_grid.Cleared += HandleCleared;
+			d_grid.LeveledDown += HandleLeveledDown;
+			d_grid.LeveledUp += HandleLeveledUp;
 			
 			Build();
 			
 			SetDefaultSize(500, 400);
+		}
+		
+		private void RemoveGone()
+		{
+			List<KeyValuePair<Components.Object, Monitor.State>> all = new List<KeyValuePair<Components.Object,Monitor.State>>(Each());
+			
+			foreach (KeyValuePair<Components.Object, Monitor.State> item in all)
+			{
+				if (!d_grid.Container.Children.Contains(item.Key))
+					RemoveHookReal(item.Key, item.Value);
+			}
+		}
+		
+		private void HandleLeveledUp(object source, Components.Object obj)
+		{
+			RemoveGone();
+		}
+		
+		private void HandleLeveledDown(object source, Components.Object obj)
+		{
+			RemoveGone();
+		}
+		
+		private void HandleCleared(object source, EventArgs args)
+		{
+			List<KeyValuePair<Components.Object, Monitor.State>> all = new List<KeyValuePair<Components.Object,Monitor.State>>(Each());
+			
+			foreach (KeyValuePair<Components.Object, Monitor.State> item in all)
+			{
+				RemoveHookReal(item.Key, item.Value);
+			}			
 		}
 
 		private void Build()
@@ -133,13 +166,13 @@ namespace Cpg.Studio
 			vboxMain.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
 			
 			d_hpaned = new HPaned();
+			d_hpaned.BorderWidth = 6;
 			CreateObjectView();
 			
 			Cpg.Studio.Table table = new Cpg.Studio.Table(1, 1, true);
 			table.Expand = Cpg.Studio.Table.ExpandType.Down;
 			table.RowSpacing = 1;
 			table.ColumnSpacing = 1;
-			
 			d_content = table;
 			
 			d_hpaned.Pack1(table, true, true);
@@ -151,10 +184,11 @@ namespace Cpg.Studio
 			vboxMain.ShowAll();
 			
 			HBox hbox = new HBox(false, 6);
+			hbox.BorderWidth = 6;
 			ToggleButton but = Stock.ChainButton();
 			
 			but.Toggled += delegate(object sender, EventArgs e) {
-				d_linkRulers = (sender as ToggleButton).Active;
+				d_linkAxis = (sender as ToggleButton).Active;
 			};
 			
 			Gtk.Label lbl = new Gtk.Label("Time: ");
@@ -164,7 +198,7 @@ namespace Cpg.Studio
 			d_timeLabel.Xalign = 0;
 			hbox.PackStart(d_timeLabel, true, true, 0);
 			
-			but.Active = d_linkRulers;
+			but.Active = d_linkAxis;
 			hbox.PackEnd(but, false, false, 0);
 			
 			d_showRulers = new CheckButton("Show graph rulers");
@@ -251,7 +285,7 @@ namespace Cpg.Studio
 			if (longname && obj is Components.Link)
 			{
 				Components.Link link = obj as Components.Link;
-				s += " (" + link.From.ToString() + " » " + link.To.ToString();
+				s += " (" + link.From.ToString() + " » " + link.To.ToString() + ")";
 			}
 			
 			return s;
@@ -276,7 +310,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void DoLinkRulers(Graph graph, Gdk.EventMotion evnt)
+		private void DoLinkRulers(Graph graph)
 		{
 			foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
 			{
@@ -287,7 +321,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void DoLinkRulersLeave(Graph graph, Gdk.EventCrossing evnt)
+		private void DoLinkRulersLeave(Graph graph)
 		{
 			foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
 			{
@@ -351,6 +385,7 @@ namespace Cpg.Studio
 			
 			List<KeyValuePair<Components.Object, Monitor.State>> all = FindForWidget(state.Widget);
 			Monitor.State toitem = FindForWidget(widget)[0].Value;
+			Widget orig = state.Widget;
 			
 			foreach (KeyValuePair<Components.Object, Monitor.State> s in all)
 			{
@@ -362,7 +397,9 @@ namespace Cpg.Studio
 			}
 			
 			UpdateTitle(obj);
-			widget.Destroy();
+			orig.Destroy();
+			
+			QueueDraw();
 		}
 		
 		private void DoMerge(Components.Object obj, string property, Point direction)
@@ -459,14 +496,20 @@ namespace Cpg.Studio
 			
 			graph.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
 				if (d_linkRulers && graph.ShowRuler)
-					DoLinkRulers(graph, args.Event);
+					DoLinkRulers(graph);
 				
 				UpdateTimeLabel(graph, args.Event);
 			};
 			
 			graph.LeaveNotifyEvent += delegate(object o, LeaveNotifyEventArgs args) {
 				if (d_linkRulers && graph.ShowRuler)
-					DoLinkRulersLeave(graph, args.Event);
+					DoLinkRulersLeave(graph);
+			};
+			
+			graph.EnterNotifyEvent += delegate(object o, EnterNotifyEventArgs args)
+			{
+				if (d_linkRulers && graph.ShowRuler)
+					DoLinkRulers(graph);
 			};
 			
 			state.Graph = graph;
@@ -475,6 +518,13 @@ namespace Cpg.Studio
 			state.Plot = graph.Add(new double[] {}, PropertyName(obj, property, true));
 
 			d_map[obj].Add(state);
+
+			if (!graph.Data.ContainsKey("HandleConfigureEvent"))
+			{
+				graph.ConfigureEvent += OnGraphConfigured;				
+				graph.Data["HandleConfigureEvent"] = true;
+			}
+			
 			d_simulation.Resimulate();			
 
 			return true;
@@ -630,6 +680,8 @@ namespace Cpg.Studio
 					isset = true;
 				}
 				
+				range.Widen(0.2);
+				
 				foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
 				{
 					state.Value.Graph.YAxis = range;
@@ -719,6 +771,9 @@ namespace Cpg.Studio
 		
 		private void SetMonitorData(Components.Object obj, Monitor.State state)
 		{
+			if (d_range == null)
+				return;
+
 			int numpix = state.Graph.Allocation.Width;
 			
 			// Resample data to be on thingie
@@ -751,7 +806,7 @@ namespace Cpg.Studio
 			}
 
 			state.Plot.SetData(data);
-			state.Graph.SetTicks((int)dw, d_range.From);			
+			state.Graph.SetTicks(dw, d_range.From);			
 		}
 		
 		private void DoPeriodEnd(object source, Simulation.Args args)
@@ -781,6 +836,28 @@ namespace Cpg.Studio
 			{
 				d_content.PositionChild(w, (uint)pt.X, (uint)pt.Y);
 			}
+		}
+		
+		private void UpdateMonitorData()
+		{
+			foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+			{
+				SetMonitorData(state.Key, state.Value);
+			}
+		}
+		
+		private void OnGraphConfigured(object source, Gtk.ConfigureEventArgs args)
+		{
+			if (d_configureSourceId != 0)
+			{
+				GLib.Source.Remove(d_configureSourceId);
+			}
+			
+			d_configureSourceId = GLib.Timeout.Add(50, delegate () {
+				UpdateMonitorData();
+				d_configureSourceId = 0;
+				return false;
+			});
 		}
 	}
 }

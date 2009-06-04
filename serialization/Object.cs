@@ -51,7 +51,7 @@ namespace Cpg.Studio.Serialization
 		
 				
 		[XmlAttribute("id")]
-		public string Id
+		public virtual string Id
 		{
 			get
 			{

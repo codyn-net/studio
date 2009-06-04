@@ -6,6 +6,7 @@ namespace Cpg.Studio
 	public class PropertyDialog : Dialog
 	{
 		Components.Object d_object;
+		PropertyView d_view;
 		
 		public PropertyDialog(Window parent, Components.Object obj)
 		{
@@ -45,7 +46,8 @@ namespace Cpg.Studio
 				};
 			}
 			
-			VBox.PackStart(new PropertyView(d_object), true, true, 0);
+			d_view = new PropertyView(d_object);
+			VBox.PackStart(d_view, true, true, 0);
 			
 			d_object.PropertyChanged += delegate(Components.Object source, string name) {
 				UpdateTitle();
@@ -55,6 +57,14 @@ namespace Cpg.Studio
 			
 			AddButton(Gtk.Stock.Close, ResponseType.Close);
 			UpdateTitle();
+		}
+		
+		public PropertyView View
+		{
+			get
+			{
+				return d_view;
+			}
 		}
 		
 		private void UpdateTitle()

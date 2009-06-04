@@ -36,17 +36,6 @@ namespace Cpg.Studio
 		{
 			d_network = new Components.Network();
 			
-			d_network.AddNotification("compiled", delegate (object source, GLib.NotifyArgs args) {
-				if (d_network.Compiled)
-				{
-					Console.WriteLine("Network has been compiled!");
-				}
-				else
-				{
-					Console.WriteLine("Network has been tainted!");
-				}				
-			});
-			
 			d_network.CompileError += OnCompileError;
 			d_simulation = new Simulation(d_network);
 
@@ -59,8 +48,6 @@ namespace Cpg.Studio
 			UpdateTitle();
 			
 			d_propertyEditors = new Dictionary<Components.Object, PropertyDialog>();
-			
-			DoLoadXml("test.cpg");
 		}
 		
 		private void Build()
@@ -87,7 +74,7 @@ namespace Cpg.Studio
 				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", new EventHandler(OnPasteActivated)),
 				new ActionEntry("GroupAction", null, "Group", "<Control>g", "Group objects", new EventHandler(OnGroupActivated)),
 				new ActionEntry("UngroupAction", null, "Ungroup", "<Control>u", "Ungroup object", new EventHandler(OnUngroupActivated)),
-				new ActionEntry("ApplySettingsAction", null, "Apply settings", null, "Apply settings from a flat format", new EventHandler(OnApplySettingsActivated)),
+				new ActionEntry("EditGlobalsAction", null, "Global Constants", null, "Edit the global constants of the network", new EventHandler(OnEditGlobalsActivated)),
 
 				new ActionEntry("AddStateAction", Studio.Stock.State, null, null, "Add state", new EventHandler(OnAddStateActivated)),
 				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", new EventHandler(OnAddLinkActivated)),
@@ -439,6 +426,11 @@ namespace Cpg.Studio
 			PropertyDialog dlg = new PropertyDialog(this, obj);
 			PositionWindow(dlg);
 			
+			dlg.View.Error += delegate (object s, Exception exception)
+			{
+				Message(Gtk.Stock.DialogInfo, "Error while editing property", exception);
+			};
+			
 			dlg.Show();
 			
 			d_propertyEditors[obj] = dlg;
@@ -453,7 +445,9 @@ namespace Cpg.Studio
 		
 		private string[] VisibleProperties(Components.Object obj)
 		{
-			return Array.FindAll(obj.Properties, delegate (string s) { return !obj.IsInvisible(s); });
+			return Array.FindAll(obj.Properties, delegate (string s) { 
+				return !obj.IsInvisible(s) && (!(obj is Components.Simulated) || (obj as Components.Simulated).SimulatedProperty(s));
+			});
 		}
 		
 		private string[] CommonProperties(Components.Object[] objects)
@@ -681,6 +675,8 @@ namespace Cpg.Studio
 			
 		private void OnFileNew(object obj, EventArgs args)
 		{
+			AskUnsavedModified();
+
 			Clear();
 			
 			d_filename = null;
@@ -1105,9 +1101,9 @@ namespace Cpg.Studio
 			d_grid.Add(new Components.Relay());
 		}
 		
-		private void OnApplySettingsActivated(object sender, EventArgs args)
+		private void OnEditGlobalsActivated(object sender, EventArgs args)
 		{
-			// TODO
+			DoObjectActivated(sender, new Components.Globals(d_network.Globals));
 		}
 		
 		private void OnCenterViewActivated(object sender, EventArgs args)
@@ -1144,6 +1140,11 @@ namespace Cpg.Studio
 					Components.Object[] selection = d_grid.Selection;
 					d_propertyView = new PropertyView(selection.Length == 1 ? selection[0] : null);
 					d_propertyView.BorderWidth = 3;
+					
+					d_propertyView.Error += delegate (object source, Exception exception)
+					{
+						Message(Gtk.Stock.DialogInfo, "Error while editing property", exception);
+					};
 					
 					d_vpaned.Pack2(d_propertyView, false, false);
 				}
@@ -1344,6 +1345,14 @@ namespace Cpg.Studio
 			Message(Gtk.Stock.DialogError, 
 			        "Error while compiling " + title,
 			        args.Error.String() + ": " + args.Error.Message + "\nExpression: \"" + expression + "\"");
+		}
+		
+		public Components.Network Network
+		{
+			get
+			{
+				return d_network;
+			}
 		}
 	}
 }

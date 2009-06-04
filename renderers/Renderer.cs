@@ -60,8 +60,15 @@ namespace Cpg.Studio.Components.Renderers
 				}
 				catch
 				{
-					ret = new Gdk.Pixbuf(Gdk.Colorspace.Rgb, true, 8, size, size);
-					ret.Fill(0);
+					// Some stupid bug in older mono, fallback strategy
+					string filename = System.IO.Path.GetTempFileName();
+					
+					if (System.IO.File.Exists(filename))
+						System.IO.File.Delete(filename);
+						
+					surface.WriteToPng(filename);
+					ret = new Gdk.Pixbuf(filename);
+					System.IO.File.Delete(filename);
 				}
 			}	
 			

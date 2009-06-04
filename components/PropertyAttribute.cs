@@ -2,7 +2,7 @@ using System;
 
 namespace Cpg.Studio.Components
 {
-	[System.AttributeUsage(System.AttributeTargets.Property)]
+	[AttributeUsage(AttributeTargets.Property | AttributeTargets.Class, AllowMultiple=true, Inherited=true)]
 	public class PropertyAttribute : System.Attribute
 	{
 		private string d_name;

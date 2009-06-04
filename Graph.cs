@@ -9,9 +9,9 @@ namespace Cpg.Studio
 		private class Ticks
 		{
 			public double Start;
-			public int Width;
+			public double Width;
 			
-			public Ticks(double start, int width)
+			public Ticks(double start, double width)
 			{
 				Start = start;
 				Width = width;
@@ -27,6 +27,19 @@ namespace Cpg.Studio
 			{
 				Min = min;
 				Max = max;
+			}
+			
+			public void Widen(double factor)
+			{
+				double dist = Math.Abs((Max - Min) * factor);
+				
+				if (dist < 0.00001)
+				{
+					dist = factor;
+				}
+				
+				Max += dist;
+				Min -= dist;
 			}
 		}
 		
@@ -152,6 +165,38 @@ namespace Cpg.Studio
 		private int d_ruleWhich;
 		private bool d_hasRuler;
 		
+		private static Cairo.Color[] s_colors;
+		private static int s_colorIndex;
+		static Graph()
+		{
+			s_colors = new Cairo.Color[] {
+				new Cairo.Color(0, 0, 0.6),
+				new Cairo.Color(0, 0.6, 0),
+				new Cairo.Color(0.6, 0, 0),
+				new Cairo.Color(0, 0.6, 0.6),
+				new Cairo.Color(0.6, 0.6, 0),
+				new Cairo.Color(0.6, 0, 0.6),
+				new Cairo.Color(0.6, 0.6, 0.6),
+				new Cairo.Color(0, 0, 0)
+			};
+		}
+		
+		private static Cairo.Color NextColor()
+		{
+			Cairo.Color ret = s_colors[s_colorIndex];
+			
+			if (s_colorIndex + 1 == s_colors.Length)
+			{
+				s_colorIndex = 0;
+			}
+			else
+			{
+				++s_colorIndex;
+			}
+			
+			return ret;
+		}
+		
 		public Graph(int sampleWidth, Range yaxis)
 		{
 			d_showRuler = true;
@@ -202,6 +247,7 @@ namespace Cpg.Studio
 			set
 			{
 				d_ruler = value;
+				d_hasRuler = true;
 				QueueDraw();
 			}
 		}
@@ -250,17 +296,14 @@ namespace Cpg.Studio
 			{
 				d_yaxis = value;
 				
-				if (d_yaxis.Min == 0 && d_yaxis.Max == 0)
+				if (d_yaxis.Min < 0.00001 && d_yaxis.Max < 0.00001)
 				{
 					d_yaxis.Min = -1;
 					d_yaxis.Max = 1;
 				}
-				else if (d_yaxis.Min == d_yaxis.Max)
+				else if (Math.Abs(d_yaxis.Min - d_yaxis.Max) < 0.00001)
 				{
-					double d = Math.Abs(d_yaxis.Min);
-					
-					d_yaxis.Min -= 0.2 * d;
-					d_yaxis.Max += 0.2 * d;
+					d_yaxis.Widen(0.2);
 				}
 				
 				Redraw();
@@ -288,13 +331,14 @@ namespace Cpg.Studio
 			}
 			
 			double dist = (range.Max - range.Min) / 2;
-			d_yaxis.Min = range.Min - dist * 0.2;
-			d_yaxis.Max = range.Max + dist * 0.2;
+			Range ax = new Range(range.Min - dist * 0.2, range.Max + dist * 0.2);
+			
+			YAxis = ax;
 			
 			Redraw();
 		}
 		
-		public void SetTicks(int width, double start)
+		public void SetTicks(double width, double start)
 		{
 			// width is the number of pixels per tick unit
 			// start is the tick unit value from the left
@@ -309,11 +353,6 @@ namespace Cpg.Studio
 			SetTicks(width, 0);
 		}
 
-		private Cairo.Color NextColor()
-		{
-			return new Cairo.Color(0, 0, 1);
-		}
-				
 		public Container Add(double[] data, string label, Cairo.Color color)
 		{
 			Container ret = new Container(data, color, label);
@@ -408,7 +447,7 @@ namespace Cpg.Studio
 			ctx.LineWidth = 2;
 		}
 		
-		private void DrawTick(Cairo.Context ctx, int wh)
+		private void DrawTick(Cairo.Context ctx, double wh)
 		{
 			ctx.MoveTo(wh, 0);
 			ctx.LineWidth = 1.5;
@@ -416,7 +455,7 @@ namespace Cpg.Studio
 			ctx.Stroke();
 		}
 		
-		private void DrawSmallTick(Cairo.Context ctx, int wh)
+		private void DrawSmallTick(Cairo.Context ctx, double wh)
 		{
 			ctx.LineWidth = 1;
 			ctx.MoveTo(wh, 0);
@@ -424,7 +463,7 @@ namespace Cpg.Studio
 			ctx.Stroke();
 		}
 		
-		private void DrawXAxis(Cairo.Context ctx, float from)
+		private void DrawXAxis(Cairo.Context ctx, double from)
 		{
 			int w = Allocation.Width - 2;
 			ctx.MoveTo(from, 0);
@@ -438,18 +477,18 @@ namespace Cpg.Studio
 			if (d_ticks == null)
 				return;
 			
-			int ms = (int)Math.Ceiling(d_ticks.Start + from / (float)d_ticks.Width);
+			double ms = d_ticks.Start + from / d_ticks.Width;
 			double smalltick = d_ticks.Width / 10.0;
 			
 			while (ms < w)
 			{
 				DrawTick(ctx, ms);
 				
-				if (smalltick > 2)
+				if (smalltick > 4)
 				{
 					for (int i = 1; i < 10; ++i)
 					{
-						DrawSmallTick(ctx, (int)Math.Ceiling(ms + i * smalltick));
+						DrawSmallTick(ctx, ms + i * smalltick);
 					}
 				}
 				
@@ -575,7 +614,7 @@ namespace Cpg.Studio
 					
 					for (int i = offset + 1; i < container.Data.Count; ++i)
 					{
-						ctx.LineTo((start + i + 1) * scale.X, container.Data[i] * scale.Y);
+						ctx.LineTo((start + i) * scale.X, container.Data[i] * scale.Y);
 					}
 					
 					ctx.Stroke();
@@ -595,9 +634,9 @@ namespace Cpg.Studio
 			
 			ctx.LineWidth = 1;
 			ctx.SetSourceRGB(0, 0, 0);
-			ctx.MoveTo(cx, 0);
-			ctx.LineTo(cx, Allocation.Height);
-			ctx.Stroke();
+			//ctx.MoveTo(cx, 0);
+			//ctx.LineTo(cx, Allocation.Height);
+			//ctx.Stroke();
 			
 			string ym = (((int)(d_yaxis.Max * 100)) / 100.0).ToString();
 			Cairo.TextExtents e = ctx.TextExtents(ym);

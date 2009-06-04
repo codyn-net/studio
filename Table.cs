@@ -324,10 +324,9 @@ namespace Cpg.Studio
 		{
 			foreach (Gtk.Widget widget in Children)
 			{
-				int cleft = (int)ChildGetProperty(widget, "left-attach").Val;
-				int ctop = (int)ChildGetProperty(widget, "top-attach").Val;
+				Point pos = ChildPosition(widget);
 				
-				if (cleft == left && ctop == top && !(widget is Placeholder))
+				if (pos.X == left && pos.Y == top && !(widget is Placeholder))
 				{
 					return widget;
 				}
@@ -343,10 +342,9 @@ namespace Cpg.Studio
 			if (child == null)
 				return null;
 			
-			int left = (int)ChildGetProperty(child, "left-attach").Val + dx;
-			int top = (int)ChildGetProperty(child, "top-attach").Val + dy;
+			Point pt = GetPosition(child);
 			
-			return At(left, top);
+			return At(pt.X + dx, pt.Y + dy);
 		}
 
 		private void RemoveRow(uint idx)
@@ -359,11 +357,10 @@ namespace Cpg.Studio
 				{
 					child.Destroy();
 				}
-				else if (pos.Y >= idx)
+				else if (pos.Y >= idx && pos.Y != 0)
 				{
-					Console.WriteLine(Children.Count);
-					ChildSetProperty(child, "top-attach", new GLib.Value(idx - 1));
-					ChildSetProperty(child, "bottom-attach", new GLib.Value(idx));
+					ChildSetProperty(child, "top-attach", new GLib.Value(pos.Y - 1));
+					ChildSetProperty(child, "bottom-attach", new GLib.Value(pos.Y));
 				}
 			}
 			
@@ -381,10 +378,10 @@ namespace Cpg.Studio
 				{
 					child.Destroy();
 				}
-				else if (pos.X > idx)
+				else if (pos.X >= idx && pos.X != 0)
 				{
-					ChildSetProperty(child, "left-attach", new GLib.Value(idx - 1));
-					ChildSetProperty(child, "right-attach", new GLib.Value(idx));
+					ChildSetProperty(child, "left-attach", new GLib.Value(pos.X - 1));
+					ChildSetProperty(child, "right-attach", new GLib.Value(pos.X));
 				}
 			}
 			
