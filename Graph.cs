@@ -8,10 +8,10 @@ namespace Cpg.Studio
 	{
 		private class Ticks
 		{
-			public int Start;
+			public double Start;
 			public int Width;
 			
-			public Ticks(int start, int width)
+			public Ticks(double start, int width)
 			{
 				Start = start;
 				Width = width;
@@ -37,7 +37,7 @@ namespace Cpg.Studio
 			private string d_label;
 			private int d_unprocessed;
 			
-			public event EventHandler Changed;
+			public event EventHandler Changed = delegate {};
 			
 			public Container(double[] data, Cairo.Color color, string label)
 			{
@@ -63,6 +63,13 @@ namespace Cpg.Studio
 					d_data = value;
 					Changed(this, new EventArgs());
 				}
+			}
+			
+			public void SetData(double[] data)
+			{
+				d_data.Clear();
+				d_data.AddRange(data);
+				Changed(this, new EventArgs());
 			}
 			
 			public Cairo.Color Color
@@ -163,7 +170,8 @@ namespace Cpg.Studio
 			          Gdk.EventMask.KeyPressMask |
 			          Gdk.EventMask.KeyReleaseMask |
 			          Gdk.EventMask.PointerMotionMask |
-			          Gdk.EventMask.LeaveNotifyMask));
+			          Gdk.EventMask.LeaveNotifyMask | 
+			          Gdk.EventMask.EnterNotifyMask));
 
 			DoubleBuffered = true;
 		}
@@ -194,6 +202,19 @@ namespace Cpg.Studio
 			set
 			{
 				d_ruler = value;
+				QueueDraw();
+			}
+		}
+		
+		public bool HasRuler
+		{
+			get
+			{
+				return d_hasRuler;
+			}
+			set
+			{
+				d_hasRuler = value;
 				QueueDraw();
 			}
 		}
@@ -273,7 +294,7 @@ namespace Cpg.Studio
 			Redraw();
 		}
 		
-		public void SetTicks(int width, int start)
+		public void SetTicks(int width, double start)
 		{
 			// width is the number of pixels per tick unit
 			// start is the tick unit value from the left
@@ -300,6 +321,10 @@ namespace Cpg.Studio
 			
 			if (d_ruleWhich < 0)
 				d_ruleWhich = 0;
+			
+			ret.Changed += delegate(object sender, EventArgs e) {
+				Redraw();
+			};
 			
 			Redraw();
 			return ret;
@@ -374,7 +399,7 @@ namespace Cpg.Studio
 		private void Prepare(Cairo.Context ctx)
 		{
 			PointF scale = Scale;
-			ctx.Translate(0.5, Math.Round(d_yaxis.Max * -scale.Y) + 1.5);
+			ctx.Translate(0.5, Math.Ceiling(d_yaxis.Max * -scale.Y) + 1.5);
 		}
 		
 		private void SetGraphLine(Cairo.Context ctx, Container container)
@@ -386,7 +411,16 @@ namespace Cpg.Studio
 		private void DrawTick(Cairo.Context ctx, int wh)
 		{
 			ctx.MoveTo(wh, 0);
+			ctx.LineWidth = 1.5;
 			ctx.LineTo(wh, -5.5);
+			ctx.Stroke();
+		}
+		
+		private void DrawSmallTick(Cairo.Context ctx, int wh)
+		{
+			ctx.LineWidth = 1;
+			ctx.MoveTo(wh, 0);
+			ctx.LineTo(wh, -3);
 			ctx.Stroke();
 		}
 		
@@ -405,10 +439,20 @@ namespace Cpg.Studio
 				return;
 			
 			int ms = (int)Math.Ceiling(d_ticks.Start + from / (float)d_ticks.Width);
+			double smalltick = d_ticks.Width / 10.0;
 			
 			while (ms < w)
 			{
 				DrawTick(ctx, ms);
+				
+				if (smalltick > 2)
+				{
+					for (int i = 1; i < 10; ++i)
+					{
+						DrawSmallTick(ctx, (int)Math.Ceiling(ms + i * smalltick));
+					}
+				}
+				
 				ms += d_ticks.Width;
 			}
 		}
@@ -562,16 +606,16 @@ namespace Cpg.Studio
 			
 			ym = (((int)(d_yaxis.Min * 100)) / 100.0).ToString();
 			e = ctx.TextExtents(ym);
-			ctx.MoveTo(cx - e.Width - 5, Allocation.Height);
+			ctx.MoveTo(cx - e.Width - 5, Allocation.Height - 2);
 			ctx.ShowText(ym);
 		}
 		
 		private void DrawRuler(Cairo.Context ctx)
 		{
 			ctx.SetSourceRGB(0.5, 0.6, 1);
-			ctx.LineWidth = 1.5;
+			ctx.LineWidth = 1;
 			ctx.MoveTo(d_ruler.X + 0.5, 0);
-			ctx.MoveTo(d_ruler.X + 0.5, Allocation.Height);
+			ctx.LineTo(d_ruler.X + 0.5, Allocation.Height);
 			ctx.Stroke();
 			
 			if (d_data.Count == 0)
@@ -601,27 +645,32 @@ namespace Cpg.Studio
 			int pos1 = dpb + offset - start;
 			int pos2 = dpe + offset - start;
 			
-			double cy = (container.Data[pos1] * factor) + (container.Data[pos2] * (1 - factor));
+			double cy = (container[pos1] * factor) + (container[pos2] * (1 - factor));
 			
 			// First draw label
-			string s = String.Format("{0:#.###}", cy);
+			string s = cy.ToString("F3");
 			Cairo.TextExtents e = ctx.TextExtents(s);
 			
 			ctx.Rectangle(d_ruler.X + 3, 1, e.Width + 4, e.Height + 4);
-			ctx.SetSourceRGBA(1, 1, 1, 0.7);
+			ctx.SetSourceRGBA(1, 1, 1, 0.8);
 			ctx.Fill();
 			
 			ctx.MoveTo(d_ruler.X + 5, 3 + e.Height);
 			ctx.SetSourceRGBA(0, 0, 0, 0.8);
 			ctx.ShowText(s);
+			ctx.Stroke();
 			
 			Prepare(ctx);
+			
+			ctx.LineWidth = 1.5;
 			ctx.Arc(d_ruler.X, cy * scale.Y, 5, 0, 2 * Math.PI);
+			
 			ctx.SetSourceRGBA(0.6, 0.6, 1, 0.5);
 			ctx.FillPreserve();
 			
 			ctx.SetSourceRGB(0.5, 0.6, 1);
 			ctx.Stroke();
+			
 		}
 		
 		private string HexColor(Cairo.Color color)
@@ -667,7 +716,7 @@ namespace Cpg.Studio
 			
 			ctx.MoveTo(1, 1);
 			ctx.SetSourceRGBA(0, 0, 0, 0.8);
-
+			
 			Pango.CairoHelper.ShowLayout(ctx, layout);			
 		}
 		
@@ -690,10 +739,14 @@ namespace Cpg.Studio
 				ctx.Restore();
 				
 				// Paint label
+				ctx.Save();
 				DrawLabel(ctx);
+				ctx.Restore();
 				
 				// Paint axis
+				ctx.Save();
 				DrawYAxis(ctx);
+				ctx.Restore();
 				
 				if (d_showRuler && d_hasRuler)
 				{
@@ -746,14 +799,19 @@ namespace Cpg.Studio
 				return ret;
 			}
 			
-			double factor = 0.2 * direction;
-			double dist = (d_yaxis.Max - d_yaxis.Min) / 2.0;
+			double oldsize = d_yaxis.Max - d_yaxis.Min;
+			double newsize = oldsize + oldsize * 0.2 * direction;
+			
+			double factor = newsize / oldsize;
+			
+			double y = d_yaxis.Max - (evnt.Y / (double)Allocation.Height) * oldsize;
+			double cor = y - (y * factor);
 			
 			Range ax = new Range(0, 0);
-			ax.Min = d_yaxis.Min - factor * dist;
-			ax.Max = d_yaxis.Max + factor * dist;
+			ax.Max = d_yaxis.Max * factor + cor;
+			ax.Min = ax.Max - newsize;
 			
-			YAxis = ax;			
+			YAxis = ax;
 			return ret;
 		}
 		
@@ -771,7 +829,16 @@ namespace Cpg.Studio
 			d_hasRuler = false;
 			
 			QueueDraw();
-			return false;
+			return base.OnLeaveNotifyEvent(evnt);
 		}
+		
+		protected override bool OnEnterNotifyEvent (Gdk.EventCrossing evnt)
+		{
+			d_hasRuler = true;
+			QueueDraw();
+
+			return base.OnEnterNotifyEvent(evnt);
+		}
+
 	}
 }

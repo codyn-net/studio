@@ -5,9 +5,16 @@ namespace Cpg.Studio
 {
 	public class Range
 	{
-		private float d_from;
-		private float d_step;
-		private float d_to;
+		private double d_from;
+		private double d_step;
+		private double d_to;
+		
+		public Range(double from, double timestep, double to)
+		{
+			d_from = from;
+			d_step = timestep;
+			d_to = to;
+		}
 		
 		public Range(string s)
 		{
@@ -20,20 +27,20 @@ namespace Cpg.Studio
 				if (parts.Length == 1)
 				{
 					d_from = 0;
-					d_to = float.Parse(parts[0]);
+					d_to = double.Parse(parts[0]);
 					d_step = d_to;
 				}
 				else if (parts.Length == 2)
 				{
-					d_from = float.Parse(parts[0]);
-					d_to = float.Parse(parts[1]);
+					d_from = double.Parse(parts[0]);
+					d_to = double.Parse(parts[1]);
 					d_step = 1;
 				}
 				else
 				{
-					d_from = float.Parse(parts[0]);
-					d_step = float.Parse(parts[1]);
-					d_to = float.Parse(parts[2]);
+					d_from = double.Parse(parts[0]);
+					d_step = double.Parse(parts[1]);
+					d_to = double.Parse(parts[2]);
 				}
 			}
 			catch (FormatException)
@@ -44,7 +51,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public float From
+		public double From
 		{
 			get
 			{
@@ -52,7 +59,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public float Step
+		public double Step
 		{
 			get
 			{
@@ -60,7 +67,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public float To
+		public double To
 		{
 			get
 			{

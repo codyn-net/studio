@@ -70,5 +70,44 @@ namespace Cpg.Studio
 			
 			factory.AddDefault();
 		}
+		
+		public static Gtk.Button SmallButton(string stockid)
+		{
+			Gtk.Button but = new Gtk.Button();
+			Gtk.RcStyle rc = new Gtk.RcStyle();
+			
+			rc.Ythickness = 0;
+			rc.Xthickness = 0;
+			
+			but.ModifyStyle(rc);
+			
+			but.Image = new Gtk.Image(stockid, Gtk.IconSize.Menu);
+			but.Relief = Gtk.ReliefStyle.None;
+			
+			return but;
+		}
+		
+		public static Gtk.Button CloseButton()
+		{
+			return SmallButton(Gtk.Stock.Close);
+		}
+		
+		public static Gtk.ToggleButton ChainButton()
+		{
+			Gtk.ToggleButton but = new Gtk.ToggleButton();
+			but.Relief = Gtk.ReliefStyle.None;
+			
+			Gtk.Image im1 = Gtk.Image.LoadFromResource("chain.png");
+			Gtk.Image im2 = Gtk.Image.LoadFromResource("chain-broken.png");
+			
+			but.Active = false;
+			but.Image = im1;
+			
+			but.Toggled += delegate(object sender, EventArgs e) {
+				but.Image = (sender as Gtk.ToggleButton).Active ? im2 : im1;		
+			};
+			
+			return but;
+		}
 	}
 }

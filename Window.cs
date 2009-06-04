@@ -26,6 +26,8 @@ namespace Cpg.Studio
 		private ActionGroup d_popupActionGroup;
 		private Dictionary<Components.Object, PropertyDialog> d_propertyEditors;
 		private Components.Network d_network;
+		private Monitor d_monitor;
+		private Simulation d_simulation;
 		
 		private bool d_modified;
 		private string d_filename;
@@ -34,7 +36,19 @@ namespace Cpg.Studio
 		{
 			d_network = new Components.Network();
 			
+			d_network.AddNotification("compiled", delegate (object source, GLib.NotifyArgs args) {
+				if (d_network.Compiled)
+				{
+					Console.WriteLine("Network has been compiled!");
+				}
+				else
+				{
+					Console.WriteLine("Network has been tainted!");
+				}				
+			});
+			
 			d_network.CompileError += OnCompileError;
+			d_simulation = new Simulation(d_network);
 
 			Build();
 			ShowAll();
@@ -46,7 +60,7 @@ namespace Cpg.Studio
 			
 			d_propertyEditors = new Dictionary<Components.Object, PropertyDialog>();
 			
-			DoLoadXml("text.cpg");
+			DoLoadXml("test.cpg");
 		}
 		
 		private void Build()
@@ -485,9 +499,12 @@ namespace Cpg.Studio
 					continue;
 				
 				string name = "Monitor" + props[i];
+				string prop = props[i];
 				
 				d_popupActionGroup.Add(new ActionEntry[] {
-					new ActionEntry(name + "Action", null, props[i].Replace("_", "__"), null, null, new EventHandler(OnStartMonitor))
+					new ActionEntry(name + "Action", null, props[i].Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
+						OnStartMonitor(selection, prop);
+					})
 				});
 				
 				d_uimanager.AddUi(d_popupMergeId, "/popup/MonitorMenu/MonitorPlaceholder", name, name + "Action", UIManagerItemType.Menuitem, false);
@@ -1157,8 +1174,40 @@ namespace Cpg.Studio
 			d_grid.ZoomDefault();
 		}
 		
+		private void EnsureMonitor()
+		{
+			if (d_monitor != null)
+				return;
+			
+			d_monitor = new Monitor(d_grid, d_simulation);
+			d_monitor.TransientFor = this;
+			
+			d_monitor.Realize();
+
+			PositionWindow(d_monitor);
+			d_monitor.Present();
+			
+			d_monitor.Destroyed += delegate(object sender, EventArgs e) {
+				d_monitor = null;
+				(d_normalGroup.GetAction("ViewMonitorAction") as ToggleAction).Active = false;
+			};
+		}
+		
 		private void OnToggleMonitorActivated(object sender, EventArgs args)
 		{
+			ToggleAction toggle = sender as ToggleAction;
+			
+			if (!toggle.Active && d_monitor != null)
+			{
+				Gtk.Window ctrl = d_monitor;
+				d_monitor = null;
+				ctrl.Destroy();
+			}
+			else if (toggle.Active)
+			{
+				EnsureMonitor();
+				d_monitor.Present();
+			}
 		}
 		
 		private void OnToggleControlActivated(object sender, EventArgs args)
@@ -1211,8 +1260,14 @@ namespace Cpg.Studio
 			Message(Gtk.Stock.DialogError, error, message);
 		}
 		
-		private void OnStartMonitor(object send, EventArgs args)
+		private void OnStartMonitor(Components.Object[] objs, string property)
 		{
+			EnsureMonitor();
+			
+			foreach (Components.Object obj in objs)
+			{
+				d_monitor.AddHook(obj, property);
+			}
 		}
 
 		private void OnSimulationRunPeriod(object sender, EventArgs args)
@@ -1229,7 +1284,7 @@ namespace Cpg.Studio
 			}
 			else
 			{
-				d_network.Run(r.From, r.Step, r.To);
+				d_simulation.RunPeriod(r.From, r.Step, r.To);
 			}
 		}
 		
@@ -1239,7 +1294,7 @@ namespace Cpg.Studio
 			
 			if (r.Step > 0)
 			{
-				d_network.Step(r.Step);
+				d_simulation.Step(r.Step);
 			}
 			else
 			{
@@ -1253,7 +1308,7 @@ namespace Cpg.Studio
 		
 		private void OnSimulationReset(object sender, EventArgs args)
 		{
-			d_network.Reset();
+			d_simulation.Reset();
 		}
 		
 		private void OnCompileError(object sender, Cpg.CompileErrorArgs args)
@@ -1270,7 +1325,7 @@ namespace Cpg.Studio
 			}
 			else
 			{
-				title += "->" + args.Error.LinkAction.Target.Name;
+				title += "»" + args.Error.LinkAction.Target.Name;
 				expression = args.Error.LinkAction.Expression.AsString;
 			}
 		

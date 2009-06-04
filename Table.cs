@@ -14,13 +14,13 @@ namespace Cpg.Studio
 			}
 		}
 		
-		enum Expand
+		public enum ExpandType
 		{
 			Right,
 			Down
 		}
 		
-		private Expand d_expand;
+		private ExpandType d_expand;
 		private bool d_compacting;
 		private Gtk.Widget d_dragging;
 		private Gtk.Widget d_swapped;
@@ -28,7 +28,7 @@ namespace Cpg.Studio
 		
 		public Table(uint rows, uint cols, bool homogeneous) : base(rows, cols, homogeneous)
 		{
-			d_expand = Expand.Right;
+			d_expand = ExpandType.Right;
 			
 			AddEvents((int)(Gdk.EventMask.KeyPressMask | Gdk.EventMask.ButtonPressMask));
 			CanFocus = true;
@@ -40,7 +40,7 @@ namespace Cpg.Studio
 		{
 		}
 		
-		public Expand Expand
+		public ExpandType Expand
 		{
 			get
 			{
@@ -52,7 +52,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private Gtk.Widget RealChild(Gtk.Widget child)
+		public Gtk.Widget RealChild(Gtk.Widget child)
 		{
 			while (child != null && child.Parent != this)
 				child = child.Parent;
@@ -60,7 +60,7 @@ namespace Cpg.Studio
 			return child;
 		}
 		
-		private void PositionChild(Gtk.Widget child, uint left, uint top)
+		public void PositionChild(Gtk.Widget child, uint left, uint top)
 		{
 			child = RealChild(child);
 
@@ -68,6 +68,20 @@ namespace Cpg.Studio
 			ChildSetProperty(child, "right-attach", new GLib.Value(left + 1));
 			ChildSetProperty(child, "top-attach", new GLib.Value(top));
 			ChildSetProperty(child, "bottom-attach", new GLib.Value(top + 1));
+		}
+		
+		public Point GetPosition(Gtk.Widget child)
+		{
+			child = RealChild(child);
+			
+			if (child == null)
+				return new Point(0, 0);
+			
+			Point ret = new Point();
+			ret.X = (int)(uint)ChildGetProperty(child, "left-attach").Val;
+			ret.Y = (int)(uint)ChildGetProperty(child, "top-attach").Val;
+			
+			return ret;
 		}
 		
 		private void MoveTo(Gtk.Widget from, Gtk.Widget to)
@@ -167,7 +181,7 @@ namespace Cpg.Studio
 					all.Add(new Point(x, y));
 			}
 			
-			if (d_expand == Expand.Down)
+			if (d_expand == ExpandType.Down)
 			{
 				all.Sort(delegate (Point first, Point second) {
 					return first.Y == second.Y ? first.X.CompareTo(second.X) : first.Y.CompareTo(second.Y);
@@ -190,7 +204,7 @@ namespace Cpg.Studio
 				return all[0];
 			
 			/* Resize is imminent */
-			if (d_expand == Expand.Right)
+			if (d_expand == ExpandType.Right)
 			{
 				Resize(NRows, NColumns + 1);
 				return new Point((int)NColumns - 1, 0);
@@ -209,8 +223,8 @@ namespace Cpg.Studio
 			if (child == null)
 				return new Point();
 			
-			int left = (int)ChildGetProperty(child, "left-attach").Val;
-			int top = (int)ChildGetProperty(child, "top-attach").Val;
+			int left = (int)(uint)ChildGetProperty(child, "left-attach").Val;
+			int top = (int)(uint)ChildGetProperty(child, "top-attach").Val;
 			
 			return new Point(left, top);
 		}
@@ -266,14 +280,14 @@ namespace Cpg.Studio
 		
 		private bool EmptyRow(uint idx)
 		{
-			return (new List<Gtk.Widget>(Children)).Exists(delegate (Gtk.Widget child) {
+			return !(new List<Gtk.Widget>(Children)).Exists(delegate (Gtk.Widget child) {
 				return !(child is Placeholder) && (uint)ChildGetProperty(child, "top-attach") == idx;
 			});
 		}
 		
 		private bool EmptyColumn(uint idx)
 		{
-			return (new List<Gtk.Widget>(Children)).Exists(delegate (Gtk.Widget child) {
+			return !(new List<Gtk.Widget>(Children)).Exists(delegate (Gtk.Widget child) {
 				return !(child is Placeholder) && (uint)ChildGetProperty(child, "left-attach") == idx;
 			});
 		}
@@ -305,6 +319,35 @@ namespace Cpg.Studio
 			
 			return false;							
 		}
+		
+		public Gtk.Widget At(int left, int top)
+		{
+			foreach (Gtk.Widget widget in Children)
+			{
+				int cleft = (int)ChildGetProperty(widget, "left-attach").Val;
+				int ctop = (int)ChildGetProperty(widget, "top-attach").Val;
+				
+				if (cleft == left && ctop == top && !(widget is Placeholder))
+				{
+					return widget;
+				}
+			}
+			
+			return null;
+		}
+		
+		public Gtk.Widget Find(Gtk.Widget child, int dx, int dy)
+		{
+			child = RealChild(child);
+			
+			if (child == null)
+				return null;
+			
+			int left = (int)ChildGetProperty(child, "left-attach").Val + dx;
+			int top = (int)ChildGetProperty(child, "top-attach").Val + dy;
+			
+			return At(left, top);
+		}
 
 		private void RemoveRow(uint idx)
 		{
@@ -318,6 +361,7 @@ namespace Cpg.Studio
 				}
 				else if (pos.Y >= idx)
 				{
+					Console.WriteLine(Children.Count);
 					ChildSetProperty(child, "top-attach", new GLib.Value(idx - 1));
 					ChildSetProperty(child, "bottom-attach", new GLib.Value(idx));
 				}
