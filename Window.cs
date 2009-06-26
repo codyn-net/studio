@@ -230,7 +230,13 @@ namespace Cpg.Studio
 					Action action = new Action(pname + name + "Action", name, "", "");
 					
 					group.Add(action);
-					action.Activated += delegate (object source, EventArgs args) { ImportFromFile(file); };
+					string importFile = file;
+
+					action.Activated += delegate (object source, EventArgs args)
+					{
+						Console.WriteLine("Import: " + importFile);
+						ImportFromFile(importFile); 
+					};
 					
 					manager.AddUi(mid, "/menubar/InsertMenu/" + parent, pname + name, pname + name + "Action", UIManagerItemType.Menuitem, false);
 					manager.AddUi(mid, "/popup/InsertMenu/" + parent, pname + name, pname + name + "Action", UIManagerItemType.Menuitem, false);
