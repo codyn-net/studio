@@ -18,7 +18,7 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 
-		private void Reconstruct(Cpg cpg, Serialization.Group group)
+		private void Reconstruct(Cpg cpg, Serialization.Group group, List<CCpg.Object> all)
 		{
 			CCpg.Network network = cpg.Network.CNetwork;
 			List<Serialization.Group> groups = new List<Serialization.Group>();
@@ -50,6 +50,8 @@ namespace Cpg.Studio.Serialization
 						throw new Exception("Could not find object '" + id + "'");
 					}
 					
+					all.Remove(cobj);
+					
 					// Set CObject
 					sim.Object = cobj;
 					
@@ -61,7 +63,7 @@ namespace Cpg.Studio.Serialization
 			// Reconstruct groups within before setting up links
 			foreach (Serialization.Group g in groups)
 			{
-				Reconstruct(cpg, g);
+				Reconstruct(cpg, g, all);
 			}
 			
 			foreach (Serialization.Object obj in group.Children)
@@ -110,9 +112,79 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
+		private void Rewrap(Serialization.Group root, List<CCpg.Object> all)
+		{
+			Dictionary<CCpg.Object, Components.Simulated> mapping = new Dictionary<CCpg.Object, Components.Simulated>();
+			List<Components.Simulated> states = new List<Components.Simulated>();
+
+			foreach (CCpg.Object obj in all)
+			{
+				if (obj is CCpg.Link)
+					continue;
+			
+				Components.Simulated sim = Components.Simulated.FromCpg(obj);
+				mapping[obj] = sim;
+
+				states.Add(sim);
+				root.Children.Add(Serialization.Object.Create(sim));
+			}
+			
+			foreach (CCpg.Object obj in all)
+			{
+				if (!(obj is CCpg.Link))
+					continue;
+
+				CCpg.Link link = obj as CCpg.Link;
+				
+				if (!mapping.ContainsKey(link.To))
+				{
+					throw new Exception("Could not locate link target '" + link.To.Id + "' for '" + link.Id + "'");
+				}
+				
+				if (!mapping.ContainsKey(link.To))
+				{
+					throw new Exception("Could not locate link source '" + link.From.Id + "' for '" + link.Id + "'");
+				}
+
+				Components.Simulated sim = Components.Simulated.FromCpg(obj);
+				(sim as Components.Link).From = mapping[link.From];
+				(sim as Components.Link).To = mapping[link.To];
+				
+				root.Children.Add(Serialization.Object.Create(sim));
+			}
+			
+			// Make grid of objects at 0, 0 with aspect ratio about 4x3, spacing 4
+			int spacing = 4;
+			double ratio = 4 / 3;
+			
+			int columns = (int)Math.Ceiling(Math.Sqrt(ratio * states.Count));
+			
+			for (int i = 0; i < states.Count; ++i)
+			{
+				int col = i % columns * (spacing + 1);
+				int row = i / columns * (spacing + 1);
+				
+				states[i].Allocation = new Allocation(col, row, 1, 1);
+			}
+		}
+		
 		private void Reconstruct(Cpg cpg)
 		{
-			Reconstruct(cpg, cpg.Project.Root);
+			// Reconstruct wrapped network
+			List<CCpg.Object> all = new List<CCpg.Object>();
+			
+			foreach (CCpg.State state in cpg.Network.CNetwork.States)
+			{
+				all.Add(state);
+			}
+			
+			foreach (CCpg.Link link in cpg.Network.CNetwork.Links)
+			{
+				all.Add(link);
+			}
+			
+			Reconstruct(cpg, cpg.Project.Root, all);
+			Rewrap(cpg.Project.Root, all);
 		}
 		
 		public Cpg LoadXml(string xml)
@@ -132,29 +204,42 @@ namespace Cpg.Studio.Serialization
 			stream.Close();
 			
 			XmlNode project = doc.SelectSingleNode("/cpg/project");
-			XmlSerializer serializer = new XmlSerializer(typeof(Project));
+			object des = null;
 			
-			XmlReader r = new XmlNodeReader(project);
-			XmlReaderSettings settings = new XmlReaderSettings();
-			settings.IgnoreComments = true;
-			settings.IgnoreWhitespace = true;
-			
-			XmlReader reader = XmlReader.Create(r, settings);
-			object des = serializer.Deserialize(reader);
-			reader.Close();			
-			
-			if (des == null)
+			if (project != null)
 			{
-				throw new Exception("Could not construct project");
+				XmlSerializer serializer = new XmlSerializer(typeof(Project));
+				
+				XmlReader r = new XmlNodeReader(project);
+				XmlReaderSettings settings = new XmlReaderSettings();
+				settings.IgnoreComments = true;
+				settings.IgnoreWhitespace = true;
+				
+				XmlReader reader = XmlReader.Create(r, settings);
+				des = serializer.Deserialize(reader);
+				reader.Close();
+				
+				if (des == null)
+				{
+					throw new Exception("Could not construct project");
+				}
 			}
 			
 			Cpg cpg = new Cpg(network);
 			
 			// Set network
 			cpg.Network.CNetwork = network;
-			cpg.Project = des as Project;
 			
-			// Reconstruct wrapped network
+			if (des != null)
+			{
+				cpg.Project = des as Project;
+			}
+			else
+			{
+				cpg.Project = new Project();
+				cpg.Project.Root = new Serialization.Group();
+			}
+			
 			Reconstruct(cpg);
 			
 			return cpg;
