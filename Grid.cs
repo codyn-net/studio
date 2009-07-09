@@ -463,7 +463,7 @@ namespace Cpg.Studio
 		
 		private PointF ScaledPosition(PointF position, ScaledPredicate predicate)
 		{
-			return new PointF(Scaled(position.X, predicate), Scaled(position.Y, predicate));
+			return new PointF(Scaled(position.X + Container.X, predicate), Scaled(position.Y + Container.Y, predicate));
 		}
 				
 		private PointF ScaledPosition(double x, double y, ScaledPredicate predicate)
