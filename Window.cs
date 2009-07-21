@@ -706,10 +706,11 @@ namespace Cpg.Studio
 			d_filename = null;
 			d_modified = false;
 			
+			UpdateSensitivity();
 			UpdateTitle();
 		}
 		
-		private void DoLoadXml(string filename)
+		public void DoLoadXml(string filename)
 		{
 			AskUnsavedModified();
 			
@@ -963,7 +964,11 @@ namespace Cpg.Studio
 						string filename = dlg.Filename;
 						
 						if (DoSaveXml(filename))
+						{
 							d_filename = filename;
+							UpdateSensitivity();
+							UpdateTitle();
+						}
 					}
 					
 					dlg.Destroy();		
