@@ -56,6 +56,8 @@ namespace Cpg.Studio
 		private float[] d_gridBackground;
 		private float[] d_gridLine;
 		
+		private RenderCache d_gridCache;
+		
 		public Grid(Components.Network network) : base()
 		{
 			AddEvents((int)(Gdk.EventMask.Button1MotionMask |
@@ -76,19 +78,21 @@ namespace Cpg.Studio
 			LeveledDown += OnLevelDown;
 			SelectionChanged += OnSelectionChanged;
 			
-			d_maxSize = 120;
-			d_minSize = 20;
+			d_maxSize = 160;
+			d_minSize = 10;
 			d_defaultGridSize = 50;
 			d_gridSize = d_defaultGridSize;
 			d_focus = null;
 			
 			d_gridBackground = new float[] {1f, 1f, 1f};
-			d_gridLine = new float[] {0.9f, 0.9f, 0.9f};
+			d_gridLine = new float[] {0.95f, 0.95f, 0.95f};
 			
 			d_objectStack = new List<StackItem>();
 			d_hover = new List<Components.Object>();
 			d_selection = new List<Components.Object>();
 			d_mouseRect = new Allocation(0f, 0f, 0f, 0f);
+			
+			d_gridCache = new RenderCache();
 		
 			Clear();
 		}
@@ -155,16 +159,6 @@ namespace Cpg.Studio
 			if (link.Empty())
 				return;
 			
-			int offset = -1; 
-			
-			// Calculate offset
-			foreach (Components.Link other in Links)
-			{
-				if (link.SameObjects(other) && other.Offset > offset)
-					offset = other.Offset;
-			}
-			
-			link.Offset = offset + 1;
 			AddObject(link);
 		}
 		
@@ -319,6 +313,12 @@ namespace Cpg.Studio
 			Container.Add(obj);
 			DoObjectAdded(obj);
 			
+			Components.Link link = obj as Components.Link;
+			if (link != null)
+			{
+				CheckLinkOffsets(link.From, link.To);
+			}
+			
 			QueueDraw();
 		}
 		
@@ -342,27 +342,17 @@ namespace Cpg.Studio
 						Remove(link);
 				}
 			}
-			else if (obj is Components.Link)
-			{
-				/* Reoffset links */
-				int offset = 0;
-				Components.Link link = obj as Components.Link;
-				
-				foreach (Components.Object child in Container.Children)
-				{
-					if (child == obj || !(child is Components.Link))
-						continue;
-				
-					if (link.SameObjects(child as Components.Link))
-					{
-						(child as Components.Link).Offset = offset++;
-					}
-				}
-			}
 			
 			ObjectRemoved(this, obj);
 			obj.Removed();
 
+			if (obj is Components.Link)
+			{
+				/* Reoffset links */
+				Components.Link link = obj as Components.Link;
+				CheckLinkOffsets(link.From, link.To);
+			}
+			
 			Unselect(obj);
 			
 			if (obj is Components.Simulated)
@@ -842,33 +832,40 @@ namespace Cpg.Studio
 		
 		private void DrawGrid(Cairo.Context graphics)
 		{
-			PointF pt = UnitSize();
+			// Calculate x/y offset of the grid lines
+			float ox = Container.X % (float)d_gridSize;
+			float oy = Container.Y % (float)d_gridSize;
 			
 			graphics.Save();
-			graphics.Scale(d_gridSize, d_gridSize);
-
-			float ox = (Container.X / (float)d_gridSize) % 1;
-			float oy = (Container.Y / (float)d_gridSize) % 1;
+			graphics.Translate(-d_gridSize - ox, -d_gridSize - oy);
 			
-			graphics.LineWidth = 1 / (float)d_gridSize;
-			
-			double offset = graphics.LineWidth / 2;
-			
-			graphics.SetSourceRGB(d_gridLine[0], d_gridLine[1], d_gridLine[2]);
-			
-			for (int i = 0; i <= pt.X; ++i)
+			d_gridCache.Render(graphics, Allocation.Width + d_gridSize * 2, Allocation.Height + d_gridSize * 2, delegate (Cairo.Context ctx, int width, int height)
 			{
-				graphics.MoveTo(i - ox + offset, offset);
-				graphics.LineTo(i - ox + offset, pt.Y + offset);
-				graphics.Stroke();
-			}
-			
-			for (int i = 0; i <= pt.Y; ++i)
-			{
-					graphics.MoveTo(0 + offset, i - oy + offset);
-					graphics.LineTo(pt.X + offset, i - oy + offset);
-					graphics.Stroke();
-			}
+				double offset = 0.5;
+				ctx.LineWidth = 1;
+				
+				ctx.SetSourceRGB(d_gridLine[0], d_gridLine[1], d_gridLine[2]);
+				
+				int i = 0;
+				while (i <= width)
+				{
+					ctx.MoveTo(i - offset, offset);
+					ctx.LineTo(i - offset, height + offset);
+					
+					i += d_gridSize;
+				}
+				
+				i = 0;
+				while (i <= height)
+				{
+					ctx.MoveTo(offset, i - offset);
+					ctx.LineTo(width + offset, i - offset);
+					
+					i += d_gridSize;
+				}
+				
+				ctx.Stroke();
+			});
 			
 			graphics.Restore();
 
@@ -1128,18 +1125,58 @@ namespace Cpg.Studio
 			return Group(d_selection.ToArray());
 		}
 		
-		private void CheckLinkOffsets(Components.Simulated obj)
+		private void CheckLinkOffsets(Components.Simulated from, Components.Simulated to)
 		{
-			foreach (Components.Link l1 in obj.Links)
+			if (from == null)
 			{
-				int idx = 0;
-
-				foreach (Components.Link l2 in obj.Links)
+				foreach (Components.Link l1 in to.Links)
 				{
-					if (l1.SameObjects(l2))
+					CheckLinkOffsets(l1.From, l1.To);
+				}
+			}
+			else
+			{
+				bool flexor = false;
+				
+				List<Components.Link> first = new List<Components.Link>();
+				List<Components.Link> second = new List<Components.Link>();
+				
+				foreach (Components.Link l1 in to.Links)
+				{
+					if (l1.From == from)
+						first.Add(l1);
+				}
+				
+				foreach (Components.Link l1 in from.Links)
+				{
+					if (l1.From == to)
 					{
-						l2.Offset = idx++;
+						second.Add(l1);
 					}
+				}
+				
+				flexor = second.Count > 0;
+				int offset = 0;
+				
+				if (first.Count == 0)
+				{
+					flexor = true;
+					offset -= 1;
+				}
+				
+				if (flexor)
+				{
+					foreach (Components.Link l1 in second)
+					{
+						l1.Offset = ++offset;
+					}
+					
+					offset = 1;
+				}
+				
+				foreach (Components.Link l1 in first)
+				{
+					l1.Offset = offset++;
 				}
 			}
 		}
@@ -1162,7 +1199,10 @@ namespace Cpg.Studio
 			}
 			
 			if (group.Main != null)
-				CheckLinkOffsets(group.Main);
+			{
+				// Check all links 'to' group.Main
+				CheckLinkOffsets(null, group.Main);
+			}
 
 			group.Links.Clear();
 			
