@@ -331,12 +331,10 @@ namespace Cpg.Studio
 			if (!String.IsNullOrEmpty(d_filename))
 			{
 				Title = extra + System.IO.Path.GetFileName(d_filename) + " - CPG Studio";
-				d_normalGroup.GetAction("RevertAction").Sensitive = d_modified;
 			}
 			else
 			{
 				Title = extra + "New Network - CPG Studio";
-				d_normalGroup.GetAction("RevertAction").Sensitive = false;
 			}
 		}
 		
@@ -371,6 +369,8 @@ namespace Cpg.Studio
 			// Disable control for now
 			d_normalGroup.GetAction("ControlMenuAction").Visible = false;
 			d_normalGroup.GetAction("ViewControlAction").Visible = false;
+			
+			d_normalGroup.GetAction("RevertAction").Sensitive = d_filename != null;
 		}
 					
 		public Grid Grid
