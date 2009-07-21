@@ -28,6 +28,7 @@ namespace Cpg.Studio
 		private Components.Network d_network;
 		private Monitor d_monitor;
 		private Simulation d_simulation;
+		private string d_prevOpen;
 		
 		private bool d_modified;
 		private string d_filename;
@@ -798,12 +799,27 @@ namespace Cpg.Studio
 			                                              Gtk.Stock.Cancel, Gtk.ResponseType.Cancel,
 			                                              Gtk.Stock.Open, Gtk.ResponseType.Accept);
 		
+			if (d_filename != null)
+			{
+				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
+			}
+			else if (d_prevOpen != null)
+			{
+				dlg.SetCurrentFolder(d_prevOpen);
+			}
+			else
+			{
+				dlg.SetCurrentFolder(Environment.GetFolderPath(Environment.SpecialFolder.Personal));
+			}
+		
 			dlg.Response += delegate(object o, ResponseArgs a) {
-					string filename = dlg.Filename;
-					dlg.Destroy();
-					
-					if (a.ResponseId == ResponseType.Accept)
-						DoLoadXml(filename);		
+				d_prevOpen = dlg.CurrentFolder;
+
+				string filename = dlg.Filename;
+				dlg.Destroy();
+				
+				if (a.ResponseId == ResponseType.Accept)
+					DoLoadXml(filename);		
 			};
 			
 			dlg.Show();
@@ -956,9 +972,17 @@ namespace Cpg.Studio
 			                                              Gtk.Stock.Save, Gtk.ResponseType.Accept);
 
 			if (d_filename != null)
+			{
 				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
+			}
+			else if (d_prevOpen != null)
+			{
+				dlg.SetCurrentFolder(d_prevOpen);
+			}
 			
 			dlg.Response += delegate(object o, ResponseArgs args) {
+					d_prevOpen = dlg.CurrentFolder;
+
 					if (args.ResponseId == ResponseType.Accept)
 					{
 						string filename = dlg.Filename;
@@ -997,8 +1021,14 @@ namespace Cpg.Studio
 			{
 				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
 			}
+			else if (d_prevOpen != null)
+			{
+				dlg.SetCurrentFolder(d_prevOpen);
+			}
 
 			dlg.Response += delegate(object o, ResponseArgs a) {
+				d_prevOpen = dlg.CurrentFolder;
+
 				if (a.ResponseId == ResponseType.Accept)
 				{
 					ImportFromFile(dlg.Filename);
@@ -1055,7 +1085,13 @@ namespace Cpg.Studio
 			                                              Gtk.Stock.Save, Gtk.ResponseType.Accept);
 
 			if (d_filename != null)
+			{
 				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
+			}
+			else if (d_prevOpen != null)
+			{
+				dlg.SetCurrentFolder(d_prevOpen);
+			}
 			
 			string doc = ExportToXml(d_grid.Selection);
 			
@@ -1063,23 +1099,25 @@ namespace Cpg.Studio
 				return;
 			
 			dlg.Response += delegate(object o, ResponseArgs a) {
-					if (a.ResponseId == ResponseType.Accept)
-					{
-						string filename = dlg.Filename;
-						
-						try
-						{
-							Serialization.Saver.SaveToFile(filename, doc);
-							
-							StatusMessage("Exported network to " + filename + "...");
-						}
-						catch (Exception e)
-						{
-							Message(Gtk.Stock.DialogError, "Error while exporting network", e);
-						}
-					}
+				d_prevOpen = dlg.CurrentFolder;
+
+				if (a.ResponseId == ResponseType.Accept)
+				{
+					string filename = dlg.Filename;
 					
-					dlg.Destroy();		
+					try
+					{
+						Serialization.Saver.SaveToFile(filename, doc);
+						
+						StatusMessage("Exported network to " + filename + "...");
+					}
+					catch (Exception e)
+					{
+						Message(Gtk.Stock.DialogError, "Error while exporting network", e);
+					}
+				}
+				
+				dlg.Destroy();		
 			};
 			
 			dlg.Show();

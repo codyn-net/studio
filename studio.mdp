@@ -1,11 +1,11 @@
-<Project name="studio" fileversion="2.0" DefaultNamespace="Cpg.Studio" language="C#" clr-version="Net_2_0" targetFramework="2.0" ctype="DotNetProject">
+<Project name="studio" fileversion="2.0" language="C#" DefaultNamespace="Cpg.Studio" clr-version="Net_2_0" targetFramework="2.0" ctype="DotNetProject">
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="studio" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
-      <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
+      <Execution runwithwarnings="True" commandlineparameters="test.cpg" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
       <EnvironmentVariables />
+      <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
     <Configuration name="Release" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Release" assembly="studio" />
@@ -18,7 +18,7 @@
     <File name="Window.cs" subtype="Code" buildaction="Compile" />
     <File name="Application.cs" subtype="Code" buildaction="Compile" />
     <File name="AssemblyInfo.cs" subtype="Code" buildaction="Compile" />
-    <File name="app.desktop" subtype="Code" buildaction="FileCopy" DeployService.TargetDirectoryId="Linux.DesktopApplications" />
+    <File name="app.desktop" subtype="Code" DeployService.TargetDirectoryId="Linux.DesktopApplications" buildaction="FileCopy" />
     <File name="ui.xml" subtype="Code" buildaction="EmbedAsResource" />
     <File name="Stock.cs" subtype="Code" buildaction="Compile" />
     <File name="Grid.cs" subtype="Code" buildaction="Compile" />
@@ -71,6 +71,7 @@
     <File name="ObjectView.cs" subtype="Code" buildaction="Compile" />
     <File name="components/Globals.cs" subtype="Code" buildaction="Compile" />
     <File name="serialization/Globals.cs" subtype="Code" buildaction="Compile" />
+    <File name="RenderCache.cs" subtype="Code" buildaction="Compile" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
