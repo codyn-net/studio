@@ -303,6 +303,24 @@ namespace Cpg.Studio
 				d_grid.LevelUp(d_grid.Root);
 			});
 			
+			if (d_messageArea != null)
+			{
+				d_messageArea.Destroy();
+			}
+			
+			if (d_monitor != null)
+			{
+				d_monitor.Destroy();
+			}
+			
+			if (d_propertyEditors != null)
+			{
+				foreach (PropertyDialog dlg in d_propertyEditors.Values)
+				{
+					dlg.Destroy();
+				}
+			}
+						
 			d_grid.GrabFocus();
 		}
 		
