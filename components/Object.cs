@@ -491,7 +491,7 @@ namespace Cpg.Studio.Components
 			{
 				int off = (int)(width - alloc.Width / 2);
 				alloc.X -= off;
-				alloc.Width += off;
+				alloc.Width += off * 2;
 			}
 
 			return alloc;
