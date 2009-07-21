@@ -71,6 +71,8 @@ namespace Cpg.Studio.Components
 		double[] d_normalColor;
 		double[] d_hoverColor;
 		
+		float d_arrowSize;
+		
 		public Link(Cpg.Link obj, Components.Simulated from, Components.Simulated to) : base(obj)
 		{
 			if (from == null && obj != null)
@@ -86,6 +88,8 @@ namespace Cpg.Studio.Components
 			d_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			d_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
 			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
+			
+			d_arrowSize = 0.15f;
 		}
 		
 		public Link(Cpg.Link obj) : this(obj, null, null)
@@ -315,7 +319,7 @@ namespace Cpg.Studio.Components
 			bool same = (diff.X == 0 && diff.Y == 0);
 			
 			// Offset perpendicular
-			float dist = 1 * (d_offset + 1);
+			float dist = 1 * d_offset;
 			float alpha = same ? 0 : (float)Math.Atan(diff.X / -diff.Y);
 			
 			if (diff.Y >= 0)
@@ -376,7 +380,6 @@ namespace Cpg.Studio.Components
 			graphics.Save();			
 
 			double[] color = StateColor();
-			double uw = graphics.LineWidth;
 			
 			if (KeyFocus)
 			{
@@ -397,8 +400,6 @@ namespace Cpg.Studio.Components
 			PointF xy;
 			float pos;
 			
-			float size = 0.15f;
-
 			// Draw the arrow, first move to the center, then rotate, then draw the arrow
 			xy = EvaluateBezier(points[0], points[1], points[2], points[3], 0.5f);
 
@@ -427,51 +428,16 @@ namespace Cpg.Studio.Components
 				pos += 0.5f * (float)Math.PI;
 			}
 			
-			graphics.Translate(xy.X, xy.Y);
-			graphics.MoveTo((pos <= Math.PI ? -1 : 1) * size / 2, 0);
+			graphics.MoveTo(xy.X, xy.Y);
 			graphics.Rotate(pos);
+			graphics.RelMoveTo(0, (pos + 0.5 * Math.PI < Math.PI ? -1 : 1) * d_arrowSize / 2);
 
-			graphics.RelLineTo(-size, 0);
-			graphics.RelLineTo(size, -size);
-			graphics.RelLineTo(size, size);
-			graphics.RelLineTo(-size, 0);
+			graphics.RelLineTo(-d_arrowSize, 0);
+			graphics.RelLineTo(d_arrowSize, -d_arrowSize);
+			graphics.RelLineTo(d_arrowSize, d_arrowSize);
+			graphics.RelLineTo(-d_arrowSize, 0);
 			
 			graphics.Fill();
-			
-			string s = ToString();
-			
-			if (s == String.Empty)
-			{
-				graphics.Restore();
-				return;
-			}
-		
-			graphics.Rotate(0.5 * Math.PI);
-			
-			if (points[0].X < points[3].X)
-				graphics.Rotate(Math.PI);
-		
-			graphics.Scale(uw, uw);
-			Pango.Layout layout = Pango.CairoHelper.CreateLayout(graphics);
-			
-			layout.FontDescription = Settings.Font;
-			layout.SetText(s);
-			
-			if (MouseFocus)
-				graphics.SetSourceRGB(d_hoverColor[0], d_hoverColor[1], d_hoverColor[2]);
-			else
-				graphics.SetSourceRGB(0.3, 0.3, 0.3);
-			
-			int width, height;
-			
-			layout.GetSize(out width, out height);
-			width = (int)(width / Pango.Scale.PangoScale);
-			height = (int)(height / Pango.Scale.PangoScale);
-			
-			graphics.MoveTo(-width / 2.0, -height * 1.5);
-			
-			Pango.CairoHelper.ShowLayout(graphics, layout);
-
 			graphics.Restore();
 		}
 
@@ -491,15 +457,13 @@ namespace Cpg.Studio.Components
 				yy.Add(points[i].Y * scale);
 			}
 			
-			float minx = Utils.Min(xx);
-			float maxx = Utils.Max(xx);
-			float miny = Utils.Min(yy);
-			float maxy = Utils.Max(yy);
-			
-			int width, height;
-			MeasureString(graphics, ToString(), out width, out height);
+			float ssize = d_arrowSize * scale;
+			float minx = Utils.Min(xx) - ssize;
+			float maxx = Utils.Max(xx) + ssize;
+			float miny = Utils.Min(yy) - ssize;
+			float maxy = Utils.Max(yy) + ssize;
 
-			return new Allocation(minx - height, miny - height, maxx - minx + height * 2, maxy - miny + height * 2);
+			return new Allocation(minx, miny, Math.Max(maxx - minx, ssize * 2), Math.Max(maxy - miny, ssize * 2));
 		}
 		
 		public override bool CanIntegrate
