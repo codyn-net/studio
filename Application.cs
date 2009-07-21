@@ -18,8 +18,13 @@ namespace Cpg.Studio
 			d_window.Show();
 		}
 		
-		public void run()
+		public void run(string[] args)
 		{
+			if (args.Length > 0)
+			{
+				d_window.DoLoadXml(args[0]);
+			}
+			
 			Gtk.Application.Run();
 		}
 		
@@ -36,7 +41,7 @@ namespace Cpg.Studio
 
 			Studio.Application instance = new Studio.Application();
 			
-			instance.run();
+			instance.run(args);
 		}
 	}
 }
