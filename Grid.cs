@@ -868,15 +868,6 @@ namespace Cpg.Studio
 			});
 			
 			graphics.Restore();
-
-			graphics.SetSourceRGB(0.6, 0.6, 0.6);
-			graphics.MoveTo(0, 0.5);
-			graphics.LineTo(Allocation.Width, 0.5);
-			graphics.Stroke();
-			
-			graphics.MoveTo(0, Allocation.Height - 0.5);
-			graphics.LineTo(Allocation.Width, Allocation.Height - 0.5);
-			graphics.Stroke();
 		}
 		
 		private void DrawObject(Cairo.Context graphics, Components.Object obj)
@@ -1616,6 +1607,15 @@ namespace Cpg.Studio
 	
 				DrawObjects(graphics);
 				DrawSelectionRect(graphics);
+				
+				graphics.SetSourceRGB(0.6, 0.6, 0.6);
+				graphics.MoveTo(0, 0.5);
+				graphics.LineTo(Allocation.Width, 0.5);
+				graphics.Stroke();
+				
+				graphics.MoveTo(0, Allocation.Height - 0.5);
+				graphics.LineTo(Allocation.Width, Allocation.Height - 0.5);
+				graphics.Stroke();
 			}
 			
 			return true;
