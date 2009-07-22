@@ -24,6 +24,10 @@
       <separator/>
       <menuitem name="EditGlobals" action="EditGlobalsAction"/>
     </menu>
+    <menu name="SimulateMenu" action="SimulateMenuAction">
+      <menuitem name="Simulate" action="SimulateAction"/>
+      <menuitem name="Step" action="StepAction"/>
+    </menu>
     <menu name="ViewMenu" action="ViewMenuAction">
       <menuitem name="Center" action="CenterAction"/>
       <separator/>

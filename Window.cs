@@ -60,11 +60,11 @@ namespace Cpg.Studio
 
 			d_normalGroup.Add(new ActionEntry[] {
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
-				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG Network", new EventHandler(OnFileNew)),
+				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG network", new EventHandler(OnFileNew)),
 				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", new EventHandler(OnOpenActivated)),
 				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, null, "Revert changes", new EventHandler(OnRevertActivated)),
-				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG file", new EventHandler(OnSaveActivated)),
-				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG file", new EventHandler(OnSaveAsActivated)),
+				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", new EventHandler(OnSaveActivated)),
+				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", new EventHandler(OnSaveAsActivated)),
 
 				new ActionEntry("ImportAction", null, "Import", null, "Import CPG network objects", new EventHandler(OnImportActivated)),
 				new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", new EventHandler(OnExportActivated)),
@@ -81,6 +81,10 @@ namespace Cpg.Studio
 				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", new EventHandler(OnAddLinkActivated)),
 				new ActionEntry("AddRelayAction", Studio.Stock.Relay, null, null, "Add relay", new EventHandler(OnAddRelayActivated)),
 
+				new ActionEntry("SimulateMenuAction", null, "_Simulate", null, null, null),
+				new ActionEntry("StepAction", Gtk.Stock.MediaNext, "Step", "<Control>t", "Execute one simulation step", new EventHandler(OnStepActivated)),
+				new ActionEntry("SimulateAction", Gtk.Stock.MediaForward, "Period", "<Control>p", "(Re)Simulate period", new EventHandler(OnSimulateActivated)),
+				
 				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
 				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "<Control>h", "Center view", new EventHandler(OnCenterViewActivated)),
 				new ActionEntry("InsertMenuAction", null, "_Insert", null, null, null),
@@ -175,6 +179,7 @@ namespace Cpg.Studio
 			but.Image = new Image(Gtk.Stock.MediaForward, IconSize.Button);
 			but.Label = "Simulate period";
 			but.Clicked += new EventHandler(OnSimulationRunPeriod);
+			but.TooltipText = "Run new simulation for specified period of time";
 
 			hbox.PackStart(but, false, false, 0);
 		
@@ -182,18 +187,23 @@ namespace Cpg.Studio
 			but.Image = new Image(Gtk.Stock.MediaNext, IconSize.Button);
 			but.Label = "Step";
 			but.Clicked += new EventHandler(OnSimulationStep);
+			but.TooltipText = "Run one single simulation step";
+			
 			hbox.PackEnd(but, false, false, 0);
 
 			d_simulateButton = new ToggleButton();
 			d_simulateButton.Image = new Image(Gtk.Stock.MediaPlay, IconSize.Button);
 			d_simulateButton.Label = "Simulate";
 			d_simulateButton.Toggled += new EventHandler(OnSimulationRun);
+			d_simulateButton.TooltipText = "Run interactive simulation";
+
 			hbox.PackEnd(d_simulateButton, false, false, 0);
 
 			but = new Button();
 			but.Image = new Image(Gtk.Stock.Clear, IconSize.Button);
 			but.Label = "Reset";
 			but.Clicked += new EventHandler(OnSimulationReset);
+			but.TooltipText = "Reset running simulation";
 			hbox.PackEnd(but, false, false, 0);
 		}
 		
@@ -321,7 +331,8 @@ namespace Cpg.Studio
 					dlg.Destroy();
 				}
 			}
-						
+			
+			d_periodEntry.Text = "0:0.01:1";
 			d_grid.GrabFocus();
 		}
 		
@@ -1368,6 +1379,16 @@ namespace Cpg.Studio
 			{
 				Message(Gtk.Stock.DialogInfo, "Invalid step size", "The step size for the simulation is invalid");
 			}
+		}
+							
+		private void OnStepActivated(object sender, EventArgs args)
+		{
+			OnSimulationStep(sender, args);
+		}
+							
+		private void OnSimulateActivated(object sender, EventArgs args)
+		{
+			OnSimulationRunPeriod(sender, args);
 		}
 		
 		private void OnSimulationRun(object sender, EventArgs args)
