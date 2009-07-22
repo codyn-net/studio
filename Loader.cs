@@ -18,18 +18,17 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 
-		private void Reconstruct(Cpg cpg, Serialization.Group group, List<CCpg.Object> all)
+		private void Reconstruct(Cpg cpg, Serialization.Group group, List<CCpg.Object> all, Dictionary<string, Components.Simulated> mapping)
 		{
 			CCpg.Network network = cpg.Network.CNetwork;
 			List<Serialization.Group> groups = new List<Serialization.Group>();
 			List<Serialization.Link> links = new List<Serialization.Link>();
 			
-			Dictionary<string, Components.Simulated> mapping = new Dictionary<string, Components.Simulated>();
-			
 			group.Transfer();
 		
 			// Fill in C objects
-			foreach (Serialization.Object obj in group.Children)
+			List<Serialization.Object> cp = new List<Serialization.Object>(group.Children);
+			foreach (Serialization.Object obj in cp)
 			{
 				if (!(obj.Obj is Components.Simulated))
 					continue;
@@ -47,7 +46,8 @@ namespace Cpg.Studio.Serialization
 					
 					if (cobj == null)
 					{
-						throw new Exception("Could not find object '" + id + "'");
+						group.Children.Remove(obj);
+						continue;
 					}
 					
 					all.Remove(cobj);
@@ -63,7 +63,7 @@ namespace Cpg.Studio.Serialization
 			// Reconstruct groups within before setting up links
 			foreach (Serialization.Group g in groups)
 			{
-				Reconstruct(cpg, g, all);
+				Reconstruct(cpg, g, all, mapping);
 			}
 			
 			foreach (Serialization.Object obj in group.Children)
@@ -99,12 +99,22 @@ namespace Cpg.Studio.Serialization
 				
 				if (!mapping.ContainsKey(clink.To.Id))
 				{
-					throw new Exception("Could not locate link target '" + clink.To.Id + "' for '" + wrapped.FullId + "'");
+					// Apparently, there is no wrapper for this, so... try to just construct it here
+					Components.Simulated sim = Components.Simulated.FromCpg(clink.To);
+					mapping[clink.To.Id] = sim;
+					
+					group.Children.Add(Serialization.Object.Create(sim));
+					all.Remove(clink.To);
 				}
 				
 				if (!mapping.ContainsKey(clink.From.Id))
 				{
-					throw new Exception("Could not locate link source '" + clink.From.Id + "' for '" + wrapped.FullId + "'");
+					// Apparently, there is no wrapper for this, so... try to just construct it here
+					Components.Simulated sim = Components.Simulated.FromCpg(clink.From);
+					mapping[clink.From.Id] = sim;
+					
+					group.Children.Add(Serialization.Object.Create(sim));
+					all.Remove(clink.From);
 				}
 				
 				wrapped.To = mapping[clink.To.Id];
@@ -112,47 +122,56 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		private void Rewrap(Serialization.Group root, List<CCpg.Object> all)
+		private void Rewrap(Serialization.Group root, List<CCpg.Object> all, Dictionary<string, Components.Simulated> mapping)
 		{
-			Dictionary<CCpg.Object, Components.Simulated> mapping = new Dictionary<CCpg.Object, Components.Simulated>();
 			List<Components.Simulated> states = new List<Components.Simulated>();
-
-			foreach (CCpg.Object obj in all)
-			{
-				if (obj is CCpg.Link)
-					continue;
+			List<CCpg.Object> cp = new List<CCpg.Object>(all);
 			
-				Components.Simulated sim = Components.Simulated.FromCpg(obj);
-				mapping[obj] = sim;
-
-				states.Add(sim);
-				root.Children.Add(Serialization.Object.Create(sim));
-			}
-			
-			foreach (CCpg.Object obj in all)
+			foreach (CCpg.Object obj in cp)
 			{
 				if (!(obj is CCpg.Link))
 					continue;
 
+				Console.WriteLine(obj.Id);
 				CCpg.Link link = obj as CCpg.Link;
 				
-				if (!mapping.ContainsKey(link.To))
+				if (!mapping.ContainsKey(link.To.Id))
 				{
-					throw new Exception("Could not locate link target '" + link.To.Id + "' for '" + link.Id + "'");
+					// So, we need to create it...
+					Components.Simulated s = Components.Simulated.FromCpg(link.To);
+					mapping[link.To.Id] = s;
+					
+					root.Children.Add(Serialization.Object.Create(s));
+					all.Remove(link.To);
 				}
 				
-				if (!mapping.ContainsKey(link.To))
+				if (!mapping.ContainsKey(link.From.Id))
 				{
-					throw new Exception("Could not locate link source '" + link.From.Id + "' for '" + link.Id + "'");
+					// So, we need to create it
+					Components.Simulated s = Components.Simulated.FromCpg(link.From);
+					mapping[link.From.Id] = s;
+					
+					root.Children.Add(Serialization.Object.Create(s));
+					all.Remove(link.To);
 				}
 
 				Components.Simulated sim = Components.Simulated.FromCpg(obj);
-				(sim as Components.Link).From = mapping[link.From];
-				(sim as Components.Link).To = mapping[link.To];
+				(sim as Components.Link).From = mapping[link.From.Id];
+				(sim as Components.Link).To = mapping[link.To.Id];
 				
 				root.Children.Add(Serialization.Object.Create(sim));
+				all.Remove(obj);
 			}
-			
+
+			foreach (CCpg.Object obj in all)
+			{
+				Components.Simulated sim = Components.Simulated.FromCpg(obj);
+				mapping[obj.Id] = sim;
+
+				states.Add(sim);
+				root.Children.Add(Serialization.Object.Create(sim));
+			}
+
 			// Make grid of objects at 0, 0 with aspect ratio about 4x3, spacing 4
 			int spacing = 4;
 			double ratio = 4 / 3;
@@ -183,8 +202,9 @@ namespace Cpg.Studio.Serialization
 				all.Add(link);
 			}
 			
-			Reconstruct(cpg, cpg.Project.Root, all);
-			Rewrap(cpg.Project.Root, all);
+			Dictionary<string, Components.Simulated> mapping = new Dictionary<string, Components.Simulated>();
+			Reconstruct(cpg, cpg.Project.Root, all, mapping);
+			Rewrap(cpg.Project.Root, all, mapping);
 		}
 		
 		public Cpg LoadXml(string xml)
@@ -194,7 +214,7 @@ namespace Cpg.Studio.Serialization
 			
 			if (network == null || network.Handle == IntPtr.Zero)
 			{
-				throw new Exception("Could not construct network. This usually means that the network file is corrupted.");
+				throw new Exception("Could not construct network. This usually means that the network file is ccorupt.");
 			}
 			
 			/* Load in project, which builds the wrapper network */
