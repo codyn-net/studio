@@ -355,7 +355,7 @@ namespace Cpg.Studio.Components
 			
 			if (from.X == to.X && from.Y == to.Y)
 			{
-				PointF pts = new PointF(2, (d_offset + 1) + 0.5f);
+				PointF pts = new PointF(2, (d_offset) + 0.5f);
 
 				return new PointF[] {
 					from,
