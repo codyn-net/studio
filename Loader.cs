@@ -142,7 +142,9 @@ namespace Cpg.Studio.Serialization
 					mapping[link.To.Id] = s;
 					
 					root.Children.Add(Serialization.Object.Create(s));
+
 					all.Remove(link.To);
+					states.Add(s);
 				}
 				
 				if (!mapping.ContainsKey(link.From.Id))
@@ -152,7 +154,9 @@ namespace Cpg.Studio.Serialization
 					mapping[link.From.Id] = s;
 					
 					root.Children.Add(Serialization.Object.Create(s));
+
 					all.Remove(link.To);
+					states.Add(s);
 				}
 
 				Components.Simulated sim = Components.Simulated.FromCpg(obj);
