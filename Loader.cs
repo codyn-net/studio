@@ -192,9 +192,9 @@ namespace Cpg.Studio.Serialization
 			// Reconstruct wrapped network
 			List<CCpg.Object> all = new List<CCpg.Object>();
 			
-			foreach (CCpg.State state in cpg.Network.CNetwork.States)
+			foreach (CCpg.Object obj in cpg.Network.CNetwork.States)
 			{
-				all.Add(state);
+				all.Add(obj);
 			}
 			
 			foreach (CCpg.Link link in cpg.Network.CNetwork.Links)
