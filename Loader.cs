@@ -250,9 +250,6 @@ namespace Cpg.Studio.Serialization
 			
 			Cpg cpg = new Cpg(network);
 			
-			// Set network
-			cpg.Network.CNetwork = network;
-			
 			if (des != null)
 			{
 				cpg.Project = des as Project;
