@@ -1116,6 +1116,19 @@ namespace Cpg.Studio
 			return Group(d_selection.ToArray());
 		}
 		
+		private void CheckLinkOffsets()
+		{
+			foreach (Components.Object obj in Container.Children)
+			{
+				Components.Link link = obj as Components.Link;
+				
+				if (link != null)
+				{
+					CheckLinkOffsets(link.From, link.To);
+				}
+			}
+		}
+		
 		private void CheckLinkOffsets(Components.Simulated from, Components.Simulated to)
 		{
 			if (from == null)
@@ -1557,6 +1570,8 @@ namespace Cpg.Studio
 			d_objectStack.Insert(0, new StackItem(obj as Components.Group, d_gridSize));
 			d_gridSize = d_defaultGridSize;
 			
+			CheckLinkOffsets();
+			
 			UnselectAll();
 
 			ModifiedView(this, new EventArgs());
@@ -1572,6 +1587,7 @@ namespace Cpg.Studio
 			
 			UnselectAll();
 
+			CheckLinkOffsets();
 			ModifiedView(this, new EventArgs());
 			
 			QueueDraw();
