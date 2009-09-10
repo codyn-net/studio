@@ -132,7 +132,6 @@ namespace Cpg.Studio.Serialization
 				if (!(obj is CCpg.Link))
 					continue;
 
-				Console.WriteLine(obj.Id);
 				CCpg.Link link = obj as CCpg.Link;
 				
 				if (!mapping.ContainsKey(link.To.Id))
