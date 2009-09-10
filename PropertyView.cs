@@ -1,6 +1,8 @@
 using System;
 using Gtk;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using CCpg = Cpg;
 
 namespace Cpg.Studio
 {
@@ -463,9 +465,18 @@ namespace Cpg.Studio
 		{
 			Components.Link link = d_object as Components.Link;
 			
-			string[] props = link.To.Properties;
+			List<string> props = new List<string>(link.To.Properties);
+		
+			// Remove properties that already have actions
+			foreach (Components.Link.Action ac in link.Actions)
+			{
+				if (props.Contains(ac.Target))
+				{
+					props.Remove(ac.Target);
+				}
+			}
 			
-			if (props.Length == 0 || (props[0] == "id" && props.Length == 1))
+			if (props.Count == 0 || (props[0] == "id" && props.Count == 1))
 				return;
 			
 			Components.Link.Action action = link.AddAction(props[0] == "id" ? props[1] : props[0], "");
