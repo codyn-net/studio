@@ -214,7 +214,7 @@ namespace Cpg.Studio.Serialization
 			
 			if (network == null || network.Handle == IntPtr.Zero)
 			{
-				throw new Exception("Could not construct network. This usually means that the network file is ccorupt.");
+				throw new Exception("Could not construct network. This usually means that the network file is corrupt.");
 			}
 			
 			/* Load in project, which builds the wrapper network */
