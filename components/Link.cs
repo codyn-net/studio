@@ -190,11 +190,18 @@ namespace Cpg.Studio.Components
 		public Action AddAction(string property, string expression)
 		{
 			Cpg.Property prop = d_to.Object.Property(property);
+			Action action;
 			
 			if (prop != null)
-				return new Action(this, (d_object as Cpg.Link).AddAction(prop, expression));
+			{
+				action = new Action(this, (d_object as Cpg.Link).AddAction(prop, expression));
+			}
 			else
-				return null;
+			{
+				action = null;
+			}
+			
+			return action;
 		}
 		
 		public bool RemoveAction(Action action)
@@ -205,8 +212,8 @@ namespace Cpg.Studio.Components
 		public Cpg.LinkAction UpdateAction(Action action, string property, string expression)
 		{
 			Cpg.Link link = d_object as Cpg.Link;
-			Cpg.Property prop = link.To.Property(property); 
-
+			Cpg.Property prop = link.To.Property(property);
+			
 			if (prop == null)
 				return action.LinkAction;
 				
