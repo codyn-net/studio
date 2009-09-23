@@ -99,6 +99,8 @@ namespace Cpg.Studio.Serialization
 				
 				if (!mapping.ContainsKey(clink.To.Id))
 				{
+					Console.WriteLine("Not found to: " + clink.To.Id);
+
 					// Apparently, there is no wrapper for this, so... try to just construct it here
 					Components.Simulated sim = Components.Simulated.FromCpg(clink.To);
 					mapping[clink.To.Id] = sim;
@@ -109,6 +111,8 @@ namespace Cpg.Studio.Serialization
 				
 				if (!mapping.ContainsKey(clink.From.Id))
 				{
+					Console.WriteLine("Not found from: " + clink.From.Id);
+					
 					// Apparently, there is no wrapper for this, so... try to just construct it here
 					Components.Simulated sim = Components.Simulated.FromCpg(clink.From);
 					mapping[clink.From.Id] = sim;
@@ -136,6 +140,7 @@ namespace Cpg.Studio.Serialization
 				
 				if (!mapping.ContainsKey(link.To.Id))
 				{
+					Console.WriteLine("Not found to: " + link.To.Id);
 					// So, we need to create it...
 					Components.Simulated s = Components.Simulated.FromCpg(link.To);
 					mapping[link.To.Id] = s;
@@ -148,13 +153,15 @@ namespace Cpg.Studio.Serialization
 				
 				if (!mapping.ContainsKey(link.From.Id))
 				{
+					Console.WriteLine("Not found from: " + link.From.Id);
+					
 					// So, we need to create it
 					Components.Simulated s = Components.Simulated.FromCpg(link.From);
 					mapping[link.From.Id] = s;
 					
 					root.Children.Add(Serialization.Object.Create(s));
 
-					all.Remove(link.To);
+					all.Remove(link.From);
 					states.Add(s);
 				}
 
