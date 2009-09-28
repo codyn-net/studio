@@ -334,6 +334,8 @@ namespace Cpg.Studio
 			
 			d_periodEntry.Text = "0:0.01:1";
 			d_grid.GrabFocus();
+			
+			d_simulation.Range = new Range(d_periodEntry.Text);
 		}
 		
 		private void UpdateTitle()
@@ -627,8 +629,16 @@ namespace Cpg.Studio
 					obj.Allocation.X = (float)Math.Round(cx + (obj.Allocation.X - x) + 0.00001);
 					obj.Allocation.Y = (float)Math.Round(cy + (obj.Allocation.Y - y) + 0.00001);
 				}
-			
+				
 				d_grid.AddObject(obj);
+			}
+			
+			// Compile the network right now
+			Cpg.CompileError err = new Cpg.CompileError();
+			
+			if (!d_network.Compile(err))
+			{
+				HandleCompileError(err);
 			}
 		}
 		
@@ -771,7 +781,12 @@ namespace Cpg.Studio
 				d_grid.LevelDown(cpg.Project.Container);
 
 			d_grid.GridSize = cpg.Project.Zoom;
-			d_periodEntry.Text = cpg.Project.Period;
+
+			if (!String.IsNullOrEmpty(cpg.Project.Period))
+			{
+				d_periodEntry.Text = cpg.Project.Period;
+				d_simulation.Range = new Range(cpg.Project.Period);
+			}
 			
 			if (alloc != null)
 			{
@@ -1400,39 +1415,44 @@ namespace Cpg.Studio
 			d_simulation.Reset();
 		}
 		
-		private void OnCompileError(object sender, Cpg.CompileErrorArgs args)
+		private void HandleCompileError(Cpg.CompileError error)
 		{
 			string title;
 			string expression;
 			
-			title = args.Error.Object.Id;
+			title = error.Object.Id;
 			
-			if (args.Error.Property != null)
+			if (error.Property != null)
 			{
-				title += "." + args.Error.Property.Name;
-				expression = args.Error.Property.ValueExpression.AsString;
+				title += "." + error.Property.Name;
+				expression = error.Property.ValueExpression.AsString;
 			}
 			else
 			{
-				title += "»" + args.Error.LinkAction.Target.Name;
-				expression = args.Error.LinkAction.Expression.AsString;
+				title += "»" + error.LinkAction.Target.Name;
+				expression = error.LinkAction.Expression.AsString;
 			}
 		
-			if (d_grid.Select(args.Error.Object) && d_propertyView != null)
+			if (d_grid.Select(error.Object) && d_propertyView != null)
 			{
-				if (args.Error.Property != null)
+				if (error.Property != null)
 				{
-					d_propertyView.Select(args.Error.Property);
+					d_propertyView.Select(error.Property);
 				}
 				else
 				{
-					d_propertyView.Select(args.Error.LinkAction);
+					d_propertyView.Select(error.LinkAction);
 				}
 			}
 		
 			Message(Gtk.Stock.DialogError, 
 			        "Error while compiling " + title,
-			        args.Error.String() + ": " + args.Error.Message + "\nExpression: \"" + expression + "\"");
+			        error.String() + ": " + error.Message + "\nExpression: \"" + expression + "\"");
+		}
+		
+		private void OnCompileError(object sender, Cpg.CompileErrorArgs args)
+		{
+			HandleCompileError(args.Error);
 		}
 		
 		public Components.Network Network
