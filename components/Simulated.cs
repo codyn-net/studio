@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace Cpg.Studio.Components
 {
-	public class Simulated : Components.Object
+	public class Simulated : Components.Object, IDisposable
 	{
 		protected Cpg.Object d_object;
 		protected List<Components.Link> d_links;
@@ -32,6 +32,17 @@ namespace Cpg.Studio.Components
 		
 		public Simulated() : this(null)
 		{
+		}
+		
+		public void Dispose()
+		{
+			if (d_object != null)
+			{
+				d_object.RemoveNotification("id", NotifyIdHandler);
+
+				d_object.Dispose();
+				d_object = null;
+			}
 		}
 
 		public override bool HasProperty(string name)
@@ -119,6 +130,14 @@ namespace Cpg.Studio.Components
 				prop.Integrated = integrated;
 		}
 		
+		private void NotifyIdHandler(object source, GLib.NotifyArgs args)
+		{
+			if (base.Id != d_object.Id)
+			{
+				base.Id = d_object.Id;
+			}
+		}
+		
 		public virtual Cpg.Object Object
 		{
 			get
@@ -127,17 +146,16 @@ namespace Cpg.Studio.Components
 			}
 			set
 			{
+				if (d_object != null)
+				{
+					d_object.RemoveNotification("id", NotifyIdHandler);
+				}
+				
 				d_object = value;
 				
 				if (d_object != null)
 				{
-					d_object.AddNotification("id", delegate (object source, GLib.NotifyArgs args)
-					{
-						if (base.Id != d_object.Id)
-						{
-							base.Id = d_object.Id;
-						}
-					});
+					d_object.AddNotification("id", NotifyIdHandler);
 				}
 			}
 		}

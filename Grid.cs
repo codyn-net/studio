@@ -272,13 +272,19 @@ namespace Cpg.Studio
 			obj.PropertyChanged += delegate (Components.Object src, string name) { Modified(this, new EventArgs()); };
 			obj.PropertyRemoved += delegate (Components.Object src, string name) { Modified(this, new EventArgs()); };
 			
-			if (obj is Components.Simulated)
+			Components.Simulated sim = obj as Components.Simulated;
+			
+			if (obj != null && d_network.GetObject(sim.Object.Id) != sim.Object)
+			{
 				d_network.AddObject((obj as Components.Simulated).Object);
+			}
 			
 			if (obj is Components.Group)
 			{
 				foreach (Components.Object child in (obj as Components.Group).Children)
+				{
 					DoObjectAdded(child);
+				}
 			}
 			
 			obj.Rename();
@@ -355,8 +361,13 @@ namespace Cpg.Studio
 			
 			Unselect(obj);
 			
-			if (obj is Components.Simulated)
-				d_network.RemoveObject((obj as Components.Simulated).Object);
+			Components.Simulated sim = obj as Components.Simulated;
+			
+			if (sim != null)
+			{
+				d_network.RemoveObject(sim.Object);
+				sim.Dispose();
+			}
 			
 			Modified(this, new EventArgs());
 			QueueDraw();
