@@ -76,6 +76,10 @@ namespace Cpg.Studio
 			{
 				return d_range;
 			}
+			set
+			{
+				d_range = value;
+			}
 		}
 		
 		public bool InPeriod
