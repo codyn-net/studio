@@ -94,18 +94,6 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		private XmlAttributeOverrides OverrideNetwork()
-		{
-			XmlAttributeOverrides overrides = new XmlAttributeOverrides();
-			
-			Ignore<Cpg>(overrides, "Project");
-			Ignore<Object>(overrides, "Allocation");
-			Ignore<Group>(overrides);
-			Ignore<Globals>(overrides, "id");
-
-			return overrides;
-		}
-		
 		private XmlAttributeOverrides OverrideProject()
 		{
 			XmlAttributeOverrides overrides = new XmlAttributeOverrides();
@@ -141,9 +129,19 @@ namespace Cpg.Studio.Serialization
 			return doc;
 		}
 		
+		private XmlDocument MakeNetworkDocument()
+		{
+			StringReader stream = new StringReader(d_cpg.Network.CNetwork.WriteToXml());
+			XmlDocument doc = new XmlDocument();
+			doc.Load(stream);
+			stream.Close();
+			
+			return doc;
+		}
+		
 		public string Save()
 		{
-			XmlDocument network = MakeDocument(OverrideNetwork());
+			XmlDocument network = MakeNetworkDocument();
 			XmlDocument project = MakeDocument(OverrideProject());
 			
 			XmlNode node = network.ImportNode(project.SelectSingleNode("//cpg/project"), true);
