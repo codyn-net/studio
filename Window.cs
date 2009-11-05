@@ -675,17 +675,45 @@ namespace Cpg.Studio
 			}			
 		}
 		
-		private void AskUnsavedModified()
+		private bool AskUnsavedModified()
 		{
 			if (!d_modified)
-				return;
+			{
+				return true;
+			}
 			
 			MessageDialog dlg = new MessageDialog(this,
 			                                      DialogFlags.DestroyWithParent | DialogFlags.Modal,
 			                                      MessageType.Warning,
-			                                      ButtonsType.YesNo,
-			                                      "There are unsaved changes in the current network, do you want to save these changes first?");
-		
+			                                      ButtonsType.None,
+			                                      true,
+			                                      "<span weight=\"bold\" size=\"larger\">Save changes before closing?</span>");
+			dlg.SecondaryText = "There are unsaved changes in the current network, do you want to save these changes first?";
+
+			Gtk.Button button = new Gtk.Button();
+			button.Label = "Close without Saving";
+			button.Show();
+			
+			dlg.AddActionWidget(button, Gtk.ResponseType.Cancel);			
+
+			button = new Gtk.Button();
+			button.Image = new Gtk.Image(Gtk.Stock.Cancel, Gtk.IconSize.Button);
+			button.Label = "Cancel";
+			button.Show();
+			
+			dlg.AddActionWidget(button, Gtk.ResponseType.Close);
+
+			button = new Gtk.Button();
+			button.Image = new Gtk.Image(Gtk.Stock.Save, Gtk.IconSize.Button);
+			button.Label = "Save";
+			button.Show();
+			button.CanDefault = true;
+			
+			dlg.AddActionWidget(button, Gtk.ResponseType.Yes);
+
+			dlg.DefaultResponse = Gtk.ResponseType.Yes;
+			dlg.Default = button;
+
 			int resp = dlg.Run();
 			
 			if (resp == (int)ResponseType.Yes)
@@ -693,10 +721,13 @@ namespace Cpg.Studio
 				FileChooserDialog d = DoSave();
 				
 				if (d != null)
+				{
 					d.Run();
+				}
 			}
 			
 			dlg.Destroy();
+			return resp != (int)ResponseType.Close && resp != (int)ResponseType.DeleteEvent;
 		}
 		
 		public int PanePosition
@@ -714,14 +745,21 @@ namespace Cpg.Studio
 		/* Callbacks */
 		protected override bool OnDeleteEvent(Gdk.Event evt)
 		{
-			AskUnsavedModified();
+			if (!AskUnsavedModified())
+			{
+				return true;
+			}
+			
 			Gtk.Application.Quit();
 			return true;
 		}
 			
 		private void OnFileNew(object obj, EventArgs args)
 		{
-			AskUnsavedModified();
+			if (!AskUnsavedModified())
+			{
+				return;
+			}
 
 			Clear();
 			
@@ -734,7 +772,10 @@ namespace Cpg.Studio
 		
 		public void DoLoadXml(string filename)
 		{
-			AskUnsavedModified();
+			if (!AskUnsavedModified())
+			{
+				return;
+			}
 			
 			Serialization.Cpg cpg;
 			
