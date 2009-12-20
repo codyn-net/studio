@@ -15,7 +15,6 @@ namespace Cpg.Studio
 		
 		private Gtk.Button d_removeButton;
 		private Gtk.Button d_pieceRemoveButton;
-		private Gtk.Button d_pieceAddButton;
 		
 		private Gtk.HPaned d_paned;
 		
@@ -271,12 +270,19 @@ namespace Cpg.Studio
 
 			hbox.PackStart(d_pieceRemoveButton, false, false ,0);
 
-			d_pieceAddButton = new Button();
-			d_pieceAddButton.Add(new Image(Gtk.Stock.Add, IconSize.Menu));
-			d_pieceAddButton.Clicked += DoAddPiece;
-			d_pieceAddButton.ShowAll();
+			but = new Button();
+			but.Add(new Image(Gtk.Stock.Add, IconSize.Menu));
+			but.Clicked += DoAddPiece;
+			but.ShowAll();
 
-			hbox.PackStart(d_pieceAddButton, false, false, 0);
+			hbox.PackStart(but, false, false, 0);
+			
+			but = new Button();
+			but.Add(new Label("Interpolate"));
+			but.Clicked += DoInterpolate;
+			but.ShowAll();
+			
+			hbox.PackEnd(but, false, false, 0);
 
 			d_pieceTreeview.NodeSelection.Changed += DoPieceSelectionChanged;
 			d_paned.Add2(vbox);
@@ -328,7 +334,10 @@ namespace Cpg.Studio
 			Cpg.FunctionPolynomial function = new Cpg.FunctionPolynomial(funcName);
 			d_network.AddFunction(function);
 			
-			d_store.AddNode(new PolynomialNode(function));
+			ITreeNode newnode = new PolynomialNode(function);
+			d_store.AddNode(newnode);
+			
+			d_treeview.NodeSelection.SelectNode(newnode);
 		}
 		
 		private void DoTreeViewKeyPress(object sender, KeyPressEventArgs args)
@@ -365,11 +374,7 @@ namespace Cpg.Studio
 			
 			if (selection.SelectedNodes.Length != 1)
 			{
-				d_paned.Child2.Sensitive = false;
-				
-				d_pieceRemoveButton.Sensitive = false;
-				d_pieceAddButton.Sensitive = false;
-				
+				d_paned.Child2.Sensitive = false;			
 				return;
 			}
 			
@@ -377,7 +382,6 @@ namespace Cpg.Studio
 			
 			d_paned.Child2.Sensitive = true;
 			d_pieceRemoveButton.Sensitive = d_pieceTreeview.NodeSelection.SelectedNodes.Length != 0;
-			d_pieceAddButton.Sensitive = true;
 			
 			foreach (Cpg.FunctionPolynomialPiece piece in node.Function.Pieces)
 			{
@@ -451,7 +455,47 @@ namespace Cpg.Studio
 			FunctionPolynomialPiece piece = new FunctionPolynomialPiece(begin, end, 0, 1);
 			node.Function.Add(piece);
 			
-			d_pieceStore.AddNode(new PieceNode(piece));
+			ITreeNode newnode = new PieceNode(piece);
+			d_pieceStore.AddNode(newnode);
+			
+			d_pieceTreeview.NodeSelection.SelectNode(newnode);
+		}
+		
+		private void DoInterpolate(object sender, EventArgs args)
+		{
+			PolynomialNode function = (PolynomialNode)d_treeview.NodeSelection.SelectedNodes[0];
+			InterpolateDialog dlg = new InterpolateDialog(Toplevel as Gtk.Window, function.Function);
+			
+			dlg.Show();
+
+			dlg.Response += delegate(object o, ResponseArgs a1) {
+				if (a1.ResponseId == ResponseType.Apply)
+				{
+					ApplyInterpolation(function, dlg.Interpolation);
+				}
+				
+				dlg.Destroy();
+			};
+		}
+
+		private void ApplyInterpolation(PolynomialNode node, Interpolators.Interpolation interpolation)
+		{
+			if (interpolation == null)
+			{
+				return;
+			}
+			
+			node.Function.Clear();
+
+			foreach (Interpolators.Interpolation.Piece piece in interpolation.Pieces)
+			{
+				node.Function.Add(new Cpg.FunctionPolynomialPiece(piece.Begin, piece.End, piece.Coefficients));
+			}
+			
+			if (d_treeview.NodeSelection.NodeIsSelected(node) && d_treeview.NodeSelection.SelectedNodes.Length == 1)
+			{
+				FillPieces();
+			}
 		}
 	}
 }

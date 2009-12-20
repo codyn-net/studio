@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="studio" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
+      <Execution runwithwarnings="True" commandlineparameters="test.cpg" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
       <EnvironmentVariables />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
@@ -75,6 +75,11 @@
     <File name="FunctionsDialog.cs" subtype="Code" buildaction="Compile" />
     <File name="FunctionsView.cs" subtype="Code" buildaction="Compile" />
     <File name="PolynomialsView.cs" subtype="Code" buildaction="Compile" />
+    <File name="interpolators" subtype="Directory" buildaction="Compile" />
+    <File name="interpolators/IInterpolator.cs" subtype="Code" buildaction="Compile" />
+    <File name="interpolators/Interpolation.cs" subtype="Code" buildaction="Compile" />
+    <File name="interpolators/PChip.cs" subtype="Code" buildaction="Compile" />
+    <File name="InterpolateDialog.cs" subtype="Code" buildaction="Compile" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
