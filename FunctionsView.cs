@@ -38,24 +38,55 @@ namespace Cpg.Studio
 			{
 				get
 				{
-					Cpg.Property[] arguments = d_function.Arguments;
+					Cpg.FunctionArgument[] arguments = d_function.Arguments;
 					string[] ret = new string[arguments.Length];
+					
+					bool optional = false;
 					
 					for (int i = 0; i < arguments.Length; ++i)
 					{
+						double optval = 0;
+
+						if (arguments[i].Optional)
+						{
+							optional = true;
+							optval = arguments[i].DefaultValue;
+						}
+
 						ret[i] = arguments[i].Name;
+						
+						if (optional)
+						{
+							ret[i] += String.Format(" = {0}", optval);
+						}
 					}
 					
 					return String.Join(", ", ret);
 				}
 				set
 				{
-					List<string> parts = new List<string>(value.Split(',', ' '));
+					List<string> parts = new List<string>(value.Split(','));
 					parts.RemoveAll(delegate (string r) {
 						return String.IsNullOrEmpty(r);
 					});
 					
-					d_function.SetArguments(parts.ToArray());
+					d_function.ClearArguments();
+
+					bool optional = false;
+					
+					foreach (string part in parts)
+					{
+						string[] opt = part.Trim().Split(new char[] {'='}, 2);
+						double optval = 0;
+						
+						if (opt.Length == 2)
+						{
+							optional = true;
+							optval = Double.Parse(opt[1].Trim());
+						}
+						
+						d_function.AddArgument(new FunctionArgument(opt[0].Trim(), optional, optval));
+					}
 				}
 			}
 			
@@ -214,7 +245,9 @@ namespace Cpg.Studio
 				}
 			}
 
-			Cpg.Function function = new Cpg.Function(funcName, "x", "x");
+			Cpg.Function function = new Cpg.Function(funcName, "x");
+			function.AddArgument(new FunctionArgument("x", false, 0));
+
 			d_network.AddFunction(function);
 			
 			d_store.AddNode(new Node(function));
