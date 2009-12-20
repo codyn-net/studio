@@ -250,7 +250,7 @@ namespace Cpg.Studio
 				}
 			}
 			
-			if (!periodic)
+			if (!periodic && pieces.Length != 0)
 			{
 				FunctionPolynomialPiece last = pieces[pieces.Length - 1];
 				AddDataPoint(last.End, SumCoefficients(last.Coefficients));
