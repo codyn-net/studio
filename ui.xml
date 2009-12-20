@@ -23,6 +23,7 @@
       <menuitem name="Ungroup" action="UngroupAction"/>
       <separator/>
       <menuitem name="EditGlobals" action="EditGlobalsAction"/>
+      <menuitem name="EditFunctions" action="EditFunctionsAction"/>
     </menu>
     <menu name="SimulateMenu" action="SimulateMenuAction">
       <menuitem name="Simulate" action="SimulateAction"/>

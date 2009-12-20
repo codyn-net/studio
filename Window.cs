@@ -29,6 +29,7 @@ namespace Cpg.Studio
 		private Monitor d_monitor;
 		private Simulation d_simulation;
 		private string d_prevOpen;
+		private FunctionsDialog d_functionsDialog;
 		
 		private bool d_modified;
 		private string d_filename;
@@ -75,7 +76,8 @@ namespace Cpg.Studio
 				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", new EventHandler(OnPasteActivated)),
 				new ActionEntry("GroupAction", null, "Group", "<Control>g", "Group objects", new EventHandler(OnGroupActivated)),
 				new ActionEntry("UngroupAction", null, "Ungroup", "<Control>u", "Ungroup object", new EventHandler(OnUngroupActivated)),
-				new ActionEntry("EditGlobalsAction", null, "Global Constants", null, "Edit the global constants of the network", new EventHandler(OnEditGlobalsActivated)),
+				new ActionEntry("EditGlobalsAction", null, "Globals", null, "Edit the network globals", new EventHandler(OnEditGlobalsActivated)),
+				new ActionEntry("EditFunctionsAction", null, "Functions", null, "Edit the network custom functions", new EventHandler(OnEditFunctionsActivated)),
 
 				new ActionEntry("AddStateAction", Studio.Stock.State, null, null, "Add state", new EventHandler(OnAddStateActivated)),
 				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", new EventHandler(OnAddLinkActivated)),
@@ -1468,10 +1470,18 @@ namespace Cpg.Studio
 				title += "." + error.Property.Name;
 				expression = error.Property.ValueExpression.AsString;
 			}
-			else
+			else if (error.LinkAction != null)
 			{
 				title += "»" + error.LinkAction.Target.Name;
 				expression = error.LinkAction.Expression.AsString;
+			}
+			else if (error.Object is Cpg.Function)
+			{
+				expression = ((Cpg.Function)error.Object).Expression.AsString;
+			}
+			else
+			{
+				expression = "";
 			}
 		
 			if (d_grid.Select(error.Object) && d_propertyView != null)
@@ -1484,6 +1494,10 @@ namespace Cpg.Studio
 				{
 					d_propertyView.Select(error.LinkAction);
 				}
+			}
+			else if (error.Object is Cpg.Function)
+			{
+				ShowFunctions();
 			}
 		
 			Message(Gtk.Stock.DialogError, 
@@ -1502,6 +1516,25 @@ namespace Cpg.Studio
 			{
 				return d_network;
 			}
+		}
+		
+		private void ShowFunctions()
+		{
+			if (d_functionsDialog == null)
+			{
+				d_functionsDialog = new FunctionsDialog(this, d_network);
+				d_functionsDialog.Response += delegate(object o, ResponseArgs a1) {
+					d_functionsDialog.Destroy();
+					d_functionsDialog = null;
+				};
+			}
+			
+			d_functionsDialog.Present();
+		}
+		
+		private void OnEditFunctionsActivated(object sender, EventArgs args)
+		{
+			ShowFunctions();
 		}
 	}
 }
