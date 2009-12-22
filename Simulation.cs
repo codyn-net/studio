@@ -27,10 +27,10 @@ namespace Cpg.Studio
 			d_network = network;
 			d_range = null;
 			
-			/* proxy step */
+			/* TODO: proxy step
 			d_network.Updated += delegate(object o, UpdatedArgs args) {
 				OnStep(this, args.Timestep);
-			};
+			};*/
 		}
 		
 		public void Step(double timestep)

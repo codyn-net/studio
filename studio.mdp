@@ -18,7 +18,6 @@
     <File name="Window.cs" subtype="Code" buildaction="Compile" />
     <File name="Application.cs" subtype="Code" buildaction="Compile" />
     <File name="AssemblyInfo.cs" subtype="Code" buildaction="Compile" />
-    <File name="app.desktop" subtype="Code" DeployService.TargetDirectoryId="Linux.DesktopApplications" buildaction="FileCopy" />
     <File name="ui.xml" subtype="Code" buildaction="EmbedAsResource" />
     <File name="Stock.cs" subtype="Code" buildaction="Compile" />
     <File name="Grid.cs" subtype="Code" buildaction="Compile" />
@@ -89,10 +88,10 @@
     <ProjectReference type="Gac" localcopy="True" refto="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
     <ProjectReference type="Gac" localcopy="True" refto="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
-    <ProjectReference type="Assembly" localcopy="True" refto="../cpg-network-sharp/cpg-network/cpg-network-sharp.dll" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <ProjectReference type="Gac" localcopy="True" refto="Mono.Cairo, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
     <ProjectReference type="Gac" localcopy="True" refto="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <ProjectReference type="Assembly" localcopy="True" specificVersion="False" refto="../../../../.packeteer/install/lib/cpg-network-sharp/CpgNetwork.dll" />
   </References>
 </Project>
