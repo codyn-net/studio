@@ -1,5 +1,5 @@
 
-EXTRA_DIST =  expansions.m4 ../cpg-network-sharp/cpg-network/cpg-network-sharp.dll
+EXTRA_DIST =  expansions.m4
 
 #Warning: This is an automatically generated file, do not edit!
 if ENABLE_DEBUG
@@ -10,4 +10,4 @@ if ENABLE_RELEASE
 endif
 
 # Projectspecifieke makefile opnemen
-include studio.make
+include cpgstudio.make

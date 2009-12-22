@@ -1,14 +1,14 @@
-<Project name="studio" fileversion="2.0" language="C#" DefaultNamespace="Cpg.Studio" clr-version="Net_2_0" targetFramework="2.0" ctype="DotNetProject">
+<Project name="cpgstudio" fileversion="2.0" language="C#" DefaultNamespace="Cpg.Studio" clr-version="Net_2_0" targetFramework="2.0" ctype="DotNetProject">
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
-      <Output directory="bin/Debug" assembly="studio" />
+      <Output directory="bin/Debug" assembly="cpgstudio" />
       <Build debugmode="True" target="Exe" />
       <Execution runwithwarnings="True" commandlineparameters="test.cpg" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
       <EnvironmentVariables />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
     <Configuration name="Release" ctype="DotNetProjectConfiguration">
-      <Output directory="bin/Release" assembly="studio" />
+      <Output directory="bin/Release" assembly="cpgstudio" />
       <Build debugmode="False" target="Exe" />
       <Execution runwithwarnings="True" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
       <CodeGeneration compiler="Mcs" warninglevel="4" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />

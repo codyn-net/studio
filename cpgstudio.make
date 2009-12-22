@@ -5,27 +5,27 @@
 if ENABLE_DEBUG
 ASSEMBLY_COMPILER_COMMAND = gmcs
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:3 -optimize+ -debug "-define:DEBUG"
-ASSEMBLY = bin/Debug/studio.exe
+ASSEMBLY = bin/Debug/cpgstudio.exe
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
 COMPILE_TARGET = exe
 PROJECT_REFERENCES = 
 BUILD_DIR = bin/Debug
 
-STUDIO_EXE_MDB_SOURCE=bin/Debug/studio.exe.mdb
-STUDIO_EXE_MDB=$(BUILD_DIR)/studio.exe.mdb
+CPGSTUDIO_EXE_MDB_SOURCE=bin/Debug/cpgstudio.exe.mdb
+CPGSTUDIO_EXE_MDB=$(BUILD_DIR)/cpgstudio.exe.mdb
 
 endif
 
 if ENABLE_RELEASE
 ASSEMBLY_COMPILER_COMMAND = gmcs
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize+
-ASSEMBLY = bin/Release/studio.exe
+ASSEMBLY = bin/Release/cpgstudio.exe
 ASSEMBLY_MDB = 
 COMPILE_TARGET = exe
 PROJECT_REFERENCES = 
 BUILD_DIR = bin/Release
 
-STUDIO_EXE_MDB=
+CPGSTUDIO_EXE_MDB=
 
 endif
 
@@ -33,10 +33,10 @@ AL=al2
 SATELLITE_ASSEMBLY_NAME=$(notdir $(basename $(ASSEMBLY))).resources.dll
 
 PROGRAMFILES = \
-	$(STUDIO_EXE_MDB)  
+	$(CPGSTUDIO_EXE_MDB)  
 
 BINARIES = \
-	$(STUDIO)  
+	$(CPGSTUDIO)  
 
 
 RESGEN=resgen2
@@ -130,9 +130,9 @@ CLEANFILES = $(PROGRAMFILES) $(BINARIES)
 
 include $(top_srcdir)/Makefile.include
 
-STUDIO = $(BUILD_DIR)/cpgstudio
+CPGSTUDIO = $(BUILD_DIR)/cpgstudio
 
-$(eval $(call emit-deploy-wrapper,STUDIO,cpgstudio,x))
+$(eval $(call emit-deploy-wrapper,CPGSTUDIO,cpgstudio,x))
 
 
 $(eval $(call emit_resgen_targets))
