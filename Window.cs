@@ -30,6 +30,8 @@ namespace Cpg.Studio
 		private Simulation d_simulation;
 		private string d_prevOpen;
 		private FunctionsDialog d_functionsDialog;
+		private ListStore d_integratorStore;
+		private ComboBox d_integratorCombo;
 		
 		private bool d_modified;
 		private string d_filename;
@@ -39,6 +41,11 @@ namespace Cpg.Studio
 			d_network = new Components.Network();
 			
 			d_network.CompileError += OnCompileError;
+
+			d_network.AddNotification("integrator", delegate (object sender, GLib.NotifyArgs args) {
+				UpdateCurrentIntegrator();
+			});
+
 			d_simulation = new Simulation(d_network);
 
 			Build();
@@ -171,6 +178,89 @@ namespace Cpg.Studio
 			d_grid.Error += DoError;
 		}
 		
+		private void UpdateCurrentIntegrator()
+		{
+			d_integratorStore.Foreach(delegate (TreeModel model, TreePath path, TreeIter piter) {
+				Cpg.Integrator intgr = (Cpg.Integrator)model.GetValue(piter, 0);
+				
+				if (intgr.Id == d_network.Integrator.Id)
+				{
+					d_integratorCombo.SetActiveIter(piter);
+					
+					return true;
+				}
+				
+				return false;
+			});
+		}
+		
+		private ComboBox CreateIntegrators()
+		{
+			ListStore store = new ListStore(typeof(Cpg.Integrator));
+			CellRendererText renderer = new CellRendererText();
+			ComboBox combo = new ComboBox(store);
+			
+			combo.PackStart(renderer, true);
+			
+			combo.SetCellDataFunc(renderer, delegate (CellLayout layout, CellRenderer rd, TreeModel model, TreeIter piter) {
+				Cpg.Integrator intgr = (Cpg.Integrator)model.GetValue(piter, 0);
+				
+				if (intgr != null)
+				{
+					((CellRendererText)rd).Text = intgr.Name;
+				}
+			});
+			
+			Type integrator = typeof(Cpg.Integrator);
+			
+			foreach (Type type in integrator.Assembly.GetTypes())
+			{
+				if (type.IsSubclassOf(integrator))
+				{
+					Cpg.Integrator intgr = (Cpg.Integrator)type.GetConstructor(new Type[] {}).Invoke(new object[] {});
+					
+					if (intgr != null)
+					{
+						TreeIter piter = store.AppendValues(intgr);
+						
+						if (intgr.Id == d_network.Integrator.Id)
+						{
+							combo.SetActiveIter(piter);
+						}
+					}
+				}
+			}
+			
+			store.SetSortFunc(0, delegate (TreeModel model, TreeIter a, TreeIter b) {
+				Cpg.Integrator i1 = (Cpg.Integrator)model.GetValue(a, 0);
+				Cpg.Integrator i2 = (Cpg.Integrator)model.GetValue(b, 0);
+				
+				return i1.Name.CompareTo(i2.Name);
+			});
+			
+			store.SetSortColumnId(0, SortType.Ascending);
+			
+			d_integratorStore = store;
+			d_integratorCombo = combo;
+			
+			combo.Changed += DoIntegratorChanged;
+			return combo;
+		}
+		
+		private void DoIntegratorChanged(object sender, EventArgs args)
+		{
+			ComboBox combo = (ComboBox)sender;
+			TreeIter piter;
+			
+			combo.GetActiveIter(out piter);
+			Cpg.Integrator integrator = (Cpg.Integrator)combo.Model.GetValue(piter, 0);
+			
+			d_network.Integrator = integrator;
+			d_modified = true;
+			
+			UpdateTitle();
+		}
+		
 		private void BuildButtonBar(HBox hbox)
 		{
 			hbox.PackStart(new Label("Period:"), false, false, 0);
@@ -184,6 +274,10 @@ namespace Cpg.Studio
 			but.TooltipText = "Run new simulation for specified period of time";
 
 			hbox.PackStart(but, false, false, 0);
+			
+			ComboBox combo = CreateIntegrators();
+			combo.Show();
+			hbox.PackStart(combo, false, false, 0);
 		
 			but = new Button();
 			but.Image = new Image(Gtk.Stock.MediaNext, IconSize.Button);
@@ -799,6 +893,8 @@ namespace Cpg.Studio
 			try
 			{
 				ImportSuccess(cpg, false);
+				
+				d_network.Integrator = cpg.Network.CNetwork.Integrator;
 			}
 			catch (Exception e)
 			{
