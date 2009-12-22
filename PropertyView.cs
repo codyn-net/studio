@@ -367,8 +367,18 @@ namespace Cpg.Studio
 			string oldprop = node.Name;
 			string oldvalue = node.Value;
 			
+			try
+			{
+				d_object.RemoveProperty(oldprop);
+			}
+			catch (GLib.GException err)
+			{
+				// Display could not remove, or something
+				Error(this, err);
+				return;
+			}
+			
 			node.Name = args.NewText;
-			d_object.RemoveProperty(oldprop);
 			d_object.SetProperty(node.Name, oldvalue);
 		}
 		
