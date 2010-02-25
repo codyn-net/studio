@@ -1,0 +1,21 @@
+Source: cpgstudio
+Priority: extra
+Maintainer: Jesse van den Kieboom <jesse.vandenkieboom@epfl.ch>
+Build-Depends: debhelper (>= 7),
+               autotools-dev,
+			   cdbs,
+			   pkg-config,
+			   mono-devel | mono-gmcs,
+			   cpg-network-sharp1 (>= 1.0),
+			   gtk-sharp2,
+			   libmono-cairo2.0-cil
+Standards-Version: 3.8.0
+Section: editors
+Homepage: http://birg.epfl.ch
+
+Package: cpgstudio
+Section: editors
+Architecture: any
+Depends: cpg-network-sharp1 (>= 1.0), gtk-sharp2, libmono-cairo2.0-cil
+Description: cpg network designer studio
+ A designer studio for cpg network
