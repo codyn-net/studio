@@ -115,12 +115,10 @@ EXTRAS = \
 REFERENCES =  \
 	$(GTK_SHARP_20_LIBS) \
 	$(GLIB_SHARP_20_LIBS) \
-	$(GLADE_SHARP_20_LIBS) \
 	System \
 	Mono.Posix \
 	System.Drawing \
 	Mono.Cairo \
-	$(GTK_DOTNET_20_LIBS) \
 	System.Xml \
 	$(CPGNETWORK_SHARP_LIBS)
 

@@ -1,7 +1,7 @@
 dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
-AC_INIT([cpgstudio], [1.0])
+AC_INIT(cpgstudio, 1.0)
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 
@@ -48,8 +48,6 @@ fi
 dnl package checks, common for all configs
 PKG_CHECK_MODULES([GTK_SHARP_20], [gtk-sharp-2.0])
 PKG_CHECK_MODULES([GLIB_SHARP_20], [glib-sharp-2.0])
-PKG_CHECK_MODULES([GLADE_SHARP_20], [glade-sharp-2.0])
-PKG_CHECK_MODULES([GTK_DOTNET_20], [gtk-dotnet-2.0])
 
 dnl package checks, per config
 PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp])
