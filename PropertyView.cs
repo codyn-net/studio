@@ -60,6 +60,22 @@ namespace Cpg.Studio
 					}
 				}
 			}
+			
+			[TreeNodeValue(Column=3)]
+			public Cpg.PropertyHint Hint
+			{
+				get
+				{
+					return (d_object is Components.Simulated) ? (d_object as Components.Simulated).GetHint(d_property) : Cpg.PropertyHint.None;
+				}
+				set
+				{
+					if (d_object is Components.Simulated)
+					{
+						(d_object as Components.Simulated).SetHint(d_property, value);
+					}
+				}
+			}
 		}
 		
 		class NodeStore : Gtk.NodeStore
@@ -82,6 +98,8 @@ namespace Cpg.Studio
 		private ListStore d_actionStore;
 		private TreeView d_actionView;
 		private Button d_removeActionButton;
+		private ListStore d_hintStore;
+		private List<KeyValuePair<string, Cpg.PropertyHint>> d_hintList;
 		
 		public PropertyView(Components.Object obj) : base()
 		{
@@ -219,9 +237,45 @@ namespace Cpg.Studio
 			} while (d_comboStore.IterNext(ref iter));
 		}
 		
+		private string HintToString(Cpg.PropertyHint hint)
+		{
+			List<string> parts = new List<string>();
+
+			foreach (KeyValuePair<string, Cpg.PropertyHint> pair in d_hintList)
+			{
+				if ((pair.Value & hint) != 0)
+				{
+					parts.Add(pair.Key);
+				}
+			}
+			
+			return String.Join(", ", parts.ToArray());
+		}
+		
+		private void InitializeHintList()
+		{
+			d_hintList = new List<KeyValuePair<string, Cpg.PropertyHint>>();
+			Type type = typeof(Cpg.PropertyHint);
+			
+			string[] names = Enum.GetNames(type);
+			Array values = Enum.GetValues(type);
+			
+			for (int i = 0; i < names.Length; ++i)
+			{
+				Cpg.PropertyHint hint = (Cpg.PropertyHint)values.GetValue(i);
+				
+				if ((int)hint != 0)
+				{
+					d_hintList.Add(new KeyValuePair<string, Cpg.PropertyHint>(names[i], hint));
+				}
+			}
+		}
+		
 		public void Initialize(Components.Object obj)
 		{
 			Clear();
+			
+			InitializeHintList();
 			
 			d_object = obj;
 			
@@ -307,6 +361,30 @@ namespace Cpg.Studio
 				column.Expand = false;
 				
 				d_treeview.AppendColumn(column);
+				
+				CellRendererCombo combo = new CellRendererCombo();
+				
+				column = new TreeViewColumn("Hint", combo);
+				column.Resizable = true;
+				column.SetCellDataFunc(combo, delegate (TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter) {
+					Node node = d_store.GetNode(model.GetPath(piter)) as Node;
+					
+					(cell as CellRendererText).Text = HintToString(node.Hint);
+					
+					(cell as CellRendererText).Editable = node.Name != "id";
+					cell.Sensitive = node.Name != "id";
+				});
+				
+				combo.EditingStarted += DoEditingStarted;
+				combo.Edited += DoHintEdited;
+				combo.HasEntry = false;
+				
+				d_hintStore = new ListStore(typeof(string), typeof(Cpg.PropertyHint));
+				combo.Model = d_hintStore;
+				combo.TextColumn = 0;
+				
+				column.MinWidth = 50;
+				d_treeview.AppendColumn(column);
 			}
 			
 			if (d_object != null)
@@ -343,10 +421,59 @@ namespace Cpg.Studio
 			ShowAll();
 		}
 		
+		private void FillHintStore(Node node)
+		{
+			d_hintStore.Clear();
+			Cpg.PropertyHint hint = node.Hint;
+			
+			foreach (KeyValuePair<string, Cpg.PropertyHint> pair in d_hintList)
+			{
+				string name = pair.Key;
+
+				if ((hint & pair.Value) != 0)
+				{
+					name = "• " + name;
+				}
+				
+				d_hintStore.AppendValues(name, hint);
+			}
+		}
+
+		private void DoEditingStarted(object o, EditingStartedArgs args)
+		{
+			Node node = (d_store.GetNode(new TreePath(args.Path)) as Node);
+			
+			FillHintStore(node);
+		}
+		
 		private void InitStore()
 		{
 			foreach (string prop in d_object.Properties)
 				AddProperty(prop);
+		}
+		
+		private void DoHintEdited(object source, EditedArgs args)
+		{
+			Node node = (d_store.GetNode(new TreePath(args.Path)) as Node);
+			bool wason = false;
+			string name = args.NewText;
+			
+			if (name.StartsWith("• "))
+			{
+				wason = true;
+				name = name.Substring(2);
+			}
+
+			Cpg.PropertyHint hint = (Cpg.PropertyHint)Enum.Parse(typeof(Cpg.PropertyHint), name);
+			
+			if (wason)
+			{
+				node.Hint &= ~hint;
+			}
+			else
+			{
+				node.Hint |= hint;
+			}
 		}
 		
 		private void DoValueEdited(object source, EditedArgs args)
