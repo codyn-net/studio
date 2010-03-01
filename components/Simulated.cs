@@ -130,6 +130,30 @@ namespace Cpg.Studio.Components
 				prop.Integrated = integrated;
 		}
 		
+		public virtual Cpg.PropertyHint GetHint(string name)
+		{
+			Cpg.Property prop = d_object.Property(name);
+			
+			if (prop != null)
+			{
+				return prop.Hint;
+			}
+			else
+			{
+				return Cpg.PropertyHint.None;
+			}
+		}
+		
+		public virtual void SetHint(string name, Cpg.PropertyHint hint)
+		{
+			Cpg.Property prop = d_object.Property(name);
+			
+			if (prop != null)
+			{
+				prop.Hint = hint;
+			}
+		}
+		
 		private void NotifyIdHandler(object source, GLib.NotifyArgs args)
 		{
 			if (base.Id != d_object.Id)
