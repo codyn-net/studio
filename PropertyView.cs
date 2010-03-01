@@ -336,7 +336,6 @@ namespace Cpg.Studio
 				(cell as CellRendererText).Editable = d_object != null && !d_object.IsReadOnly(node.Name);
 			});
 			
-			column.MinWidth = 200;
 			d_treeview.AppendColumn(column);
 			
 			if (d_object != null && d_object is Components.Simulated && (d_object as Components.Simulated).CanIntegrate)
