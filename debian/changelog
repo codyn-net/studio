@@ -1,3 +1,9 @@
+cpgstudio (1.1-1) UNRELEASED; urgency=low
+
+  * New upstream release
+
+ -- Jesse van den Kieboom <jvanden@grijpc10.epfl.ch>  Mon, 01 Mar 2010 13:37:14 +0100
+
 cpgstudio (1.0-1) UNRELEASED; urgency=low
 
   * Initial release
