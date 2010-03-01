@@ -223,23 +223,15 @@ namespace Cpg.Studio
 				}
 			});
 			
-			Type integrator = typeof(Cpg.Integrator);
+			Integrator[] integrators = Cpg.Integrators.Create();
 			
-			foreach (Type type in integrator.Assembly.GetTypes())
+			foreach (Integrator integrator in integrators)
 			{
-				if (type.IsSubclassOf(integrator))
-				{
-					Cpg.Integrator intgr = (Cpg.Integrator)type.GetConstructor(new Type[] {}).Invoke(new object[] {});
+				TreeIter piter = store.AppendValues(integrator);
 					
-					if (intgr != null)
-					{
-						TreeIter piter = store.AppendValues(intgr);
-						
-						if (intgr.Id == d_network.Integrator.Id)
-						{
-							combo.SetActiveIter(piter);
-						}
-					}
+				if (integrator.Id == d_network.Integrator.Id)
+				{
+					combo.SetActiveIter(piter);
 				}
 			}
 			

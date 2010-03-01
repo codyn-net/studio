@@ -5,6 +5,7 @@
 //
 using System;
 using Gtk;
+using System.IO;
 
 namespace Cpg.Studio
 {
@@ -12,8 +13,47 @@ namespace Cpg.Studio
 	{
 		private Studio.Window d_window;
 		
+		private void RegisterNativeIntegrators()
+		{
+			string path = Environment.GetEnvironmentVariable("CPG_INTEGRATOR_PATH");
+			
+			if (String.IsNullOrEmpty(path))
+			{
+				return;
+			}
+			
+			string[] dirs = path.Split(':');
+			
+			foreach (string dir in dirs)
+			{
+				string[] files;
+				
+				try
+				{
+					files = Directory.GetFiles(dir);
+				}
+				catch
+				{
+					continue;
+				}
+				
+				foreach (string file in files)
+				{
+					if (file.EndsWith(".so") || file.EndsWith(".dll"))
+					{
+						Console.WriteLine(file);
+						DynamicIntegrator dyn = new DynamicIntegrator(file);
+						
+						dyn.Register();
+					}
+				}
+			}
+		}
+		
 		public Application()
 		{
+			RegisterNativeIntegrators();
+			
 			d_window = new Studio.Window();
 			d_window.Show();
 		}
