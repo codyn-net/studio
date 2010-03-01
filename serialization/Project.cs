@@ -14,6 +14,10 @@ namespace Cpg.Studio.Serialization
 		private string d_period;
 		private int d_panePosition;
 		private string d_container;
+		private bool d_showStatusbar;
+		private bool d_showToolbar;
+		private bool d_showSimulateButtons;
+		private bool d_showPathbar;
 
 		public Project(Window window)
 		{
@@ -22,6 +26,11 @@ namespace Cpg.Studio.Serialization
 			d_zoom = 50;
 			d_period = "";
 			d_panePosition = 200;
+			
+			d_showSimulateButtons = true;
+			d_showStatusbar = true;
+			d_showToolbar = true;
+			d_showPathbar = true;
 		}
 		
 		public Project() : this(null)
@@ -122,7 +131,7 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		[XmlElement("panePosition")]
+		[XmlElement("pane-position")]
 		public int PanePosition
 		{
 			get
@@ -132,6 +141,58 @@ namespace Cpg.Studio.Serialization
 			set
 			{
 				d_panePosition = value;
+			}
+		}
+		
+		[XmlElement("show-toolbar")]
+		public bool ShowToolbar
+		{
+			get
+			{
+				return d_window != null ? d_window.ShowToolbar : d_showToolbar;
+			}
+			set
+			{
+				d_showToolbar = value;
+			}
+		}
+		
+		[XmlElement("show-pathbar")]
+		public bool ShowPathbar
+		{
+			get
+			{
+				return d_window != null ? d_window.ShowPathbar : d_showPathbar;
+			}
+			set
+			{
+				d_showPathbar = value;
+			}
+		}
+		
+		[XmlElement("show-statusbar")]
+		public bool ShowStatusbar
+		{
+			get
+			{
+				return d_window != null ? d_window.ShowStatusbar : d_showStatusbar;
+			}
+			set
+			{
+				d_showStatusbar = value;
+			}
+		}
+		
+		[XmlElement("show-simulate-buttons")]
+		public bool ShowSimulateButtons
+		{
+			get
+			{
+				return d_window != null ? d_window.ShowStatusbar : d_showSimulateButtons;
+			}
+			set
+			{
+				d_showSimulateButtons = value;
 			}
 		}
 	}

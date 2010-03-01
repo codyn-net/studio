@@ -18,6 +18,8 @@ namespace Cpg.Studio
 		private Entry d_periodEntry;
 		private Statusbar d_statusbar;
 		private ToggleButton d_simulateButton;
+		private HBox d_simulateButtons;
+		private Widget d_toolbar;
 		private PropertyView d_propertyView;
 		private MessageArea d_messageArea;
 		private uint d_statusTimeout;
@@ -108,7 +110,11 @@ namespace Cpg.Studio
 			});
 			
 			d_normalGroup.Add(new ToggleActionEntry[] {
-				new ToggleActionEntry("PropertyEditorAction", Gtk.Stock.Properties, "Property Editor", "<Control>F9", "Show/Hide property editor pane", new EventHandler(OnPropertyEditorActivated), true),
+				new ToggleActionEntry("ViewPropertyEditorAction", Gtk.Stock.Properties, "Property Editor", "<Control>F9", "Show/Hide property editor pane", new EventHandler(OnViewPropertyEditorActivated), true),
+				new ToggleActionEntry("ViewToolbarAction", null, "Toolbar", null, "Show/Hide toolbar", new EventHandler(OnViewToolbarActivated), true),
+				new ToggleActionEntry("ViewPathbarAction", null, "Pathbar", null, "Show/Hide pathbar", new EventHandler(OnViewPathbarActivated), true),
+				new ToggleActionEntry("ViewSimulateButtonsAction", null, "Simulate Buttons", null, "Show/Hide simulate buttons", new EventHandler(OnViewSimulateButtonsActivated), true),
+				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", new EventHandler(OnViewStatusbarActivated), true),
 				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", new EventHandler(OnToggleMonitorActivated), false),
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", new EventHandler(OnToggleControlActivated), false)		
 			});
@@ -132,7 +138,9 @@ namespace Cpg.Studio
 			VBox vbox = new VBox(false, 0);
 
 			vbox.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
-			vbox.PackStart(d_uimanager.GetWidget("/toolbar"), false, false, 0);
+			
+			d_toolbar = d_uimanager.GetWidget("/toolbar");
+			vbox.PackStart(d_toolbar, false, false, 0);
 			
 			d_hboxPath = new HBox(false, 0);
 			d_hboxPath.BorderWidth = 1;
@@ -146,24 +154,28 @@ namespace Cpg.Studio
 			d_vpaned.Position = 300;
 			d_vpaned.Pack1(d_grid, true, true);
 			
-			OnPropertyEditorActivated(d_normalGroup.GetAction("PropertyEditorAction"), new EventArgs());
-			
 			d_vboxContents.PackStart(d_vpaned, true, true, 0);
 			
 			d_periodEntry = new Entry();
 			d_periodEntry.SetSizeRequest(75, -1);
 			d_periodEntry.Activated += new EventHandler(OnSimulationRunPeriod);
 
-			HBox hbox = new HBox(false, 3);
-			hbox.BorderWidth = 3;
-			BuildButtonBar(hbox);
+			d_simulateButtons = new HBox(false, 3);
+			d_simulateButtons.BorderWidth = 3;
+			BuildButtonBar(d_simulateButtons);
 			
-			d_vboxContents.PackStart(hbox, false, false, 0);
+			d_vboxContents.PackStart(d_simulateButtons, false, false, 0);
 			
 			d_statusbar = new Statusbar();
 			d_statusbar.Show();
 			vbox.PackStart(d_statusbar, false, false, 0);
-			
+
+			OnViewPropertyEditorActivated(d_normalGroup.GetAction("ViewPropertyEditorAction"), new EventArgs());
+			OnViewToolbarActivated(d_normalGroup.GetAction("ViewToolbarAction"), new EventArgs());
+			OnViewPathbarActivated(d_normalGroup.GetAction("ViewPathbarAction"), new EventArgs());
+			OnViewSimulateButtonsActivated(d_normalGroup.GetAction("ViewSimulateButtonsAction"), new EventArgs());
+			OnViewStatusbarActivated(d_normalGroup.GetAction("ViewStatusbarAction"), new EventArgs());
+
 			Add(vbox);
 			
 			d_grid.Activated += DoObjectActivated;
@@ -838,6 +850,54 @@ namespace Cpg.Studio
 			}
 		}
 		
+		public bool ShowStatusbar
+		{
+			get
+			{
+				return ((ToggleAction)d_normalGroup.GetAction("ViewStatusbarAction")).Active;
+			}
+			set
+			{
+				((ToggleAction)d_normalGroup.GetAction("ViewStatusbarAction")).Active = value;
+			}
+		}
+		
+		public bool ShowToolbar
+		{
+			get
+			{
+				return ((ToggleAction)d_normalGroup.GetAction("ViewToolbarAction")).Active;
+			}
+			set
+			{
+				((ToggleAction)d_normalGroup.GetAction("ViewToolbarAction")).Active = value;
+			}
+		}
+		
+		public bool ShowPathbar
+		{
+			get
+			{
+				return ((ToggleAction)d_normalGroup.GetAction("ViewPathbarAction")).Active;
+			}
+			set
+			{
+				((ToggleAction)d_normalGroup.GetAction("ViewPathbarAction")).Active = value;
+			}
+		}
+		
+		public bool ShowSimulateButtons
+		{
+			get
+			{
+				return ((ToggleAction)d_normalGroup.GetAction("ViewSimulateButtonsAction")).Active;
+			}
+			set
+			{
+				((ToggleAction)d_normalGroup.GetAction("ViewSimulateButtonsAction")).Active = value;
+			}
+		}
+		
 		/* Callbacks */
 		protected override bool OnDeleteEvent(Gdk.Event evt)
 		{
@@ -937,7 +997,7 @@ namespace Cpg.Studio
 				Resize((int)alloc.Width, (int)alloc.Height);
 			}
 			
-			ToggleAction action = d_normalGroup.GetAction("PropertyEditorAction") as ToggleAction;
+			ToggleAction action = d_normalGroup.GetAction("ViewPropertyEditorAction") as ToggleAction;
 			
 			if (cpg.Project.PanePosition == -1)
 			{
@@ -950,6 +1010,11 @@ namespace Cpg.Studio
 				d_vpaned.Position = d_vpaned.Allocation.Height - cpg.Project.PanePosition;
 			}
 			
+			(d_normalGroup.GetAction("ViewToolbarAction") as ToggleAction).Active = cpg.Project.ShowToolbar;
+			(d_normalGroup.GetAction("ViewPathbarAction") as ToggleAction).Active = cpg.Project.ShowPathbar;
+			(d_normalGroup.GetAction("ViewSimulateButtonsAction") as ToggleAction).Active = cpg.Project.ShowSimulateButtons;
+			(d_normalGroup.GetAction("ViewStatusbarAction") as ToggleAction).Active = cpg.Project.ShowStatusbar;
+
 			d_modified = false;
 			UpdateTitle();
 			
@@ -1360,8 +1425,36 @@ namespace Cpg.Studio
 			if (selection.Length != 0)
 				DoObjectActivated(sender, selection[0]);
 		}
+							
+		private void OnViewStatusbarActivated(object sender, EventArgs args)
+		{
+			ToggleAction action = sender as ToggleAction;
+			
+			d_statusbar.Visible = action.Active;
+		}
 		
-		private void OnPropertyEditorActivated(object sender, EventArgs args)
+		private void OnViewToolbarActivated(object sender, EventArgs args)
+		{
+			ToggleAction action = sender as ToggleAction;
+			
+			d_toolbar.Visible = action.Active;
+		}
+		
+		private void OnViewPathbarActivated(object sender, EventArgs args)
+		{
+			ToggleAction action = sender as ToggleAction;
+			
+			d_hboxPath.Visible = action.Active;
+		}
+		
+		private void OnViewSimulateButtonsActivated(object sender, EventArgs args)
+		{
+			ToggleAction action = sender as ToggleAction;
+			
+			d_simulateButtons.Visible = action.Active;
+		}
+		
+		private void OnViewPropertyEditorActivated(object sender, EventArgs args)
 		{
 			ToggleAction action = sender as ToggleAction;
 			
