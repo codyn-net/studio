@@ -44,6 +44,7 @@ RESGEN=resgen2
 all: $(ASSEMBLY) $(PROGRAMFILES) $(BINARIES) 
 
 FILES = \
+	Directories.cs \
 	Window.cs \
 	Application.cs \
 	AssemblyInfo.cs \

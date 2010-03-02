@@ -13,8 +13,34 @@ namespace Cpg.Studio
 	{
 		private Studio.Window d_window;
 		
+		private void RegisterNativeIntegrators(string dir)
+		{
+			string[] files;
+			
+			try
+			{
+				files = Directory.GetFiles(dir);
+			}
+			catch
+			{
+				return;
+			}
+			
+			foreach (string file in files)
+			{
+				if (file.EndsWith(".so") || file.EndsWith(".dll"))
+				{
+					DynamicIntegrator dyn = new DynamicIntegrator(file);
+					
+					dyn.Register();
+				}
+			}
+		}
+		
 		private void RegisterNativeIntegrators()
 		{
+			RegisterNativeIntegrators(Path.Combine(Path.Combine(Directories.Lib, "cpgstudio"), "integrators"));
+
 			string path = Environment.GetEnvironmentVariable("CPG_INTEGRATOR_PATH");
 			
 			if (String.IsNullOrEmpty(path))
@@ -26,27 +52,7 @@ namespace Cpg.Studio
 			
 			foreach (string dir in dirs)
 			{
-				string[] files;
-				
-				try
-				{
-					files = Directory.GetFiles(dir);
-				}
-				catch
-				{
-					continue;
-				}
-				
-				foreach (string file in files)
-				{
-					if (file.EndsWith(".so") || file.EndsWith(".dll"))
-					{
-						Console.WriteLine(file);
-						DynamicIntegrator dyn = new DynamicIntegrator(file);
-						
-						dyn.Register();
-					}
-				}
+				RegisterNativeIntegrators(dir);
 			}
 		}
 		
