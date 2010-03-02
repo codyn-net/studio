@@ -227,6 +227,11 @@ namespace Cpg.Studio
 			
 			foreach (Integrator integrator in integrators)
 			{
+				if (integrator.Id == "stub")
+				{
+					continue;
+				}
+
 				TreeIter piter = store.AppendValues(integrator);
 					
 				if (integrator.Id == d_network.Integrator.Id)
