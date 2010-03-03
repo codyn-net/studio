@@ -360,7 +360,11 @@ namespace Cpg.Studio
 				column.Expand = false;
 				
 				d_treeview.AppendColumn(column);
-				
+			}
+			
+			if (d_object != null)
+			{
+				// Add column for property hints
 				CellRendererCombo combo = new CellRendererCombo();
 				
 				column = new TreeViewColumn("Hint", combo);
@@ -384,10 +388,7 @@ namespace Cpg.Studio
 				
 				column.MinWidth = 50;
 				d_treeview.AppendColumn(column);
-			}
-			
-			if (d_object != null)
-			{
+
 				HBox hbox = new HBox(false, 3);
 				vbox.PackStart(hbox, false, false, 0);
 
