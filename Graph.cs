@@ -398,11 +398,28 @@ namespace Cpg.Studio
 			}
 		}
 		
+		public static Container SelectMaxUnprocessed(IEnumerable<Container> list)
+		{
+			bool hasitem = false;
+			Container best = default(Container);
+			
+			foreach (Container item in list)
+			{
+				if (!hasitem)
+					best = item;
+				else
+					best = item.Unprocessed > best.Unprocessed ? item : best;
+				
+				hasitem = true;
+			}
+			
+			return best;
+		}
+
 		public void ProcessAppend()
 		{
-			Container maxunp = Utils.Select(d_data, delegate (Container best, Container next) {
-				return next.Unprocessed > best.Unprocessed ? next : best;
-			});
+
+			Container maxunp = SelectMaxUnprocessed (d_data);
 			
 			if (maxunp == null || maxunp.Unprocessed == 0)
 				return;

@@ -7,14 +7,52 @@ namespace Cpg.Studio
 {
 	public class Utils
 	{
-		public delegate T SelectHandler<T>(T first, T second);
-		
-		public static T Select<T>(IEnumerable<T> list, SelectHandler<T> handler)
+		public delegate double SelectHandlerDouble(double first, double second);
+		public delegate float SelectHandlerFloat(float first, float second);
+		public delegate int SelectHandlerInt(int first, int second);
+
+		public static double Select(IEnumerable<double> list, SelectHandlerDouble handler)
 		{
 			bool hasitem = false;
-			T best = default(T);
+			double best = default(double);
 			
-			foreach (T item in list)
+			foreach (double item in list)
+			{
+				if (!hasitem)
+					best = item;
+				else
+					best = handler(best, item);
+				
+				hasitem = true;
+			}
+			
+			return best;
+		}
+			
+		public static float Select(IEnumerable<float> list, SelectHandlerFloat handler)
+		{
+			bool hasitem = false;
+			float best = default(float);
+			
+			foreach (float item in list)
+			{
+				if (!hasitem)
+					best = item;
+				else
+					best = handler(best, item);
+				
+				hasitem = true;
+			}
+			
+			return best;
+		}
+				
+		public static int Select(IEnumerable<int> list, SelectHandlerInt handler)
+		{
+			bool hasitem = false;
+			int best = default(int);
+			
+			foreach (int item in list)
 			{
 				if (!hasitem)
 					best = item;
@@ -29,32 +67,32 @@ namespace Cpg.Studio
 		
 		public static double Max(IEnumerable<double> list)
 		{
-			return Select<double>(list, new SelectHandler<double>(Math.Max));
+			return Select(list, new SelectHandlerDouble(Math.Max));
 		}
 		
 		public static float Max(IEnumerable<float> list)
 		{
-			return Select<float>(list, new SelectHandler<float>(Math.Max));
+			return Select(list, new SelectHandlerFloat(Math.Max));
 		}
 		
 		public static int Max(IEnumerable<int> list)
 		{
-			return Select<int>(list, new SelectHandler<int>(Math.Max));
+			return Select(list, new SelectHandlerInt(Math.Max));
 		}
 		
 		public static double Min(IEnumerable<double> list)
 		{
-			return Select<double>(list, new SelectHandler<double>(Math.Min));
+			return Select(list, new SelectHandlerDouble(Math.Min));
 		}
 		
 		public static float Min(IEnumerable<float> list)
 		{
-			return Select<float>(list, new SelectHandler<float>(Math.Min));
+			return Select(list, new SelectHandlerFloat(Math.Min));
 		}
 		
 		public static int Min(IEnumerable<int> list)
 		{
-			return Select<int>(list, new SelectHandler<int>(Math.Min));
+			return Select(list, new SelectHandlerInt(Math.Min));
 		}
 		
 		public static string Capitalize(string s)
