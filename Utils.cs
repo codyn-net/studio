@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -113,12 +114,12 @@ namespace Cpg.Studio
 				return first.ToLower().CompareTo(second.ToLower());
 		}
 		
-		public static bool In<T>(T val, ICollection<T> collection)
+		public static bool In(object val, ICollection collection)
 		{
 			if (val == null)
 				return false;
 
-			foreach (T t in collection)
+			foreach (object t in collection)
 			{
 				if (t != null && t.Equals(val))
 					return true;
