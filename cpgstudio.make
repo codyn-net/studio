@@ -44,6 +44,8 @@ RESGEN=resgen2
 all: $(ASSEMBLY) $(PROGRAMFILES) $(BINARIES) 
 
 FILES = \
+	Directories.cs \
+	DynamicIntegrator.cs \
 	Window.cs \
 	Application.cs \
 	AssemblyInfo.cs \

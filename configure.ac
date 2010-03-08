@@ -1,7 +1,7 @@
 dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
-AC_INIT(cpgstudio, 1.1)
+AC_INIT(cpgstudio, 1.2)
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 
@@ -55,13 +55,13 @@ PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp])
 dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
 UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp"
-INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries $UNSTABLE_INSTALL_ASSEMBLIES`"
+INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES >= 1.1\"`"
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
 AC_CONFIG_FILES([
 cpgstudio
 Makefile
-
+Directories.cs
 ])
 
 AC_OUTPUT
