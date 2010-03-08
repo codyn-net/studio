@@ -55,7 +55,7 @@ PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp])
 dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
 UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp"
-INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries $UNSTABLE_INSTALL_ASSEMBLIES`"
+INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries '$UNSTABLE_INSTALL_ASSEMBLIES >= 1.1'`"
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
 AC_CONFIG_FILES([
