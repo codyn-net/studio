@@ -1,86 +1,78 @@
-<Project name="cpgstudio" fileversion="2.0" language="C#" DefaultNamespace="Cpg.Studio" clr-version="Net_2_0" targetFramework="2.0" ctype="DotNetProject">
+<Project name="cpgstudio" fileversion="2.0" DefaultNamespace="Cpg.Studio" language="C#" clr-version="Net_2_0" targetFramework="2.0" ctype="DotNetProject">
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="cpgstudio" />
       <Build debugmode="True" target="Exe" />
-      <Execution runwithwarnings="True" commandlineparameters="test.cpg" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
-      <EnvironmentVariables />
+      <Execution consolepause="True" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
     <Configuration name="Release" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Release" assembly="cpgstudio" />
       <Build debugmode="False" target="Exe" />
-      <Execution runwithwarnings="True" consolepause="True" runtime="MsNet" clr-version="Net_2_0" />
+      <Execution consolepause="True" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
       <CodeGeneration compiler="Mcs" warninglevel="4" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
   </Configurations>
   <Contents>
-    <File name="Window.cs" subtype="Code" buildaction="Compile" />
-    <File name="Application.cs" subtype="Code" buildaction="Compile" />
-    <File name="AssemblyInfo.cs" subtype="Code" buildaction="Compile" />
-    <File name="ui.xml" subtype="Code" buildaction="EmbedAsResource" />
-    <File name="Stock.cs" subtype="Code" buildaction="Compile" />
-    <File name="Grid.cs" subtype="Code" buildaction="Compile" />
-    <File name="icons/chain.png" subtype="Code" buildaction="EmbedAsResource" />
-    <File name="icons/chain-broken.png" subtype="Code" buildaction="EmbedAsResource" />
-    <File name="icons/link.png" subtype="Code" buildaction="EmbedAsResource" />
-    <File name="components" subtype="Directory" buildaction="Compile" />
-    <File name="components/Group.cs" subtype="Code" buildaction="Compile" />
-    <File name="components/Object.cs" subtype="Code" buildaction="Compile" />
-    <File name="components/State.cs" subtype="Code" buildaction="Compile" />
-    <File name="components/Link.cs" subtype="Code" buildaction="Compile" />
-    <File name="components/Relay.cs" subtype="Code" buildaction="Compile" />
-    <File name="components/Simulated.cs" subtype="Code" buildaction="Compile" />
-    <File name="components/Network.cs" subtype="Code" buildaction="Compile" />
-    <File name="Utils.cs" subtype="Code" buildaction="Compile" />
-    <File name="Table.cs" subtype="Code" buildaction="Compile" />
-    <File name="PropertyView.cs" subtype="Code" buildaction="Compile" />
-    <File name="Allocation.cs" subtype="Code" buildaction="Compile" />
-    <File name="components/PropertyAttribute.cs" subtype="Code" buildaction="Compile" />
-    <File name="GroupProperties.cs" subtype="Code" buildaction="Compile" />
-    <File name="renderers" subtype="Directory" buildaction="Compile" />
-    <File name="renderers/Renderer.cs" subtype="Code" buildaction="Compile" />
-    <File name="renderers/Default.cs" subtype="Code" buildaction="Compile" />
-    <File name="renderers/Oscillator.cs" subtype="Code" buildaction="Compile" />
-    <File name="renderers/Group.cs" subtype="Code" buildaction="Compile" />
-    <File name="renderers/Box.cs" subtype="Code" buildaction="Compile" />
-    <File name="renderers/State.cs" subtype="Code" buildaction="Compile" />
-    <File name="renderers/Relay.cs" subtype="Code" buildaction="Compile" />
-    <File name="Saver.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization" subtype="Directory" buildaction="Compile" />
-    <File name="serialization/Cpg.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Network.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Property.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/State.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Simulated.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Relay.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Link.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Project.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Object.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Group.cs" subtype="Code" buildaction="Compile" />
-    <File name="Settings.cs" subtype="Code" buildaction="Compile" />
-    <File name="MessageArea.cs" subtype="Code" buildaction="Compile" />
-    <File name="PropertyDialog.cs" subtype="Code" buildaction="Compile" />
-    <File name="Loader.cs" subtype="Code" buildaction="Compile" />
-    <File name="Range.cs" subtype="Code" buildaction="Compile" />
-    <File name="Graph.cs" subtype="Code" buildaction="Compile" />
-    <File name="Monitor.cs" subtype="Code" buildaction="Compile" />
-    <File name="Simulation.cs" subtype="Code" buildaction="Compile" />
-    <File name="monitor-ui.xml" subtype="Code" buildaction="EmbedAsResource" />
-    <File name="ObjectView.cs" subtype="Code" buildaction="Compile" />
-    <File name="components/Globals.cs" subtype="Code" buildaction="Compile" />
-    <File name="serialization/Globals.cs" subtype="Code" buildaction="Compile" />
-    <File name="RenderCache.cs" subtype="Code" buildaction="Compile" />
-    <File name="FunctionsDialog.cs" subtype="Code" buildaction="Compile" />
-    <File name="FunctionsView.cs" subtype="Code" buildaction="Compile" />
-    <File name="PolynomialsView.cs" subtype="Code" buildaction="Compile" />
-    <File name="interpolators" subtype="Directory" buildaction="Compile" />
-    <File name="interpolators/IInterpolator.cs" subtype="Code" buildaction="Compile" />
-    <File name="interpolators/Interpolation.cs" subtype="Code" buildaction="Compile" />
-    <File name="interpolators/PChip.cs" subtype="Code" buildaction="Compile" />
-    <File name="InterpolateDialog.cs" subtype="Code" buildaction="Compile" />
-    <File name="DynamicIntegrator.cs" subtype="Code" buildaction="Compile" />
-    <File name="Directories.cs" subtype="Code" buildaction="Compile" />
+    <File subtype="Code" buildaction="Compile" name="Window.cs" />
+    <File subtype="Code" buildaction="Compile" name="Application.cs" />
+    <File subtype="Code" buildaction="Compile" name="AssemblyInfo.cs" />
+    <File subtype="Code" buildaction="EmbedAsResource" name="ui.xml" />
+    <File subtype="Code" buildaction="Compile" name="Stock.cs" />
+    <File subtype="Code" buildaction="Compile" name="Grid.cs" />
+    <File subtype="Code" buildaction="EmbedAsResource" name="icons/chain.png" />
+    <File subtype="Code" buildaction="EmbedAsResource" name="icons/chain-broken.png" />
+    <File subtype="Code" buildaction="EmbedAsResource" name="icons/link.png" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Wrappers" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Group.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Graphical.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/State.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Link.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Wrapper.cs" />
+    <File subtype="Code" buildaction="Compile" name="Utils.cs" />
+    <File subtype="Code" buildaction="Compile" name="Table.cs" />
+    <File subtype="Code" buildaction="Compile" name="PropertyView.cs" />
+    <File subtype="Code" buildaction="Compile" name="Allocation.cs" />
+    <File subtype="Code" buildaction="Compile" name="GroupProperties.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Renderers" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Renderer.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Default.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Oscillator.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Group.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Box.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/State.cs" />
+    <File subtype="Code" buildaction="Compile" name="Saver.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Serialization" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Main.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Network.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Property.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/State.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Link.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Project.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Object.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Group.cs" />
+    <File subtype="Code" buildaction="Compile" name="Settings.cs" />
+    <File subtype="Code" buildaction="Compile" name="MessageArea.cs" />
+    <File subtype="Code" buildaction="Compile" name="PropertyDialog.cs" />
+    <File subtype="Code" buildaction="Compile" name="Loader.cs" />
+    <File subtype="Code" buildaction="Compile" name="Range.cs" />
+    <File subtype="Code" buildaction="Compile" name="Graph.cs" />
+    <File subtype="Code" buildaction="Compile" name="Monitor.cs" />
+    <File subtype="Code" buildaction="Compile" name="Simulation.cs" />
+    <File subtype="Code" buildaction="EmbedAsResource" name="monitor-ui.xml" />
+    <File subtype="Code" buildaction="Compile" name="ObjectView.cs" />
+    <File subtype="Code" buildaction="Compile" name="RenderCache.cs" />
+    <File subtype="Code" buildaction="Compile" name="FunctionsDialog.cs" />
+    <File subtype="Code" buildaction="Compile" name="FunctionsView.cs" />
+    <File subtype="Code" buildaction="Compile" name="PolynomialsView.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Interpolators" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Interpolators/IInterpolator.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Interpolators/Interpolation.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Interpolators/PChip.cs" />
+    <File subtype="Code" buildaction="Compile" name="InterpolateDialog.cs" />
+    <File subtype="Code" buildaction="Compile" name="DynamicIntegrator.cs" />
+    <File subtype="Code" buildaction="Compile" name="Directories.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Network.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
@@ -94,6 +86,6 @@
     <ProjectReference type="Gac" localcopy="True" refto="Mono.Cairo, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
     <ProjectReference type="Gac" localcopy="True" refto="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-    <ProjectReference type="Assembly" localcopy="True" specificVersion="False" refto="../../../../.packeteer/install/lib/cpg-network-sharp/CpgNetwork.dll" />
+    <ProjectReference type="Assembly" localcopy="True" specificVersion="False" refto="../../../../.packeteer/install/lib/cpg-network-sharp-2.0/CpgNetwork.dll" />
   </References>
 </Project>

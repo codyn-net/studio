@@ -5,7 +5,7 @@ namespace Cpg.Studio
 {
 	public class ObjectView : TreeView
 	{
-		public delegate void PropertyHandler(ObjectView source, Components.Object obj, string property);
+		public delegate void PropertyHandler(ObjectView source, Wrappers.Wrapper obj, Cpg.Property property);
 
 		public event PropertyHandler Toggled = delegate {};
 		public event PropertyHandler PropertyAdded = delegate {};
@@ -21,7 +21,7 @@ namespace Cpg.Studio
 		
 		private void Build()
 		{
-			d_store = new TreeStore(typeof(object), typeof(string), typeof(int));
+			d_store = new TreeStore(typeof(object), typeof(object), typeof(int));
 			
 			d_store.SetSortFunc(1, DoRowSort);
 			d_store.SetSortColumnId(1, SortType.Ascending);
@@ -91,7 +91,7 @@ namespace Cpg.Studio
 			{
 				do
 				{
-					Components.Object o = d_store.GetValue(iter, 0) as Components.Object;
+					Wrappers.Wrapper o = d_store.GetValue(iter, 0) as Wrappers.Wrapper;
 					
 					Disconnect(o);
 				} while (d_store.IterNext(ref iter));
@@ -99,18 +99,20 @@ namespace Cpg.Studio
 			
 			d_store.Clear();
 			
-			foreach (Components.Object obj in d_grid.Container.Children)
+			foreach (Wrappers.Wrapper obj in d_grid.Container.Children)
 			{
 				AddObject(obj);
 			}
 		}
 		
-		public void SetActive(Components.Object obj, string prop, bool active)
+		public void SetActive(Wrappers.Wrapper obj, Cpg.Property prop, bool active)
 		{
 			TreeIter parent;
 			
 			if (!Find(obj, out parent))
+			{
 				return;
+			}
 				
 			TreeIter child;
 			
@@ -120,12 +122,14 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public bool GetActive(Components.Object obj, string prop)
+		public bool GetActive(Wrappers.Wrapper obj, Cpg.Property prop)
 		{
 			TreeIter parent;
 			
 			if (!Find(obj, out parent))
+			{
 				return false;
+			}
 				
 			TreeIter child;
 			
@@ -142,23 +146,29 @@ namespace Cpg.Studio
 			object o1 = model.GetValue(a, 0);
 			object o2 = model.GetValue(b, 0);
 			
-			string o3 = model.GetValue(a, 1) as string;
+			string o3 = (model.GetValue(a, 1) as Cpg.Property).Name;
 			
 			if (o3 == null)
 			{
-				bool aat = o1 is Components.Link;
-				bool bat = o2 is Components.Link;
+				bool aat = o1 is Wrappers.Link;
+				bool bat = o2 is Wrappers.Link;
 				
 				if (aat && !bat)
+				{
 					return 1;
+				}
 				else if (!aat && bat)
+				{
 					return 0;
+				}
 				else
+				{
 					return o1.ToString().CompareTo(o2.ToString());
+				}
 			}
 			else
 			{
-				return o3.CompareTo(model.GetValue(b, 1) as string); 
+				return o3.CompareTo((model.GetValue(b, 1) as Cpg.Property).Name); 
 			}
 		}
 		
@@ -190,21 +200,21 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void Disconnect(Components.Object obj)
+		private void Disconnect(Wrappers.Wrapper obj)
 		{
 			obj.PropertyAdded -= HandlePropertyAdded;
 			obj.PropertyRemoved -= HandlePropertyRemoved;
 			obj.PropertyChanged -= HandlePropertyChanged;
 		}
 		
-		private bool Find(Components.Object obj, out TreeIter iter)
+		private bool Find(Wrappers.Wrapper obj, out TreeIter iter)
 		{
 			if (!d_store.GetIterFirst(out iter))
 				return false;
 			
 			do
 			{
-				Components.Object other = d_store.GetValue(iter, 0) as Components.Object;
+				Wrappers.Wrapper other = d_store.GetValue(iter, 0) as Wrappers.Wrapper;
 				
 				if (other.Equals(obj))
 				{
@@ -215,7 +225,7 @@ namespace Cpg.Studio
 			return false;
 		}
 		
-		private void RemoveObject(Components.Object obj)
+		private void RemoveObject(Wrappers.Wrapper obj)
 		{
 			TreeIter parent;
 			
@@ -225,21 +235,20 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void AddObject(Components.Object obj)
+		private void AddObject(Wrappers.Wrapper obj)
 		{
-			if (!(obj is Components.Simulated))
+			if (!(obj is Wrappers.Wrapper))
+			{
 				return;
+			}
 			
 			TreeIter parent;
 			
 			parent = d_store.AppendValues(obj, null, 0);
 			
-			foreach (string property in obj.Properties)
+			foreach (Cpg.Property property in obj.Properties)
 			{
-				if ((obj as Components.Simulated).SimulatedProperty(property))
-				{
-					AddProperty(parent, obj, property);
-				}
+				AddProperty(parent, obj, property);
 			}
 			
 			CheckConsistency(parent);
@@ -251,29 +260,30 @@ namespace Cpg.Studio
 			ExpandRow(d_store.GetPath(parent), false);
 		}
 
-		private void HandlePropertyChanged(Components.Object source, string name)
+		private void HandlePropertyChanged(Wrappers.Wrapper source, Cpg.Property prop)
 		{
-			if (name != "id")
-				return;
-
 			TreeIter parent;
 			
 			if (!Find(source, out parent))
+			{
 				return;
+			}
 			
 			d_store.EmitRowChanged(d_store.GetPath(parent), parent);
 		}
 
-		private bool FindProperty(TreeIter parent, string name, out TreeIter iter)
+		private bool FindProperty(TreeIter parent, Cpg.Property prop, out TreeIter iter)
 		{
 			if (!d_store.IterChildren(out iter, parent))
+			{
 				return false;
+			}
 			
 			do
 			{
-				string property = d_store.GetValue(iter, 1) as string;
+				Cpg.Property property = d_store.GetValue(iter, 1) as Cpg.Property;
 				
-				if (property == name)
+				if (property == prop)
 				{
 					return true;
 				}
@@ -282,15 +292,15 @@ namespace Cpg.Studio
 			return false;
 		}
 
-		private void HandlePropertyRemoved(Components.Object source, string name)
+		private void HandlePropertyRemoved(Wrappers.Wrapper source, Cpg.Property property)
 		{
 			TreeIter parent;
 			
-			if (Find(source as Components.Object, out parent))
+			if (Find(source as Wrappers.Wrapper, out parent))
 			{
 				TreeIter prop;
 
-				if (FindProperty(parent, name, out prop))
+				if (FindProperty(parent, property, out prop))
 				{
 					d_store.Remove(ref prop);
 				}
@@ -299,26 +309,23 @@ namespace Cpg.Studio
 			}
 		}
 
-		private void HandlePropertyAdded(Components.Object source, string name)
+		private void HandlePropertyAdded(Wrappers.Wrapper source, Cpg.Property prop)
 		{
 			TreeIter parent;
 			
-			if (Find(source as Components.Object, out parent))
+			if (Find(source as Wrappers.Wrapper, out parent))
 			{
-				if ((source as Components.Simulated).SimulatedProperty(name))
-				{
-					AddProperty(parent, source as Components.Object, name);
-					CheckConsistency(parent);
-				}
+				AddProperty(parent, source, prop);
+				CheckConsistency(parent);
 			}
 		}
 		
-		private void AddProperty(TreeIter parent, Components.Object obj, string property)
+		private void AddProperty(TreeIter parent, Wrappers.Wrapper obj, Cpg.Property prop)
 		{
-			d_store.AppendValues(parent, obj, property, 0);
+			d_store.AppendValues(parent, obj, prop, 0);
 			
 			ExpandRow(d_store.GetPath(parent), false);
-			PropertyAdded(this, obj, property);
+			PropertyAdded(this, obj, prop);
 		}
 		
 		private void OnToggleCellData(TreeViewColumn column, CellRenderer cell, TreeModel model, TreeIter iter)
@@ -343,17 +350,17 @@ namespace Cpg.Studio
 		private void OnTextCellData(TreeViewColumn column, CellRenderer cell, TreeModel model, TreeIter iter)
 		{
 			object o = model.GetValue(iter, 0);
-			string st = model.GetValue(iter, 1) as string;
+			Cpg.Property st = model.GetValue(iter, 1) as Cpg.Property;
 			
 			CellRendererText renderer = cell as CellRendererText;
 			
 			if (st == null)
 			{
-				string s = (o as Components.Object).ToString() + " (" + o.GetType().Name + ")";
+				string s = (o as Wrappers.Wrapper).ToString() + " (" + o.GetType().Name + ")";
 				
-				if (o is Components.Link)
+				if (o is Wrappers.Link)
 				{
-					Components.Link link = o as Components.Link;
+					Wrappers.Link link = o as Wrappers.Link;
 					s += " " + link.From.ToString() + " » " + link.To.ToString();
 				}
 				
@@ -363,28 +370,28 @@ namespace Cpg.Studio
 			}
 			else
 			{
-				renderer.Text = st;
+				renderer.Text = st.Name;
 				cell.CellBackgroundGdk = Style.Base(this.State);
 				renderer.ForegroundGdk = Style.Text(this.State);
 			}
 		}
 
-		private void HandleLeveledDown(object source, Components.Object obj)
+		private void HandleLeveledDown(object source, Wrappers.Wrapper obj)
 		{
 			InitStore();
 		}
 
-		private void HandleLeveledUp(object source, Components.Object obj)
+		private void HandleLeveledUp(object source, Wrappers.Wrapper obj)
 		{
 			InitStore();
 		}
 
-		private void HandleObjectAdded(object source, Components.Object obj)
+		private void HandleObjectAdded(object source, Wrappers.Wrapper obj)
 		{
 			AddObject(obj);	
 		}
 
-		private void HandleObjectRemoved(object source, Components.Object obj)
+		private void HandleObjectRemoved(object source, Wrappers.Wrapper obj)
 		{
 			RemoveObject(obj);
 		}
@@ -396,7 +403,7 @@ namespace Cpg.Studio
 			TreeIter parent;
 			d_store.IterParent(out parent, iter);
 			
-			Toggled(this, d_store.GetValue(parent, 0) as Components.Object, d_store.GetValue(iter, 1) as string);
+			Toggled(this, d_store.GetValue(parent, 0) as Wrappers.Wrapper, d_store.GetValue(iter, 1) as Cpg.Property);
 		}
 		
 		private void ToggleChildren(TreeIter parent)
@@ -406,7 +413,9 @@ namespace Cpg.Studio
 			TreeIter iter;
 			
 			if (!d_store.IterChildren(out iter, parent))
+			{
 				return;
+			}
 			
 			do
 			{

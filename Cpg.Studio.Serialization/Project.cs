@@ -69,7 +69,7 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				return d_window != null ? d_window.Grid.Container.FullId : d_container;
+				return d_window != null ? d_window.Grid.Container.Id : d_container;
 			}
 			set
 			{

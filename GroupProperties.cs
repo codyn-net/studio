@@ -7,29 +7,29 @@ namespace Cpg.Studio
 {
 	public class GroupProperties : Gtk.Table
 	{
-		private List<Components.Simulated> d_objects;
+		private List<Wrappers.Wrapper> d_objects;
 		private ComboBox d_comboMain;
 		private ComboBox d_comboKlass;
 		
-		public GroupProperties(Components.Object[] objects, Components.Simulated defmain, Type defklass) : base(2, 2, false)
+		public GroupProperties(Wrappers.Wrapper[] objects, Wrappers.Wrapper defmain, Type defklass) : base(2, 2, false)
 		{
 			RowSpacing = 6;
 			ColumnSpacing = 12;
 			
 			/* Get all simulated non-links */
-			d_objects = new List<Components.Simulated>();
+			d_objects = new List<Wrappers.Wrapper>();
 			
-			foreach (Components.Object obj in objects)
+			foreach (Wrappers.Wrapper obj in objects)
 			{
-				if (obj is Components.Simulated && !(obj is Components.Link))
-					d_objects.Add(obj as Components.Simulated);
+				if (obj is Wrappers.Wrapper && !(obj is Wrappers.Link))
+					d_objects.Add(obj as Wrappers.Wrapper);
 			}
 			
 			Build(defmain, defklass);
 			ShowAll();
 		}
 		
-		public GroupProperties(Components.Object[] objects) : this(objects, null, null)
+		public GroupProperties(Wrappers.Wrapper[] objects) : this(objects, null, null)
 		{
 		}
 		
@@ -48,20 +48,20 @@ namespace Cpg.Studio
 			if (info == null)
 				return null;
 			
-			Components.Renderers.Group renderer = info.Invoke(new object[] {}) as Components.Renderers.Group;
+			Wrappers.Renderers.Group renderer = info.Invoke(new object[] {}) as Wrappers.Renderers.Group;
 			
 			return renderer.Icon(24);
 		}
 		
-		private void Build(Components.Simulated defmain, Type defklass)
+		private void Build(Wrappers.Wrapper defmain, Type defklass)
 		{
-			Attach(MakeLabel("Relay:"), 0, 1, 0, 1, AttachOptions.Fill, AttachOptions.Fill, 0, 0);
+			Attach(MakeLabel("Proxy:"), 0, 1, 0, 1, AttachOptions.Fill, AttachOptions.Fill, 0, 0);
 			Attach(MakeLabel("Class:"), 0, 1, 1, 2, AttachOptions.Fill, AttachOptions.Fill, 0, 0);
 			
-			ListStore store = new ListStore(typeof(Components.Simulated), typeof(String), typeof(Gdk.Pixbuf));
+			ListStore store = new ListStore(typeof(Wrappers.Wrapper), typeof(String), typeof(Gdk.Pixbuf));
 			TreePath path = null;
 			
-			foreach (Components.Simulated obj in d_objects)
+			foreach (Wrappers.Wrapper obj in d_objects)
 			{
 				if (String.IsNullOrEmpty(obj.Id))
 					continue;
@@ -109,10 +109,10 @@ namespace Cpg.Studio
 			
 			foreach (Type type in asm.GetTypes())
 			{
-				if (!type.IsSubclassOf(typeof(Components.Renderers.Group)))
+				if (!type.IsSubclassOf(typeof(Wrappers.Renderers.Group)))
 					continue;
 
-				string name = Components.Renderers.Renderer.GetName(type);
+				string name = Wrappers.Renderers.Renderer.GetName(type);
 				TreeIter iter = store.Append();
 				
 				store.SetValue(iter, 0, new GLib.Value(type));
@@ -147,14 +147,14 @@ namespace Cpg.Studio
 			Attach(cmb, 1, 2, 1, 2);
 		}
 		
-		public Components.Simulated Main
+		public Wrappers.Wrapper Main
 		{
 			get
 			{
 				TreeIter iter;
 				
 				if (d_comboMain.GetActiveIter(out iter))
-					return d_comboMain.Model.GetValue(iter, 0) as Components.Simulated;
+					return d_comboMain.Model.GetValue(iter, 0) as Wrappers.Wrapper;
 				else
 					return null;
 			}

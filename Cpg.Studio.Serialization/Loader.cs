@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using System.Reflection;
+using CCpg = Cpg;
 
 namespace Cpg.Studio.Serialization
 {
@@ -17,9 +18,9 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 
-		private void Reconstruct(Main cpg, Serialization.Group group, List<Cpg.Object> all, Dictionary<string, Wrappers.Wrapper> mapping)
+		private void Reconstruct(Cpg cpg, Serialization.Group group, List<CCpg.Object> all, Dictionary<string, Wrappers.Wrapper> mapping)
 		{
-			Cpg.Network network = cpg.Network.CNetwork;
+			CCpg.Network network = cpg.Network.CNetwork;
 			List<Serialization.Group> groups = new List<Serialization.Group>();
 			List<Serialization.Link> links = new List<Serialization.Link>();
 			
@@ -39,22 +40,20 @@ namespace Cpg.Studio.Serialization
 				else
 				{
 					string id = obj.Id;
-					//Wrappers.Wrapper sim = obj.Obj as Wrappers.Wrapper;
+					Wrappers.Wrapper sim = obj.Obj as Wrappers.Wrapper;
 					
-					Cpg.Object cobj = network.GetChild(id);
+					CCpg.Object cobj = network.GetObject(id);
 					
 					if (cobj == null)
 					{
-						// TODO
-						//group.Remove(obj);
+						group.Children.Remove(obj);
 						continue;
 					}
 					
 					all.Remove(cobj);
 					
 					// Set CObject
-					// TODO
-					//sim.Object = cobj;
+					sim.Object = cobj;
 					
 					if (obj is Serialization.Link)
 						links.Add(obj as Serialization.Link);
@@ -72,11 +71,10 @@ namespace Cpg.Studio.Serialization
 				if (!(obj.Obj is Wrappers.Wrapper))
 					continue;
 
-				//Wrappers.Wrapper sim = obj.Obj as Wrappers.Wrapper;
+				Wrappers.Wrapper sim = obj.Obj as Wrappers.Wrapper;
 				
 				// Fill main of current group
-				/*TODO
-				if (sim.Id == group.Main)
+				if (sim.FullId == group.Main)
 				{
 					(group.Obj as Wrappers.Group).Main = sim;
 				}
@@ -89,7 +87,7 @@ namespace Cpg.Studio.Serialization
 				else
 				{
 					mapping[sim.FullId] = sim;
-				}*/
+				}
 			}
 						
 			// Set link objects
@@ -97,14 +95,14 @@ namespace Cpg.Studio.Serialization
 			{
 				// Fill in wrapped to/from, use earlier constructed mapping
 				Wrappers.Link wrapped = link.As<Wrappers.Link>();
-				Cpg.Link clink = wrapped.WrappedObject;
+				CCpg.Link clink = wrapped.Object as CCpg.Link;
 				
 				if (!mapping.ContainsKey(clink.To.Id))
 				{
 					Console.WriteLine("Not found to: " + clink.To.Id);
 
 					// Apparently, there is no wrapper for this, so... try to just construct it here
-					Wrappers.Wrapper sim = Wrappers.Wrapper.Wrap(clink.To);
+					Wrappers.Wrapper sim = Wrappers.Wrapper.FromCpg(clink.To);
 					mapping[clink.To.Id] = sim;
 					
 					group.Children.Add(Serialization.Object.Create(sim));
@@ -116,7 +114,7 @@ namespace Cpg.Studio.Serialization
 					Console.WriteLine("Not found from: " + clink.From.Id);
 					
 					// Apparently, there is no wrapper for this, so... try to just construct it here
-					Wrappers.Wrapper sim = Wrappers.Wrapper.Wrap(clink.From);
+					Wrappers.Wrapper sim = Wrappers.Wrapper.FromCpg(clink.From);
 					mapping[clink.From.Id] = sim;
 					
 					group.Children.Add(Serialization.Object.Create(sim));
@@ -128,23 +126,23 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		private void Rewrap(Serialization.Group root, List<Cpg.Object> all, Dictionary<string, Wrappers.Wrapper> mapping)
+		private void Rewrap(Serialization.Group root, List<CCpg.Object> all, Dictionary<string, Wrappers.Wrapper> mapping)
 		{
 			List<Wrappers.Wrapper> states = new List<Wrappers.Wrapper>();
-			List<Cpg.Object> cp = new List<Cpg.Object>(all);
+			List<CCpg.Object> cp = new List<CCpg.Object>(all);
 			
-			foreach (Cpg.Object obj in cp)
+			foreach (CCpg.Object obj in cp)
 			{
-				if (!(obj is Cpg.Link))
+				if (!(obj is CCpg.Link))
 					continue;
 
-				Cpg.Link link = obj as Cpg.Link;
+				CCpg.Link link = obj as CCpg.Link;
 				
 				if (!mapping.ContainsKey(link.To.Id))
 				{
 					Console.WriteLine("Not found to: " + link.To.Id);
 					// So, we need to create it...
-					Wrappers.Wrapper s = Wrappers.Wrapper.Wrap(link.To);
+					Wrappers.Wrapper s = Wrappers.Wrapper.FromCpg(link.To);
 					mapping[link.To.Id] = s;
 					
 					root.Children.Add(Serialization.Object.Create(s));
@@ -158,7 +156,7 @@ namespace Cpg.Studio.Serialization
 					Console.WriteLine("Not found from: " + link.From.Id);
 					
 					// So, we need to create it
-					Wrappers.Wrapper s = Wrappers.Wrapper.Wrap(link.From);
+					Wrappers.Wrapper s = Wrappers.Wrapper.FromCpg(link.From);
 					mapping[link.From.Id] = s;
 					
 					root.Children.Add(Serialization.Object.Create(s));
@@ -167,7 +165,7 @@ namespace Cpg.Studio.Serialization
 					states.Add(s);
 				}
 
-				Wrappers.Wrapper sim = Wrappers.Wrapper.Wrap(obj);
+				Wrappers.Wrapper sim = Wrappers.Wrapper.FromCpg(obj);
 				(sim as Wrappers.Link).From = mapping[link.From.Id];
 				(sim as Wrappers.Link).To = mapping[link.To.Id];
 				
@@ -175,9 +173,9 @@ namespace Cpg.Studio.Serialization
 				all.Remove(obj);
 			}
 
-			foreach (Cpg.Object obj in all)
+			foreach (CCpg.Object obj in all)
 			{
-				Wrappers.Wrapper sim = Wrappers.Wrapper.Wrap(obj);
+				Wrappers.Wrapper sim = Wrappers.Wrapper.FromCpg(obj);
 				mapping[obj.Id] = sim;
 
 				states.Add(sim);
@@ -199,14 +197,19 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		private void Reconstruct(Main cpg)
+		private void Reconstruct(Cpg cpg)
 		{
 			// Reconstruct wrapped network
-			List<Cpg.Object> all = new List<Cpg.Object>();
+			List<CCpg.Object> all = new List<CCpg.Object>();
 			
-			foreach (Cpg.Object obj in cpg.Network.CNetwork.Children)
+			foreach (CCpg.Object obj in cpg.Network.CNetwork.States)
 			{
 				all.Add(obj);
+			}
+			
+			foreach (CCpg.Link link in cpg.Network.CNetwork.Links)
+			{
+				all.Add(link);
 			}
 			
 			Dictionary<string, Wrappers.Wrapper> mapping = new Dictionary<string, Wrappers.Wrapper>();
@@ -214,10 +217,10 @@ namespace Cpg.Studio.Serialization
 			Rewrap(cpg.Project.Root, all, mapping);
 		}
 		
-		public Main LoadXml(string xml)
+		public Cpg LoadXml(string xml)
 		{
 			/* Load in the network */
-			Cpg.Network network = Cpg.Network.NewFromXml(xml);
+			CCpg.Network network = CCpg.Network.NewFromXml(xml);
 			
 			if (network == null || network.Handle == IntPtr.Zero)
 			{
@@ -252,7 +255,7 @@ namespace Cpg.Studio.Serialization
 				}
 			}
 			
-			Main cpg = new Main(network);
+			Cpg cpg = new Cpg(network);
 			
 			if (des != null)
 			{
@@ -269,12 +272,12 @@ namespace Cpg.Studio.Serialization
 			return cpg;
 		}
 		
-		public Main Load(string filename)
+		public Cpg Load(string filename)
 		{
 			FileStream stream = new FileStream(filename, FileMode.Open, FileAccess.Read);
 			TextReader reader = new StreamReader(stream, Encoding.UTF8);
 			
-			Main cpg = LoadXml(reader.ReadToEnd());
+			Cpg cpg = LoadXml(reader.ReadToEnd());
 			reader.Close();
 			
 			return cpg;

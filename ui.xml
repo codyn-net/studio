@@ -48,7 +48,6 @@
     <menu name="InsertMenu" action="InsertMenuAction">
       <menuitem name="AddState" action="AddStateAction"/>
       <menuitem name="AddLink" action="AddLinkAction"/>
-      <menuitem name="AddRelay" action="AddRelayAction"/>
       <separator/>
       <placeholder name="InsertTemplates"/>
     </menu>
@@ -57,7 +56,6 @@
     <menu name="InsertMenu" action="InsertMenuAction">
       <menuitem name="AddState" action="AddStateAction"/>
       <menuitem name="AddLink" action="AddLinkAction"/>
-      <menuitem name="AddRelay" action="AddRelayAction"/>
       <separator/>
       <placeholder name="InsertTemplates"/>
     </menu>
@@ -88,7 +86,6 @@
     <separator/>
     <toolitem name="AddState" action="AddStateAction"/>
     <toolitem name="AddLink" action="AddLinkAction"/>
-    <toolitem name="AddRelay" action="AddRelayAction"/>
     <separator/>
     <placeholder name="ToolItems"/>
   </toolbar>

@@ -77,9 +77,10 @@ namespace Cpg.Studio
 		public static void Main(string[] args)
 		{
 			System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
+			GLib.GType.Init();
 
 			Gtk.Application.Init("Cpg Studio", ref args);
-			Components.Renderers.Oscillator renderer = new Components.Renderers.Oscillator();
+			Wrappers.Renderers.Oscillator renderer = new Wrappers.Renderers.Oscillator();
 			Gtk.Window.DefaultIconList = new Gdk.Pixbuf[] {
 				renderer.Icon(16),
 				renderer.Icon(24),

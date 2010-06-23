@@ -1,18 +1,19 @@
 using System;
 using System.Xml.Serialization;
 using System.Collections.Generic;
+using CCpg = Cpg;
 
 namespace Cpg.Studio.Serialization
 {
 	[XmlType("link")]
-	public class Link : Simulated
+	public class Link : Object
 	{
 		[XmlType("action")]
 		public class Action
 		{
-			Components.Link.Action d_action;
+			Wrappers.Link.Action d_action;
 			
-			public Action(Components.Link.Action action)
+			public Action(Wrappers.Link.Action action)
 			{
 				d_action = action;
 			}
@@ -48,23 +49,29 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		public Link(Components.Link link) : base(link)
+		public Link(Wrappers.Link link) : base(link)
 		{
 		}
 		
-		public Link() : this (new Components.Link())
+		public Link() : this (new Wrappers.Link())
 		{
 		}
-		
-		private string FlattenedId(Components.Simulated obj)
+
+		public static implicit operator Wrappers.Link(Link link)
 		{
-			if (obj is Components.Group)
+			return link.WrappedObject;
+		}
+		
+		public static implicit operator Link(Wrappers.Link link)
+		{
+			return new Link(link);
+		}
+		
+		public new Wrappers.Link WrappedObject
+		{
+			get
 			{
-				return FlattenedId((obj as Components.Group).Main);
-			}
-			else
-			{
-				return obj.FullId;
+				return As<Wrappers.Link>();
 			}
 		}
 		
@@ -73,9 +80,7 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				Components.Link link = As<Components.Link>();
-				
-				return FlattenedId(link.From);
+				return As<Wrappers.Link>().From.Id;
 			}
 			set
 			{
@@ -88,8 +93,7 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				Components.Link link = As<Components.Link>();
-				return FlattenedId(link.To);
+				return As<Wrappers.Link>().To.Id;
 			}
 			set
 			{
@@ -102,10 +106,10 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				Components.Link link = As<Components.Link>();
+				Wrappers.Link link = As<Wrappers.Link>();
 				List<Action> actions = new List<Action>();
 				
-				foreach (Components.Link.Action action in link.Actions)
+				foreach (Wrappers.Link.Action action in link.Actions)
 				{
 					actions.Add(new Action(action));
 				}

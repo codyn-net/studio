@@ -128,15 +128,15 @@ namespace Cpg.Studio
 			return false;
 		}
 		
-		public static void MeanPosition(ICollection<Components.Object> objects, out double x, out double y)
+		public static void MeanPosition(ICollection<Wrappers.Wrapper> objects, out double x, out double y)
 		{
 			x = 0;
 			y = 0;
 			int num = 0;
 			
-			foreach (Components.Object obj in objects)
+			foreach (Wrappers.Wrapper obj in objects)
 			{
-				if (obj is Components.Link)
+				if (obj is Wrappers.Link)
 					continue;
 
 				x += obj.Allocation.X + obj.Allocation.Width / 2.0f;

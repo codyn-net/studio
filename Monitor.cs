@@ -66,13 +66,13 @@ namespace Cpg.Studio
 		
 		new class State
 		{
-			public string Property;
+			public Cpg.Property Property;
 			public Graph Graph;
 			public Graph.Container Plot;
 			public Cpg.Monitor Monitor;
 			public Widget Widget;
 			
-			public State(string property)
+			public State(Cpg.Property property)
 			{
 				Property = property;
 				Graph = null;
@@ -93,7 +93,7 @@ namespace Cpg.Studio
 		
 		private ObjectView d_objectView;
 		private ScrolledWindow d_objectViewScrolledWindow;
-		private Dictionary<Components.Object, List<State>> d_map;
+		private Dictionary<Wrappers.Wrapper, List<State>> d_map;
 		private Cpg.Studio.Table d_content;
 		private Range d_range;
 		private uint d_configureSourceId;
@@ -113,7 +113,7 @@ namespace Cpg.Studio
 			d_linkRulers = true;
 			d_linkAxis = true;
 			
-			d_map = new Dictionary<Components.Object, List<State>>();
+			d_map = new Dictionary<Wrappers.Wrapper, List<State>>();
 			
 			d_grid = grid;
 			d_grid.Cleared += HandleCleared;
@@ -127,30 +127,32 @@ namespace Cpg.Studio
 		
 		private void RemoveGone()
 		{
-			List<KeyValuePair<Components.Object, Monitor.State>> all = new List<KeyValuePair<Components.Object,Monitor.State>>(Each());
+			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all = new List<KeyValuePair<Wrappers.Wrapper,Monitor.State>>(Each());
 			
-			foreach (KeyValuePair<Components.Object, Monitor.State> item in all)
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> item in all)
 			{
-				if (!d_grid.Container.Children.Contains(item.Key))
+				if (!d_grid.Container.Contains(item.Key))
+				{
 					RemoveHookReal(item.Key, item.Value);
+				}
 			}
 		}
 		
-		private void HandleLeveledUp(object source, Components.Object obj)
+		private void HandleLeveledUp(object source, Wrappers.Wrapper obj)
 		{
 			RemoveGone();
 		}
 		
-		private void HandleLeveledDown(object source, Components.Object obj)
+		private void HandleLeveledDown(object source, Wrappers.Wrapper obj)
 		{
 			RemoveGone();
 		}
 		
 		private void HandleCleared(object source, EventArgs args)
 		{
-			List<KeyValuePair<Components.Object, Monitor.State>> all = new List<KeyValuePair<Components.Object,Monitor.State>>(Each());
+			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all = new List<KeyValuePair<Wrappers.Wrapper,Monitor.State>>(Each());
 			
-			foreach (KeyValuePair<Components.Object, Monitor.State> item in all)
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> item in all)
 			{
 				RemoveHookReal(item.Key, item.Value);
 			}			
@@ -208,7 +210,7 @@ namespace Cpg.Studio
 			vboxContent.PackEnd(hbox, false, false, 3);
 			
 			d_showRulers.Toggled += delegate(object sender, EventArgs e) {
-				foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 				{
 					state.Value.Graph.ShowRuler = (sender as CheckButton).Active;
 				}
@@ -235,12 +237,12 @@ namespace Cpg.Studio
 			d_objectViewScrolledWindow = sw;
 		}
 
-		void HandlePropertyAdded(ObjectView source, Components.Object obj, string property)
+		void HandlePropertyAdded(ObjectView source, Wrappers.Wrapper obj, Cpg.Property property)
 		{
 			source.SetActive(obj, property, HasHook(obj, property));
 		}
 
-		void HandleToggled(ObjectView source, Components.Object obj, string property)
+		void HandleToggled(ObjectView source, Wrappers.Wrapper obj, Cpg.Property property)
 		{
 			if (source.GetActive(obj, property))
 			{
@@ -252,25 +254,31 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private bool HasHook(Components.Object obj)
+		private bool HasHook(Wrappers.Wrapper obj)
 		{
 			return d_map.ContainsKey(obj);
 		}
 		
-		private bool HasHook(Components.Object obj, string property)
+		private bool HasHook(Wrappers.Wrapper obj, Cpg.Property property)
 		{
 			if (!d_map.ContainsKey(obj))
+			{
 				return false;
+			}
 			
 			return d_map[obj].Exists(delegate (Monitor.State state) {
 				if (state.Property == property)
+				{
 					return true;
+				}
 				else
+				{
 					return false;
+				}
 			});
 		}
 		
-		private void InstallObject(Components.Object obj)
+		private void InstallObject(Wrappers.Wrapper obj)
 		{
 			d_map[obj] = new List<State>();
 			
@@ -278,20 +286,20 @@ namespace Cpg.Studio
 			obj.PropertyChanged += HandlePropertyChanged;
 		}
 		
-		private string PropertyName(Components.Object obj, string property, bool longname)
+		private string PropertyName(Wrappers.Wrapper obj, Cpg.Property property, bool longname)
 		{
 			string s = obj.ToString() + "." + property;
 			
-			if (longname && obj is Components.Link)
+			if (longname && obj is Wrappers.Link)
 			{
-				Components.Link link = obj as Components.Link;
+				Wrappers.Link link = obj as Wrappers.Link;
 				s += " (" + link.From.ToString() + " » " + link.To.ToString() + ")";
 			}
 			
 			return s;
 		}
 
-		private void UpdateTitle(Components.Object obj)
+		private void UpdateTitle(Wrappers.Wrapper obj)
 		{
 			if (!HasHook(obj))
 				return;
@@ -302,17 +310,18 @@ namespace Cpg.Studio
 			}
 		}
 
-		private void HandlePropertyChanged(Components.Object source, string name)
+		private void HandlePropertyChanged(Wrappers.Wrapper source, Cpg.Property prop)
 		{
-			if (name == "id")
+			// TODO: this works differently now
+			/*if (name == "id")
 			{
 				UpdateTitle(source);
-			}
+			}*/
 		}
 		
 		private void DoLinkRulers(Graph graph)
 		{
-			foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 			{
 				if (state.Value.Graph != graph)
 				{
@@ -323,37 +332,41 @@ namespace Cpg.Studio
 		
 		private void DoLinkRulersLeave(Graph graph)
 		{
-			foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 			{
 				state.Value.Graph.HasRuler = false;
 			}
 		}
 		
-		private Monitor.State FindHook(Components.Object obj, string property)
+		private Monitor.State FindHook(Wrappers.Wrapper obj, Cpg.Property property)
 		{
 			if (!HasHook(obj))
+			{
 				return null;
+			}
 			
 			foreach (Monitor.State state in d_map[obj])
 			{
 				if (state.Property == property)
+				{
 					return state;
+				}
 			}
 			
 			return null;
 		}
 		
-		private List<KeyValuePair<Components.Object, Monitor.State>> FindForWidget(Widget w)
+		private List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> FindForWidget(Widget w)
 		{
-			List<KeyValuePair<Components.Object, Monitor.State>> ret = new List<KeyValuePair<Components.Object, Monitor.State>>();
+			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> ret = new List<KeyValuePair<Wrappers.Wrapper, Monitor.State>>();
 			
-			foreach (KeyValuePair<Components.Object, List<Monitor.State>> r in d_map)
+			foreach (KeyValuePair<Wrappers.Wrapper, List<Monitor.State>> r in d_map)
 			{
 				foreach (Monitor.State state in r.Value)
 				{
 					if (state.Widget == w)
 					{
-						ret.Add(new KeyValuePair<Components.Object, Monitor.State>(r.Key, state));
+						ret.Add(new KeyValuePair<Wrappers.Wrapper, Monitor.State>(r.Key, state));
 					}
 				}
 			}
@@ -361,33 +374,37 @@ namespace Cpg.Studio
 			return ret;
 		}
 		
-		private void RemoveAllHooks(Components.Object obj, string property)
+		private void RemoveAllHooks(Wrappers.Wrapper obj, Cpg.Property property)
 		{
 			Monitor.State state = FindHook(obj, property);
 			
 			if (state == null)
+			{
 				return;
+			}
 			
-			List<KeyValuePair<Components.Object, Monitor.State>> all = FindForWidget(state.Widget);
+			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all = FindForWidget(state.Widget);
 			
-			foreach (KeyValuePair<Components.Object, Monitor.State> s in all)
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> s in all)
 			{
 				RemoveHook(s.Key, s.Value.Property);
 			}
 		}
 		
-		private void MergeWith(Components.Object obj, string property, Widget widget)
+		private void MergeWith(Wrappers.Wrapper obj, Cpg.Property property, Widget widget)
 		{
 			Monitor.State state = FindHook(obj, property);
 			
 			if (state == null)
+			{
 				return;
+			}
 			
-			List<KeyValuePair<Components.Object, Monitor.State>> all = FindForWidget(state.Widget);
+			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all = FindForWidget(state.Widget);
 			Monitor.State toitem = FindForWidget(widget)[0].Value;
 			Widget orig = state.Widget;
 			
-			foreach (KeyValuePair<Components.Object, Monitor.State> s in all)
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> s in all)
 			{
 				Monitor.State s2 = s.Value;
 				
@@ -402,7 +419,7 @@ namespace Cpg.Studio
 			QueueDraw();
 		}
 		
-		private void DoMerge(Components.Object obj, string property, Point direction)
+		private void DoMerge(Wrappers.Wrapper obj, Cpg.Property property, Point direction)
 		{
 			Monitor.State state = FindHook(obj, property);
 			
@@ -417,7 +434,7 @@ namespace Cpg.Studio
 			MergeWith(obj, property, to);
 		}
 		
-		private void MakeMergeMenuItem(Components.Object obj, string property, Menu menu, Point pos, string stockid, string label, Point dir)
+		private void MakeMergeMenuItem(Wrappers.Wrapper obj, Cpg.Property property, Menu menu, Point pos, string stockid, string label, Point dir)
 		{
 			if (pos.X + dir.X < 0 || pos.X + dir.X >= d_content.NColumns)
 				return;
@@ -436,7 +453,7 @@ namespace Cpg.Studio
 			item.Show();
 		}
 		
-		private void ShowMergeMenu(Components.Object obj, string property)
+		private void ShowMergeMenu(Wrappers.Wrapper obj, Cpg.Property property)
 		{
 			Monitor.State state = FindHook(obj, property);
 			Menu menu = new Menu();
@@ -466,7 +483,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private bool AddHookReal(Components.Object obj, string property, Monitor.State state)
+		private bool AddHookReal(Wrappers.Wrapper obj, Cpg.Property property, Monitor.State state)
 		{
 			Graph graph = new Graph(SampleWidth, new Graph.Range(-3, 3));
 			graph.SetSizeRequest(-1, 50);
@@ -474,7 +491,7 @@ namespace Cpg.Studio
 			
 			if (d_linkAxis)
 			{
-				foreach (KeyValuePair<Components.Object, Monitor.State> s in Each())
+				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> s in Each())
 				{
 					graph.YAxis = s.Value.Graph.YAxis;
 					break;
@@ -514,7 +531,7 @@ namespace Cpg.Studio
 			
 			state.Graph = graph;
 			state.Widget = cont;
-			state.Monitor = new Cpg.Monitor(d_simulation.Network, (obj as Components.Simulated).Object, property);
+			state.Monitor = new Cpg.Monitor(d_simulation.Network, property);
 			state.Plot = graph.Add(new double[] {}, PropertyName(obj, property, true));
 
 			d_map[obj].Add(state);
@@ -530,32 +547,37 @@ namespace Cpg.Studio
 			return true;
 		}
 
-		void HandlePropertyRemoved(Components.Object source, string name)
+		void HandlePropertyRemoved(Wrappers.Wrapper source, Cpg.Property prop)
 		{
-			RemoveHook(source, name);
+			RemoveHook(source, prop);
 		}
 		
-		public bool AddHook(Components.Object obj, string property)
+		public bool AddHook(Wrappers.Wrapper obj, Cpg.Property property)
 		{
-			if (!(obj is Components.Simulated))
-				return false;
-
 			if (!HasHook(obj))
+			{
 				InstallObject(obj);
+			}
 			
 			if (HasHook(obj, property))
+			{
 				return false;
+			}
 			
 			if (!AddHookReal(obj, property, new Monitor.State(property)))
+			{
 				return false;
+			}
 			
 			if (d_objectView != null)
+			{
 				d_objectView.SetActive(obj, property, true);
+			}
 			
 			return true;
 		}
 		
-		private bool RemoveHookReal(Components.Object obj, Monitor.State state)
+		private bool RemoveHookReal(Wrappers.Wrapper obj, Monitor.State state)
 		{
 			if (state.Graph != null)
 			{
@@ -573,16 +595,18 @@ namespace Cpg.Studio
 			return true;
 		}
 		
-		private void Disconnect(Components.Object obj)
+		private void Disconnect(Wrappers.Wrapper obj)
 		{
 			obj.PropertyRemoved -= HandlePropertyRemoved;
 			obj.PropertyChanged -= HandlePropertyChanged;
 		}
 		
-		private void RemoveHook(Components.Object obj, string property)
+		private void RemoveHook(Wrappers.Wrapper obj, Cpg.Property property)
 		{
 			if (!HasHook(obj, property))
+			{
 				return;
+			}
 			
 			d_map[obj].RemoveAll(delegate (Monitor.State state) {
 				return (property == null || property == state.Property) && RemoveHookReal(obj, state);
@@ -595,7 +619,9 @@ namespace Cpg.Studio
 			}
 			
 			if (d_objectView != null)
+			{
 				d_objectView.SetActive(obj, property, false);
+			}
 		}
 		
 		private void BuildMenu()
@@ -668,7 +694,7 @@ namespace Cpg.Studio
 				Graph.Range range = new Graph.Range(0, 0);
 				bool isset = false;
 				
-				foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 				{
 					Graph.Range yaxis = state.Value.Graph.YAxis;
 					
@@ -682,7 +708,7 @@ namespace Cpg.Studio
 				
 				range.Widen(0.2);
 				
-				foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 				{
 					state.Value.Graph.YAxis = range;
 				}
@@ -708,7 +734,7 @@ namespace Cpg.Studio
 		
 		void DoAutoAxis(object source, EventArgs args)
 		{
-			foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 			{
 				state.Value.Graph.AutoAxis();
 			}
@@ -716,13 +742,13 @@ namespace Cpg.Studio
 			LinkAxis(d_linkAxis);
 		}
 		
-		private IEnumerable<KeyValuePair<Components.Object, Monitor.State>> Each()
+		private IEnumerable<KeyValuePair<Wrappers.Wrapper, Monitor.State>> Each()
 		{
-			foreach (KeyValuePair<Components.Object, List<Monitor.State>> pair in d_map)
+			foreach (KeyValuePair<Wrappers.Wrapper, List<Monitor.State>> pair in d_map)
 			{
 				foreach (Monitor.State state in pair.Value)
 				{
-					yield return new KeyValuePair<Components.Object, Monitor.State>(pair.Key, state);
+					yield return new KeyValuePair<Wrappers.Wrapper, Monitor.State>(pair.Key, state);
 				}
 			}
 		}
@@ -769,7 +795,7 @@ namespace Cpg.Studio
 			// TODO
 		}
 		
-		private void SetMonitorData(Components.Object obj, Monitor.State state)
+		private void SetMonitorData(Wrappers.Wrapper obj, Monitor.State state)
 		{
 			if (d_range == null)
 				return;
@@ -813,13 +839,13 @@ namespace Cpg.Studio
 		{
 			d_range = d_simulation.Range;
 			
-			foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 			{
 				SetMonitorData(state.Key, state.Value);
 			}			
 		}
 		
-		public void SetMonitorPosition(Components.Object obj, string property, Point pt)
+		public void SetMonitorPosition(Wrappers.Wrapper obj, Cpg.Property property, Point pt)
 		{
 			Monitor.State state = FindHook(obj, property);
 			
@@ -840,7 +866,7 @@ namespace Cpg.Studio
 		
 		private void UpdateMonitorData()
 		{
-			foreach (KeyValuePair<Components.Object, Monitor.State> state in Each())
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 			{
 				SetMonitorData(state.Key, state.Value);
 			}

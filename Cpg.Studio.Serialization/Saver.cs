@@ -6,20 +6,20 @@ using System.Text;
 using System.Xml;
 using System.Reflection;
 
+using CCpg = Cpg;
+
 namespace Cpg.Studio.Serialization
 {
 	public class Saver
 	{
-		Main d_cpg;
+		Cpg d_cpg;
 		
 		public Saver(Window window, List<Wrappers.Wrapper> objects)
 		{
 			Wrappers.Group group = new Wrappers.Group();
 			
 			foreach (Wrappers.Wrapper obj in objects)
-			{
 				group.Add(obj);
-			}
 		
 			Initialize(window, group);
 		}
@@ -31,9 +31,29 @@ namespace Cpg.Studio.Serialization
 		
 		public void Initialize(Window window, Wrappers.Group group)
 		{
-			d_cpg = new Main(window.Network.WrappedObject);
+			CCpg.Network network = new CCpg.Network();
+			network.Merge(window.Network);
+			
+			Dictionary<string, bool> selection = Collect(group);
+			
+			foreach (CCpg.Object o in network.States)
+			{
+				if (!selection.ContainsKey(o.Id))
+				{
+					network.RemoveObject(o);
+				}
+			}
+			
+			foreach (CCpg.Link o in network.Links)
+			{
+				if (!selection.ContainsKey(o.Id))
+				{
+					network.RemoveObject(o);
+				}
+			}
 
-			d_cpg.Network.Objects.AddRange(Collect(group));
+			d_cpg = new Cpg(network);
+			
 			d_cpg.Project.Window = window;
 			d_cpg.Project.Root = new Group(group);
 		}
@@ -100,8 +120,8 @@ namespace Cpg.Studio.Serialization
 		{
 			XmlAttributeOverrides overrides = new XmlAttributeOverrides();
 			
-			Ignore<Main>(overrides, "Network");
-			Ignore<Object>(overrides, "Properties");
+			Ignore<Cpg>(overrides, "Network");
+			Ignore<Simulated>(overrides, "Properties");
 			Ignore<Link>(overrides, "From", "To", "Actions");
 			
 			return overrides;
@@ -120,7 +140,7 @@ namespace Cpg.Studio.Serialization
 			stream = new StreamWriter(memstream);
 			
 			writer = XmlWriter.Create(stream, settings);
-			serializer = new XmlSerializer(typeof(Main), overrides);
+			serializer = new XmlSerializer(typeof(Cpg), overrides);
 
 			serializer.Serialize(writer, d_cpg, Namespace());
 			
@@ -203,23 +223,21 @@ namespace Cpg.Studio.Serialization
 			SaveToFile(filename, Save());			
 		}
 		
-		private List<Object> Collect(List<Wrappers.Wrapper> objects)
+		private void Collect(List<Wrappers.Wrapper> objects, Dictionary<string, Wrappers.Wrapper> ret)
 		{
-			List<Object> list = new List<Object>();
-			
 			foreach (Wrappers.Wrapper obj in objects)
 			{
 				if (obj is Wrappers.Group)
 				{
-					list.AddRange(Collect(new List<Wrappers.Wrapper>((obj as Wrappers.Group).Children)));
+					Collect((obj as Wrappers.Group).Children, ret);
 				}
 				else
 				{
-					Object o = Object.Create(obj);
+					CCpg.Simulated sim = obj as CCpg.Simulated;
 					
-					if (o != null)
+					if (sim != null)
 					{
-						list.Add(o);
+						ret[sim.FullId] = true;
 					}
 				}
 			}
@@ -228,7 +246,7 @@ namespace Cpg.Studio.Serialization
 			return list;
 		}
 		
-		private List<Object> Collect(Wrappers.Group group)
+		private Dictionary<string, bool> Collect(Wrappers.Group group)
 		{
 			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
 			

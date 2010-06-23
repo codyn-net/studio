@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace Cpg.Studio.Components
+namespace Cpg.Studio.Wrappers
 {
-	public class Link : Simulated
+	public class Link : Wrapper
 	{
 		public class Action
 		{
@@ -62,8 +62,8 @@ namespace Cpg.Studio.Components
 			}
 		}
 		
-		Components.Simulated d_from;
-		Components.Simulated d_to;
+		Wrappers.Wrapper d_from;
+		Wrappers.Wrapper d_to;
 		
 		int d_offset;
 		
@@ -73,17 +73,25 @@ namespace Cpg.Studio.Components
 		
 		float d_arrowSize;
 		
-		public Link(Cpg.Link obj, Components.Simulated from, Components.Simulated to) : base(obj)
+		public Link(Cpg.Link obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
 		{
 			if (from == null && obj != null)
-				From = Components.Simulated.FromCpg(obj.From);
+			{
+				From = Wrappers.Wrapper.Wrap(obj.From);
+			}
 			else
+			{
 				From = from;
+			}
 			
 			if (to == null && obj != null)
-				To = Components.Simulated.FromCpg(obj.To);
+			{
+				To = Wrappers.Wrapper.Wrap(obj.To);
+			}
 			else
+			{
 				To = to;
+			}
 			
 			d_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			d_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
@@ -99,41 +107,39 @@ namespace Cpg.Studio.Components
 		public Link() : this(null, null, null)
 		{
 		}
+
+		public static implicit operator Cpg.Link(Link obj)
+		{
+			return obj.WrappedObject;
+		}
 		
-		public Components.Object[] Objects
+		public Wrappers.Wrapper[] Objects
 		{
 			get
 			{
 				if (d_object != null)
-					return new Components.Object[] {d_from, d_to};
+				{
+					return new Wrappers.Wrapper[] {d_from, d_to};
+				}
 				else
-					return new Components.Object[] {};
+				{
+					return new Wrappers.Wrapper[] {};
+				}
 			}
 		}
 		
 		public int Offset
 		{
-			get
-			{
-				return d_offset;
-			}
-			set
-			{
-				d_offset = value;
-			}
+			get { return d_offset; }
+			set { d_offset = value; }
 		}
 		
-		public bool Empty()
-		{
-			return d_object == null;
-		}
-		
-		public bool SameObjects(Components.Link other)
+		public bool SameObjects(Wrappers.Link other)
 		{
 			return (other.d_from == d_from && other.d_to == d_to);
 		}
 		
-		public Components.Simulated From
+		public Wrappers.Wrapper From
 		{
 			get
 			{
@@ -145,14 +151,15 @@ namespace Cpg.Studio.Components
 				
 				if (d_from != null)
 				{
-					d_from.Moved += delegate(object sender, EventArgs e) {
+					d_from.Moved += delegate(object sender, EventArgs e)
+					{
 						DoRequestRedraw();
 					};
 				}
 			}
 		}
 		
-		public Components.Simulated To
+		public Wrappers.Wrapper To
 		{
 			get
 			{
@@ -161,7 +168,9 @@ namespace Cpg.Studio.Components
 			set
 			{
 				if (d_to != null)
+				{
 					d_to.Unlink(this);
+				}
 					
 				d_to = value;
 				
@@ -189,12 +198,12 @@ namespace Cpg.Studio.Components
 		
 		public Action AddAction(string property, string expression)
 		{
-			Cpg.Property prop = d_to.Object.Property(property);
+			Cpg.Property prop = d_to[property];
 			Action action;
 			
 			if (prop != null)
 			{
-				action = new Action(this, (d_object as Cpg.Link).AddAction(prop, expression));
+				action = new Action(this, WrappedObject.AddAction(prop, expression));
 			}
 			else
 			{
@@ -223,12 +232,30 @@ namespace Cpg.Studio.Components
 			return link.AddAction(prop, expression);
 		}
 		
+		public new Cpg.Link WrappedObject
+		{
+			get
+			{
+				return base.WrappedObject as Cpg.Link;
+			}
+		}
+		
 		public override void Removed()
 		{
 			if (d_to != null)
+			{
 				d_to.Unlink(this);
+			}
 
 			base.Removed();
+		}
+		
+		public bool Empty
+		{
+			get
+			{
+				return From == null && To == null;
+			}
 		}
 
 		private bool RectHittest(PointF p1, PointF p2, PointF p3, PointF p4, Allocation rect, float gridSize)
@@ -471,14 +498,6 @@ namespace Cpg.Studio.Components
 			float maxy = Utils.Max(yy) + ssize;
 
 			return new Allocation(minx, miny, Math.Max(maxx - minx, ssize * 2), Math.Max(maxy - miny, ssize * 2));
-		}
-		
-		public override bool CanIntegrate
-		{
-			get
-			{
-				return false;
-			}
 		}
 	}
 }

@@ -10,17 +10,17 @@ namespace Cpg.Studio
 	{
 		struct StackItem
 		{
-			public Components.Group Group;
+			public Wrappers.Group Group;
 			public int GridSize;
 			
-			public StackItem(Components.Group group, int gridSize)
+			public StackItem(Wrappers.Group group, int gridSize)
 			{
 				this.Group = group;
 				this.GridSize = gridSize;
 			}
 		}
 		
-		public delegate void ObjectEventHandler(object source, Components.Object obj);
+		public delegate void ObjectEventHandler(object source, Wrappers.Wrapper obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
 		public delegate void ErrorHandler(object source, string error, string message);
 		
@@ -46,19 +46,19 @@ namespace Cpg.Studio
 		private PointF d_dragState;
 		private bool d_isDragging;
 		
-		private Components.Object d_focus;
+		private Wrappers.Wrapper d_focus;
 		
-		private Components.Network d_network;
-		private List<Components.Object> d_hover;
+		private Wrappers.Network d_network;
+		private List<Wrappers.Wrapper> d_hover;
 		private List<StackItem> d_objectStack;
-		private List<Components.Object> d_selection;
+		private List<Wrappers.Wrapper> d_selection;
 		
 		private float[] d_gridBackground;
 		private float[] d_gridLine;
 		
 		private RenderCache d_gridCache;
 		
-		public Grid(Components.Network network) : base()
+		public Grid(Wrappers.Network network) : base()
 		{
 			AddEvents((int)(Gdk.EventMask.Button1MotionMask |
 					  Gdk.EventMask.Button3MotionMask |
@@ -88,8 +88,8 @@ namespace Cpg.Studio
 			d_gridLine = new float[] {0.95f, 0.95f, 0.95f};
 			
 			d_objectStack = new List<StackItem>();
-			d_hover = new List<Components.Object>();
-			d_selection = new List<Components.Object>();
+			d_hover = new List<Wrappers.Wrapper>();
+			d_selection = new List<Wrappers.Wrapper>();
 			d_mouseRect = new Allocation(0f, 0f, 0f, 0f);
 			
 			d_gridCache = new RenderCache();
@@ -99,10 +99,10 @@ namespace Cpg.Studio
 		
 		public void Clear()
 		{
-			bool changed = d_objectStack.Count != 1 || d_objectStack[0].Group.Children.Count == 0;
+			bool changed = d_objectStack.Count != 1 || d_objectStack[0].Group.Length == 0;
 			
 			d_objectStack.Clear();
-			d_objectStack.Insert(0, new StackItem(new Components.Group(), d_gridSize));
+			d_objectStack.Insert(0, new StackItem(new Wrappers.Group(), d_gridSize));
 			QueueDraw();
 
 			d_network.Clear();
@@ -115,28 +115,30 @@ namespace Cpg.Studio
 				Modified(this, new EventArgs());
 		}
 		
-		public void LevelUp(Components.Object obj)
+		public void LevelUp(Wrappers.Wrapper obj)
 		{
-			if (!(obj is Components.Group) || d_objectStack.Count <= 1 || Container.Equals(obj))
+			if (!(obj is Wrappers.Group) || d_objectStack.Count <= 1 || Container.Equals(obj))
 				return;
 
 			LeveledUp(this, obj);
 		}
 		
-		private bool LevelDown(Components.Group group, string objectid)
+		private bool LevelDown(Wrappers.Group group, string objectid)
 		{
-			if (group.FullId == objectid)
+			if (group.Id == objectid)
 			{
 				LevelDown(group);
 				return true;
 			}
 			
-			foreach (Components.Object obj in group.Children)
+			foreach (Wrappers.Wrapper obj in group.Children)
 			{
-				if (obj is Components.Group)
+				if (obj is Wrappers.Group)
 				{
-					if (LevelDown(obj as Components.Group, objectid))
+					if (LevelDown(obj as Wrappers.Group, objectid))
+					{
 						return true;
+					}
 				}
 			}
 			
@@ -148,21 +150,21 @@ namespace Cpg.Studio
 			LevelDown(Root, objectid);			
 		}
 		
-		public void LevelDown(Components.Object obj)
+		public void LevelDown(Wrappers.Wrapper obj)
 		{
 			LeveledDown(this, obj);
 		}
 		
-		private void AddLink(Components.Link link)
+		private void AddLink(Wrappers.Link link)
 		{
 			// Check if link has no objects
-			if (link.Empty())
+			if (link.Empty)
 				return;
 			
 			AddObject(link);
 		}
 		
-		public Components.Group Root
+		public Wrappers.Group Root
 		{
 			get
 			{
@@ -170,7 +172,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public Components.Object[] Selection
+		public Wrappers.Wrapper[] Selection
 		{
 			get
 			{
@@ -178,44 +180,44 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public Components.Link[] Attach()
+		public Wrappers.Link[] Attach()
 		{
 			if (d_selection.Count == 0)
 				return null;
 			
-			List<Components.Simulated> selection = new List<Components.Simulated>();
+			List<Wrappers.Wrapper> selection = new List<Wrappers.Wrapper>();
 			
-			foreach (Components.Object obj in d_selection)
+			foreach (Wrappers.Wrapper obj in d_selection)
 			{
-				if (obj is Components.Simulated && !(obj is Components.Link))
+				if (obj is Wrappers.Wrapper && !(obj is Wrappers.Link))
 				{
-					selection.Add(obj as Components.Simulated);
+					selection.Add(obj as Wrappers.Wrapper);
 				}
 			}
 
 			return Attach(selection.ToArray());
 		}
 		
-		private Components.Link Attach(Components.Simulated from, Components.Simulated to)
+		private Wrappers.Link Attach(Wrappers.Wrapper from, Wrappers.Wrapper to)
 		{
-			Cpg.Link orig = new Cpg.Link("link", from.Object, to.Object);
+			Cpg.Link orig = new Cpg.Link("link", from, to);
 				
-			d_network.AddObject(orig);
+			d_network.Add(orig);
 
-			Components.Link link = new Components.Link(orig, from, to);
+			Wrappers.Link link = new Wrappers.Link(orig, from, to);
 			AddLink(link);
 			
 			return link;
 		}
 		
-		public Components.Link[] Attach(Components.Simulated[] objs)
+		public Wrappers.Link[] Attach(Wrappers.Wrapper[] objs)
 		{
-			List<Components.Simulated> objects = new List<Components.Simulated>(objs);
+			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>(objs);
 			
 			/* Remove links */
-			objects.RemoveAll(delegate (Components.Simulated obj) { return obj is Components.Link; });
+			objects.RemoveAll(delegate (Wrappers.Wrapper obj) { return obj is Wrappers.Link; });
 
-			List<Components.Link> added = new List<Components.Link>();
+			List<Wrappers.Link> added = new List<Wrappers.Link>();
 			
 			if (objects.Count == 0)
 			{
@@ -232,7 +234,7 @@ namespace Cpg.Studio
 			return added.ToArray();
 		}
 		
-		public Components.Group Container
+		public Wrappers.Group Container
 		{
 			get
 			{
@@ -248,14 +250,14 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public void Add(Components.Object obj)
+		public void Add(Wrappers.Wrapper obj)
 		{
 			int cx = (int)Math.Round((Container.X + Allocation.Width / 2.0) / (double)d_gridSize);
 			int cy = (int)Math.Round((Container.Y + Allocation.Height / 2.0) / (double)d_gridSize);
 			
-			if (obj is Components.Link)
+			if (obj is Wrappers.Link)
 			{
-				AddLink(obj as Components.Link);
+				AddLink(obj as Wrappers.Link);
 			}
 			else
 			{
@@ -263,63 +265,61 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void DoObjectAdded(Components.Object obj)
+		private void DoObjectAdded(Wrappers.Wrapper obj)
 		{
 			ObjectAdded(this, obj);
 			
 			obj.RequestRedraw += new EventHandler(OnRequestRedraw);
-			obj.PropertyAdded += delegate (Components.Object src, string name) { Modified(this, new EventArgs()); };
-			obj.PropertyChanged += delegate (Components.Object src, string name) { Modified(this, new EventArgs()); };
-			obj.PropertyRemoved += delegate (Components.Object src, string name) { Modified(this, new EventArgs()); };
+			obj.PropertyAdded += delegate (Wrappers.Wrapper src, Cpg.Property prop) { Modified(this, new EventArgs()); };
+			obj.PropertyChanged += delegate (Wrappers.Wrapper src, Cpg.Property prop) { Modified(this, new EventArgs()); };
+			obj.PropertyRemoved += delegate (Wrappers.Wrapper src, Cpg.Property prop) { Modified(this, new EventArgs()); };
 			
-			Components.Simulated sim = obj as Components.Simulated;
-			
-			if (obj != null && d_network.GetObject(sim.Object.Id) != sim.Object)
+			if (d_network.GetChild(obj.Id) != obj)
 			{
-				d_network.AddObject((obj as Components.Simulated).Object);
+				d_network.Add(obj);
 			}
 			
-			if (obj is Components.Group)
+			if (obj is Wrappers.Group)
 			{
-				foreach (Components.Object child in (obj as Components.Group).Children)
+				foreach (Wrappers.Wrapper child in (obj as Wrappers.Group).Children)
 				{
 					DoObjectAdded(child);
 				}
 			}
 			
-			obj.Rename();
-			
 			Modified(this, new EventArgs());
 		}
 		
-		public List<Components.Link> Links
+		public List<Wrappers.Link> Links
 		{
 			get
 			{
-				List<Components.Link> res = new List<Components.Link>();
+				List<Wrappers.Link> res = new List<Wrappers.Link>();
 				
-				foreach (Components.Object obj in Container.Children)
+				foreach (Wrappers.Wrapper obj in Container.Children)
 				{
-					if (obj is Components.Link)
-						res.Add(obj as Components.Link);
+					if (obj is Wrappers.Link)
+					{
+						res.Add(obj as Wrappers.Link);
+					}
 				}
 				
 				return res;
 			}
 		}
 		
-		public void Add(Components.Object obj, int x, int y, int width, int height)
+		public void Add(Wrappers.Wrapper obj, int x, int y, int width, int height)
 		{
 			obj.Allocation.Assign(x, y, width, height);
 			AddObject(obj);
 		}
 		
-		public void AddObject(Components.Object obj)
+		public void AddObject(Wrappers.Wrapper obj)
 		{
 			Container.Add(obj);
-			DoObjectAdded(obj);
 			
-			Components.Link link = obj as Components.Link;
+			Wrappers.Link link = obj as Wrappers.Link;
+			
 			if (link != null)
 			{
 				CheckLinkOffsets(link.From, link.To);
@@ -328,52 +328,52 @@ namespace Cpg.Studio
 			QueueDraw();
 		}
 		
-		public void Remove(Components.Object obj)
+		public void Remove(Wrappers.Wrapper obj)
 		{
-			if (!Container.Children.Remove(obj))
+			if (!Container.Remove(obj))
+			{
 				return;
+			}
 
-			if (!(obj is Components.Link) && obj is Components.Simulated)
+			if (!(obj is Wrappers.Link) && obj is Wrappers.Wrapper)
 			{
 				/* Remove any associated links */
-				Components.Object[] children = Container.Children.ToArray();
-				foreach (Components.Object other in children)
+				Wrappers.Wrapper[] children = Container.Children;
+				foreach (Wrappers.Wrapper other in children)
 				{
-					if (!(other is Components.Link))
+					if (!(other is Wrappers.Link))
+					{
 						continue;
+					}
 				
-					Components.Link link = other as Components.Link;
+					Wrappers.Link link = other as Wrappers.Link;
 					
 					if (link.From == obj || link.To == obj)
+					{
 						Remove(link);
+					}
 				}
 			}
 			
 			ObjectRemoved(this, obj);
 			obj.Removed();
 
-			if (obj is Components.Link)
+			if (obj is Wrappers.Link)
 			{
 				/* Reoffset links */
-				Components.Link link = obj as Components.Link;
+				Wrappers.Link link = obj as Wrappers.Link;
 				CheckLinkOffsets(link.From, link.To);
 			}
 			
 			Unselect(obj);
-			
-			Components.Simulated sim = obj as Components.Simulated;
-			
-			if (sim != null)
-			{
-				d_network.RemoveObject(sim.Object);
-				sim.Dispose();
-			}
+
+			obj.Dispose();
 			
 			Modified(this, new EventArgs());
 			QueueDraw();
 		}
 		
-		public void Unselect(Components.Object obj)
+		public void Unselect(Wrappers.Wrapper obj)
 		{
 			if (obj == null || !d_selection.Remove(obj))
 				return;
@@ -384,11 +384,11 @@ namespace Cpg.Studio
 			SelectionChanged(this, new EventArgs());
 		}
 		
-		private bool Select(Components.Simulated sim, Cpg.Object obj)
+		private bool Select(Wrappers.Wrapper sim, Cpg.Object obj)
 		{
-			if (sim.Object == obj)
+			if (sim.WrappedObject == obj)
 			{
-				Components.Group container = sim.Parent;
+				Wrappers.Group container = Wrappers.Wrapper.Wrap(sim.Parent) as Wrappers.Group;
 
 				if (container != Container)
 				{
@@ -400,17 +400,21 @@ namespace Cpg.Studio
 				return true;
 			}
 			
-			if (!(sim is Components.Group))
-				return false;
-			
-			Components.Group group = sim as Components.Group;
-			
-			foreach (Components.Object o in group.Children)
+			if (!(sim is Wrappers.Group))
 			{
-				if (!(o is Components.Simulated))
+				return false;
+			}
+			
+			Wrappers.Group group = sim as Wrappers.Group;
+			
+			foreach (Wrappers.Wrapper o in group.Children)
+			{
+				if (!(o is Wrappers.Wrapper))
+				{
 					continue;
+				}
 				
-				if (Select(o as Components.Simulated, obj))
+				if (Select(o as Wrappers.Wrapper, obj))
 				{
 					return true;
 				}
@@ -424,7 +428,7 @@ namespace Cpg.Studio
 			return Select(Container, obj);
 		}
 		
-		public void Select(Components.Object obj)
+		public void Select(Wrappers.Wrapper obj)
 		{
 			if (d_selection.IndexOf(obj) != -1)
 				return;
@@ -436,10 +440,12 @@ namespace Cpg.Studio
 			SelectionChanged(this, new EventArgs());
 		}
 		
-		private void QueueDrawObject(Components.Object obj)
+		private void QueueDrawObject(Wrappers.Wrapper obj)
 		{
-			if (Container.Children.IndexOf(obj) == -1)
+			if (Array.IndexOf<Wrappers.Wrapper>(Container.Children, obj) != -1)
+			{
 				return;
+			}
 			
 			using (Cairo.Context graphics = Gdk.CairoHelper.Create(GdkWindow))
 			{
@@ -477,14 +483,14 @@ namespace Cpg.Studio
 			return ScaledPosition(x, y, null);
 		}
 		
-		private Components.Object[] SortedObjects()
+		private Wrappers.Wrapper[] SortedObjects()
 		{
-			List<Components.Object> objects = new List<Components.Object>();
-			List<Components.Object> links = new List<Components.Object>();
+			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
+			List<Wrappers.Wrapper> links = new List<Wrappers.Wrapper>();
 			
-			foreach (Components.Object obj in Container.Children)
+			foreach (Wrappers.Wrapper obj in Container.Children)
 			{
-				if (obj is Components.Link)
+				if (obj is Wrappers.Link)
 					links.Add(obj);
 				else
 					objects.Add(obj);
@@ -497,9 +503,9 @@ namespace Cpg.Studio
 			return objects.ToArray();
 		}
 		
-		private List<Components.Object> HitTest(Allocation allocation)
+		private List<Wrappers.Wrapper> HitTest(Allocation allocation)
 		{
-			List<Components.Object> res = new List<Components.Object>();
+			List<Wrappers.Wrapper> res = new List<Wrappers.Wrapper>();
 			Allocation rect = new Allocation(allocation);
 			
 			rect.X += Container.X;
@@ -510,16 +516,16 @@ namespace Cpg.Studio
 			rect.Width = Scaled(rect.Width);
 			rect.Height = Scaled(rect.Height);
 			
-			foreach (Components.Object obj in SortedObjects())
+			foreach (Wrappers.Wrapper obj in SortedObjects())
 			{				
-				if (!(obj is Components.Link))
+				if (!(obj is Wrappers.Link))
 				{
 					if (obj.Allocation.Intersects(rect) && obj.HitTest(rect))
 						res.Add(obj);
 				}
 				else
 				{
-					if ((obj as Components.Link).HitTest(rect, d_gridSize))
+					if ((obj as Wrappers.Link).HitTest(rect, d_gridSize))
 						res.Add(obj);
 				}
 			}
@@ -542,7 +548,7 @@ namespace Cpg.Studio
 			QueueDraw();
 		}
 		
-		private bool Selected(Components.Object obj)
+		private bool Selected(Wrappers.Wrapper obj)
 		{
 			return d_selection.IndexOf(obj) != -1;
 		}
@@ -557,7 +563,7 @@ namespace Cpg.Studio
 			
 			/* The drag state contains the relative offset of the mouse to the first
 			 * object in the selection. x and y are in unit coordinates */
-			Components.Object first = d_selection.Find(delegate (Components.Object obj) { return !(obj is Components.Link); });
+			Wrappers.Wrapper first = d_selection.Find(delegate (Wrappers.Wrapper obj) { return !(obj is Wrappers.Link); });
 			
 			if (first == null)
 			{
@@ -576,7 +582,7 @@ namespace Cpg.Studio
 			d_isDragging = true;
 		}
 		
-		private PointF ScaledFromDragState(Components.Object obj)
+		private PointF ScaledFromDragState(Wrappers.Wrapper obj)
 		{
 			Allocation rect = d_selection[0].Allocation;
 			Allocation aobj = obj.Allocation;
@@ -593,18 +599,18 @@ namespace Cpg.Studio
 			d_mouseRect.Width = (int)evnt.X;
 			d_mouseRect.Height = (int)evnt.Y;
 
-			List<Components.Object> objects = HitTest(d_mouseRect.FromRegion());
+			List<Wrappers.Wrapper> objects = HitTest(d_mouseRect.FromRegion());
 			
-			Components.Object[] selection = new Components.Object[d_selection.Count];
+			Wrappers.Wrapper[] selection = new Wrappers.Wrapper[d_selection.Count];
 			d_selection.CopyTo(selection, 0);
 		
-			foreach (Components.Object obj in selection)
+			foreach (Wrappers.Wrapper obj in selection)
 			{
 				if (objects.IndexOf(obj) == -1)
 					Unselect(obj);
 			}
 			
-			foreach (Components.Object obj in objects)
+			foreach (Wrappers.Wrapper obj in objects)
 			{
 				if (!Selected(obj))
 					Select(obj);
@@ -629,9 +635,9 @@ namespace Cpg.Studio
 		
 		private void DoMouseInOut(double x, double y)
 		{
-			List<Components.Object> objects = HitTest(new Allocation(x, y, 1, 1));
+			List<Wrappers.Wrapper> objects = HitTest(new Allocation(x, y, 1, 1));
 			
-			d_hover.RemoveAll(delegate (Components.Object obj) {
+			d_hover.RemoveAll(delegate (Wrappers.Wrapper obj) {
 				if (objects.Count == 0 || obj != objects[0])
 				{
 					obj.MouseFocus = false;
@@ -689,14 +695,14 @@ namespace Cpg.Studio
 			
 			if (upperReached)
 			{
-				List<Components.Object> objects = HitTest(new Allocation(where.X, where.Y, 1f, 1f));
+				List<Wrappers.Wrapper> objects = HitTest(new Allocation(where.X, where.Y, 1f, 1f));
 				
-				foreach (Components.Object obj in objects)
+				foreach (Wrappers.Wrapper obj in objects)
 				{
-					if (!(obj is Components.Group))
+					if (!(obj is Wrappers.Group))
 						continue;
 
-					Components.Group grp = obj as Components.Group;
+					Wrappers.Group grp = obj as Wrappers.Group;
 					double x, y;
 					
 					Utils.MeanPosition(grp.Children, out x, out y);
@@ -711,7 +717,7 @@ namespace Cpg.Studio
 			
 			if (lowerReached && d_objectStack.Count > 1)
 			{
-				Components.Group group = d_objectStack[1].Group;
+				Wrappers.Group group = d_objectStack[1].Group;
 				LevelUp(group);
 				
 				if (Container == group)
@@ -752,7 +758,7 @@ namespace Cpg.Studio
 		
 		public void DeleteSelected()
 		{
-			foreach (Components.Object obj in d_selection.ToArray())
+			foreach (Wrappers.Wrapper obj in d_selection.ToArray())
 				Remove(obj);
 		}
 		
@@ -770,9 +776,9 @@ namespace Cpg.Studio
 			}
 			else
 			{
-				foreach (Components.Object obj in d_selection)
+				foreach (Wrappers.Wrapper obj in d_selection)
 				{
-					if (!(obj is Components.Link))
+					if (!(obj is Wrappers.Link))
 						obj.MoveRel(dx, dy);
 				}
 				
@@ -787,7 +793,7 @@ namespace Cpg.Studio
 		{
 			if (d_focus != null)
 			{
-				Components.Object o = d_focus;
+				Wrappers.Wrapper o = d_focus;
 				d_focus = null;
 				
 				o.KeyFocus = false;
@@ -796,22 +802,24 @@ namespace Cpg.Studio
 		
 		private bool FocusNext(int direction)
 		{
-			Components.Object pf = d_focus;
+			Wrappers.Wrapper pf = d_focus;
 			
 			FocusRelease();
 			
-			if (Container.Children.Count == 0)
+			if (Container.Length == 0)
+			{
 				return false;
+			}
 			
 			if (pf == null)
 			{
-				d_focus = Container.Children[direction == 1 ? 0 : Container.Children.Count - 1];
+				d_focus = Container.Children[direction == 1 ? 0 : Container.Length - 1];
 			}
 			else
 			{
-				int nidx = Container.Children.IndexOf(pf) + direction;
+				int nidx = Container.IndexOf(pf) + direction;
 				
-				if (nidx >= Container.Children.Count || nidx < 0)
+				if (nidx >= Container.Length || nidx < 0)
 					return false;
 				
 				d_focus = Container.Children[nidx];
@@ -828,7 +836,7 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void FocusSet(Components.Object obj)
+		private void FocusSet(Wrappers.Wrapper obj)
 		{
 			d_focus = obj;
 			obj.KeyFocus = true;
@@ -881,7 +889,7 @@ namespace Cpg.Studio
 			graphics.Restore();
 		}
 		
-		private void DrawObject(Cairo.Context graphics, Components.Object obj)
+		private void DrawObject(Cairo.Context graphics, Wrappers.Wrapper obj)
 		{
 			if (obj == null)
 				return;
@@ -902,17 +910,17 @@ namespace Cpg.Studio
 			graphics.Scale(d_gridSize, d_gridSize);
 			graphics.LineWidth = 1.0 / d_gridSize;
 
-			List<Components.Object> objects = new List<Components.Object>();
+			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
 			
-			foreach (Components.Object obj in Container.Children)
+			foreach (Wrappers.Wrapper obj in Container.Children)
 			{
-				if (!(obj is Components.Link))
+				if (!(obj is Wrappers.Link))
 					objects.Add(obj);
 				else
 					DrawObject(graphics, obj);
 			}
 			
-			foreach (Components.Object obj in objects)
+			foreach (Wrappers.Wrapper obj in objects)
 				DrawObject(graphics, obj);
 
 			graphics.Restore();
@@ -933,32 +941,32 @@ namespace Cpg.Studio
 			graphics.Stroke();
 		}
 		
-		public List<Components.Object> Normalize(List<Components.Object> objects)
+		public List<Wrappers.Wrapper> Normalize(List<Wrappers.Wrapper> objects)
 		{
-			Components.Object[] objs = new Components.Object[objects.Count];
+			Wrappers.Wrapper[] objs = new Wrappers.Wrapper[objects.Count];
 			objects.CopyTo(objs, 0);
 
-			Components.Object[] ret = Normalize(objs);			
-			return new List<Components.Object>(ret);
+			Wrappers.Wrapper[] ret = Normalize(objs);			
+			return new List<Wrappers.Wrapper>(ret);
 		}
 		
-		public Components.Object[] Normalize(Components.Object[] objects)
+		public Wrappers.Wrapper[] Normalize(Wrappers.Wrapper[] objects)
 		{
-			Components.Object[] removed;
+			Wrappers.Wrapper[] removed;
 			
 			return Normalize(objects, out removed);
 		}
 				
-		public Components.Object[] Normalize(Components.Object[] objects, out Components.Object[] removed)
+		public Wrappers.Wrapper[] Normalize(Wrappers.Wrapper[] objects, out Wrappers.Wrapper[] removed)
 		{
-			List<Components.Object> orig = new List<Components.Object>(objects);
-			List<Components.Object> rm = new List<Components.Object>();
+			List<Wrappers.Wrapper> orig = new List<Wrappers.Wrapper>(objects);
+			List<Wrappers.Wrapper> rm = new List<Wrappers.Wrapper>();
 						
 			/* Remove any links with objects not within the group */
-			orig.RemoveAll(delegate (Components.Object obj) {
-				if ((obj is Components.Link))
+			orig.RemoveAll(delegate (Wrappers.Wrapper obj) {
+				if ((obj is Wrappers.Link))
 				{
-					Components.Link link = obj as Components.Link;
+					Wrappers.Link link = obj as Wrappers.Link;
 					
 					if (!Utils.In(link.From, orig) || !Utils.In(link.To, orig))
 					{
@@ -971,12 +979,12 @@ namespace Cpg.Studio
 			});
 			
 			/* Add any links that are fully within the group, wrt from and to */
-			foreach (Components.Object obj in Container.Children)
+			foreach (Wrappers.Wrapper obj in Container.Children)
 			{
-				if (!(obj is Components.Link) || Utils.In(obj, orig) || Utils.In(obj, rm))
+				if (!(obj is Wrappers.Link) || Utils.In(obj, orig) || Utils.In(obj, rm))
 					continue;
 				
-				Components.Link link = obj as Components.Link;
+				Wrappers.Link link = obj as Wrappers.Link;
 				
 				if (Utils.In(link.From, orig) && Utils.In(link.To, orig))
 				{
@@ -988,18 +996,18 @@ namespace Cpg.Studio
 			return orig.ToArray();
 		}
 		
-		private bool DoGroupReal(Components.Object[] objects, Components.Simulated main, Type renderer)
+		private bool DoGroupReal(Wrappers.Wrapper[] objects, Wrappers.Wrapper main, Type renderer)
 		{
 			/* Check if any objects have links to objects not in the group, except
 			 * for the main object */
-			List<Components.Object> objs = new List<Components.Object>(objects);
+			List<Wrappers.Wrapper> objs = new List<Wrappers.Wrapper>(objects);
 
-			foreach (Components.Object obj in Container.Children)
+			foreach (Wrappers.Wrapper obj in Container.Children)
 			{
-				if (!(obj is Components.Link))
+				if (!(obj is Wrappers.Link))
 					continue;
 				
-				Components.Link link = obj as Components.Link;
+				Wrappers.Link link = obj as Wrappers.Link;
 				
 				if (link.To.Equals(main) || link.From.Equals(main))
 					continue;
@@ -1011,22 +1019,23 @@ namespace Cpg.Studio
 			double x, y;
 			Utils.MeanPosition(objs, out x, out y);
 
-			Components.Group group = new Components.Group(main);
+			//TODO
+			/*Wrappers.Group group = new Wrappers.Group(main);
 			group.RendererType = renderer;
 
-			/* Copy positioning from current group */
+			// Copy positioning from current group
 			group.X = Container.X;
 			group.Y = Container.Y;
 			group.Allocation.X = (int)Math.Floor(x);
 			group.Allocation.Y = (int)Math.Floor(y);
 			
-			/* Reroute links going to main to the group (but not internally) */
-			foreach (Components.Object obj in Container.Children)
+			// Reroute links going to main to the group (but not internally)
+			foreach (Wrappers.Wrapper obj in Container.Children)
 			{
-				if (!(obj is Components.Link))
+				if (!(obj is Wrappers.Link))
 					continue;
 				
-				Components.Link link = obj as Components.Link;
+				Wrappers.Link link = obj as Wrappers.Link;
 				
 				if (link.From.Equals(group.Main) && Array.IndexOf(objects, link.To) == -1)
 					link.From = group;
@@ -1035,8 +1044,8 @@ namespace Cpg.Studio
 					link.To = group;
 			}
 			
-			/* Remove objects from the grid and add them to the group */
-			foreach (Components.Object obj in objects)
+			// Remove objects from the grid and add them to the group
+			foreach (Wrappers.Wrapper obj in objects)
 			{
 				Container.Remove(obj);
 				
@@ -1046,7 +1055,7 @@ namespace Cpg.Studio
 				group.Add(obj);
 			}
 			
-			/* Add group to current */
+			// Add group to current
 			Rectangle r = group.Allocation;
 			
 			Add(group, r.X, r.Y, r.Width, r.Height);
@@ -1056,12 +1065,12 @@ namespace Cpg.Studio
 			Select(group);
 			
 			Modified(this, new EventArgs());
-			QueueDraw();
+			QueueDraw();*/
 			
 			return true;
 		}
 		
-		private void NewGroup(Components.Object[] objects)
+		private void NewGroup(Wrappers.Wrapper[] objects)
 		{
 			Gtk.Dialog dlg = new Gtk.Dialog("Group", Toplevel as Window, 
 			                                DialogFlags.DestroyWithParent,
@@ -1093,11 +1102,11 @@ namespace Cpg.Studio
 			dlg.ShowAll();
 		}
 		
-		public bool Group(Components.Object[] objects)
+		public bool Group(Wrappers.Wrapper[] objects)
 		{
 			/* Check if everything is in the group */
-			Components.Object[] res;
-			Components.Object[] removed;
+			Wrappers.Wrapper[] res;
+			Wrappers.Wrapper[] removed;
 
 			res = Normalize(objects, out removed);
 			
@@ -1108,9 +1117,9 @@ namespace Cpg.Studio
 			/* Check if there is at least one non-link simulated object */
 			bool hassim = false;
 			
-			foreach (Components.Object obj in res)
+			foreach (Wrappers.Wrapper obj in res)
 			{
-				if (obj is Components.Simulated && !(obj is Components.Link))
+				if (obj is Wrappers.Wrapper && !(obj is Wrappers.Link))
 					hassim = true;
 			}
 			
@@ -1129,9 +1138,9 @@ namespace Cpg.Studio
 		
 		private void CheckLinkOffsets()
 		{
-			foreach (Components.Object obj in Container.Children)
+			foreach (Wrappers.Wrapper obj in Container.Children)
 			{
-				Components.Link link = obj as Components.Link;
+				Wrappers.Link link = obj as Wrappers.Link;
 				
 				if (link != null)
 				{
@@ -1140,11 +1149,11 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void CheckLinkOffsets(Components.Simulated from, Components.Simulated to)
+		private void CheckLinkOffsets(Wrappers.Wrapper from, Wrappers.Wrapper to)
 		{
 			if (from == null)
 			{
-				foreach (Components.Link l1 in to.Links)
+				foreach (Wrappers.Link l1 in to.Links)
 				{
 					CheckLinkOffsets(l1.From, l1.To);
 				}
@@ -1153,16 +1162,16 @@ namespace Cpg.Studio
 			{
 				bool flexor = false;
 				
-				List<Components.Link> first = new List<Components.Link>();
-				List<Components.Link> second = new List<Components.Link>();
+				List<Wrappers.Link> first = new List<Wrappers.Link>();
+				List<Wrappers.Link> second = new List<Wrappers.Link>();
 				
-				foreach (Components.Link l1 in to.Links)
+				foreach (Wrappers.Link l1 in to.Links)
 				{
 					if (l1.From == from)
 						first.Add(l1);
 				}
 				
-				foreach (Components.Link l1 in from.Links)
+				foreach (Wrappers.Link l1 in from.Links)
 				{
 					if (l1.From == to)
 					{
@@ -1181,7 +1190,7 @@ namespace Cpg.Studio
 				
 				if (flexor)
 				{
-					foreach (Components.Link l1 in second)
+					foreach (Wrappers.Link l1 in second)
 					{
 						l1.Offset = ++offset;
 					}
@@ -1189,28 +1198,34 @@ namespace Cpg.Studio
 					offset = 1;
 				}
 				
-				foreach (Components.Link l1 in first)
+				foreach (Wrappers.Link l1 in first)
 				{
 					l1.Offset = offset++;
 				}
 			}
 		}
 		
-		public void Ungroup(Components.Group group)
+		public void Ungroup(Wrappers.Group group)
 		{
 			// Reconnect attachments to main object
-			foreach (Components.Object obj in group.Parent.Children)
+			// TODO
+			/*
+			foreach (Wrappers.Wrapper obj in group.Parent.Children)
 			{
-				if (!(obj is Components.Link))
+				if (!(obj is Wrappers.Link))
 					continue;
 			
-				Components.Link link = obj as Components.Link;
+				Wrappers.Link link = obj as Wrappers.Link;
 				
 				if (link.From.Equals(group))
+				{
 					link.From = group.Main;
+				}
 				
 				if (link.To.Equals(group))
+				{
 					link.To = group.Main;
+				}
 			}
 			
 			if (group.Main != null)
@@ -1240,9 +1255,9 @@ namespace Cpg.Studio
 					group.Main.Id = pid;
 			}
 			
-			foreach (Components.Object obj in group.Children)
+			foreach (Wrappers.Wrapper obj in group.Children)
 			{
-				if (!(obj is Components.Link))
+				if (!(obj is Wrappers.Link))
 				{
 					obj.Allocation.X = (int)Math.Round((x + (obj.Allocation.X - xx) + 0.00001));
 					obj.Allocation.Y = (int)Math.Round((y + (obj.Allocation.Y - yy) + 0.00001));
@@ -1253,7 +1268,7 @@ namespace Cpg.Studio
 			}
 			
 			ModifiedView(this, new EventArgs());
-			QueueDraw();
+			QueueDraw();*/
 		}
 		
 		public int GridSize
@@ -1272,7 +1287,7 @@ namespace Cpg.Studio
 		/* Callbacks */
 		private void OnRequestRedraw(object source, EventArgs e)
 		{
-			QueueDrawObject(source as Components.Object);
+			QueueDrawObject(source as Wrappers.Wrapper);
 		}
 		
 		protected override bool OnButtonPressEvent(Gdk.EventButton evnt)
@@ -1284,8 +1299,8 @@ namespace Cpg.Studio
 			if (evnt.Button < 1 || evnt.Button > 3)
 				return false;
 			
-			List<Components.Object> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
-			Components.Object first = objects.Count > 0 ? objects[0] : null;
+			List<Wrappers.Wrapper> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
+			Wrappers.Wrapper first = objects.Count > 0 ? objects[0] : null;
 
 			if (evnt.Type == Gdk.EventType.TwoButtonPress)
 			{
@@ -1306,10 +1321,10 @@ namespace Cpg.Studio
 				
 				if (!(Selected(first) || (evnt.State & (Gdk.ModifierType.ControlMask | Gdk.ModifierType.ShiftMask)) != 0))
 				{
-					Components.Object[] selection = new Components.Object[d_selection.Count];
+					Wrappers.Wrapper[] selection = new Wrappers.Wrapper[d_selection.Count];
 					d_selection.CopyTo(selection, 0);
 					
-					foreach (Components.Object obj in selection)
+					foreach (Wrappers.Wrapper obj in selection)
 						Unselect(obj);
 				}
 			}
@@ -1351,8 +1366,8 @@ namespace Cpg.Studio
 			
 			if (evnt.Type == Gdk.EventType.ButtonRelease)
 			{
-				List<Components.Object> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
-				Components.Object first = objects.Count > 0 ? objects[0] : null;
+				List<Wrappers.Wrapper> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
+				Wrappers.Wrapper first = objects.Count > 0 ? objects[0] : null;
 				
 				if (first != null)
 				{
@@ -1395,7 +1410,7 @@ namespace Cpg.Studio
 			List<float> minx = new List<float>();
 			List<float> maxy = new List<float>();
 			List<float> miny = new List<float>();
-			List<KeyValuePair<Components.Object, PointF>> translation = new List<KeyValuePair<Components.Object, PointF>>(); 
+			List<KeyValuePair<Wrappers.Wrapper, PointF>> translation = new List<KeyValuePair<Wrappers.Wrapper, PointF>>(); 
 			
 			maxx.Add(size.X - 1 + pxn);
 			minx.Add(position.X);
@@ -1403,9 +1418,9 @@ namespace Cpg.Studio
 			miny.Add(position.Y);
 			
 			/* Check boundaries */
-			foreach (Components.Object obj in d_selection)
+			foreach (Wrappers.Wrapper obj in d_selection)
 			{
-				if (obj is Components.Link)
+				if (obj is Wrappers.Link)
 					continue;
 
 				PointF pt = ScaledFromDragState(obj);
@@ -1416,7 +1431,7 @@ namespace Cpg.Studio
 				miny.Add(-pt.Y + pyn);
 				maxy.Add(size.Y - pt.Y + pyn - alloc.Height);
 				
-				translation.Add(new KeyValuePair<Components.Object, PointF>(obj, pt));
+				translation.Add(new KeyValuePair<Wrappers.Wrapper, PointF>(obj, pt));
 			}
 			
 			if (position.X < Utils.Max(minx))
@@ -1433,7 +1448,7 @@ namespace Cpg.Studio
 			
 			bool changed = false;
 			
-			foreach (KeyValuePair<Components.Object, PointF> item in translation)
+			foreach (KeyValuePair<Wrappers.Wrapper, PointF> item in translation)
 			{
 				Allocation alloc = item.Key.Allocation;
 				
@@ -1476,7 +1491,7 @@ namespace Cpg.Studio
 		{
 			bool ret = base.OnLeaveNotifyEvent(evnt);
 			
-			foreach (Components.Object obj in d_hover)
+			foreach (Wrappers.Wrapper obj in d_hover)
 				obj.MouseFocus = false;
 		
 			d_hover.Clear();
@@ -1533,7 +1548,7 @@ namespace Cpg.Studio
 			}
 			else if (evnt.Key == Gdk.Key.space)
 			{
-				Components.Object obj = d_focus;
+				Wrappers.Wrapper obj = d_focus;
 				
 				if (d_focus != null && !Selected(d_focus))
 				{
@@ -1567,18 +1582,20 @@ namespace Cpg.Studio
 		
 		public void UnselectAll()
 		{
-			List<Components.Object> copy = new List<Components.Object>(d_selection);
+			List<Wrappers.Wrapper> copy = new List<Wrappers.Wrapper>(d_selection);
 			
-			foreach (Components.Object o in copy)
+			foreach (Wrappers.Wrapper o in copy)
 				Unselect(o);
 		}
 
-		private void OnLevelDown(object source, Components.Object obj)
+		private void OnLevelDown(object source, Wrappers.Wrapper obj)
 		{
-			if (Container.Children.IndexOf(obj) == -1 || !(obj is Components.Group))
+			if (!Container.Contains(obj) || !(obj is Wrappers.Group))
+			{
 				return;
+			}
 
-			d_objectStack.Insert(0, new StackItem(obj as Components.Group, d_gridSize));
+			d_objectStack.Insert(0, new StackItem(obj as Wrappers.Group, d_gridSize));
 			d_gridSize = d_defaultGridSize;
 			
 			CheckLinkOffsets();
@@ -1589,7 +1606,7 @@ namespace Cpg.Studio
 			QueueDraw();			
 		}
 		
-		private void OnLevelUp(object source, Components.Object obj)
+		private void OnLevelUp(object source, Wrappers.Wrapper obj)
 		{
 			StackItem item = d_objectStack[0];
 			d_objectStack.RemoveAt(0);
@@ -1612,7 +1629,7 @@ namespace Cpg.Studio
 		
 		protected override bool OnFocusOutEvent(Gdk.EventFocus evnt)
 		{
-			foreach (Components.Object obj in d_hover)
+			foreach (Wrappers.Wrapper obj in d_hover)
 				obj.MouseFocus = false;
 			
 			d_hover.Clear();

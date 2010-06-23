@@ -1,13 +1,13 @@
 using System;
 using System.Reflection;
 
-namespace Cpg.Studio.Components.Renderers
+namespace Cpg.Studio.Wrappers.Renderers
 {
 	public class Renderer
 	{
-		protected Components.Object d_object;
+		protected Wrappers.Wrapper d_object;
 
-		public Renderer(Components.Object obj)
+		public Renderer(Wrappers.Wrapper obj)
 		{
 			d_object = obj;
 		}
@@ -77,11 +77,11 @@ namespace Cpg.Studio.Components.Renderers
 		
 		public static string GetName(Type type)
 		{
-			object[] attributes = type.GetCustomAttributes(typeof(Components.Renderers.NameAttribute), true);
+			object[] attributes = type.GetCustomAttributes(typeof(Wrappers.Renderers.NameAttribute), true);
 			
 			if (attributes.Length != 0)
 			{
-				return (attributes[0] as Components.Renderers.NameAttribute).Name;
+				return (attributes[0] as Wrappers.Renderers.NameAttribute).Name;
 			}
 			else
 			{

@@ -2,14 +2,14 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
-namespace Cpg.Studio.Components.Renderers
+namespace Cpg.Studio.Wrappers.Renderers
 {
 	[Name("Default")]
 	public class Default : Group
 	{
 		private double[][] d_colors;
 		
-		public Default(Components.Object obj) : base(obj)
+		public Default(Wrappers.Wrapper obj) : base(obj)
 		{
 			d_colors = new double[5][];
 			

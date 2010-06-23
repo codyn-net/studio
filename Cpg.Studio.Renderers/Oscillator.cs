@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
-namespace Cpg.Studio.Components.Renderers
+namespace Cpg.Studio.Wrappers.Renderers
 {
 	[Name("Oscillator")]
 	public class Oscillator : Group
@@ -11,7 +11,7 @@ namespace Cpg.Studio.Components.Renderers
 		private Cairo.LinearGradient d_outer;
 		private Cairo.LinearGradient d_inner;
 		
-		public Oscillator(Components.Object obj) : base(obj)
+		public Oscillator(Wrappers.Wrapper obj) : base(obj)
 		{
 			d_height = 0;
 		}

@@ -8,12 +8,12 @@ namespace Cpg.Studio.Serialization
 	[XmlType("network")]
 	public class Network
 	{
-		private List<Simulated> d_objects;
+		private List<Object> d_objects;
 		private CCpg.Network d_network;
 		
 		public Network()
 		{
-			d_objects = new List<Simulated>();
+			d_objects = new List<Object>();
 		}
 		
 		public Network(CCpg.Network network) : this()
@@ -22,9 +22,9 @@ namespace Cpg.Studio.Serialization
 		}
 
 		[XmlElement(typeof(State)),
-		 XmlElement(typeof(Relay)),
+		 XmlElement(typeof(Group)),
 		 XmlElement(typeof(Link))]
-		public List<Simulated> Objects
+		public List<Object> Objects
 		{
 			get
 			{
@@ -49,14 +49,14 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		[XmlElement("globals", typeof(Globals))]
-		public Serialization.Globals Globals
+		[XmlElement("globals", typeof(Object))]
+		public Serialization.Object Globals
 		{
 			get
 			{
 				if (d_network != null)
 				{
-					return new Serialization.Globals(new Components.Globals(d_network.Globals));
+					return new Serialization.Object(new Wrappers.Wrapper(d_network));
 				}
 				else
 				{

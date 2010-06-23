@@ -1,10 +1,10 @@
 using System;
 
-namespace Cpg.Studio.Components.Renderers
+namespace Cpg.Studio.Wrappers.Renderers
 {	
 	public class State : Box
 	{		
-		public State(Components.Object obj) : base(obj)
+		public State(Wrappers.Wrapper obj) : base(obj)
 		{
 		}
 		

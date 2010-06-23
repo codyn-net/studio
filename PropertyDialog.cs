@@ -5,10 +5,10 @@ namespace Cpg.Studio
 {
 	public class PropertyDialog : Dialog
 	{
-		Components.Object d_object;
+		Wrappers.Wrapper d_object;
 		PropertyView d_view;
 		
-		public PropertyDialog(Window parent, Components.Object obj)
+		public PropertyDialog(Window parent, Wrappers.Wrapper obj)
 		{
 			d_object = obj;
 			
@@ -18,7 +18,7 @@ namespace Cpg.Studio
 			
 			BorderWidth = 12;
 			
-			if (obj is Components.Link)
+			if (obj is Wrappers.Link)
 			{
 				SetDefaultSize(600, 300);
 			}
@@ -29,16 +29,16 @@ namespace Cpg.Studio
 			
 			VBox.Spacing = 6;
 			
-			if (obj is Components.Group)
+			if (obj is Wrappers.Group)
 			{
-				Components.Group group = obj as Components.Group;
-				GroupProperties props = new GroupProperties(group.Children.ToArray(), group.Main, group.Renderer.GetType()); 
+				Wrappers.Group group = obj as Wrappers.Group;
+				GroupProperties props = new GroupProperties(group.Children, group.Proxy, group.Renderer.GetType()); 
 				
 				VBox.PackStart(props, false, false, 0);
 				VBox.PackStart(new HSeparator(), false, false, 0);
 				
 				props.ComboMain.Changed  += delegate(object sender, EventArgs e) {
-					group.Main = props.Main;
+					group.SetProxy(props.Main);
 				};
 				
 				props.ComboKlass.Changed += delegate(object sender, EventArgs e) {
@@ -49,7 +49,7 @@ namespace Cpg.Studio
 			d_view = new PropertyView(d_object);
 			VBox.PackStart(d_view, true, true, 0);
 			
-			d_object.PropertyChanged += delegate(Components.Object source, string name) {
+			d_object.PropertyChanged += delegate(Wrappers.Wrapper source, Cpg.Property name) {
 				UpdateTitle();
 			};
 			

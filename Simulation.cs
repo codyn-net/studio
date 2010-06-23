@@ -11,7 +11,7 @@ namespace Cpg.Studio
 			public double To;
 		}
 		
-		Components.Network d_network;
+		Wrappers.Network d_network;
 		Range d_range;
 		bool d_inPeriod;
 		
@@ -22,7 +22,7 @@ namespace Cpg.Studio
 		public event SimulationRunHandler OnPeriodBegin = delegate {};
 		public event SimulationRunHandler OnPeriodEnd = delegate {};
 		
-		public Simulation(Components.Network network)
+		public Simulation(Wrappers.Network network)
 		{
 			d_network = network;
 			d_range = null;

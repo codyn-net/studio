@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Components.Renderers
+namespace Cpg.Studio.Wrappers.Renderers
 {	
 	public class Box : Renderer
 	{
@@ -8,7 +8,7 @@ namespace Cpg.Studio.Components.Renderers
 		protected Cairo.LinearGradient d_inner;
 		protected double[] d_hoverColor;
 		
-		public Box(Components.Object obj) : base(obj)
+		public Box(Wrappers.Wrapper obj) : base(obj)
 		{
 			d_object = obj;
 			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};

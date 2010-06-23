@@ -1,19 +1,20 @@
 using System;
 using System.Xml.Serialization;
 using System.Collections.Generic;
+using CCpg = Cpg;
 
 namespace Cpg.Studio.Serialization
 {
 	[XmlType("group")]
-	public class Group : Simulated
+	public class Group : Object
 	{
 		List<Serialization.Object> d_children;
 		
-		public Group(Components.Group group) : base(group)
+		public Group(Wrappers.Group group) : base(group)
 		{
 		}
 		
-		public Group() : this(new Components.Group(new Components.Simulated()))
+		public Group() : this(new Wrappers.Group())
 		{
 		}
 		
@@ -22,13 +23,13 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				Components.Group group = As<Components.Group>();
+				Wrappers.Group group = As<Wrappers.Group>();
 				
 				return group.X;
 			}
 			set
 			{
-				Components.Group group = As<Components.Group>();
+				Wrappers.Group group = As<Wrappers.Group>();
 				group.X = value;
 			}
 		}
@@ -38,36 +39,59 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				Components.Group group = As<Components.Group>();
+				Wrappers.Group group = As<Wrappers.Group>();
 				
 				return group.Y;
 			}
 			set
 			{
-				Components.Group group = As<Components.Group>();
+				Wrappers.Group group = As<Wrappers.Group>();
 				group.Y = value;
 			}
 		}
 		
+		public static implicit operator Wrappers.Group(Group group)
+		{
+			return group.WrappedObject;
+		}
+		
+		public static implicit operator Group(Wrappers.Group group)
+		{
+			return new Group(group);
+		}
+		
+		public new Wrappers.Group WrappedObject
+		{
+			get
+			{
+				return As<Wrappers.Group>();
+			}
+		}
+		
+		/* TODO
 		[XmlAttribute("main"),
 		 System.ComponentModel.DefaultValue("")]
 		public string Main
 		{
 			get
 			{
-				Components.Group group = As<Components.Group>();
+				Wrappers.Group group = As<Wrappers.Group>();
 				
 				if (group.Main != null)
-					return group.Main.FullId;
+				{
+					return group.Main.Id;
+				}
 				else
+				{
 					return "";
+				}
 			}
 			set
 			{
-				Components.Group group = As<Components.Group>();
+				Wrappers.Group group = As<Wrappers.Group>();
 				group.Main.Id = value;
 			}
-		}
+		}*/
 		
 		[XmlAttribute("renderer"),
 		 System.ComponentModel.DefaultValue("Default")]
@@ -75,23 +99,22 @@ namespace Cpg.Studio.Serialization
 		{
 			get
 			{
-				Components.Group group = As<Components.Group>();
+				Wrappers.Group group = As<Wrappers.Group>();
 				
 				if (group.Renderer != null)
-					return Components.Renderers.Renderer.GetName(group.Renderer.GetType());
+					return Wrappers.Renderers.Renderer.GetName(group.Renderer.GetType());
 				else
 					return "Default";
 			}
 			set
 			{
-				Components.Group group = As<Components.Group>();
-				group.RendererType = Components.Renderers.Renderer.FindByName(value, typeof(Components.Renderers.Group));
+				Wrappers.Group group = As<Wrappers.Group>();
+				group.RendererType = Wrappers.Renderers.Renderer.FindByName(value, typeof(Wrappers.Renderers.Group));
 			}
 		}
 		
 		[XmlElement(typeof(State)),
 		 XmlElement(typeof(Link)),
-		 XmlElement(typeof(Relay)),
 		 XmlElement(typeof(Group))]
 		public List<Object> Children
 		{
@@ -100,11 +123,11 @@ namespace Cpg.Studio.Serialization
 				if (d_children != null)
 					return d_children;
 					
-				Components.Group group = As<Components.Group>();
+				Wrappers.Group group = As<Wrappers.Group>();
 				
 				List<Object> children = new List<Object>();
 				
-				foreach (Components.Object child in group.Children)
+				foreach (Wrappers.Wrapper child in group.Children)
 				{
 					Object o = Object.Create(child);
 					
@@ -119,7 +142,7 @@ namespace Cpg.Studio.Serialization
 		
 		public void Transfer()
 		{
-			Components.Group group = As<Components.Group>();
+			Wrappers.Group group = As<Wrappers.Group>();
 			
 			foreach (Serialization.Object obj in Children)
 			{

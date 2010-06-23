@@ -5,9 +5,9 @@ namespace Cpg.Studio
 {
 	public class FunctionsDialog : Dialog
 	{
-		private Network d_network;
+		private Wrappers.Network d_network;
 
-		public FunctionsDialog(Window parent, Network network)
+		public FunctionsDialog(Window parent, Wrappers.Network network)
 		{
 			d_network = network;
 			

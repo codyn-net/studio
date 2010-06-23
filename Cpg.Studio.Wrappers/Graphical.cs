@@ -3,9 +3,9 @@ using System.Drawing;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cpg.Studio.Components
+namespace Cpg.Studio.Wrappers
 {
-	public class Object
+	public abstract class Graphical
 	{
 		[Flags]
 		public enum State
@@ -15,28 +15,18 @@ namespace Cpg.Studio.Components
 			KeyFocus = 1 << 1,
 			MouseFocus = 1 << 2
 		}
-		
-		public delegate void PropertyHandler(Components.Object source, string name);
-		
+			
 		public event EventHandler RequestRedraw = delegate {};
-		public event PropertyHandler PropertyAdded = delegate {};
-		public event PropertyHandler PropertyRemoved = delegate {};
-		public event PropertyHandler PropertyChanged = delegate {};
 		public event EventHandler Moved = delegate {};
 
 		private Allocation d_allocation;
-		private Dictionary<string, object> d_properties;
 		private Renderers.Renderer d_renderer;
-		private Components.Group d_parent;
-		private string d_id;
 		
 		private State d_state;
 		
-		public Object()
+		public Graphical()
 		{
 			d_allocation = new Allocation(0f, 0f, 1f, 1f);
-			d_properties = new Dictionary<string, object>();
-			
 			d_state = State.None;
 		}
 
@@ -50,62 +40,44 @@ namespace Cpg.Studio.Components
 			State old = d_state;
 			
 			if (val)
+			{
 				d_state |= field;
+			}
 			else
+			{
 				d_state &= ~field;
+			}
 		
 			if (d_state != old)
-				RequestRedraw(this, new EventArgs());
+			{
+				DoRequestRedraw();
+			}
 			
 			return d_state != old;
 		}
 		
 		public bool Selected
 		{
-			get
-			{
-				return FromState(State.Selected);
-			}
-			set
-			{
-				ToState(State.Selected, value);
-			}
+			get { return FromState(State.Selected); }
+			set { ToState(State.Selected, value); }
 		}
 		
 		public bool KeyFocus
 		{
-			get
-			{
-				return FromState(State.KeyFocus);
-			}
-			set
-			{
-				ToState(State.KeyFocus, value);
-			}
+			get { return FromState(State.KeyFocus); }
+			set { ToState(State.KeyFocus, value); }
 		}
 		
 		public bool MouseFocus
 		{
-			get
-			{
-				return FromState(State.MouseFocus);
-			}
-			set
-			{
-				ToState(State.MouseFocus, value);
-			}
+			get { return FromState(State.MouseFocus); }
+			set { ToState(State.MouseFocus, value); }
 		}
 		
 		public Allocation Allocation
 		{
-			get
-			{
-				return d_allocation;
-			}
-			set
-			{
-				d_allocation = value;
-			}
+			get { return d_allocation; }
+			set { d_allocation = value; }
 		}
 		
 		public virtual Renderers.Renderer Renderer
@@ -135,174 +107,18 @@ namespace Cpg.Studio.Components
 				}
 				else
 				{
-					ConstructorInfo info = value.GetConstructor(new Type[] {typeof(Components.Object) });
+					ConstructorInfo info = value.GetConstructor(new Type[] {typeof(Wrappers.Wrapper) });
 					
 					if (info != null)
 					{
-						Renderer = info.Invoke(new object[] { this }) as Components.Renderers.Renderer;
+						Renderer = info.Invoke(new object[] { this }) as Wrappers.Renderers.Renderer;
 					}
 					else
 					{
-						Console.WriteLine(value);
 						Renderer = null;
 					}
 				}
 			}
-		}
-		
-		public string this[string name]
-		{
-			get
-			{
-				return GetProperty(name) as string;
-			}
-			set
-			{
-				SetProperty(name, value);
-			}
-		}
-		
-		public virtual List<string> FixedProperties()
-		{
-			List<string> lst = new List<string>();
-			
-			foreach (PropertyInfo info in GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
-			{
-				foreach (object attr in info.GetCustomAttributes(typeof(PropertyAttribute), true))
-					lst.Add((attr as PropertyAttribute).Name);
-			}
-			
-			return lst;
-		}
-		
-		public virtual string[] Properties
-		{
-			get
-			{
-				List<string> props = FixedProperties();
-				
-				string[] ret = new string[d_properties.Count + props.Count];
-				props.CopyTo(ret, 0);
-				d_properties.Keys.CopyTo(ret, props.Count);
-				
-				return ret;
-			}
-		}
-		
-		public virtual Components.Group Parent
-		{
-			get
-			{
-				return d_parent;
-			}
-			set
-			{
-				d_parent = value;
-			}
-		}
-		
-		public virtual bool HasProperty(string name)
-		{
-			return d_properties.ContainsKey(name) || FindPropertyAttribute(name) != null;
-		}
-		
-		public virtual object GetProperty(string name)
-		{
-			PropertyInfo info;
-			PropertyAttribute attr = FindPropertyAttribute(name, out info);
-			
-			if (attr != null)
-				return info.GetGetMethod().Invoke(this, new object[] {});
-			else if (d_properties.ContainsKey(name))
-				return d_properties[name];
-			else
-				return null;
-		}
-		
-		protected virtual void SetPropertyReal(string name, object val)
-		{
-			if (val == null)
-				d_properties.Remove(name);
-			else
-				d_properties[name] = val;
-		}
-		
-		public virtual void SetProperty(string name, object val)
-		{
-			bool newprop = !HasProperty(name);
-			
-			if (!newprop && val != null && GetProperty(name).Equals(val))
-				return;
-
-			SetPropertyReal(name, val);
-			
-			if (newprop && val != null)
-				PropertyAdded(this, name);
-			else if (!newprop && val != null)
-				PropertyChanged(this, name);
-			else if (!newprop && val == null)
-				PropertyRemoved(this, name);
-		}
-
-		public virtual void RemoveProperty(string name)
-		{
-			SetProperty(name, null);
-		}
-		
-		public virtual PropertyAttribute FindPropertyAttribute(string name, out PropertyInfo info)
-		{
-			Type type = GetType();
-			
-			PropertyInfo[] infos = type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-			foreach (PropertyInfo inf in infos)
-			{
-				object[] attributes = inf.GetCustomAttributes(typeof(PropertyAttribute), true);
-				
-				foreach (object attr in attributes)
-				{
-					PropertyAttribute prop = attr as PropertyAttribute;
-					
-					if (prop.Name == name)
-					{
-						info = inf;
-						return prop;
-					}
-				}
-			}
-			
-			info = null;
-			return null;
-		}
-		
-		public PropertyAttribute FindPropertyAttribute(string name)
-		{
-			PropertyInfo info;
-			
-			return FindPropertyAttribute(name, out info);
-		}
-		
-		public bool IsPermanent(string name)
-		{
-			PropertyAttribute prop = FindPropertyAttribute(name);
-			return prop != null;
-		}
-		
-		public bool IsReadOnly(string name)
-		{
-			PropertyAttribute prop = FindPropertyAttribute(name);
-			return prop != null && prop.ReadOnly;
-		}
-		
-		public bool IsInvisible(string name)
-		{
-			PropertyAttribute prop = FindPropertyAttribute(name);
-			
-			return prop != null && prop.Invisible;
-		}
-		
-		public virtual void Removed()
-		{
 		}
 		
 		public virtual bool HitTest(Allocation rect)
@@ -313,10 +129,6 @@ namespace Cpg.Studio.Components
 		public virtual void Clicked(PointF position)
 		{
 			// NOOP
-		}
-		
-		public virtual void Rename()
-		{
 		}
 		
 		protected virtual void DrawSelection(Cairo.Context graphics)
@@ -368,16 +180,22 @@ namespace Cpg.Studio.Components
 		public virtual void Draw(Cairo.Context graphics)
 		{
 			if (Renderer != null)
+			{
 				Renderer.Draw(graphics);
+			}
 
 			string s = ToString();
 
 			if (s != String.Empty)
 			{
 				if (MouseFocus)
+				{
 					graphics.SetSourceRGB(0.3, 0.6, 0.3);
+				}
 				else
+				{
 					graphics.SetSourceRGB(0.3, 0.3, 0.3);
+				}
 							
 				double uw = graphics.LineWidth;
 				
@@ -401,10 +219,14 @@ namespace Cpg.Studio.Components
 			}
 			
 			if (Selected)
+			{
 				DrawSelection(graphics);
+			}
 		
 			if (KeyFocus)
+			{
 				DrawFocus(graphics);
+			}
 		}
 		
 		public virtual void DoRequestRedraw()
@@ -412,37 +234,10 @@ namespace Cpg.Studio.Components
 			RequestRedraw(this, new EventArgs());
 		}
 		
-		protected void DoPropertyAdded(string name)
+		public abstract string Id
 		{
-			PropertyAdded(this, name);
-		}
-		
-		protected void DoPropertyChanged(string name)
-		{
-			PropertyChanged(this, name);
-		}
-		
-		protected void DoPropertyRemoved(string name)
-		{
-			PropertyRemoved(this, name);
-		}
-		
-		[Property("id")]
-		public virtual string Id
-		{
-			get
-			{
-				return d_id;
-			}
-			
-			set
-			{
-				if (!String.IsNullOrEmpty(value))
-				{
-					d_id = value;
-					DoRequestRedraw();
-				}
-			}
+			get;
+			set;
 		}
 	
 		public override string ToString()

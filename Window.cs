@@ -26,8 +26,8 @@ namespace Cpg.Studio
 		private uint d_popupMergeId;
 		private UIManager d_uimanager;
 		private ActionGroup d_popupActionGroup;
-		private Dictionary<Components.Object, PropertyDialog> d_propertyEditors;
-		private Components.Network d_network;
+		private Dictionary<Wrappers.Wrapper, PropertyDialog> d_propertyEditors;
+		private Wrappers.Network d_network;
 		private Monitor d_monitor;
 		private Simulation d_simulation;
 		private string d_prevOpen;
@@ -40,11 +40,11 @@ namespace Cpg.Studio
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
-			d_network = new Components.Network();
+			d_network = new Wrappers.Network();
 			
-			d_network.CompileError += OnCompileError;
+			d_network.WrappedObject.CompileError += OnCompileError;
 
-			d_network.AddNotification("integrator", delegate (object sender, GLib.NotifyArgs args) {
+			d_network.WrappedObject.AddNotification("integrator", delegate (object sender, GLib.NotifyArgs args) {
 				UpdateCurrentIntegrator();
 			});
 
@@ -58,7 +58,7 @@ namespace Cpg.Studio
 			d_modified = false;
 			UpdateTitle();
 			
-			d_propertyEditors = new Dictionary<Components.Object, PropertyDialog>();
+			d_propertyEditors = new Dictionary<Wrappers.Wrapper, PropertyDialog>();
 		}
 		
 		private void Build()
@@ -90,7 +90,6 @@ namespace Cpg.Studio
 
 				new ActionEntry("AddStateAction", Studio.Stock.State, null, null, "Add state", new EventHandler(OnAddStateActivated)),
 				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", new EventHandler(OnAddLinkActivated)),
-				new ActionEntry("AddRelayAction", Studio.Stock.Relay, null, null, "Add relay", new EventHandler(OnAddRelayActivated)),
 
 				new ActionEntry("SimulateMenuAction", null, "_Simulate", null, null, null),
 				new ActionEntry("StepAction", Gtk.Stock.MediaNext, "Step", "<Control>t", "Execute one simulation step", new EventHandler(OnStepActivated)),
@@ -376,7 +375,7 @@ namespace Cpg.Studio
 		
 		delegate void PathHandler();
 		
-		private void PushPath(Components.Object obj, PathHandler handler)
+		private void PushPath(Wrappers.Wrapper obj, PathHandler handler)
 		{
 			if (obj != null)
 			{
@@ -392,11 +391,13 @@ namespace Cpg.Studio
 			d_hboxPath.PackStart(but, false, false, 0);
 			
 			if (handler != null)
+			{
 				but.Clicked += delegate(object source, EventArgs args) { handler(); };
+			}
 			
 			if (obj != null)
 			{
-				obj.PropertyChanged += delegate (Components.Object source, string name) {
+				obj.PropertyChanged += delegate (Wrappers.Wrapper source, Cpg.Property prop) {
 					but.Label = obj.ToString();
 				};
 			}
@@ -459,13 +460,13 @@ namespace Cpg.Studio
 		
 		private void UpdateSensitivity()
 		{
-			List<Components.Object> objects = new List<Components.Object>(d_grid.Selection);
+			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>(d_grid.Selection);
 			
 			d_selectionGroup.Sensitive = objects.Count > 0 && d_grid.HasFocus;
 			
 			bool singleobj = objects.Count == 1;
-			bool singlegroup = singleobj && objects[0] is Components.Group;
-			int anygroup = objects.FindAll(delegate (Components.Object obj) { return obj is Components.Group; }).Count;
+			bool singlegroup = singleobj && objects[0] is Wrappers.Group;
+			int anygroup = objects.FindAll(delegate (Wrappers.Wrapper obj) { return obj is Wrappers.Group; }).Count;
 			
 			Action ungroup = d_normalGroup.GetAction("UngroupAction");
 			ungroup.Sensitive = anygroup > 0;
@@ -479,7 +480,7 @@ namespace Cpg.Studio
 				ungroup.Label = "Ungroup";
 			}
 			
-			d_normalGroup.GetAction("GroupAction").Sensitive = objects.Count > 1 && objects.Find(delegate (Components.Object obj) { return !(obj is Components.Link); }) != null;
+			d_normalGroup.GetAction("GroupAction").Sensitive = objects.Count > 1 && objects.Find(delegate (Wrappers.Wrapper obj) { return !(obj is Wrappers.Link); }) != null;
 			d_normalGroup.GetAction("EditGroupAction").Sensitive = singlegroup;
 			
 			d_normalGroup.GetAction("PropertiesAction").Sensitive = singleobj;
@@ -558,7 +559,7 @@ namespace Cpg.Studio
 			       Utils.Max(new int [] {Utils.Min(new int[] {ny, sh - wh}), 0}));
 		}
 		
-		private void DoObjectActivated(object source, Components.Object obj)
+		private void DoObjectActivated(object source, Wrappers.Wrapper obj)
 		{			
 			if (d_propertyEditors.ContainsKey(obj))
 			{
@@ -586,28 +587,22 @@ namespace Cpg.Studio
 			};
 		}
 		
-		private string[] VisibleProperties(Components.Object obj)
-		{
-			return Array.FindAll(obj.Properties, delegate (string s) { 
-				return !obj.IsInvisible(s) && (!(obj is Components.Simulated) || (obj as Components.Simulated).SimulatedProperty(s));
-			});
-		}
-		
-		private string[] CommonProperties(Components.Object[] objects)
+		private Cpg.Property[] CommonProperties(Wrappers.Wrapper[] objects)
 		{
 			if (objects.Length == 0)
 			{
-				return new string[] {};
+				return new Cpg.Property[] {};
 			}
 			
-			string[] props = VisibleProperties(objects[0]);
+			Cpg.Property[] props = objects[0].Properties;
 			int i = 1;
 			
 			while (props.Length > 0 && i < objects.Length)
 			{
-				string[] pp = VisibleProperties(objects[i]);
+				Cpg.Property[] pp = objects[i].Properties;
 				
-				props = Array.FindAll(props, delegate (string s) { return Utils.In(s, pp); });
+				// TODO
+				props = Array.FindAll(props, delegate (Cpg.Property s) { return Utils.In(s, pp); });
 				++i;
 			}
 			
@@ -627,19 +622,14 @@ namespace Cpg.Studio
 			d_uimanager.InsertActionGroup(d_popupActionGroup, 0);
 			
 			// Merge monitor
-			Components.Object[] selection = d_grid.Selection;
-			string[] props = CommonProperties(selection);
+			Wrappers.Wrapper[] selection = d_grid.Selection;
 			
-			for (int i = 0; i < props.Length; ++i)
+			foreach (Cpg.Property prop in CommonProperties(selection))
 			{
-				if (props[i] == "id")
-					continue;
-				
-				string name = "Monitor" + props[i];
-				string prop = props[i];
+				string name = "Monitor" + prop.Name;
 				
 				d_popupActionGroup.Add(new ActionEntry[] {
-					new ActionEntry(name + "Action", null, props[i].Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
+					new ActionEntry(name + "Action", null, prop.Name.Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
 						OnStartMonitor(selection, prop);
 					})
 				});
@@ -652,17 +642,17 @@ namespace Cpg.Studio
 			(menu as Menu).Popup(null, null, null, (uint)button, (uint)time);
 		}
 		
-		private void DoLevelDown(object source, Components.Object obj)
+		private void DoLevelDown(object source, Wrappers.Wrapper obj)
 		{
 			PushPath(obj, delegate () { d_grid.LevelUp(obj); });
 		}
 		
-		private void DoLevelUp(object source, Components.Object obj)
+		private void DoLevelUp(object source, Wrappers.Wrapper obj)
 		{
 			PopPath();
 		}
 		
-		private void DoObjectRemoved(object source, Components.Object obj)
+		private void DoObjectRemoved(object source, Wrappers.Wrapper obj)
 		{
 			if (d_propertyEditors.ContainsKey(obj))
 			{
@@ -683,7 +673,7 @@ namespace Cpg.Studio
 		{
 			if (d_propertyView != null)
 			{
-				Components.Object[] selection = d_grid.Selection;
+				Wrappers.Wrapper[] selection = d_grid.Selection;
 				
 				if (selection.Length == 1)
 				{
@@ -708,13 +698,13 @@ namespace Cpg.Studio
 			UpdateSensitivity();
 		}
 		
-		private void ImportSuccess(Serialization.Cpg cpg, bool centerPosition)
+		private void ImportSuccess(Serialization.Main cpg, bool centerPosition)
 		{			
 			// Merge C network
 			d_network.Merge(cpg.Network.CNetwork);
 
 			// Add wrappers to grid, position them if necessary
-			List<Components.Object> objects = new List<Components.Object>();
+			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
 			
 			foreach (Serialization.Object obj in cpg.Project.Root.Children)
 			{
@@ -727,9 +717,9 @@ namespace Cpg.Studio
 			double cx = (d_grid.Container.X + (d_grid.Allocation.Width / 2.0)) / (float)d_grid.GridSize;
 			double cy = (d_grid.Container.Y + (d_grid.Allocation.Height / 2.0)) / (float)d_grid.GridSize;
 			
-			foreach (Components.Object obj in objects)
+			foreach (Wrappers.Wrapper obj in objects)
 			{
-				if (!(obj is Components.Link) && centerPosition)
+				if (!(obj is Wrappers.Link) && centerPosition)
 				{
 					obj.Allocation.X = (float)Math.Round(cx + (obj.Allocation.X - x) + 0.00001);
 					obj.Allocation.Y = (float)Math.Round(cy + (obj.Allocation.Y - y) + 0.00001);
@@ -741,7 +731,7 @@ namespace Cpg.Studio
 			// Compile the network right now
 			Cpg.CompileError err = new Cpg.CompileError();
 			
-			if (!d_network.Compile(err))
+			if (!d_network.Compile(null, err))
 			{
 				HandleCompileError(err);
 			}
@@ -930,7 +920,7 @@ namespace Cpg.Studio
 				return;
 			}
 			
-			Serialization.Cpg cpg;
+			Serialization.Main cpg;
 			
 			try
 			{
@@ -1081,7 +1071,7 @@ namespace Cpg.Studio
 			DoSave();
 		}
 		
-		private bool ExportXml(string filename, List<Components.Object> objects)
+		private bool ExportXml(string filename, List<Wrappers.Wrapper> objects)
 		{
 			Serialization.Saver saver;
 			
@@ -1267,16 +1257,16 @@ namespace Cpg.Studio
 			dlg.Show();
 		}
 		
-		private string ExportToXml(Components.Object[] objects)
+		private string ExportToXml(Wrappers.Wrapper[] objects)
 		{
 			Serialization.Saver saver;
 			
 			if (objects.Length != 0)
 			{
-				List<Components.Object> objs = new List<Components.Object>();
+				List<Wrappers.Wrapper> objs = new List<Wrappers.Wrapper>();
 				objs.AddRange(objects);
 				
-				List<Components.Object> normalized = d_grid.Normalize(objs);
+				List<Wrappers.Wrapper> normalized = d_grid.Normalize(objs);
 				
 				if (normalized.Count == 0)
 					return null;
@@ -1371,18 +1361,20 @@ namespace Cpg.Studio
 		
 		private void OnUngroupActivated(object sender, EventArgs args)
 		{
-			Components.Object[] objects = d_grid.Selection;
+			Wrappers.Wrapper[] objects = d_grid.Selection;
 
-			foreach (Components.Object obj in objects)
+			foreach (Wrappers.Wrapper obj in objects)
 			{
-				if (obj is Components.Group)
-					d_grid.Ungroup(obj as Components.Group);
+				if (obj is Wrappers.Group)
+				{
+					d_grid.Ungroup(obj as Wrappers.Group);
+				}
 			}
 		}
 		
 		private void OnAddStateActivated(object sender, EventArgs args)
 		{
-			d_grid.Add(new Components.State());
+			d_grid.Add(new Wrappers.State());
 		}
 		
 		private void OnAddLinkActivated(object sender, EventArgs args)
@@ -1390,14 +1382,9 @@ namespace Cpg.Studio
 			d_grid.Attach();
 		}
 		
-		private void OnAddRelayActivated(object sender, EventArgs args)
-		{
-			d_grid.Add(new Components.Relay());
-		}
-		
 		private void OnEditGlobalsActivated(object sender, EventArgs args)
 		{
-			DoObjectActivated(sender, new Components.Globals(d_network.Globals));
+			DoObjectActivated(sender, d_network);
 		}
 		
 		private void OnCenterViewActivated(object sender, EventArgs args)
@@ -1407,9 +1394,9 @@ namespace Cpg.Studio
 		
 		private void OnEditGroupActivated(object sender, EventArgs args)
 		{
-			Components.Object[] selection = d_grid.Selection;
+			Wrappers.Wrapper[] selection = d_grid.Selection;
 			
-			if (selection.Length != 1 || !(selection[0] is Components.Group))
+			if (selection.Length != 1 || !(selection[0] is Wrappers.Group))
 				return;
 			
 			d_grid.LevelDown(selection[0]);
@@ -1417,7 +1404,7 @@ namespace Cpg.Studio
 		
 		private void OnPropertiesActivated(object sender, EventArgs args)
 		{
-			Components.Object[] selection = d_grid.Selection;
+			Wrappers.Wrapper[] selection = d_grid.Selection;
 			
 			if (selection.Length != 0)
 				DoObjectActivated(sender, selection[0]);
@@ -1459,7 +1446,7 @@ namespace Cpg.Studio
 			{
 				if (d_propertyView == null)
 				{
-					Components.Object[] selection = d_grid.Selection;
+					Wrappers.Wrapper[] selection = d_grid.Selection;
 					d_propertyView = new PropertyView(selection.Length == 1 ? selection[0] : null);
 					d_propertyView.BorderWidth = 3;
 					
@@ -1539,7 +1526,7 @@ namespace Cpg.Studio
 		
 		private bool DoCopy()
 		{
-			Components.Object[] objects = d_grid.Selection;
+			Wrappers.Wrapper[] objects = d_grid.Selection;
 			
 			if (objects.Length == 0)
 				return false;
@@ -1583,11 +1570,11 @@ namespace Cpg.Studio
 			Message(Gtk.Stock.DialogError, error, message);
 		}
 		
-		private void OnStartMonitor(Components.Object[] objs, string property)
+		private void OnStartMonitor(Wrappers.Wrapper[] objs, Cpg.Property property)
 		{
 			EnsureMonitor();
 			
-			foreach (Components.Object obj in objs)
+			foreach (Wrappers.Wrapper obj in objs)
 			{
 				d_monitor.AddHook(obj, property);
 			}
@@ -1654,7 +1641,7 @@ namespace Cpg.Studio
 			if (error.Property != null)
 			{
 				title += "." + error.Property.Name;
-				expression = error.Property.ValueExpression.AsString;
+				expression = error.Property.Expression.AsString;
 			}
 			else if (error.LinkAction != null)
 			{
@@ -1696,7 +1683,7 @@ namespace Cpg.Studio
 			HandleCompileError(args.Error);
 		}
 		
-		public Components.Network Network
+		public Wrappers.Network Network
 		{
 			get
 			{
@@ -1709,6 +1696,7 @@ namespace Cpg.Studio
 			if (d_functionsDialog == null)
 			{
 				d_functionsDialog = new FunctionsDialog(this, d_network);
+
 				d_functionsDialog.Response += delegate(object o, ResponseArgs a1) {
 					d_functionsDialog.Destroy();
 					d_functionsDialog = null;
