@@ -66,9 +66,9 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.Merge(other);
 		}
 		
-		public void MergeFromFile(string filename)
+		public void MergeFromPath(string filename)
 		{
-			WrappedObject.MergeFromFile(filename);
+			WrappedObject.MergeFromPath(filename);
 		}
 		
 		public void MergeFromXml(string xml)
@@ -86,55 +86,41 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.Step(timestep);
 		}
 		
-		public Wrapper[] Templates
+		public Group TemplateGroup
 		{
 			get
 			{
-				return Wrap(WrappedObject.Templates);
+				return (Group)Wrap(WrappedObject.TemplateGroup);
 			}
 		}
-		
-		public void RemoveTemplate(string name)
-		{
-			WrappedObject.RemoveTemplate(name);
-		}
-		
-		public void RemoveTemplate(Wrapper obj)
-		{
-			RemoveTemplate(obj.Id);
-		}
-		
-		public Wrapper AddFromTemplate(string name)
-		{
-			return Wrap(WrappedObject.AddFromTemplate(name));
-		}
-		
-		public Wrapper AddLinkFromTemplate(string name, Wrapper from, Wrapper to)
-		{
-			return Wrap(WrappedObject.AddLinkFromTemplate(name, from, to));
-		}
-		
-		public void AddFunction(Cpg.Function function)
-		{
-			WrappedObject.AddFunction(function);
-		}
-		
-		public void RemoveFunction(Cpg.Function function)
-		{
-			WrappedObject.RemoveFunction(function);
-		}
-		
+
 		public Cpg.Function[] Functions
 		{
 			get
 			{
-				return WrappedObject.Functions;
+				Cpg.Object[] children = WrappedObject.FunctionGroup.Children;
+				Cpg.Function[] ret = new Cpg.Function[children.Length];
+
+				for (int i = 0; i < children.Length; ++i)
+				{
+					ret[i] = (Cpg.Function)children[i];
+				}
+				
+				return ret;
 			}
 		}
 		
 		public Cpg.Function GetFunction(string name)
 		{
-			return WrappedObject.GetFunction(name);
-		}		
+			return (Cpg.Function)WrappedObject.FunctionGroup.GetChild(name);
+		}
+		
+		public Group FunctionGroup 
+		{
+			get
+			{
+				return (Group)Wrap(WrappedObject.FunctionGroup);
+			}
+		}
 	}
 }

@@ -6,7 +6,7 @@ namespace Cpg.Studio
 {
 	public class FunctionsView : VBox
 	{
-		private Network d_network;
+		private Cpg.Studio.Wrappers.Network d_network;
 		private NodeStore d_store;
 		private NodeView d_treeview;
 		private Gtk.Button d_removeButton;
@@ -119,7 +119,7 @@ namespace Cpg.Studio
 			}
 		}		
 
-		public FunctionsView(Network network) : base(false, 3)
+		public FunctionsView(Cpg.Studio.Wrappers.Network network) : base(false, 3)
 		{
 			d_network = network;
 			
@@ -225,7 +225,7 @@ namespace Cpg.Studio
 			
 			foreach (Node node in nodes)
 			{
-				d_network.RemoveFunction(node.Function);
+				d_network.FunctionGroup.Remove(node.Function);
 				d_store.RemoveNode(node);
 			}
 		}
@@ -248,7 +248,7 @@ namespace Cpg.Studio
 			Cpg.Function function = new Cpg.Function(funcName, "x");
 			function.AddArgument(new FunctionArgument("x", false, 0));
 
-			d_network.AddFunction(function);
+			d_network.FunctionGroup.Add(function);
 			
 			d_store.AddNode(new Node(function));
 		}

@@ -6,7 +6,7 @@ namespace Cpg.Studio
 {
 	public class PolynomialsView : VBox
 	{
-		private Network d_network;
+		private Wrappers.Network d_network;
 		private NodeStore d_store;
 		private NodeView d_treeview;
 		
@@ -137,7 +137,7 @@ namespace Cpg.Studio
 			}
 		}
 
-		public PolynomialsView(Network network) : base(false, 3)
+		public PolynomialsView(Wrappers.Network network) : base(false, 3)
 		{
 			d_network = network;
 
@@ -311,7 +311,7 @@ namespace Cpg.Studio
 			
 			foreach (PolynomialNode node in nodes)
 			{
-				d_network.RemoveFunction(node.Function);
+				d_network.FunctionGroup.Remove(node.Function);
 				d_store.RemoveNode(node);
 			}
 		}
@@ -332,7 +332,7 @@ namespace Cpg.Studio
 			}
 
 			Cpg.FunctionPolynomial function = new Cpg.FunctionPolynomial(funcName);
-			d_network.AddFunction(function);
+			d_network.FunctionGroup.Add(function);
 			
 			ITreeNode newnode = new PolynomialNode(function);
 			d_store.AddNode(newnode);
