@@ -78,7 +78,6 @@ FILES = \
 	Cpg.Studio.Renderers/Oscillator.cs \
 	Cpg.Studio.Renderers/Renderer.cs \
 	Cpg.Studio.Renderers/State.cs \
-	Cpg.Studio.Serialization/Allocation.cs \
 	Cpg.Studio.Serialization/Group.cs \
 	Cpg.Studio.Serialization/Link.cs \
 	Cpg.Studio/Loader.cs \
