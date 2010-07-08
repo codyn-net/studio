@@ -8,7 +8,7 @@ ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:3 -optimize+ -debug "-
 ASSEMBLY = bin/Debug/cpgstudio.exe
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
 COMPILE_TARGET = exe
-PROJECT_REFERENCES = 
+PROJECT_REFERENCES =
 BUILD_DIR = bin/Debug
 
 CPGSTUDIO_EXE_MDB_SOURCE=bin/Debug/cpgstudio.exe.mdb
@@ -20,9 +20,9 @@ if ENABLE_RELEASE
 ASSEMBLY_COMPILER_COMMAND = gmcs
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize+
 ASSEMBLY = bin/Release/cpgstudio.exe
-ASSEMBLY_MDB = 
+ASSEMBLY_MDB =
 COMPILE_TARGET = exe
-PROJECT_REFERENCES = 
+PROJECT_REFERENCES =
 BUILD_DIR = bin/Release
 
 CPGSTUDIO_EXE_MDB=
@@ -33,86 +33,80 @@ AL=al2
 SATELLITE_ASSEMBLY_NAME=$(notdir $(basename $(ASSEMBLY))).resources.dll
 
 PROGRAMFILES = \
-	$(CPGSTUDIO_EXE_MDB)  
+	$(CPGSTUDIO_EXE_MDB)
 
 BINARIES = \
-	$(CPGSTUDIO)  
+	$(CPGSTUDIO)
 
 
 RESGEN=resgen2
-	
-all: $(ASSEMBLY) $(PROGRAMFILES) $(BINARIES) 
+
+all: $(ASSEMBLY) $(PROGRAMFILES) $(BINARIES)
 
 FILES = \
-	Directories.cs \
-	DynamicIntegrator.cs \
-	Window.cs \
-	Application.cs \
-	AssemblyInfo.cs \
-	Stock.cs \
-	Grid.cs \
-	components/Group.cs \
-	components/Object.cs \
-	components/State.cs \
-	components/Link.cs \
-	components/Relay.cs \
-	components/Simulated.cs \
-	components/Network.cs \
-	Utils.cs \
-	Table.cs \
-	PropertyView.cs \
-	Allocation.cs \
-	components/PropertyAttribute.cs \
-	GroupProperties.cs \
-	renderers/Renderer.cs \
-	renderers/Default.cs \
-	renderers/Oscillator.cs \
-	renderers/Group.cs \
-	renderers/Box.cs \
-	renderers/State.cs \
-	renderers/Relay.cs \
-	Saver.cs \
-	serialization/Cpg.cs \
-	serialization/Network.cs \
-	serialization/Property.cs \
-	serialization/State.cs \
-	serialization/Simulated.cs \
-	serialization/Relay.cs \
-	serialization/Link.cs \
-	serialization/Project.cs \
-	serialization/Object.cs \
-	serialization/Group.cs \
-	Settings.cs \
-	MessageArea.cs \
-	PropertyDialog.cs \
-	Loader.cs \
-	Range.cs \
-	Graph.cs \
-	Monitor.cs \
-	Simulation.cs \
-	ObjectView.cs \
-	components/Globals.cs \
-	serialization/Globals.cs \
-	RenderCache.cs \
-	FunctionsDialog.cs \
-	FunctionsView.cs \
-	PolynomialsView.cs \
-	interpolators/IInterpolator.cs \
-	interpolators/Interpolation.cs \
-	interpolators/PChip.cs \
-	InterpolateDialog.cs 
+	Cpg.Studio/Allocation.cs \
+	Cpg.Studio/Application.cs \
+	Cpg.Studio/AssemblyInfo.cs \
+	Cpg.Studio/Directories.cs \
+	Cpg.Studio/DynamicIntegrator.cs \
+	Cpg.Studio/FunctionsDialog.cs \
+	Cpg.Studio/FunctionsView.cs \
+	Cpg.Studio/Graph.cs \
+	Cpg.Studio/Grid.cs \
+	Cpg.Studio/GroupProperties.cs \
+	Cpg.Studio/InterpolateDialog.cs \
+	Cpg.Studio/MessageArea.cs \
+	Cpg.Studio/Monitor.cs \
+	Cpg.Studio/ObjectView.cs \
+	Cpg.Studio/PolynomialsView.cs \
+	Cpg.Studio/PropertyDialog.cs \
+	Cpg.Studio/PropertyView.cs \
+	Cpg.Studio/Range.cs \
+	Cpg.Studio/RenderCache.cs \
+	Cpg.Studio/Settings.cs \
+	Cpg.Studio/Simulation.cs \
+	Cpg.Studio/Stock.cs \
+	Cpg.Studio/Table.cs \
+	Cpg.Studio/Utils.cs \
+	Cpg.Studio/Window.cs \
+	Cpg.Studio.Interpolators/IInterpolator.cs \
+	Cpg.Studio.Interpolators/Interpolation.cs \
+	Cpg.Studio.Interpolators/PChip.cs \
+	Cpg.Studio.Renderers/Box.cs \
+	Cpg.Studio.Renderers/Default.cs \
+	Cpg.Studio.Renderers/Group.cs \
+	Cpg.Studio.Renderers/Oscillator.cs \
+	Cpg.Studio.Renderers/Renderer.cs \
+	Cpg.Studio.Renderers/State.cs \
+	Cpg.Studio.Serialization/Allocation.cs \
+	Cpg.Studio.Serialization/Group.cs \
+	Cpg.Studio.Serialization/Link.cs \
+	Cpg.Studio/Loader.cs \
+	Cpg.Studio.Serialization/Main.cs \
+	Cpg.Studio.Serialization/Network.cs \
+	Cpg.Studio.Serialization/Object.cs \
+	Cpg.Studio.Serialization/Project.cs \
+	Cpg.Studio.Serialization/Property.cs \
+	Cpg.Studio/Saver.cs \
+	Cpg.Studio.Serialization/State.cs \
+	Cpg.Studio.Wrappers/Graphical.cs \
+	Cpg.Studio.Wrappers/Group.cs \
+	Cpg.Studio.Wrappers/Link.cs \
+	Cpg.Studio.Wrappers/Network.cs \
+	Cpg.Studio.Wrappers/State.cs \
+	Cpg.Studio.Wrappers/Wrapper.cs
 
-DATA_FILES = 
+DATA_FILES =
 
 RESOURCES = \
-	ui.xml \
-	icons/chain.png \
-	icons/chain-broken.png \
-	icons/link.png \
-	monitor-ui.xml 
+	Cpg.Studio.Resources/ui.xml \
+	Cpg.Studio.Resources/chain.png \
+	Cpg.Studio.Resources/chain-broken.png \
+	Cpg.Studio.Resources/link.png \
+	Cpg.Studio.Resources/monitor-ui.xml
 
 EXTRAS = \
-	cpgstudio.in 
+	cpgstudio.in
 
 REFERENCES =  \
 	$(GTK_SHARP_20_LIBS) \
@@ -124,9 +118,9 @@ REFERENCES =  \
 	System.Xml \
 	$(CPGNETWORK_SHARP_LIBS)
 
-DLL_REFERENCES = 
+DLL_REFERENCES =
 
-CLEANFILES = $(PROGRAMFILES) $(BINARIES) 
+CLEANFILES = $(PROGRAMFILES) $(BINARIES)
 
 include $(top_srcdir)/Makefile.include
 
