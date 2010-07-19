@@ -255,6 +255,8 @@ namespace Cpg.Studio.Wrappers
 			Moved(this, new EventArgs());
 			d_allocation.Move(x, y);
 			Moved(this, new EventArgs());
+			
+			DoRequestRedraw();
 		}
 		
 		protected void MeasureString(Cairo.Context graphics, string s, out int width, out int height)

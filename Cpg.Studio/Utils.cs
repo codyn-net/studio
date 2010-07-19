@@ -20,9 +20,13 @@ namespace Cpg.Studio
 			foreach (double item in list)
 			{
 				if (!hasitem)
+				{
 					best = item;
+				}
 				else
+				{
 					best = handler(best, item);
+				}
 				
 				hasitem = true;
 			}
@@ -38,9 +42,13 @@ namespace Cpg.Studio
 			foreach (float item in list)
 			{
 				if (!hasitem)
+				{
 					best = item;
+				}
 				else
+				{
 					best = handler(best, item);
+				}
 				
 				hasitem = true;
 			}
@@ -56,9 +64,13 @@ namespace Cpg.Studio
 			foreach (int item in list)
 			{
 				if (!hasitem)
+				{
 					best = item;
+				}
 				else
+				{
 					best = handler(best, item);
+				}
 				
 				hasitem = true;
 			}
@@ -99,30 +111,44 @@ namespace Cpg.Studio
 		public static string Capitalize(string s)
 		{
 			if (s == String.Empty)
+			{
 				return s;
+			}
 			else
+			{
 				return s.Substring(0, 1).ToUpper() + s.Substring(1);
+			}
 		}
 		
 		public static int SortProperties(string first, string second)
 		{
 			if (first == "id")
+			{
 				return -1;
+			}
 			else if (second == "id")
+			{
 				return 1;
+			}
 			else
+			{
 				return first.ToLower().CompareTo(second.ToLower());
+			}
 		}
 		
 		public static bool In(object val, ICollection collection)
 		{
 			if (val == null)
+			{
 				return false;
+			}
 
 			foreach (object t in collection)
 			{
 				if (t != null && t.Equals(val))
+				{
 					return true;
+				}
 			}
 			
 			return false;
@@ -137,7 +163,9 @@ namespace Cpg.Studio
 			foreach (Wrappers.Wrapper obj in objects)
 			{
 				if (obj is Wrappers.Link)
+				{
 					continue;
+				}
 
 				x += obj.Allocation.X + obj.Allocation.Width / 2.0f;
 				y += obj.Allocation.Y + obj.Allocation.Height / 2.0f;

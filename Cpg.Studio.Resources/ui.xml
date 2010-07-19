@@ -15,6 +15,9 @@
       <menuitem name="Quit" action="QuitAction"/>
     </menu>
     <menu name="EditMenu" action="EditMenuAction">
+      <menuitem name="Undo" action="UndoAction"/>
+      <menuitem name="Redo" action="RedoAction"/>
+      <separator/>
       <menuitem name="Cut" action="CutAction"/>
       <menuitem name="Copy" action="CopyAction"/>
       <menuitem name="Paste" action="PasteAction"/>
@@ -77,6 +80,9 @@
     <toolitem name="New" action="NewAction"/>
     <toolitem name="Open" action="OpenAction"/>
     <toolitem name="Save" action="SaveAction"/>
+    <separator/>
+    <toolitem name="Undo" action="UndoAction"/>
+    <toolitem name="Redo" action="RedoAction"/>
     <separator/>
     <toolitem name="Cut" action="CutAction"/>
     <toolitem name="Copy" action="CopyAction"/>

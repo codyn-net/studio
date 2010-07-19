@@ -1,13 +1,13 @@
 using System;
 using Gtk;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Dialogs
 {
-	public class FunctionsDialog : Dialog
+	public class Functions : Dialog
 	{
 		private Wrappers.Network d_network;
 
-		public FunctionsDialog(Window parent, Wrappers.Network network)
+		public Functions(Window parent, Wrappers.Network network)
 		{
 			d_network = network;
 			

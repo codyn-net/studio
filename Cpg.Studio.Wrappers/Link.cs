@@ -213,6 +213,18 @@ namespace Cpg.Studio.Wrappers
 			return action;
 		}
 		
+		public Action GetAction(string target)
+		{
+			Cpg.LinkAction ret = WrappedObject.GetAction(target);
+			
+			if (ret == null)
+			{
+				return null;
+			}
+			
+			return new Action(this, ret);
+		}
+		
 		public bool RemoveAction(Action action)
 		{
 			return (d_object as Cpg.Link).RemoveAction(action.LinkAction);

@@ -35,7 +35,9 @@ namespace Cpg.Studio
 			for (int i = 0; i < actions.Length; ++i)
 			{
 				if (i + 1 < actions.Length)
+				{
 					AddAction(actions[i] as string, (ResponseType)actions[i + 1]);
+				}
 			}
 		}
 		
@@ -75,6 +77,8 @@ namespace Cpg.Studio
 			
 			vbox.PackStart(sec, false, true, 0);
 			
+			prim.StyleSet += ret.OnStyleSet;
+			sec.StyleSet += ret.OnStyleSet;
 			
 			content.ShowAll();
 			
@@ -170,15 +174,19 @@ namespace Cpg.Studio
 		void OnStyleSet(object o, StyleSetArgs args)
 		{
 			if (d_changingStyle)
+			{
 				return;
+			}
 			
 			Gtk.Window wnd = new Gtk.Window(WindowType.Popup);
 			wnd.Name = "gtk-tooltip";
 			wnd.EnsureStyle();
 			
+			Gtk.Widget thisone = (Gtk.Widget)o;
+			
 			Style style = wnd.Style;
 			d_changingStyle = true;
-			Style = style;
+			thisone.Style = style;
 			d_changingStyle = false;
 			
 			QueueDraw();

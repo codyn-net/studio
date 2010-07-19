@@ -1,5 +1,6 @@
 using System;
 using Gtk;
+using System.Collections.Generic;
 
 namespace Cpg.Studio
 {
@@ -10,18 +11,39 @@ namespace Cpg.Studio
 		public event PropertyHandler Toggled = delegate {};
 		public event PropertyHandler PropertyAdded = delegate {};
 
-		TreeStore d_store;
-		Grid d_grid;
+		private TreeStore d_store;
+		private Wrappers.Network d_network;
 		
-		public ObjectView(Grid grid)
+		private enum ObjectType
 		{
-			d_grid = grid;
+			Object = 1,
+			Property = 2
+		}
+		
+		private enum Column
+		{
+			ObjectType = 0,
+			Object = 1,
+			Property = 1,
+			Activity = 2
+		}
+		
+		private enum Activity
+		{
+			Active = 0,
+			Inactive = 1,
+			Inconsistent = 2
+		}
+		
+		public ObjectView(Wrappers.Network network)
+		{
+			d_network = network;
 			Build();
 		}
 		
 		private void Build()
 		{
-			d_store = new TreeStore(typeof(object), typeof(object), typeof(int));
+			d_store = new TreeStore(typeof(ObjectType), typeof(object), typeof(Activity));
 			
 			d_store.SetSortFunc(1, DoRowSort);
 			d_store.SetSortColumnId(1, SortType.Ascending);
@@ -46,17 +68,21 @@ namespace Cpg.Studio
 			CellRendererText renderer = new CellRendererText();
 			column.PackStart(renderer, true);
 			column.SetCellDataFunc(renderer, (TreeCellDataFunc)OnTextCellData);
-			
-			d_grid.ObjectAdded += HandleObjectAdded;
-			d_grid.ObjectRemoved += HandleObjectRemoved;
-			d_grid.LeveledUp += HandleLeveledUp;
-			d_grid.LeveledDown += HandleLeveledDown;
-			d_grid.Cleared += HandleCleared;
 		}
 		
 		private void HandleCleared(object source, EventArgs args)
 		{
 			InitStore();
+		}
+		
+		private T FromStore<T>(Gtk.TreeIter iter, Column column)
+		{
+			return (T)d_store.GetValue(iter, (int)column);
+		}
+		
+		private void ToStore<T>(Gtk.TreeIter iter, Column column, T val)
+		{
+			d_store.SetValue(iter, (int)column, val);
 		}
 
 		private void HandleToggled(object o, ToggledArgs args)
@@ -64,44 +90,93 @@ namespace Cpg.Studio
 			TreeIter iter;
 			
 			d_store.GetIter(out iter, new TreePath(args.Path));
-			int active = (int)d_store.GetValue(iter, 2);
+			Activity active = FromStore<Activity>(iter, Column.Activity);
 			
-			d_store.SetValue(iter, 2, active == 1 ? 0 : 1);
+			bool isactive = active == Activity.Inactive ? true : false;
 			
-			if (d_store.GetValue(iter, 1) == null)
+			ToStore(iter, Column.Activity, isactive ? Activity.Active : Activity.Inactive);
+			
+			if (FromStore<ObjectType>(iter, Column.ObjectType) == ObjectType.Object)
 			{
-				ToggleChildren(iter);
+				ToggleChildProperties(iter);
 			}
 			else
 			{
 				TreeIter parent;
 				
 				d_store.IterParent(out parent, iter);
-				CheckConsistency(parent);
-				
-				ToggleProperty(iter, (int)d_store.GetValue(iter, 2) == 1);
+				ToggleProperty(iter, FromStore<Wrappers.Wrapper>(parent, Column.Object), FromStore<Cpg.Property>(iter, Column.Property), isactive ? Activity.Active : Activity.Inactive);
 			}
+		}
+		
+		private void Disconnect(TreeIter iter, bool getChildren)
+		{
+			if (FromStore<ObjectType>(iter, Column.ObjectType) == ObjectType.Object)
+			{
+				Wrappers.Wrapper obj = FromStore<Wrappers.Wrapper>(iter, Column.Object);
+
+				obj.PropertyAdded -= HandlePropertyAdded;
+				obj.PropertyRemoved -= HandlePropertyRemoved;
+				
+				if (obj is Wrappers.Group)
+				{
+					Wrappers.Group grp = (Wrappers.Group)obj;
+					
+					grp.ChildAdded -= HandleChildAdded;
+					grp.ChildRemoved -= HandleChildRemoved;
+				}
+			}
+			
+			TreeIter child;
+
+			if (getChildren)
+			{
+				d_store.IterChildren(out child, iter);
+			}
+			else
+			{
+				child = iter;
+			}
+			
+			do
+			{
+				Disconnect(child);
+			} while (d_store.IterNext(ref child));
+		}
+		
+		private void Disconnect(TreeIter iter)
+		{
+			Disconnect(iter, true);
+		}
+		
+		private void Disconnect()
+		{
+			TreeIter child;
+
+			d_store.GetIterFirst(out child);
+			Disconnect(child, false);
 		}
 		
 		private void InitStore()
 		{
-			TreeIter iter;
-			
-			if (d_store.GetIterFirst(out iter))
-			{
-				do
-				{
-					Wrappers.Wrapper o = d_store.GetValue(iter, 0) as Wrappers.Wrapper;
-					
-					Disconnect(o);
-				} while (d_store.IterNext(ref iter));
-			}
-			
+			Disconnect();
 			d_store.Clear();
 			
-			foreach (Wrappers.Wrapper obj in d_grid.Container.Children)
+			AddObject(d_network);
+		}
+		
+		private void ToggleProperty(TreeIter iter, Wrappers.Wrapper obj, Cpg.Property property, Activity activity)
+		{
+			if (activity != FromStore<Activity>(iter, Column.Activity))
 			{
-				AddObject(obj);
+				ToStore(iter, Column.Activity, activity);
+				
+				TreeIter parent;
+				
+				d_store.IterParent(out parent, iter);
+				CheckConsistency(parent);
+
+				Toggled(this, obj, property);
 			}
 		}
 		
@@ -118,7 +193,7 @@ namespace Cpg.Studio
 			
 			if (FindProperty(parent, prop, out child))
 			{
-				d_store.SetValue(child, 2, active ? 1 : 0);
+				ToggleProperty(child, obj, prop, active ? Activity.Active : Activity.Inactive);
 			}
 		}
 		
@@ -135,7 +210,7 @@ namespace Cpg.Studio
 			
 			if (FindProperty(parent, prop, out child))
 			{
-				return (int)d_store.GetValue(child, 2) == 1;
+				return FromStore<Activity>(child, Column.Activity) == Activity.Active;
 			}
 			
 			return false;
@@ -177,99 +252,156 @@ namespace Cpg.Studio
 			TreeIter iter;
 			
 			if (!d_store.IterChildren(out iter, parent))
+			{
 				return;
+			}
 			
-			int numcheck = 0;
+			Activity activity = Activity.Inactive;
+			bool first = true;
 			
 			do
 			{
-				numcheck += (int)d_store.GetValue(iter, 2);
+				if (FromStore<ObjectType>(iter, Column.ObjectType) == ObjectType.Property)
+				{
+					Activity ac = FromStore<Activity>(iter, Column.Activity);
+					
+					if (first)
+					{
+						activity = ac;
+						first = false;
+					}
+					else if (ac != activity)
+					{
+						activity = Activity.Inconsistent;
+						break;
+					}
+				}
 			} while (d_store.IterNext(ref iter));
 			
-			if (numcheck == 0)
-			{
-				d_store.SetValue(parent, 2, 0);
-			}
-			else if (numcheck == d_store.IterNChildren(parent))
-			{
-				d_store.SetValue(parent, 2, 1);
-			}
-			else
-			{
-				d_store.SetValue(parent, 2, 2);
-			}
-		}
-		
-		private void Disconnect(Wrappers.Wrapper obj)
-		{
-			obj.PropertyAdded -= HandlePropertyAdded;
-			obj.PropertyRemoved -= HandlePropertyRemoved;
-			obj.PropertyChanged -= HandlePropertyChanged;
+			ToStore(parent, Column.Activity, activity);
 		}
 		
 		private bool Find(Wrappers.Wrapper obj, out TreeIter iter)
 		{
 			if (!d_store.GetIterFirst(out iter))
-				return false;
-			
-			do
 			{
-				Wrappers.Wrapper other = d_store.GetValue(iter, 0) as Wrappers.Wrapper;
-				
-				if (other.Equals(obj))
+				return false;
+			}
+
+			Queue<Wrappers.Wrapper> parents = new Queue<Wrappers.Wrapper>();
+			
+			Wrappers.Group parent = obj.Parent;
+			
+			while (parent != null)
+			{
+				parents.Enqueue(parent);
+				parent = parent.Parent;
+			}
+			
+			parents.Enqueue(obj);
+		
+			while (true)
+			{
+				if (FromStore<ObjectType>(iter, Column.ObjectType) == ObjectType.Object)
 				{
-					return true;
+					Wrappers.Wrapper wrap = FromStore<Wrappers.Wrapper>(iter, Column.Object);
+					
+					if (wrap.Equals(parents.Peek()))
+					{
+						parents.Dequeue();
+						
+						if (parents.Count == 0)
+						{
+							return true;
+						}
+						
+						d_store.IterChildren(out iter, iter);
+						continue;
+					}
 				}
-			} while (d_store.IterNext(ref iter));
+
+				if (!d_store.IterNext(ref iter))
+				{
+					break;
+				}
+			}
 			
 			return false;
 		}
 		
 		private void RemoveObject(Wrappers.Wrapper obj)
 		{
-			TreeIter parent;
+			TreeIter iter;
 			
-			if (Find(obj, out parent))
+			if (Find(obj, out iter))
 			{
-				d_store.Remove(ref parent);
+				d_store.Remove(ref iter);
 			}
+		}
+		
+		private void Connect(Wrappers.Wrapper obj, TreeIter iter)
+		{
+			foreach (Cpg.Property property in obj.Properties)
+			{
+				AddProperty(iter, obj, property);
+			}
+			
+			obj.PropertyAdded += HandlePropertyAdded;
+			obj.PropertyRemoved += HandlePropertyRemoved;
+			
+			if (obj is Wrappers.Group)
+			{
+				Wrappers.Group grp = (Wrappers.Group)obj;
+				
+				foreach (Wrappers.Wrapper child in grp.Children)
+				{
+					AddObject(child, iter);
+				}
+				
+				grp.ChildAdded += HandleChildAdded;
+				grp.ChildRemoved += HandleChildRemoved;
+			}
+			
+			ExpandRow(d_store.GetPath(iter), false);
+		}
+		
+		private void AddObject(Wrappers.Wrapper obj, TreeIter parent)
+		{
+			TreeIter iter;
+
+			iter = d_store.AppendValues(parent, ObjectType.Object, obj, Activity.Inactive);
+			Connect(obj, iter);
 		}
 		
 		private void AddObject(Wrappers.Wrapper obj)
 		{
-			if (!(obj is Wrappers.Wrapper))
-			{
-				return;
-			}
-			
 			TreeIter parent;
 			
-			parent = d_store.AppendValues(obj, null, 0);
-			
-			foreach (Cpg.Property property in obj.Properties)
+			if (obj.Parent != null)
 			{
-				AddProperty(parent, obj, property);
+				if (Find(obj.Parent, out parent))
+				{
+					AddObject(obj, parent);
+				}
 			}
-			
-			CheckConsistency(parent);
-			
-			obj.PropertyAdded += HandlePropertyAdded;
-			obj.PropertyRemoved += HandlePropertyRemoved;
-			obj.PropertyChanged += HandlePropertyChanged;
-			
-			ExpandRow(d_store.GetPath(parent), false);
+			else
+			{
+				TreeIter iter;
+
+				iter = d_store.AppendValues(ObjectType.Object, obj, Activity.Inactive);
+				
+				Connect(obj, iter);
+			}
 		}
 
-		private void HandlePropertyChanged(Wrappers.Wrapper source, Cpg.Property prop)
+		private void HandleChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
 		{
-			TreeIter parent;
-			
-			if (!Find(source, out parent))
-			{
-				return;
-			}
-			
-			d_store.EmitRowChanged(d_store.GetPath(parent), parent);
+			RemoveObject(child);
+		}
+
+		private void HandleChildAdded(Wrappers.Group source, Wrappers.Wrapper child)
+		{
+			AddObject(child);
 		}
 
 		private bool FindProperty(TreeIter parent, Cpg.Property prop, out TreeIter iter)
@@ -281,7 +413,12 @@ namespace Cpg.Studio
 			
 			do
 			{
-				Cpg.Property property = d_store.GetValue(iter, 1) as Cpg.Property;
+				if (FromStore<ObjectType>(iter, Column.ObjectType) != ObjectType.Property)
+				{
+					continue;
+				}
+
+				Cpg.Property property = FromStore<Cpg.Property>(iter, Column.Property);
 				
 				if (property == prop)
 				{
@@ -296,7 +433,7 @@ namespace Cpg.Studio
 		{
 			TreeIter parent;
 			
-			if (Find(source as Wrappers.Wrapper, out parent))
+			if (Find(source, out parent))
 			{
 				TreeIter prop;
 
@@ -313,7 +450,7 @@ namespace Cpg.Studio
 		{
 			TreeIter parent;
 			
-			if (Find(source as Wrappers.Wrapper, out parent))
+			if (Find(source, out parent))
 			{
 				AddProperty(parent, source, prop);
 				CheckConsistency(parent);
@@ -322,7 +459,7 @@ namespace Cpg.Studio
 		
 		private void AddProperty(TreeIter parent, Wrappers.Wrapper obj, Cpg.Property prop)
 		{
-			d_store.AppendValues(parent, obj, prop, 0);
+			d_store.AppendValues(parent, ObjectType.Property, prop, Activity.Inactive);
 			
 			ExpandRow(d_store.GetPath(parent), false);
 			PropertyAdded(this, obj, prop);
@@ -332,7 +469,7 @@ namespace Cpg.Studio
 		{
 			CellRendererToggle renderer = cell as CellRendererToggle;
 			
-			if (model.GetValue(iter, 1) == null)
+			if (FromStore<ObjectType>(iter, Column.ObjectType) == ObjectType.Object)
 			{
 				cell.CellBackgroundGdk = Style.Base(Gtk.StateType.Active);
 			}
@@ -341,26 +478,25 @@ namespace Cpg.Studio
 				cell.CellBackgroundGdk = Style.Base(this.State);
 			}
 			
-			int active = (int)model.GetValue(iter, 2);
+			Activity activity = FromStore<Activity>(iter, Column.Activity);
 			
-			renderer.Active = active != 0;
-			renderer.Inconsistent = active == 2;
+			renderer.Active = activity != Activity.Inactive;
+			renderer.Inconsistent = activity == Activity.Inconsistent;
 		}
 		
 		private void OnTextCellData(TreeViewColumn column, CellRenderer cell, TreeModel model, TreeIter iter)
 		{
-			object o = model.GetValue(iter, 0);
-			Cpg.Property st = model.GetValue(iter, 1) as Cpg.Property;
-			
 			CellRendererText renderer = cell as CellRendererText;
 			
-			if (st == null)
+			if (FromStore<ObjectType>(iter, Column.ObjectType) == ObjectType.Object)
 			{
-				string s = (o as Wrappers.Wrapper).ToString() + " (" + o.GetType().Name + ")";
+				Wrappers.Wrapper wrapper = FromStore<Wrappers.Wrapper>(iter, Column.Object);
+
+				string s = wrapper.ToString() + " (" + wrapper.GetType().Name + ")";
 				
-				if (o is Wrappers.Link)
+				if (wrapper is Wrappers.Link)
 				{
-					Wrappers.Link link = o as Wrappers.Link;
+					Wrappers.Link link = (Wrappers.Link)wrapper;
 					s += " " + link.From.ToString() + " » " + link.To.ToString();
 				}
 				
@@ -370,20 +506,12 @@ namespace Cpg.Studio
 			}
 			else
 			{
-				renderer.Text = st.Name;
+				Cpg.Property property = FromStore<Cpg.Property>(iter, Column.Property);
+				
+				renderer.Text = property.Name;
 				cell.CellBackgroundGdk = Style.Base(this.State);
 				renderer.ForegroundGdk = Style.Text(this.State);
 			}
-		}
-
-		private void HandleLeveledDown(object source, Wrappers.Wrapper obj)
-		{
-			InitStore();
-		}
-
-		private void HandleLeveledUp(object source, Wrappers.Wrapper obj)
-		{
-			InitStore();
 		}
 
 		private void HandleObjectAdded(object source, Wrappers.Wrapper obj)
@@ -396,19 +524,9 @@ namespace Cpg.Studio
 			RemoveObject(obj);
 		}
 		
-		private void ToggleProperty(TreeIter iter, bool active)
+		private void ToggleChildProperties(TreeIter parent)
 		{
-			d_store.SetValue(iter, 2, active ? 1 : 0);
-			
-			TreeIter parent;
-			d_store.IterParent(out parent, iter);
-			
-			Toggled(this, d_store.GetValue(parent, 0) as Wrappers.Wrapper, d_store.GetValue(iter, 1) as Cpg.Property);
-		}
-		
-		private void ToggleChildren(TreeIter parent)
-		{
-			int active = (int)d_store.GetValue(parent, 2);
+			Activity activity = FromStore<Activity>(parent, Column.Activity);
 			
 			TreeIter iter;
 			
@@ -417,23 +535,15 @@ namespace Cpg.Studio
 				return;
 			}
 			
+			Wrappers.Wrapper obj = FromStore<Wrappers.Wrapper>(parent, Column.Object);
+			
 			do
 			{
-				if ((int)d_store.GetValue(iter, 2) != active)
+				if (FromStore<ObjectType>(iter, Column.ObjectType) == ObjectType.Property)
 				{
-					ToggleProperty(iter, active == 1);
+					ToggleProperty(iter, obj, FromStore<Cpg.Property>(iter, Column.Property), activity);
 				}
 			} while (d_store.IterNext(ref iter));
-		}
-		
-		protected override void OnDestroyed()
-		{
-			base.OnDestroyed();
-			
-			d_grid.ObjectAdded -= HandleObjectAdded;
-			d_grid.ObjectRemoved -= HandleObjectRemoved;
-			d_grid.LeveledUp -= HandleLeveledUp;
-			d_grid.LeveledDown -= HandleLeveledDown;
 		}
 	}
 }

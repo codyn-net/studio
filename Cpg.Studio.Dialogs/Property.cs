@@ -1,14 +1,14 @@
 using System;
 using Gtk;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Dialogs
 {
-	public class PropertyDialog : Dialog
+	public class Property : Dialog
 	{
 		Wrappers.Wrapper d_object;
 		PropertyView d_view;
 		
-		public PropertyDialog(Window parent, Wrappers.Wrapper obj)
+		public Property(Window parent, Wrappers.Wrapper obj)
 		{
 			d_object = obj;
 			
@@ -28,23 +28,6 @@ namespace Cpg.Studio
 			}
 			
 			VBox.Spacing = 6;
-			
-			if (obj is Wrappers.Group)
-			{
-				Wrappers.Group group = obj as Wrappers.Group;
-				GroupProperties props = new GroupProperties(group.Children, group.Proxy, group.Renderer.GetType()); 
-				
-				VBox.PackStart(props, false, false, 0);
-				VBox.PackStart(new HSeparator(), false, false, 0);
-				
-				props.ComboMain.Changed  += delegate(object sender, EventArgs e) {
-					group.SetProxy(props.Main);
-				};
-				
-				props.ComboKlass.Changed += delegate(object sender, EventArgs e) {
-					group.RendererType = props.Klass;
-				};
-			}
 			
 			d_view = new PropertyView(d_object);
 			VBox.PackStart(d_view, true, true, 0);

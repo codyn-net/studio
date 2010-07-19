@@ -13,7 +13,7 @@ namespace Cpg.Studio.Serialization
 		private Allocation d_allocation;
 		private string d_period;
 		private int d_panePosition;
-		private string d_container;
+		private string d_activeGroup;
 		private bool d_showStatusbar;
 		private bool d_showToolbar;
 		private bool d_showSimulateButtons;
@@ -63,17 +63,30 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		[XmlElement("container"),
+		[XmlElement("active-group"),
 		 System.ComponentModel.DefaultValue("")]
-		public string Container
+		public string ActiveGroup
 		{
 			get
 			{
-				return d_window != null ? d_window.Grid.Container.Id : d_container;
+				return d_window != null ? d_window.Grid.ActiveGroup.Id : d_activeGroup;
 			}
 			set
 			{
-				d_container = value;
+				d_activeGroup = value;
+			}
+		}
+		
+		[XmlElement("canvas")]
+		public Group Root
+		{
+			get
+			{
+				return d_root == null ? new Group(d_window.Network) : d_root;
+			}
+			set
+			{
+				d_root = value;
 			}
 		}
 		
@@ -115,19 +128,6 @@ namespace Cpg.Studio.Serialization
 			set
 			{
 				d_period = value;
-			}
-		}
-
-		[XmlElement("canvas")]
-		public Group Root
-		{
-			get
-			{
-				return d_root == null ? new Group(d_window.Grid.Root) : d_root;
-			}
-			set
-			{
-				d_root = value;
 			}
 		}
 		

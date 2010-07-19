@@ -26,17 +26,20 @@ namespace Cpg.Studio
 		private uint d_popupMergeId;
 		private UIManager d_uimanager;
 		private ActionGroup d_popupActionGroup;
-		private Dictionary<Wrappers.Wrapper, PropertyDialog> d_propertyEditors;
+		private Dictionary<Wrappers.Wrapper, Dialogs.Property> d_propertyEditors;
 		private Wrappers.Network d_network;
 		private Monitor d_monitor;
 		private Simulation d_simulation;
 		private string d_prevOpen;
-		private FunctionsDialog d_functionsDialog;
+		private Dialogs.Functions d_functionsDialog;
 		private ListStore d_integratorStore;
 		private ComboBox d_integratorCombo;
 		
 		private bool d_modified;
 		private string d_filename;
+		
+		private Undo.Manager d_undoManager;
+		private Actions d_actions;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -50,17 +53,38 @@ namespace Cpg.Studio
 
 			d_simulation = new Simulation(d_network);
 
+			d_undoManager = new Undo.Manager();
+			d_undoManager.OnChanged += delegate (object source) {
+				UpdateUndoState();	
+			};
+			
+			d_undoManager.OnModified += delegate (object source) {
+				UpdateModified();
+			};
+			
+			d_actions = new Actions(d_undoManager);
+
 			Build();
 			ShowAll();
 			
 			Clear();
 			
 			d_modified = false;
+			
+			UpdateUndoState();
 			UpdateTitle();
 			
-			d_propertyEditors = new Dictionary<Wrappers.Wrapper, PropertyDialog>();
+			d_propertyEditors = new Dictionary<Wrappers.Wrapper, Dialogs.Property>();
 		}
-		
+
+		private void UpdateUndoState()
+		{
+			d_normalGroup.GetAction("UndoAction").Sensitive = d_undoManager.CanUndo;
+			d_normalGroup.GetAction("RedoAction").Sensitive = d_undoManager.CanRedo;
+			
+			// TODO
+		}
+
 		private void Build()
 		{
 			SetDefaultSize(700, 600);
@@ -70,67 +94,67 @@ namespace Cpg.Studio
 
 			d_normalGroup.Add(new ActionEntry[] {
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
-				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG network", new EventHandler(OnFileNew)),
-				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", new EventHandler(OnOpenActivated)),
-				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, null, "Revert changes", new EventHandler(OnRevertActivated)),
-				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", new EventHandler(OnSaveActivated)),
-				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", new EventHandler(OnSaveAsActivated)),
+				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG network", OnFileNew),
+				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", OnOpenActivated),
+				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, null, "Revert changes", OnRevertActivated),
+				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", OnSaveActivated),
+				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", OnSaveAsActivated),
 
-				new ActionEntry("ImportAction", null, "Import", null, "Import CPG network objects", new EventHandler(OnImportActivated)),
-				new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", new EventHandler(OnExportActivated)),
+				//new ActionEntry("ImportAction", null, "Import", null, "Import CPG network objects", new EventHandler(OnImportActivated)),
+				//new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", new EventHandler(OnExportActivated)),
 
-				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, "<Control>Q", "Quit", new EventHandler(OnQuitActivated)),
+				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, "<Control>Q", "Quit", OnQuitActivated),
 
 				new ActionEntry("EditMenuAction", null, "_Edit", null, null, null),
-				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", new EventHandler(OnPasteActivated)),
-				new ActionEntry("GroupAction", null, "Group", "<Control>g", "Group objects", new EventHandler(OnGroupActivated)),
-				new ActionEntry("UngroupAction", null, "Ungroup", "<Control>u", "Ungroup object", new EventHandler(OnUngroupActivated)),
-				new ActionEntry("EditGlobalsAction", null, "Globals", null, "Edit the network globals", new EventHandler(OnEditGlobalsActivated)),
-				new ActionEntry("EditFunctionsAction", null, "Functions", null, "Edit the network custom functions", new EventHandler(OnEditFunctionsActivated)),
+				new ActionEntry("UndoAction", Gtk.Stock.Undo, null, "<control>Z", "Undo last action", OnUndoActivated),
+				new ActionEntry("RedoAction", Gtk.Stock.Redo, null, "<control><shift>Z", "Redo last action", OnRedoActivated),
+				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", OnPasteActivated),
+				new ActionEntry("GroupAction", null, "Group", "<Control>g", "Group objects", OnGroupActivated),
+				new ActionEntry("UngroupAction", null, "Ungroup", "<Control>u", "Ungroup object", OnUngroupActivated),
+				new ActionEntry("EditGlobalsAction", null, "Globals", null, "Edit the network globals", OnEditGlobalsActivated),
+				new ActionEntry("EditFunctionsAction", null, "Functions", null, "Edit the network custom functions", OnEditFunctionsActivated),
 
-				new ActionEntry("AddStateAction", Studio.Stock.State, null, null, "Add state", new EventHandler(OnAddStateActivated)),
-				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", new EventHandler(OnAddLinkActivated)),
+				new ActionEntry("AddStateAction", Studio.Stock.State, null, null, "Add state", OnAddStateActivated),
+				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", OnAddLinkActivated),
 
 				new ActionEntry("SimulateMenuAction", null, "_Simulate", null, null, null),
-				new ActionEntry("StepAction", Gtk.Stock.MediaNext, "Step", "<Control>t", "Execute one simulation step", new EventHandler(OnStepActivated)),
-				new ActionEntry("SimulateAction", Gtk.Stock.MediaForward, "Period", "<Control>p", "(Re)Simulate period", new EventHandler(OnSimulateActivated)),
+				new ActionEntry("StepAction", Gtk.Stock.MediaNext, "Step", "<Control>t", "Execute one simulation step", OnStepActivated),
+				new ActionEntry("SimulateAction", Gtk.Stock.MediaForward, "Period", "<Control>p", "(Re)Simulate period", OnSimulateActivated),
 				
 				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
-				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "<Control>h", "Center view", new EventHandler(OnCenterViewActivated)),
+				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "<Control>h", "Center view", OnCenterViewActivated),
 				new ActionEntry("InsertMenuAction", null, "_Insert", null, null, null),
-				new ActionEntry("ZoomDefaultAction", Gtk.Stock.Zoom100, null, "<Control>1", null, new EventHandler(OnZoomDefaultActivated)),
-				new ActionEntry("ZoomInAction", Gtk.Stock.ZoomIn, null, "<Control>plus", null, new EventHandler(OnZoomInActivated)),
-				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, new EventHandler(OnZoomOutActivated)),
+				new ActionEntry("ZoomDefaultAction", Gtk.Stock.Zoom100, null, "<Control>1", null, OnZoomDefaultActivated),
+				new ActionEntry("ZoomInAction", Gtk.Stock.ZoomIn, null, "<Control>plus", null, OnZoomInActivated),
+				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, OnZoomOutActivated),
 
 				new ActionEntry("MonitorMenuAction", null, "Monitor", null, null, null),
 				new ActionEntry("ControlMenuAction", null, "Control", null, null, null),
-				new ActionEntry("PropertiesAction", null, "Properties", null, null, new EventHandler(OnPropertiesActivated)),
-				new ActionEntry("EditGroupAction", null, "Edit group", null, null, new EventHandler(OnEditGroupActivated))
+				new ActionEntry("PropertiesAction", null, "Properties", null, null, OnPropertiesActivated),
+				new ActionEntry("EditGroupAction", null, "Edit group", null, null, OnEditGroupActivated)
 			});
 			
 			d_normalGroup.Add(new ToggleActionEntry[] {
-				new ToggleActionEntry("ViewPropertyEditorAction", Gtk.Stock.Properties, "Property Editor", "<Control>F9", "Show/Hide property editor pane", new EventHandler(OnViewPropertyEditorActivated), true),
-				new ToggleActionEntry("ViewToolbarAction", null, "Toolbar", null, "Show/Hide toolbar", new EventHandler(OnViewToolbarActivated), true),
-				new ToggleActionEntry("ViewPathbarAction", null, "Pathbar", null, "Show/Hide pathbar", new EventHandler(OnViewPathbarActivated), true),
-				new ToggleActionEntry("ViewSimulateButtonsAction", null, "Simulate Buttons", null, "Show/Hide simulate buttons", new EventHandler(OnViewSimulateButtonsActivated), true),
-				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", new EventHandler(OnViewStatusbarActivated), true),
-				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", new EventHandler(OnToggleMonitorActivated), false),
-				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", new EventHandler(OnToggleControlActivated), false)		
+				new ToggleActionEntry("ViewPropertyEditorAction", Gtk.Stock.Properties, "Property Editor", "<Control>F9", "Show/Hide property editor pane", OnViewPropertyEditorActivated, true),
+				new ToggleActionEntry("ViewToolbarAction", null, "Toolbar", null, "Show/Hide toolbar", OnViewToolbarActivated, true),
+				new ToggleActionEntry("ViewPathbarAction", null, "Pathbar", null, "Show/Hide pathbar", OnViewPathbarActivated, true),
+				new ToggleActionEntry("ViewSimulateButtonsAction", null, "Simulate Buttons", null, "Show/Hide simulate buttons", OnViewSimulateButtonsActivated, true),
+				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", OnViewStatusbarActivated, true),
+				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", OnToggleMonitorActivated, false),
+				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false)		
 			});
 				
 			d_uimanager.InsertActionGroup(d_normalGroup, 0);
 			
 			d_selectionGroup = new ActionGroup("SelectionActions");
 			d_selectionGroup.Add(new ActionEntry[] {
-				new ActionEntry("CutAction", Gtk.Stock.Cut, null, "<Control>X", "Cut objects", new EventHandler(OnCutActivated)),
-				new ActionEntry("CopyAction", Gtk.Stock.Copy, null, "<Control>C", "Copy objects", new EventHandler(OnCopyActivated)),
-				new ActionEntry("DeleteAction", Gtk.Stock.Delete, null, null, "Delete object", new EventHandler(OnDeleteActivated))			
+				new ActionEntry("CutAction", Gtk.Stock.Cut, null, "<Control>X", "Cut objects", OnCutActivated),
+				new ActionEntry("CopyAction", Gtk.Stock.Copy, null, "<Control>C", "Copy objects", OnCopyActivated),
+				new ActionEntry("DeleteAction", Gtk.Stock.Delete, null, null, "Delete object", OnDeleteActivated)			
 			});
 			
 			d_uimanager.InsertActionGroup(d_selectionGroup, 0);
 			d_uimanager.AddUiFromResource("ui.xml");
-			
-			BuildTemplates(d_uimanager);
 			
 			AddAccelGroup(d_uimanager.AccelGroup);
 			
@@ -148,7 +172,7 @@ namespace Cpg.Studio
 			d_vboxContents = new VBox(false, 3);
 			vbox.PackStart(d_vboxContents, true, true, 0);
 			
-			d_grid = new Grid(d_network);
+			d_grid = new Grid(d_network, d_actions);
 			d_vpaned = new VPaned();
 			d_vpaned.Position = 300;
 			d_vpaned.Pack1(d_grid, true, true);
@@ -179,10 +203,7 @@ namespace Cpg.Studio
 			
 			d_grid.Activated += DoObjectActivated;
 			d_grid.Popup += DoPopup;
-			d_grid.ObjectRemoved += DoObjectRemoved;
-			d_grid.LeveledDown += DoLevelDown;
-			d_grid.LeveledUp += DoLevelUp;
-			d_grid.Modified += DoModified;
+
 			d_grid.SelectionChanged += DoSelectionChanged;
 			d_grid.FocusInEvent += DoFocusInEvent;
 			d_grid.FocusOutEvent += DoFocusOutEvent;
@@ -311,68 +332,6 @@ namespace Cpg.Studio
 			hbox.PackEnd(but, false, false, 0);
 		}
 		
-		private void TraverseTemplates(UIManager manager, ActionGroup group, uint mid, string path, string parent)
-		{
-			if (!Directory.Exists(path))
-				return;
-			
-			string pname = parent.Replace("/", "");
-			List<string> paths = new List<string>();
-			
-			paths.AddRange(Directory.GetFiles(path));
-			paths.AddRange(Directory.GetDirectories(path));
-			
-			paths.Sort();
-			
-			foreach (string file in paths)
-			{
-				string part = System.IO.Path.GetFileName(file);
-				string capitalized = Utils.Capitalize(part);
-				
-				if (Directory.Exists(file))
-				{
-					string name = pname + capitalized + "Menu";
-					
-					group.Add(new Action(name + "Action", capitalized.Replace("_", "__"), "", ""));
-					manager.AddUi(mid, "/menubar/InsertMenu/" + parent, name, name + "Action", UIManagerItemType.Menu, false);
-					manager.AddUi(mid, "/popup/InsertMenu/" + parent, name, name + "Action", UIManagerItemType.Menu, false);
-					
-					TraverseTemplates(manager, group, mid, file, parent + "/" + name);
-				}
-				else if (File.Exists(file) && System.IO.Path.GetExtension(file) == ".cpg")
-				{
-					string name = Regex.Replace(Regex.Replace(capitalized, ".cpg$", ""), "[.-:]+", "").Replace("_", "__");
-					Action action = new Action(pname + name + "Action", name, "", "");
-					
-					group.Add(action);
-					string importFile = file;
-
-					action.Activated += delegate (object source, EventArgs args)
-					{
-						Console.WriteLine("Import: " + importFile);
-						ImportFromFile(importFile); 
-					};
-					
-					manager.AddUi(mid, "/menubar/InsertMenu/" + parent, pname + name, pname + name + "Action", UIManagerItemType.Menuitem, false);
-					manager.AddUi(mid, "/popup/InsertMenu/" + parent, pname + name, pname + name + "Action", UIManagerItemType.Menuitem, false);
-				}
-			}
-		}
-		
-		private void BuildTemplates(UIManager manager)
-		{
-			Assembly asm = Assembly.GetExecutingAssembly();
-			string dname = System.IO.Path.GetDirectoryName(asm.Location);
-			string tdir = System.IO.Path.Combine(dname, "templates");
-			
-			ActionGroup group = new ActionGroup("TemplateActions");
-			uint mid = manager.NewMergeId();
-			
-			manager.InsertActionGroup(group, 0);
-			
-			TraverseTemplates(manager, group, mid, tdir, "InsertTemplates");
-		}
-		
 		delegate void PathHandler();
 		
 		private void PushPath(Wrappers.Wrapper obj, PathHandler handler)
@@ -414,11 +373,9 @@ namespace Cpg.Studio
 			d_grid.Clear();
 			
 			while (d_hboxPath.Children.Length > 0)
+			{
 				d_hboxPath.Remove(d_hboxPath.Children[0]);
-			
-			PushPath(null, delegate() { 
-				d_grid.LevelUp(d_grid.Root);
-			});
+			}
 			
 			if (d_messageArea != null)
 			{
@@ -432,7 +389,7 @@ namespace Cpg.Studio
 			
 			if (d_propertyEditors != null)
 			{
-				foreach (PropertyDialog dlg in d_propertyEditors.Values)
+				foreach (Dialogs.Property dlg in d_propertyEditors.Values)
 				{
 					dlg.Destroy();
 				}
@@ -442,6 +399,15 @@ namespace Cpg.Studio
 			d_grid.GrabFocus();
 			
 			d_simulation.Range = new Range(d_periodEntry.Text);
+		}
+		
+		private void UpdateModified()
+		{
+			if (d_modified == d_undoManager.IsUnmodified)
+			{
+				d_modified = !d_modified;
+				UpdateTitle();
+			}
 		}
 		
 		private void UpdateTitle()
@@ -567,7 +533,7 @@ namespace Cpg.Studio
 				return;
 			}
 			
-			PropertyDialog dlg = new PropertyDialog(this, obj);
+			Dialogs.Property dlg = new Dialogs.Property(this, obj);
 			PositionWindow(dlg);
 			
 			dlg.View.Error += delegate (object s, Exception exception)
@@ -642,16 +608,6 @@ namespace Cpg.Studio
 			(menu as Menu).Popup(null, null, null, (uint)button, (uint)time);
 		}
 		
-		private void DoLevelDown(object source, Wrappers.Wrapper obj)
-		{
-			PushPath(obj, delegate () { d_grid.LevelUp(obj); });
-		}
-		
-		private void DoLevelUp(object source, Wrappers.Wrapper obj)
-		{
-			PopPath();
-		}
-		
 		private void DoObjectRemoved(object source, Wrappers.Wrapper obj)
 		{
 			if (d_propertyEditors.ContainsKey(obj))
@@ -660,12 +616,19 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void DoModified(object source, EventArgs args)
+		private void ModifiedChanged()
 		{
 			if (!d_modified)
 			{
 				d_modified = true;
-				UpdateTitle();
+				
+				if (!d_undoManager.IsUnmodified)
+				{
+					UpdateTitle();
+				}
+			}
+			else if (!d_undoManager.IsUnmodified)
+			{
 			}
 		}
 		
@@ -697,79 +660,7 @@ namespace Cpg.Studio
 		{
 			UpdateSensitivity();
 		}
-		
-		private void ImportSuccess(Serialization.Main cpg, bool centerPosition)
-		{			
-			// Merge C network
-			d_network.Merge(cpg.Network.CNetwork);
 
-			// Add wrappers to grid, position them if necessary
-			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
-			
-			foreach (Serialization.Object obj in cpg.Project.Root.Children)
-			{
-				objects.Add(obj.Obj);
-			}
-			
-			double x, y;
-			Utils.MeanPosition(objects, out x, out y);
-			
-			double cx = (d_grid.Container.X + (d_grid.Allocation.Width / 2.0)) / (float)d_grid.GridSize;
-			double cy = (d_grid.Container.Y + (d_grid.Allocation.Height / 2.0)) / (float)d_grid.GridSize;
-			
-			foreach (Wrappers.Wrapper obj in objects)
-			{
-				if (!(obj is Wrappers.Link) && centerPosition)
-				{
-					obj.Allocation.X = (float)Math.Round(cx + (obj.Allocation.X - x) + 0.00001);
-					obj.Allocation.Y = (float)Math.Round(cy + (obj.Allocation.Y - y) + 0.00001);
-				}
-				
-				d_grid.AddObject(obj);
-			}
-			
-			// Compile the network right now
-			Cpg.CompileError err = new Cpg.CompileError();
-			
-			if (!d_network.Compile(null, err))
-			{
-				HandleCompileError(err);
-			}
-		}
-		
-		private void ImportFail(Exception e)
-		{
-			Message(Gtk.Stock.DialogError, "Error while importing network", e);
-		}
-
-		private void ImportFromXml(string xml)
-		{
-			try
-			{
-				Serialization.Loader loader = new Serialization.Loader();
-				ImportSuccess(loader.LoadXml(xml), true);
-			}
-			catch (Exception e)
-			{
-				ImportFail(e);
-			}
-		}
-
-		private void ImportFromFile(string file)
-		{
-			try
-			{
-				Serialization.Loader loader = new Serialization.Loader();
-				ImportSuccess(loader.Load(file), true);
-				
-				StatusMessage("Imported network from " + file + "...");
-			}
-			catch (Exception e)
-			{
-				ImportFail(e);
-			}			
-		}
-		
 		private bool AskUnsavedModified()
 		{
 			if (!d_modified)
@@ -915,7 +806,8 @@ namespace Cpg.Studio
 		
 		public void DoLoadXml(string filename)
 		{
-			if (!AskUnsavedModified())
+			// TODO
+			/*if (!AskUnsavedModified())
 			{
 				return;
 			}
@@ -938,9 +830,7 @@ namespace Cpg.Studio
 			d_filename = filename;
 			
 			try
-			{
-				ImportSuccess(cpg, false);
-				
+			{				
 				d_network.Integrator = cpg.Network.CNetwork.Integrator;
 			}
 			catch (Exception e)
@@ -962,7 +852,7 @@ namespace Cpg.Studio
 			d_grid.Container.X = cpg.Project.Root.X;
 			d_grid.Container.Y = cpg.Project.Root.Y;
 						
-			/* Select container */
+			// Select container
 			if (!String.IsNullOrEmpty(cpg.Project.Container))
 				d_grid.LevelDown(cpg.Project.Container);
 
@@ -1005,7 +895,7 @@ namespace Cpg.Studio
 			d_modified = false;
 			UpdateTitle();
 			
-			StatusMessage("Loaded network from " + filename + "...");
+			StatusMessage("Loaded network from " + filename + "...");*/
 		}
 		
 		private void OnOpenActivated(object sender, EventArgs args)
@@ -1077,7 +967,7 @@ namespace Cpg.Studio
 			
 			if (objects == null)
 			{
-				saver = new Serialization.Saver(this, d_grid.Root);
+				saver = new Serialization.Saver(this, d_grid.ActiveGroup);
 			}
 			else
 			{
@@ -1226,7 +1116,7 @@ namespace Cpg.Studio
 			DoSaveAs();
 		}
 		
-		private void OnImportActivated(object sender, EventArgs args)
+		/*private void OnImportActivated(object sender, EventArgs args)
 		{
 			FileChooserDialog dlg = new FileChooserDialog("Import network",
 			                                              this,
@@ -1255,9 +1145,9 @@ namespace Cpg.Studio
 			};
 			
 			dlg.Show();
-		}
+		}*/
 		
-		private string ExportToXml(Wrappers.Wrapper[] objects)
+		/*private string ExportToXml(Wrappers.Wrapper[] objects)
 		{
 			Serialization.Saver saver;
 			
@@ -1291,9 +1181,9 @@ namespace Cpg.Studio
 			}
 			
 			return doc;
-		}
+		}*/
 		
-		private void OnExportActivated(object sender, EventArgs args)
+		/*private void OnExportActivated(object sender, EventArgs args)
 		{
 			FileChooserDialog dlg = new FileChooserDialog("Save As",
 			                                              this,
@@ -1338,7 +1228,7 @@ namespace Cpg.Studio
 			};
 			
 			dlg.Show();
-		}
+		}*/
 		
 		private void OnQuitActivated(object sender, EventArgs args)
 		{
@@ -1347,41 +1237,42 @@ namespace Cpg.Studio
 		
 		private void OnPasteActivated(object sender, EventArgs args)
 		{
-			Clipboard clip = Clipboard.Get(Gdk.Selection.Clipboard);
-			
-			clip.RequestText(delegate (Clipboard c, string text) {
-				ImportFromXml(text);
-			});
+			d_actions.Paste();
 		}
 		
 		private void OnGroupActivated(object sender, EventArgs args)
 		{
-			d_grid.Group();
+			d_actions.Group();
 		}
 		
 		private void OnUngroupActivated(object sender, EventArgs args)
 		{
-			Wrappers.Wrapper[] objects = d_grid.Selection;
-
-			foreach (Wrappers.Wrapper obj in objects)
-			{
-				if (obj is Wrappers.Group)
-				{
-					d_grid.Ungroup(obj as Wrappers.Group);
-				}
-			}
+			d_actions.Ungroup();
 		}
 		
 		private void OnAddStateActivated(object sender, EventArgs args)
 		{
-			d_grid.Add(new Wrappers.State());
+			int[] center = d_grid.Center;
+			d_actions.AddState(d_grid.ActiveGroup, center[0], center[1]);
 		}
 		
 		private void OnAddLinkActivated(object sender, EventArgs args)
 		{
-			d_grid.Attach();
+			d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection);
 		}
 		
+		private void OnUndoActivated(object sender, EventArgs args)
+		{
+			d_undoManager.Undo();
+			d_grid.QueueDraw();
+		}
+		
+		private void OnRedoActivated(object sender, EventArgs args)
+		{
+			d_undoManager.Redo();
+			d_grid.QueueDraw();
+		}
+
 		private void OnEditGlobalsActivated(object sender, EventArgs args)
 		{
 			DoObjectActivated(sender, d_network);
@@ -1397,9 +1288,11 @@ namespace Cpg.Studio
 			Wrappers.Wrapper[] selection = d_grid.Selection;
 			
 			if (selection.Length != 1 || !(selection[0] is Wrappers.Group))
+			{
 				return;
+			}
 			
-			d_grid.LevelDown(selection[0]);
+			d_grid.ActiveGroup = (Wrappers.Group)selection[0];
 		}
 		
 		private void OnPropertiesActivated(object sender, EventArgs args)
@@ -1407,7 +1300,9 @@ namespace Cpg.Studio
 			Wrappers.Wrapper[] selection = d_grid.Selection;
 			
 			if (selection.Length != 0)
+			{
 				DoObjectActivated(sender, selection[0]);
+			}
 		}
 							
 		private void OnViewStatusbarActivated(object sender, EventArgs args)
@@ -1489,7 +1384,7 @@ namespace Cpg.Studio
 			if (d_monitor != null)
 				return;
 			
-			d_monitor = new Monitor(d_grid, d_simulation);
+			d_monitor = new Monitor(d_network, d_simulation);
 			d_monitor.TransientFor = this;
 			
 			d_monitor.Realize();
@@ -1524,45 +1419,19 @@ namespace Cpg.Studio
 		{
 		}
 		
-		private bool DoCopy()
-		{
-			Wrappers.Wrapper[] objects = d_grid.Selection;
-			
-			if (objects.Length == 0)
-				return false;
-			
-			string doc = ExportToXml(objects);
-			
-			if (doc == null)
-				return false;
-			
-			Clipboard clip = Clipboard.Get(Gdk.Selection.Clipboard);
-			clip.Text = doc;
-			
-			return true;
-		}
-		
-		private void DoDelete()
-		{
-			d_grid.DeleteSelected();
-		}
-		
 		private void OnCutActivated(object sender, EventArgs args)
 		{
-			if (!DoCopy())
-				return;
-			
-			DoDelete();
+			d_actions.Cut();
 		}
 		
 		private void OnCopyActivated(object sender, EventArgs args)
 		{
-			DoCopy();
+			d_actions.Copy();
 		}
 		
 		private void OnDeleteActivated(object sender, EventArgs args)
 		{
-			DoDelete();
+			d_actions.Delete(d_grid.ActiveGroup, d_grid.Selection);
 		}
 		
 		private void DoError(object sender, string error, string message)
@@ -1657,7 +1526,9 @@ namespace Cpg.Studio
 				expression = "";
 			}
 		
-			if (d_grid.Select(error.Object) && d_propertyView != null)
+			d_grid.Select(error.Object);
+			
+			if (d_propertyView != null)
 			{
 				if (error.Property != null)
 				{
@@ -1695,7 +1566,7 @@ namespace Cpg.Studio
 		{
 			if (d_functionsDialog == null)
 			{
-				d_functionsDialog = new FunctionsDialog(this, d_network);
+				d_functionsDialog = new Dialogs.Functions(this, d_network);
 
 				d_functionsDialog.Response += delegate(object o, ResponseArgs a1) {
 					d_functionsDialog.Destroy();

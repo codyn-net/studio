@@ -3,9 +3,9 @@ using Gtk;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Dialogs
 {
-	public class InterpolateDialog : Dialog
+	public class Interpolate : Dialog
 	{
 		private ComboBox d_comboBox;
 		private Dictionary<string, Interpolators.IInterpolator> d_interpolators;
@@ -16,7 +16,7 @@ namespace Cpg.Studio
 		private Interpolators.Interpolation d_interpolation;
 		private DrawingArea d_preview;
 
-		public InterpolateDialog(Gtk.Window parent, Cpg.FunctionPolynomial polynomial)
+		public Interpolate(Gtk.Window parent, Cpg.FunctionPolynomial polynomial)
 		{
 			HasSeparator = false;
 			BorderWidth = 10;

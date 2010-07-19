@@ -464,7 +464,7 @@ namespace Cpg.Studio
 		private void DoInterpolate(object sender, EventArgs args)
 		{
 			PolynomialNode function = (PolynomialNode)d_treeview.NodeSelection.SelectedNodes[0];
-			InterpolateDialog dlg = new InterpolateDialog(Toplevel as Gtk.Window, function.Function);
+			Dialogs.Interpolate dlg = new Dialogs.Interpolate(Toplevel as Gtk.Window, function.Function);
 			
 			dlg.Show();
 

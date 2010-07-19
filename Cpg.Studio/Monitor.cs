@@ -83,7 +83,7 @@ namespace Cpg.Studio
 		}
 		
 		private Simulation d_simulation;
-		private Grid d_grid;
+		private Wrappers.Network d_network;
 		
 		private bool d_linkRulers;
 		private bool d_linkAxis;
@@ -103,7 +103,7 @@ namespace Cpg.Studio
 		private Gtk.Label d_timeLabel;
 		private Gtk.CheckButton d_showRulers;
 		
-		public Monitor(Grid grid, Simulation simulation) : base("Monitor")
+		public Monitor(Wrappers.Network network, Simulation simulation) : base("Monitor")
 		{
 			d_simulation = simulation;
 			
@@ -115,47 +115,11 @@ namespace Cpg.Studio
 			
 			d_map = new Dictionary<Wrappers.Wrapper, List<State>>();
 			
-			d_grid = grid;
-			d_grid.Cleared += HandleCleared;
-			d_grid.LeveledDown += HandleLeveledDown;
-			d_grid.LeveledUp += HandleLeveledUp;
-			
+			d_network = network;
+
 			Build();
 			
 			SetDefaultSize(500, 400);
-		}
-		
-		private void RemoveGone()
-		{
-			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all = new List<KeyValuePair<Wrappers.Wrapper,Monitor.State>>(Each());
-			
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> item in all)
-			{
-				if (!d_grid.Container.Contains(item.Key))
-				{
-					RemoveHookReal(item.Key, item.Value);
-				}
-			}
-		}
-		
-		private void HandleLeveledUp(object source, Wrappers.Wrapper obj)
-		{
-			RemoveGone();
-		}
-		
-		private void HandleLeveledDown(object source, Wrappers.Wrapper obj)
-		{
-			RemoveGone();
-		}
-		
-		private void HandleCleared(object source, EventArgs args)
-		{
-			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all = new List<KeyValuePair<Wrappers.Wrapper,Monitor.State>>(Each());
-			
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> item in all)
-			{
-				RemoveHookReal(item.Key, item.Value);
-			}			
 		}
 
 		private void Build()
@@ -221,7 +185,7 @@ namespace Cpg.Studio
 		
 		private void CreateObjectView()
 		{
-			d_objectView = new ObjectView(d_grid);
+			d_objectView = new ObjectView(d_network);
 			
 			ScrolledWindow sw = new ScrolledWindow();
 			sw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
@@ -233,16 +197,10 @@ namespace Cpg.Studio
 			d_hpaned.Pack2(sw, false, false);
 			
 			d_objectView.Toggled += HandleToggled;
-			d_objectView.PropertyAdded += HandlePropertyAdded;
 			d_objectViewScrolledWindow = sw;
 		}
 
-		void HandlePropertyAdded(ObjectView source, Wrappers.Wrapper obj, Cpg.Property property)
-		{
-			source.SetActive(obj, property, HasHook(obj, property));
-		}
-
-		void HandleToggled(ObjectView source, Wrappers.Wrapper obj, Cpg.Property property)
+		private void HandleToggled(ObjectView source, Wrappers.Wrapper obj, Cpg.Property property)
 		{
 			if (source.GetActive(obj, property))
 			{
