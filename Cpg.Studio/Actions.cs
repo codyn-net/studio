@@ -17,7 +17,7 @@ namespace Cpg.Studio
 			Wrappers.State state = new Wrappers.State();
 			state.Allocation = new Allocation(x, y, 1, 1);
 			
-			d_undoManager.Do(new Undo.AddObject(parent, state));
+			Do(new Undo.AddObject(parent, state));
 		}
 		
 		private IEnumerable<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>> GetLinkPairs(Wrappers.Wrapper[] selection)
@@ -48,7 +48,7 @@ namespace Cpg.Studio
 				actions.Add(new Undo.AddObject(parent, link));
 			}
 
-			d_undoManager.Do(new Undo.Group(actions));
+			Do(new Undo.Group(actions));
 		}
 		
 		private bool OnlyLinks(List<Wrappers.Wrapper> wrappers)
@@ -117,7 +117,7 @@ namespace Cpg.Studio
 				actions.Add(new Undo.RemoveObject(child));
 			}
 			
-			d_undoManager.Do(new Undo.Group(actions));
+			Do(new Undo.Group(actions));
 		}
 		
 		public void Group()
@@ -236,7 +236,7 @@ namespace Cpg.Studio
 				}
 			}
 			
-			d_undoManager.Do(new Undo.Group(actions));
+			Do(new Undo.Group(actions));
 		}
 		
 		public void Move(List<Wrappers.Wrapper> all, int dx, int dy)
@@ -256,7 +256,12 @@ namespace Cpg.Studio
 				actions.Add(new Undo.MoveObject(obj, dx, dy));
 			}
 			
-			d_undoManager.Do(new Undo.Group(actions));
+			Do(new Undo.Group(actions));
+		}
+		
+		public void Do(Undo.IAction action)
+		{
+			d_undoManager.Do(action);
 		}
 	}
 }
