@@ -208,7 +208,11 @@ namespace Cpg.Studio
 			if (child is Wrappers.Link)
 			{
 				Wrappers.Link link = (Wrappers.Link)child;
-				CheckLinkOffsets(link.From, link.To);
+				
+				if (link.From != null && link.To != null)
+				{
+					CheckLinkOffsets(link.From, link.To);
+				}
 			}
 
 			QueueDraw();
@@ -221,7 +225,11 @@ namespace Cpg.Studio
 			if (child is Wrappers.Link)
 			{
 				Wrappers.Link link = (Wrappers.Link)child;
-				CheckLinkOffsets(link.From, link.To);
+				
+				if (link.From != null && link.To != null)
+				{
+					CheckLinkOffsets(link.From, link.To);
+				}
 			}
 			
 			QueueDraw();
