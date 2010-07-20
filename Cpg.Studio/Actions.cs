@@ -25,12 +25,15 @@ namespace Cpg.Studio
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 
 			sel.RemoveAll(item => item is Wrappers.Link);
-
-			Wrappers.Wrapper last = selection[sel.Count - 1];
 			
-			for (int i = 0; i < sel.Count - 1; ++i)
+			if (sel.Count > 0)
 			{
-				yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(sel[i], last);
+				Wrappers.Wrapper last = sel[sel.Count - 1];
+			
+				for (int i = 0; i < sel.Count - 1; ++i)
+				{
+					yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(sel[i], last);
+				}
 			}
 		}
 		
