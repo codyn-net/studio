@@ -100,8 +100,8 @@ namespace Cpg.Studio
 				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", OnSaveActivated),
 				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", OnSaveAsActivated),
 
-				//new ActionEntry("ImportAction", null, "Import", null, "Import CPG network objects", new EventHandler(OnImportActivated)),
-				//new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", new EventHandler(OnExportActivated)),
+				new ActionEntry("ImportAction", null, "Import", null, "Import CPG network objects", null), //new EventHandler(OnImportActivated)),
+				new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", null), //new EventHandler(OnExportActivated)),
 
 				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, "<Control>Q", "Quit", OnQuitActivated),
 
@@ -1276,15 +1276,37 @@ namespace Cpg.Studio
 			d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection);
 		}
 		
+		private void SelectFromAction(Undo.IAction action)
+		{
+			if (action is Undo.Property)
+			{
+				Undo.Property property = (Undo.Property)action;
+				d_grid.Select(property.Wrapped);
+			}
+			else if (action is Undo.Object)
+			{
+				Undo.Object obj = (Undo.Object)action;
+				
+				if (obj.Wrapped.Parent != null)
+				{
+					d_grid.Select(obj.Wrapped);
+				}
+			}
+		}
+		
 		private void OnUndoActivated(object sender, EventArgs args)
 		{
-			d_undoManager.Undo();
+			SelectFromAction(d_undoManager.PeekUndo());
+			SelectFromAction(d_undoManager.Undo());
+
 			d_grid.QueueDraw();
 		}
 		
 		private void OnRedoActivated(object sender, EventArgs args)
 		{
-			d_undoManager.Redo();
+			SelectFromAction(d_undoManager.PeekRedo());
+			SelectFromAction(d_undoManager.Redo());
+			
 			d_grid.QueueDraw();
 		}
 
