@@ -38,6 +38,15 @@ namespace Cpg.Studio.Undo
 		
 		protected void DoRemove()
 		{
+			Wrappers.Link link = d_wrapped as Wrappers.Link;
+			
+			if (link != null && link.To != null)
+			{
+				// Do this so that link offsets are recalculated correctly. This is a bit of a hack
+				// really, and might be solved differently in the distant future, the year 2000
+				link.To.Unlink(link);
+			}
+
 			d_parent.Remove(d_wrapped);
 			d_wrapped.Removed();
 		}
