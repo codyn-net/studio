@@ -494,8 +494,14 @@ namespace Cpg.Studio
 			
 			GetPosition(out root_x, out root_y);
 			
-			int sw = Screen.Width;
-			int sh = Screen.Height;
+			int monitor = Screen.GetMonitorAtWindow(GdkWindow);
+			Gdk.Rectangle geom = Screen.GetMonitorGeometry(monitor);
+			
+			int sw = geom.Width;
+			int sh = geom.Height;
+			
+			root_x -= geom.X;
+			root_y -= geom.Y;
 			
 			int mw, mh;
 			GetSize(out mw, out mh);
@@ -507,7 +513,6 @@ namespace Cpg.Studio
 			mh += 10;
 			ww += 10;
 			wh += 10;
-			
 			
 			int maxx = Utils.Max(new int[] {root_x, sw - (root_x + mw)});
 			int maxy = Utils.Max(new int[] {root_y, sh - (root_y + mh)});
@@ -530,8 +535,8 @@ namespace Cpg.Studio
 				ny = sh - wh;
 			}
 			
-			w.Move(Utils.Max(new int [] {Utils.Min(new int[] {nx, sw - ww}), 0}),
-			       Utils.Max(new int [] {Utils.Min(new int[] {ny, sh - wh}), 0}));
+			w.Move(Utils.Max(new int [] {Utils.Min(new int[] {nx, sw - ww}), 0}) + geom.X,
+			       Utils.Max(new int [] {Utils.Min(new int[] {ny, sh - wh}), 0}) + geom.Y);
 		}
 		
 		private void DoObjectActivated(object source, Wrappers.Wrapper obj)
