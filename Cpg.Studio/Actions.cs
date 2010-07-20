@@ -20,28 +20,37 @@ namespace Cpg.Studio
 			d_undoManager.Do(new Undo.AddObject(parent, state));
 		}
 		
-		public void AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		private IEnumerable<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>> GetLinkPairs(Wrappers.Wrapper[] selection)
 		{
-			// Add links between each first selected N-1 objects and selected object N
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
-			
+
 			sel.RemoveAll(item => item is Wrappers.Link);
-			
-			if (sel.Count < 2)
-			{
-				return;
-			}
-			
-			Wrappers.Wrapper last = sel[sel.Count - 1];
-			List<Undo.IAction> actions = new List<Undo.IAction>();
+
+			Wrappers.Wrapper last = selection[sel.Count - 1];
 			
 			for (int i = 0; i < sel.Count - 1; ++i)
 			{
-				Wrappers.Link link = new Wrappers.Link(new Cpg.Link("link", sel[i], last));
+				yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(sel[i], last);
+			}
+		}
+		
+		public void AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		{
+			// Add links between each first selected N-1 objects and selected object N
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper> pair in GetLinkPairs(selection))
+			{
+				Wrappers.Link link = new Wrappers.Link(new Cpg.Link("link", pair.Key, pair.Value));
 				actions.Add(new Undo.AddObject(parent, link));
 			}
 
-			d_undoManager.Do(actions[0]);
+			d_undoManager.Do(new Undo.Group(actions));
+		}
+		
+		private bool OnlyLinks(List<Wrappers.Wrapper> wrappers)
+		{
+			return !wrappers.Exists(item => !(item is Wrappers.Link));
 		}
 		
 		private List<Wrappers.Wrapper> NormalizeSelection(Wrappers.Group parent, Wrappers.Wrapper[] selection)
@@ -66,7 +75,13 @@ namespace Cpg.Studio
 				}
 			}
 			else
-			{			
+			{
+				if (OnlyLinks(sel))
+				{
+					// Only links, that is fine and special!
+					return sel;
+				}
+
 				sel.RemoveAll(delegate (Wrappers.Wrapper wrapper) {
 					Wrappers.Link link = wrapper as Wrappers.Link;
 				
@@ -134,11 +149,14 @@ namespace Cpg.Studio
 			// Reconnect links
 			foreach (Wrappers.Link link in Utils.FilterLink(sel))
 			{
-				Wrappers.Wrapper from = map[link.From];
-				Wrappers.Wrapper to = map[link.To];
+				if (map.ContainsKey(link.From) && map.ContainsKey(link.To))
+				{
+					Wrappers.Wrapper from = map[link.From];
+					Wrappers.Wrapper to = map[link.To];
 				
-				Wrappers.Link target = (Wrappers.Link)map[link.WrappedObject];
-				target.Attach(from, to);
+					Wrappers.Link target = (Wrappers.Link)map[link.WrappedObject];
+					target.Attach(from, to);
+				}
 			}
 			
 			return copied.ToArray();
@@ -164,32 +182,55 @@ namespace Cpg.Studio
 			Delete(parent, selection);
 		}
 		
-		public void Paste(Wrappers.Group parent, int dx, int dy)
+		public void Paste(Wrappers.Group parent, Wrappers.Wrapper[] selection, int dx, int dy)
 		{
 			if (Clipboard.Internal.Empty)
 			{
 				return;
 			}
 			
-			// Paste the new objects by making a copy (yes, again)
-			Wrappers.Wrapper[] copied = MakeCopy(Clipboard.Internal.Objects);
-			
-			double x;
-			double y;
-
-			Utils.MeanPosition(copied, out x, out y);
-			
-			dx -= (int)x;
-			dy -= (int)y;
-			
+			// See if this is a special link only paste
+			List<Wrappers.Wrapper> clip = new List<Wrappers.Wrapper>(Clipboard.Internal.Objects);
 			List<Undo.IAction> actions = new List<Undo.IAction>();
-			
-			foreach (Wrappers.Wrapper wrapper in copied)
+
+			if (OnlyLinks(clip))
 			{
-				wrapper.Allocation.X += dx;
-				wrapper.Allocation.Y += dy;
+				// Add links between each first selected N-1 objects and selected object N
+				List<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>> pairs = new List<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>>(GetLinkPairs(selection));
+			
+				foreach (Wrappers.Wrapper obj in clip)
+				{
+					Wrappers.Link link = (Wrappers.Link)obj;
+					
+					foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper> pair in pairs)
+					{
+						Wrappers.Link copy = (Wrappers.Link)link.Copy();
+						copy.Attach(pair.Key, pair.Value);
+
+						actions.Add(new Undo.AddObject(parent, copy));
+					}
+				}
+			}
+			else
+			{
+				// Paste the new objects by making a copy (yes, again)
+				Wrappers.Wrapper[] copied = MakeCopy(Clipboard.Internal.Objects);
+			
+				double x;
+				double y;
+	
+				Utils.MeanPosition(copied, out x, out y);
 				
-				actions.Add(new Undo.AddObject(parent, wrapper));
+				dx -= (int)x;
+				dy -= (int)y;
+				
+				foreach (Wrappers.Wrapper wrapper in copied)
+				{
+					wrapper.Allocation.X += dx;
+					wrapper.Allocation.Y += dy;
+					
+					actions.Add(new Undo.AddObject(parent, wrapper));
+				}
 			}
 			
 			d_undoManager.Do(new Undo.Group(actions));

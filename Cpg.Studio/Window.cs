@@ -1247,7 +1247,7 @@ namespace Cpg.Studio
 		private void OnPasteActivated(object sender, EventArgs args)
 		{
 			int[] center = d_grid.Center;
-			d_actions.Paste(d_grid.ActiveGroup, center[0], center[1]);
+			d_actions.Paste(d_grid.ActiveGroup, d_grid.Selection, center[0], center[1]);
 		}
 		
 		private void OnGroupActivated(object sender, EventArgs args)
