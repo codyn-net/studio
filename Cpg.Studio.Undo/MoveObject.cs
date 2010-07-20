@@ -25,7 +25,9 @@ namespace Cpg.Studio.Undo
 		
 		public override bool CanMerge(IAction other)
 		{
-			return (other is MoveObject);
+			MoveObject o = other as MoveObject;
+			
+			return o != null && Wrapped == o.Wrapped;
 		}
 		
 		public override void Merge(IAction other)
