@@ -75,11 +75,21 @@ namespace Cpg.Studio.Wrappers
 			
 		public static implicit operator Cpg.Object(Wrapper obj)
 		{
+			if (obj == null)
+			{
+				return null;
+			}
+
 			return obj.WrappedObject;
 		}
 		
 		public static implicit operator Wrapper(Cpg.Object obj)
 		{
+			if (obj == null)
+			{
+				return null;
+			}
+
 			return Wrap(obj);
 		}
 		
