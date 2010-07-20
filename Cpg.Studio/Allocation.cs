@@ -21,6 +21,11 @@ namespace Cpg.Studio
 		{
 		}
 		
+		public Allocation Copy()
+		{
+			return new Allocation(d_rectangle.X, d_rectangle.Y, d_rectangle.Width, d_rectangle.Height);
+		}
+		
 		[XmlAttribute("x")]
 		public float X
 		{

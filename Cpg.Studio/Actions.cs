@@ -40,40 +40,55 @@ namespace Cpg.Studio
 				Wrappers.Link link = new Wrappers.Link(new Cpg.Link("link", sel[i], last));
 				actions.Add(new Undo.AddObject(parent, link));
 			}
+
+			d_undoManager.Do(actions[0]);
+		}
+		
+		private List<Wrappers.Wrapper> NormalizeSelection(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		{
+			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 			
-			if (actions.Count > 1)
+			if (parent != null)
 			{
-				d_undoManager.Do(new Undo.Group(actions));
+				foreach (Wrappers.Wrapper child in parent.Children)
+				{
+					if (sel.Contains(child) || !(child is Wrappers.Link))
+					{
+						continue;
+					}
+					
+					Wrappers.Link link = (Wrappers.Link)child;
+				
+					if (sel.Contains(link.To) || sel.Contains(link.From))
+					{
+						sel.Add(link);
+					}
+				}
 			}
 			else
-			{
-				d_undoManager.Do(actions[0]);
+			{			
+				sel.RemoveAll(delegate (Wrappers.Wrapper wrapper) {
+					Wrappers.Link link = wrapper as Wrappers.Link;
+				
+					return link != null && (sel.Contains(link.To) && sel.Contains(link.From));
+				});
 			}
+			
+			return sel;
+		}
+		
+		private List<Wrappers.Wrapper> NormalizeSelection(Wrappers.Wrapper[] selection)
+		{
+			return NormalizeSelection(null, selection);
 		}
 		
 		public void Delete(Wrappers.Group parent, Wrappers.Wrapper[] selection)
 		{
-			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
+			List<Wrappers.Wrapper> sel = NormalizeSelection(parent, selection);
 			
 			if (sel.Count == 0)
 			{
 				return;
-			}
-			
-			// Get all the links that are connected to selected items
-			foreach (Wrappers.Wrapper child in parent.Children)
-			{
-				if (sel.Contains(child) || !(child is Wrappers.Link))
-				{
-					continue;
-				}
-				
-				Wrappers.Link link = (Wrappers.Link)child;
-				
-				if (sel.Contains(link.To) || sel.Contains(link.From))
-				{
-					sel.Add(link);
-				}
 			}
 			
 			// Remove them all!
@@ -84,14 +99,7 @@ namespace Cpg.Studio
 				actions.Add(new Undo.RemoveObject(child));
 			}
 			
-			if (actions.Count == 1)
-			{
-				d_undoManager.Do(actions[0]);
-			}
-			else
-			{
-				d_undoManager.Do(new Undo.Group(actions));
-			}
+			d_undoManager.Do(new Undo.Group(actions));
 		}
 		
 		public void Group()
@@ -102,16 +110,89 @@ namespace Cpg.Studio
 		{
 		}
 		
-		public void Copy()
+		private Wrappers.Wrapper[] MakeCopy(Wrappers.Wrapper[] selection)
 		{
+			List<Wrappers.Wrapper> sel = NormalizeSelection(selection);
+			
+			if (sel.Count == 0)
+			{
+				return new Wrappers.Wrapper[] {};
+			}
+			
+			Dictionary<Cpg.Object, Wrappers.Wrapper> map = new Dictionary<Cpg.Object, Wrappers.Wrapper>();
+			List<Wrappers.Wrapper> copied = new List<Wrappers.Wrapper>();
+			
+			// Create copies and store in a map the mapping from the orig to the copy
+			foreach (Wrappers.Wrapper wrapper in sel)
+			{
+				Wrappers.Wrapper copy = wrapper.Copy();
+				
+				map[wrapper] = copy;
+				copied.Add(copy);
+			}
+			
+			// Reconnect links
+			foreach (Wrappers.Link link in Utils.FilterLink(sel))
+			{
+				Wrappers.Wrapper from = map[link.From];
+				Wrappers.Wrapper to = map[link.To];
+				
+				Wrappers.Link target = (Wrappers.Link)map[link.WrappedObject];
+				target.Attach(from, to);
+			}
+			
+			return copied.ToArray();
 		}
 		
-		public void Cut()
+		public void Copy(Wrappers.Wrapper[] selection)
 		{
+			Wrappers.Wrapper[] sel = MakeCopy(selection);
+			
+			if (sel.Length == 0)
+			{
+				return;
+			}
+			
+			Clipboard.Internal.Objects = sel;
+			
+			// TODO: serialize to XML too
 		}
 		
-		public void Paste()
+		public void Cut(Wrappers.Group parent, Wrappers.Wrapper[] selection)
 		{
+			Copy(selection);
+			Delete(parent, selection);
+		}
+		
+		public void Paste(Wrappers.Group parent, int dx, int dy)
+		{
+			if (Clipboard.Internal.Empty)
+			{
+				return;
+			}
+			
+			// Paste the new objects by making a copy (yes, again)
+			Wrappers.Wrapper[] copied = MakeCopy(Clipboard.Internal.Objects);
+			
+			double x;
+			double y;
+
+			Utils.MeanPosition(copied, out x, out y);
+			
+			dx -= (int)x;
+			dy -= (int)y;
+			
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			foreach (Wrappers.Wrapper wrapper in copied)
+			{
+				wrapper.Allocation.X += dx;
+				wrapper.Allocation.Y += dy;
+				
+				actions.Add(new Undo.AddObject(parent, wrapper));
+			}
+			
+			d_undoManager.Do(new Undo.Group(actions));
 		}
 		
 		public void Move(List<Wrappers.Wrapper> all, int dx, int dy)
@@ -131,14 +212,7 @@ namespace Cpg.Studio
 				actions.Add(new Undo.MoveObject(obj, dx, dy));
 			}
 			
-			if (actions.Count == 1)
-			{
-				d_undoManager.Do(actions[0]);
-			}
-			else
-			{
-				d_undoManager.Do(new Undo.Group(actions));
-			}
+			d_undoManager.Do(new Undo.Group(actions));
 		}
 	}
 }

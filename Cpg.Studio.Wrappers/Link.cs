@@ -75,29 +75,74 @@ namespace Cpg.Studio.Wrappers
 		
 		public Link(Cpg.Link obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
 		{
-			if (from == null && obj != null)
+			if (obj != null && from != null)
 			{
-				From = Wrappers.Wrapper.Wrap(obj.From);
+				obj.From = from;
 			}
-			else
-			{
-				From = from;
-			}
+
+			UpdateFrom();
 			
-			if (to == null && obj != null)
+			
+			if (obj != null && to != null)
 			{
-				To = Wrappers.Wrapper.Wrap(obj.To);
+				obj.To = to;
 			}
-			else
-			{
-				To = to;
-			}
+
+			UpdateTo();
 			
 			d_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			d_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
 			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
 			
 			d_arrowSize = 0.15f;
+			
+			obj.AddNotification("to", OnToChanged);
+			obj.AddNotification("from", OnFromChanged);
+		}
+		
+		private void UpdateFrom()
+		{
+			if (d_from != null)
+			{
+				d_from.Moved -= OnFromMoved;
+			}
+
+			d_from = WrappedObject.From;
+			
+			if (d_from != null)
+			{
+				d_from.Moved += OnFromMoved;
+			}
+		}
+		
+		private void UpdateTo()
+		{
+			if (d_to != null)
+			{
+				d_to.Unlink(this);
+			}
+			
+			d_to = WrappedObject.To;
+			
+			if (d_to != null)
+			{
+				d_to.Link(this);
+			}
+		}
+		
+		private void OnToChanged(object source, GLib.NotifyArgs args)
+		{
+			UpdateTo();
+		}
+		
+		private void OnFromChanged(object source, GLib.NotifyArgs args)
+		{
+			UpdateFrom();
+		}
+		
+		private void OnFromMoved(object source, EventArgs args)
+		{
+			DoRequestRedraw();
 		}
 		
 		public Link(Cpg.Link obj) : this(obj, null, null)
@@ -147,15 +192,7 @@ namespace Cpg.Studio.Wrappers
 			}
 			set
 			{
-				d_from = value;
-				
-				if (d_from != null)
-				{
-					d_from.Moved += delegate(object sender, EventArgs e)
-					{
-						DoRequestRedraw();
-					};
-				}
+				WrappedObject.From = value;
 			}
 		}
 		
@@ -167,17 +204,7 @@ namespace Cpg.Studio.Wrappers
 			}
 			set
 			{
-				if (d_to != null)
-				{
-					d_to.Unlink(this);
-				}
-					
-				d_to = value;
-				
-				if (d_to != null)
-				{
-					d_to.Link(this);
-				}
+				WrappedObject.To = value;
 			}
 		}
 		
@@ -252,12 +279,19 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
+		public void Reattach()
+		{
+			Attach(d_from, d_to);			
+		}
+		
+		public void Attach(Wrappers.Wrapper from, Wrappers.Wrapper to)
+		{
+			WrappedObject.Attach(from, to);
+		}
+		
 		public override void Removed()
 		{
-			if (d_to != null)
-			{
-				d_to.Unlink(this);
-			}
+			Attach(null, null);
 
 			base.Removed();
 		}
@@ -280,7 +314,9 @@ namespace Cpg.Studio.Wrappers
 				other.Y = EvaluateBezier(p1.Y, p2.Y, p3.Y, p4.Y, (float)i / 5);
 				
 				if (rect.Intersects(other))
+				{
 					return true;
+				}
 			}
 			
 			return false;
@@ -390,7 +426,9 @@ namespace Cpg.Studio.Wrappers
 		private PointF[] ControlPoints()
 		{
 			if (d_from == null || d_to == null)
+			{
 				return null;
+			}
 
 			Allocation a1 = d_from.Allocation;
 			Allocation a2 = d_to.Allocation;
@@ -421,7 +459,9 @@ namespace Cpg.Studio.Wrappers
 			PointF[] points = ControlPoints();
 			
 			if (points == null)
+			{
 				return;
+			}
 			
 			graphics.Save();			
 
@@ -492,7 +532,9 @@ namespace Cpg.Studio.Wrappers
 			PointF[] points = ControlPoints();
 			
 			if (points == null)
+			{
 				return new Allocation(0, 0, 0, 0);
+			}
 			
 			List<float> xx = new List<float>();
 			List<float> yy = new List<float>();

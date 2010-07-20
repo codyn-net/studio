@@ -208,6 +208,36 @@ namespace Cpg.Studio
 			d_grid.FocusInEvent += DoFocusInEvent;
 			d_grid.FocusOutEvent += DoFocusOutEvent;
 			d_grid.Error += DoError;
+			d_grid.ActiveGroupChanged += DoActiveGroupChanged;
+			
+			BuildButtonPath();
+		}
+
+		private void DoActiveGroupChanged(object source, Wrappers.Wrapper obj)
+		{
+			BuildButtonPath();
+		}
+		
+		private void BuildButtonPath()
+		{
+			while (d_hboxPath.Children.Length > 0)
+			{
+				d_hboxPath.Remove(d_hboxPath.Children[0]);
+			}
+			
+			Queue<Wrappers.Group> parents = new Queue<Wrappers.Group>();
+			Wrappers.Group parent = d_grid.ActiveGroup;
+			
+			while (parent != null)
+			{
+				parents.Enqueue(parent);
+				parent = parent.Parent;
+			}
+			
+			while (parents.Count != 0)
+			{
+				PushPath(parents.Dequeue());
+			}
 		}
 		
 		private void UpdateCurrentIntegrator()
@@ -332,50 +362,29 @@ namespace Cpg.Studio
 			hbox.PackEnd(but, false, false, 0);
 		}
 		
-		delegate void PathHandler();
-		
-		private void PushPath(Wrappers.Wrapper obj, PathHandler handler)
+		private void PushPath(Wrappers.Group obj)
 		{
-			if (obj != null)
+			if (obj != d_network)
 			{
 				Arrow arrow = new Arrow(ArrowType.Right, ShadowType.None);
 				arrow.Show();
 				d_hboxPath.PackStart(arrow, false, false, 0);
 			}
 			
-			Button but = new Button(obj != null ? obj.ToString() : "(cpg)");
+			Button but = new Button(obj.ToString());
 			but.Relief = ReliefStyle.None;
 			but.Show();
 			
 			d_hboxPath.PackStart(but, false, false, 0);
 			
-			if (handler != null)
-			{
-				but.Clicked += delegate(object source, EventArgs args) { handler(); };
-			}
-			
-			if (obj != null)
-			{
-				obj.PropertyChanged += delegate (Wrappers.Wrapper source, Cpg.Property prop) {
-					but.Label = obj.ToString();
-				};
-			}
-		}
-		
-		private void PopPath()
-		{
-			d_hboxPath.Children[d_hboxPath.Children.Length - 1].Destroy();
-			d_hboxPath.Children[d_hboxPath.Children.Length - 1].Destroy();
+			but.Clicked += delegate(object source, EventArgs args) {
+				d_grid.ActiveGroup = obj;
+			};
 		}
 		
 		private void Clear()
 		{
 			d_grid.Clear();
-			
-			while (d_hboxPath.Children.Length > 0)
-			{
-				d_hboxPath.Remove(d_hboxPath.Children[0]);
-			}
 			
 			if (d_messageArea != null)
 			{
@@ -1237,7 +1246,8 @@ namespace Cpg.Studio
 		
 		private void OnPasteActivated(object sender, EventArgs args)
 		{
-			d_actions.Paste();
+			int[] center = d_grid.Center;
+			d_actions.Paste(d_grid.ActiveGroup, center[0], center[1]);
 		}
 		
 		private void OnGroupActivated(object sender, EventArgs args)
@@ -1421,12 +1431,12 @@ namespace Cpg.Studio
 		
 		private void OnCutActivated(object sender, EventArgs args)
 		{
-			d_actions.Cut();
+			d_actions.Cut(d_grid.ActiveGroup, d_grid.Selection);
 		}
 		
 		private void OnCopyActivated(object sender, EventArgs args)
 		{
-			d_actions.Copy();
+			d_actions.Copy(d_grid.Selection);
 		}
 		
 		private void OnDeleteActivated(object sender, EventArgs args)

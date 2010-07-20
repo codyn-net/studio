@@ -133,12 +133,16 @@ namespace Cpg.Studio.Serialization
 		
 		private XmlDocument MakeNetworkDocument()
 		{
-			StringReader stream = new StringReader(d_cpg.Network.CNetwork.WriteToXml());
+			/*
+				TODO:
+			Cpg.NetworkSerializer serializer = new Cpg.NetworkSerializer(d_cpg.Network, d_cpg.Network);
+			StringReader stream = new StringReader(serializer.);
 			XmlDocument doc = new XmlDocument();
 			doc.Load(stream);
-			stream.Close();
+			stream.Close();&/
 			
-			return doc;
+			return doc;*/
+			return null;
 		}
 		
 		public string Save()

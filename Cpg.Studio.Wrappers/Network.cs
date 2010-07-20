@@ -46,16 +46,6 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public string WriteToXml()
-		{
-			return WrappedObject.WriteToXml();
-		}
-		
-		public void WriteToFile(string filename)
-		{
-			WrappedObject.WriteToFile(filename);
-		}
-		
 		public void Merge(Network other)
 		{
 			WrappedObject.Merge(other);

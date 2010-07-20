@@ -219,6 +219,7 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.PropertyAdded -= HandlePropertyAdded;
 			WrappedObject.PropertyRemoved -= HandlePropertyRemoved;
 			WrappedObject.PropertyChanged -= HandlePropertyChanged;
+			WrappedObject.Copied -= HandleCopied;
 		}
 		
 		protected virtual void ConnectWrapped()
@@ -228,6 +229,15 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.PropertyAdded += HandlePropertyAdded;
 			WrappedObject.PropertyRemoved += HandlePropertyRemoved;
 			WrappedObject.PropertyChanged += HandlePropertyChanged;
+			WrappedObject.Copied += HandleCopied;
+		}
+
+		private void HandleCopied(object o, CopiedArgs args)
+		{
+			Wrapper wrapped = Wrap(args.Copy);
+			
+			wrapped.Allocation = Allocation.Copy();
+			wrapped.Renderer = Renderer;
 		}
 		
 		public virtual Cpg.Object WrappedObject
@@ -268,12 +278,20 @@ namespace Cpg.Studio.Wrappers
 		
 		public void Link(Wrappers.Link link)
 		{
-			d_links.Add(link);
+			if (!d_links.Contains(link))
+			{
+				d_links.Add(link);
+			}
 		}
 		
 		public void Unlink(Wrappers.Link link)
 		{
 			d_links.Remove(link);
+		}
+		
+		public Wrappers.Wrapper Copy()
+		{
+			return Wrappers.Wrapper.Wrap(WrappedObject.Copy());
 		}
 
 		public override string Id

@@ -154,7 +154,7 @@ namespace Cpg.Studio
 			return false;
 		}
 		
-		public static void MeanPosition(ICollection<Wrappers.Wrapper> objects, out double x, out double y)
+		public static void MeanPosition(IEnumerable<Wrappers.Wrapper> objects, out double x, out double y)
 		{
 			x = 0;
 			y = 0;
@@ -177,6 +177,19 @@ namespace Cpg.Studio
 			{
 				x = x / num;
 				y = y / num;
+			}
+		}
+		
+		public static IEnumerable<Wrappers.Link> FilterLink(IEnumerable<Wrappers.Wrapper> wrappers)
+		{
+			foreach (Wrappers.Wrapper wrapper in wrappers)
+			{
+				Wrappers.Link link = wrapper as Wrappers.Link;
+				
+				if (link != null)
+				{
+					yield return link;
+				}
 			}
 		}
 	}

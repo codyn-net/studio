@@ -15,12 +15,20 @@ namespace Cpg.Studio.Undo
 		
 		protected void DoAdd()
 		{
+			if (d_wrapped is Wrappers.Link)
+			{
+				Wrappers.Link link = (Wrappers.Link)d_wrapped;
+				
+				link.Reattach();
+			}
+
 			d_parent.Add(d_wrapped);
 		}
 		
 		protected void DoRemove()
 		{
 			d_parent.Remove(d_wrapped);
+			d_wrapped.Removed();
 		}
 		
 		public Wrappers.Wrapper Wrapped
