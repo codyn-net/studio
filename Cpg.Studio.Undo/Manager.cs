@@ -131,14 +131,16 @@ namespace Cpg.Studio.Undo
 			OnModified(this);
 		}
 		
-		public void Undo()
+		public IAction Undo()
 		{
 			if (!CanUndo)
 			{
-				return;
+				return null;
 			}
 			
-			d_actions[d_actionPtr].Undo();
+			IAction action = d_actions[d_actionPtr];
+			action.Undo();
+			
 			d_actionPtr += 1;
 			
 			OnChanged(this);
@@ -147,17 +149,31 @@ namespace Cpg.Studio.Undo
 			{
 				OnModified(this);
 			}
+			
+			return action;
 		}
 		
-		public void Redo()
+		public IAction PeekUndo()
+		{
+			if (!CanUndo)
+			{
+				return null;
+			}
+			
+			return d_actions[d_actionPtr];
+		}
+		
+		public IAction Redo()
 		{
 			if (!CanRedo)
 			{
-				return;
+				return null;
 			}
 			
 			d_actionPtr -= 1;
-			d_actions[d_actionPtr].Redo();
+			
+			IAction action = d_actions[d_actionPtr];
+			action.Redo();
 			
 			OnChanged(this);
 			
@@ -165,6 +181,18 @@ namespace Cpg.Studio.Undo
 			{
 				OnModified(this);
 			}
+			
+			return action;
+		}
+		
+		public IAction PeekRedo()
+		{
+			if (!CanRedo)
+			{
+				return null;
+			}
+			
+			return d_actions[d_actionPtr - 1];
 		}
 	}
 }
