@@ -6,90 +6,40 @@ using CCpg = Cpg;
 
 namespace Cpg.Studio
 {
+	[Gtk.Binding(Gdk.Key.Delete, "HandleDeleteBinding")]
+	[Gtk.Binding(Gdk.Key.Insert, "HandleAddBinding")]
 	public class PropertyView : HPaned
 	{
-		class Node : TreeNode
+		enum Column
 		{
-			Cpg.Property d_property;
-			
-			public Node(Cpg.Property property)
-			{
-				d_property = property;
-			}
-			
-			[TreeNodeValue(Column=0)]
-			public string Name
-			{
-				get
-				{
-					return d_property.Name;
-				}
-			}
-			
-			[TreeNodeValue(Column=1)]
-			public string Value
-			{
-				get
-				{
-					return d_property.Expression.AsString;
-				}
-				set
-				{
-					d_property.Expression.FromString = value;
-				}
-			}
+			Property = 0
+		}
 
-			[TreeNodeValue(Column=2)]
-			public Cpg.PropertyFlags Flags
-			{
-				get
-				{
-					return d_property.Flags;
-				}
-				set
-				{
-					d_property.Flags = value;
-				}
-			}
-			
-			public Cpg.Property Property
-			{
-				get
-				{
-					return d_property;
-				}
-			}
-		}
-		
-		class NodeStore : Gtk.NodeStore
-		{
-			public NodeStore() : base(typeof(Node))
-			{
-			}
-		}
-		
 		public delegate void ErrorHandler(object source, Exception exception);
 		
 		public event ErrorHandler Error = delegate {};
 		
 		private Wrappers.Wrapper d_object;
-		private NodeStore d_store;
-		private NodeView d_treeview;
+		private ListStore d_store;
+		private TreeView d_treeview;
 		private Button d_removeButton;
 		private bool d_selectProperty;
 		private ListStore d_comboStore;
 		private ListStore d_actionStore;
 		private TreeView d_actionView;
 		private Button d_removeActionButton;
-		private ListStore d_hintStore;
+		private ListStore d_flagsStore;
 		private List<KeyValuePair<string, Cpg.PropertyFlags>> d_flaglist;
+		private Actions d_actions;
 		
-		public PropertyView(Wrappers.Wrapper obj) : base()
+		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base()
 		{
+			d_actions = actions;
+
 			Initialize(obj);
 		}
 		
-		public PropertyView() : this(null)
+		public PropertyView(Actions actions) : this(actions, null)
 		{
 			d_selectProperty = false;
 		}
@@ -125,12 +75,16 @@ namespace Cpg.Studio
 				TreeIter iter;
 				
 				if (!d_actionStore.GetIter(out iter, new TreePath(args.Path)))
+				{
 					return;
+				}
 				
 				Wrappers.Link.Action action = d_actionStore.GetValue(iter, 0) as Wrappers.Link.Action;
 				
 				if (action.Target == args.NewText)
+				{
 					return;
+				}
 
 				action.Target = args.NewText;
 				d_actionStore.SetValue(iter, 1, action.Target);
@@ -147,12 +101,16 @@ namespace Cpg.Studio
 				TreeIter iter;
 				
 				if (!d_actionStore.GetIter(out iter, new TreePath(args.Path)))
+				{
 					return;
+				}
 				
 				Wrappers.Link.Action action = d_actionStore.GetValue(iter, 0) as Wrappers.Link.Action;
 				
 				if (action.Equation == args.NewText)
+				{
 					return;
+				}
 				
 				action.Equation = args.NewText;
 				d_actionStore.SetValue(iter, 2, action.Equation);
@@ -280,8 +238,8 @@ namespace Cpg.Studio
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			vw.ShadowType = ShadowType.EtchedIn;
 			
-			d_store = new NodeStore();
-			d_treeview = new NodeView(d_store);	
+			d_store = new ListStore(typeof(Cpg.Property));
+			d_treeview = new TreeView(d_store);	
 			
 			d_treeview.ShowExpanders = false;
 			
@@ -292,8 +250,14 @@ namespace Cpg.Studio
 
 			vbox.PackStart(vw, true, true, 0);
 			
-			CellRendererText renderer = new CellRendererText();
-			TreeViewColumn column = new TreeViewColumn("Name", renderer, new object[] {"text", 0});
+			CellRendererText renderer;
+			TreeViewColumn column;
+			
+			// Add column for the name
+			renderer = new CellRendererText();
+			renderer.Editable = true;
+			
+			column = new TreeViewColumn("Name", renderer);
 			column.Resizable = true;
 			column.MinWidth = 75;
 			
@@ -301,41 +265,40 @@ namespace Cpg.Studio
 			{
 				renderer.Edited += DoNameEdited;
 			}
-
+			
+			column.SetCellDataFunc(renderer, HandleRenderName);
 			d_treeview.AppendColumn(column);
 			
+			// Add column for the value
 			renderer = new CellRendererText();
+			renderer.Editable = true;
 			
 			if (d_object != null)
 			{
 				renderer.Edited += DoValueEdited;
 			}
 				
-			column = new TreeViewColumn("Value", renderer, new object[] {"text", 1});
+			column = new TreeViewColumn("Value", renderer);
 			column.Resizable = true;
 			
+			column.SetCellDataFunc(renderer, HandleRenderValue);
 			d_treeview.AppendColumn(column);
 				
 			// Add column for property flags
 			CellRendererCombo combo = new CellRendererCombo();
+			combo.Editable = true;
+			combo.Sensitive = true;
 			
 			column = new TreeViewColumn("Flags", combo);
 			column.Resizable = true;
-			column.SetCellDataFunc(combo, delegate (TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter) {
-				Node node = d_store.GetNode(model.GetPath(piter)) as Node;
-				
-				(cell as CellRendererText).Text = FlagsToString(node.Flags);
-				
-				(cell as CellRendererText).Editable = node.Name != "id";
-				cell.Sensitive = node.Name != "id";
-			});
+			column.SetCellDataFunc(combo, HandleRenderFlags);
 			
 			combo.EditingStarted += DoEditingStarted;
-			combo.Edited += DoHintEdited;
+			combo.Edited += DoFlagsEdited;
 			combo.HasEntry = false;
 			
-			d_hintStore = new ListStore(typeof(string), typeof(Cpg.PropertyFlags));
-			combo.Model = d_hintStore;
+			d_flagsStore = new ListStore(typeof(string), typeof(Cpg.PropertyFlags));
+			combo.Model = d_flagsStore;
 			combo.TextColumn = 0;
 			
 			column.MinWidth = 50;
@@ -343,8 +306,6 @@ namespace Cpg.Studio
 
 			HBox hbox = new HBox(false, 3);
 			vbox.PackStart(hbox, false, false, 0);
-
-			d_treeview.KeyPressEvent += DoTreeViewKeyPress;
 			
 			d_removeButton = new Button();
 			d_removeButton.Add(new Image(Gtk.Stock.Remove, IconSize.Menu));
@@ -357,7 +318,7 @@ namespace Cpg.Studio
 			but.Clicked += DoAddProperty;
 			hbox.PackStart(but, false, false, 0);
 
-			d_treeview.NodeSelection.Changed += DoSelectionChanged;
+			d_treeview.Selection.Changed += DoSelectionChanged;
 			
 			if (d_object != null)
 			{
@@ -379,10 +340,34 @@ namespace Cpg.Studio
 			ShowAll();
 		}
 		
-		private void FillHintStore(Node node)
+		private void HandleRenderName(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
 		{
-			d_hintStore.Clear();
-			Cpg.PropertyFlags flags = node.Flags;
+			Cpg.Property property = PropertyFromStore(piter);
+			CellRendererText renderer = (CellRendererText)cell;
+			
+			renderer.Text = property.Name;
+		}
+		
+		private void HandleRenderValue(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
+		{
+			Cpg.Property property = PropertyFromStore(piter);
+			CellRendererText renderer = (CellRendererText)cell;
+			
+			renderer.Text = property.Expression.AsString;
+		}
+		
+		private void HandleRenderFlags(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
+		{
+			Cpg.Property property = PropertyFromStore(piter);
+			CellRendererText renderer = (CellRendererText)cell;
+			
+			renderer.Text = FlagsToString(property.Flags);
+		}
+		
+		private void FillFlagsStore(Cpg.Property property)
+		{
+			d_flagsStore.Clear();
+			Cpg.PropertyFlags flags = property.Flags;
 			
 			foreach (KeyValuePair<string, Cpg.PropertyFlags> pair in d_flaglist)
 			{
@@ -393,15 +378,13 @@ namespace Cpg.Studio
 					name = "• " + name;
 				}
 				
-				d_hintStore.AppendValues(name, flags);
+				d_flagsStore.AppendValues(name, flags);
 			}
 		}
 
 		private void DoEditingStarted(object o, EditingStartedArgs args)
 		{
-			Node node = (d_store.GetNode(new TreePath(args.Path)) as Node);
-			
-			FillHintStore(node);
+			FillFlagsStore(PropertyFromStore(args.Path));
 		}
 		
 		private void InitStore()
@@ -412,9 +395,28 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void DoHintEdited(object source, EditedArgs args)
+		private Cpg.Property PropertyFromStore(string path)
 		{
-			Node node = (d_store.GetNode(new TreePath(args.Path)) as Node);
+			return PropertyFromStore(new TreePath(path));
+		}
+		
+		private Cpg.Property PropertyFromStore(TreePath path)
+		{
+			TreeIter iter;
+			
+			d_store.GetIter(out iter, path);
+			return PropertyFromStore(iter);
+		}
+		
+		private Cpg.Property PropertyFromStore(TreeIter iter)
+		{
+			return (Cpg.Property)d_store.GetValue(iter, 0);
+		}
+		
+		private void DoFlagsEdited(object source, EditedArgs args)
+		{
+			Cpg.Property property = PropertyFromStore(args.Path);
+
 			bool wason = false;
 			string name = args.NewText;
 			
@@ -425,38 +427,58 @@ namespace Cpg.Studio
 			}
 
 			Cpg.PropertyFlags flags = (Cpg.PropertyFlags)Enum.Parse(typeof(Cpg.PropertyFlags), name);
+			Cpg.PropertyFlags newflags = property.Flags;
 			
 			if (wason)
 			{
-				node.Flags &= ~flags;
+				newflags &= ~flags;
 			}
 			else
 			{
-				node.Flags |= flags;
+				newflags |= flags;
 			}
+			
+			if (newflags == property.Flags)
+			{
+				return;
+			}
+			
+			d_actions.Do(new Undo.ModifyProperty(property, newflags));
 		}
 		
 		private void DoValueEdited(object source, EditedArgs args)
 		{
-			(d_store.GetNode(new TreePath(args.Path)) as Node).Value = args.NewText;
+			Cpg.Property property = PropertyFromStore(args.Path);
+			
+			if (args.NewText == property.Expression.AsString)
+			{
+				return;
+			}
+			
+			d_actions.Do(new Undo.ModifyProperty(property, args.NewText));
 		}
 		
 		private void DoNameEdited(object source, EditedArgs args)
 		{
-			if (args.NewText == String.Empty)
+			if (String.IsNullOrEmpty(args.NewText))
+			{
 				return;
+			}
 			
-			Node node = (d_store.GetNode(new TreePath(args.Path)) as Node);
+			Cpg.Property property = PropertyFromStore(args.Path);
 			
-			if (args.NewText == node.Name)
+			if (args.NewText == property.Name)
+			{
 				return;
+			}
 
-			string oldprop = node.Name;
-			//string oldvalue = node.Value;
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			actions.Add(new Undo.RemoveProperty(d_object, property));
+			actions.Add(new Undo.AddProperty(d_object, args.NewText, property.Expression.AsString, property.Flags));
 			
 			try
 			{
-				d_object.RemoveProperty(oldprop);
+				d_actions.Do(new Undo.Group(actions));
 			}
 			catch (GLib.GException err)
 			{
@@ -464,18 +486,13 @@ namespace Cpg.Studio
 				Error(this, err);
 				return;
 			}
-			
-			// TODO
-			//node.Name = args.NewText;
-			//d_object.SetProperty(node.Name, oldvalue);
 		}
 		
 		private void DoSelectionChanged(object source, EventArgs args)
 		{
-			NodeSelection selection = source as NodeSelection;
-			Node node = selection.SelectedNode as Node;
-			
-			d_removeButton.Sensitive = node != null;
+			TreeIter iter;
+
+			d_removeButton.Sensitive = d_treeview.Selection.GetSelected(out iter);
 		}
 		
 		private void DoActionSelectionChanged(object source, EventArgs args)
@@ -490,10 +507,14 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void DoTreeViewKeyPress(object source, KeyPressEventArgs args)
+		private void HandleAddBinding()
 		{
-			if (args.Event.Key == Gdk.Key.Delete)
-				DoRemoveProperty(source, new EventArgs());
+			DoAddProperty();
+		}
+		
+		private void HandleDeleteBinding()
+		{
+			DoRemoveProperty();
 		}
 		
 		private void AddProperty(Cpg.Property prop)
@@ -502,33 +523,48 @@ namespace Cpg.Studio
 			{
 				return;
 			}
-
-			Node node = new Node(prop);
-			d_store.AddNode(node);
+			
+			TreeIter iter = d_store.AppendValues(prop);
 			
 			if (d_selectProperty)
 			{
-				d_treeview.NodeSelection.UnselectAll();
-				d_treeview.NodeSelection.SelectNode(node);
+				d_treeview.Selection.UnselectAll();
+				d_treeview.Selection.SelectIter(iter);
 				
-				TreeModel model;
-				TreeIter iter;
-				
-				if (d_treeview.Selection.GetSelected(out model, out iter))
-				{
-					TreePath path = d_treeview.Model.GetPath(iter);
-					
-					d_treeview.SetCursor(path, d_treeview.GetColumn(0), true);
-				}
+				TreePath path = d_store.GetPath(iter);					
+				d_treeview.SetCursor(path, d_treeview.GetColumn(0), true);
+			}
+			
+			prop.AddNotification("expression", HandlePropertyChanged);
+			prop.AddNotification("flags", HandlePropertyChanged);
+			prop.AddNotification("name", HandlePropertyChanged);
+		}
+		
+		private void HandlePropertyChanged(object source, GLib.NotifyArgs args)
+		{
+			Cpg.Property prop = (Cpg.Property)source;
+			
+			TreeIter iter;
+			TreePath path;
+			
+			if (FindProperty(prop.Name, out path, out iter))
+			{
+				d_store.EmitRowChanged(path, iter);
 			}
 		}
 		
 		private bool PropertyExists(string name)
 		{
-			return FindProperty(name) != null;
+			TreeIter iter;
+			return FindProperty(name, out iter);
 		}
 		
 		private void DoAddProperty(object source, EventArgs args)
+		{
+			DoAddProperty();
+		}
+		
+		private void DoAddProperty()
 		{
 			int num = 1;
 			
@@ -538,30 +574,34 @@ namespace Cpg.Studio
 			}
 			
 			d_selectProperty = true;
-
-			d_object.AddProperty("x" + num, "0");
+			d_actions.Do(new Undo.AddProperty(d_object, "x" + num, "0", Cpg.PropertyFlags.None));
 			d_selectProperty = false;
 		}
 		
 		private void DoRemoveProperty(object source, EventArgs args)
 		{
-			NodeSelection selection = d_treeview.NodeSelection;
-			
-			Node[] nodes = new Node[selection.SelectedNodes.Length];
-			selection.SelectedNodes.CopyTo(nodes, 0);
-			
-			foreach (Node node in nodes)
+			DoRemoveProperty();
+		}
+		
+		private void DoRemoveProperty()
+		{
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+
+			foreach (TreePath path in d_treeview.Selection.GetSelectedRows())
 			{
-				try
-				{
-					d_object.RemoveProperty(node.Name);
-					d_store.RemoveNode(node);
-				}
-				catch (GLib.GException err)
-				{
-					// Display could not remove, or something
-					Error(this, err);
-				}
+				Cpg.Property prop = PropertyFromStore(path);
+				actions.Add(new Undo.RemoveProperty(d_object, prop));
+			}
+
+			try
+			{
+				// FIXME: if one fails, the others are still removed, but not undoable!
+				d_actions.Do(new Undo.Group(actions));
+			}
+			catch (GLib.GException err)
+			{
+				// Display could not remove, or something
+				Error(this, err);
 			}
 		}
 		
@@ -608,7 +648,9 @@ namespace Cpg.Studio
 			if ((d_object as Wrappers.Link).RemoveAction(val))
 			{
 				if (d_actionStore.Remove(ref iter))
+				{
 					d_actionView.Selection.SelectIter(iter);
+				}
 			}
 		}
 		
@@ -617,69 +659,73 @@ namespace Cpg.Studio
 			AddProperty(prop);
 		}
 		
-		private Node FindProperty(string name, out TreePath path)
+		private bool FindProperty(string name, out TreePath path, out TreeIter iter)
 		{
 			TreeModel model = d_treeview.Model;
-			TreeIter iter;
 			
 			path = null;
 			
 			if (!model.GetIterFirst(out iter))
-				return null;
+			{
+				return false;
+			}
 			
 			do
 			{
-				path = model.GetPath(iter);
-				Node node = d_store.GetNode(path) as Node;
-				
-				if (node.Name == name)
+				Cpg.Property property = PropertyFromStore(iter);
+
+				if (property.Name == name)
 				{
-					return node;
+					path = model.GetPath(iter);
+					return true;
 				}
 			} while (model.IterNext(ref iter));	
 			
-			return null;
+			return false;
 		}
 		
-		private Node FindProperty(string name)
+		private bool FindProperty(string name, out TreeIter iter)
 		{
 			TreePath path;
-			return FindProperty(name, out path);
+			return FindProperty(name, out path, out iter);
 		}
 		
 		private void DoPropertyChanged(Wrappers.Wrapper obj, Cpg.Property prop)
 		{
 			TreePath path;
-			Node node = FindProperty(prop.Name, out path);
-			
-			if (node != null)
+			TreeIter iter;
+
+			if (FindProperty(prop.Name, out path, out iter))
 			{
-				TreeIter iter;
-				
-				if (d_treeview.Model.GetIter(out iter, path))
-				{
-					d_treeview.Model.EmitRowChanged(path, iter);
-				}
+				d_store.EmitRowChanged(path, iter);
 			}
 		}
 		
 		private void DoPropertyRemoved(Wrappers.Wrapper obj, Cpg.Property prop)
 		{
-			Node node = FindProperty(prop.Name);
-			
-			if (node != null)
+			TreeIter iter;
+
+			if (FindProperty(prop.Name, out iter))
 			{
-				d_store.RemoveNode(node);
+				d_store.Remove(ref iter);
 			}
+			
+			prop.RemoveNotification(HandlePropertyChanged);
+			prop.RemoveNotification(HandlePropertyChanged);
+			prop.RemoveNotification(HandlePropertyChanged);
 		}
 		
 		private void Clear()
 		{
 			while (Children.Length > 0)
+			{
 				Remove(Children[0]);
+			}
 			
 			if (d_store != null)
+			{
 				d_store.Clear();
+			}
 				
 			d_object = null;
 			Sensitive = false;
@@ -687,10 +733,12 @@ namespace Cpg.Studio
 		
 		public void Select(Cpg.Property property)
 		{
-			Node node = FindProperty(property.Name);
+			TreeIter iter;
 			
-			if (node != null)
-				d_treeview.NodeSelection.SelectNode(node);
+			if (FindProperty(property.Name, out iter))
+			{
+				d_treeview.Selection.SelectIter(iter);
+			}
 		}
 		
 		public void Select(Cpg.LinkAction action)
@@ -698,7 +746,9 @@ namespace Cpg.Studio
 			TreeIter iter;
 			
 			if (!d_actionStore.GetIterFirst(out iter))
+			{
 				return;
+			}
 			
 			do
 			{
@@ -712,7 +762,7 @@ namespace Cpg.Studio
 			} while (d_actionStore.IterNext(ref iter));
 		}
 		
-		protected override void OnRealized ()
+		protected override void OnRealized()
 		{
 			base.OnRealized();
 			

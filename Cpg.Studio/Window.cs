@@ -1348,6 +1348,14 @@ namespace Cpg.Studio
 			d_simulateButtons.Visible = action.Active;
 		}
 		
+		public Actions Actions
+		{
+			get
+			{
+				return d_actions;
+			}
+		}
+		
 		private void OnViewPropertyEditorActivated(object sender, EventArgs args)
 		{
 			ToggleAction action = sender as ToggleAction;
@@ -1357,7 +1365,7 @@ namespace Cpg.Studio
 				if (d_propertyView == null)
 				{
 					Wrappers.Wrapper[] selection = d_grid.Selection;
-					d_propertyView = new PropertyView(selection.Length == 1 ? selection[0] : null);
+					d_propertyView = new PropertyView(d_actions, selection.Length == 1 ? selection[0] : null);
 					d_propertyView.BorderWidth = 3;
 					
 					d_propertyView.Error += delegate (object source, Exception exception)

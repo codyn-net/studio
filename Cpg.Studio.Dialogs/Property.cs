@@ -29,7 +29,7 @@ namespace Cpg.Studio.Dialogs
 			
 			VBox.Spacing = 6;
 			
-			d_view = new PropertyView(d_object);
+			d_view = new PropertyView(parent.Actions, d_object);
 			VBox.PackStart(d_view, true, true, 0);
 			
 			d_object.PropertyChanged += delegate(Wrappers.Wrapper source, Cpg.Property name) {
