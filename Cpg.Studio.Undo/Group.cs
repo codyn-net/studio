@@ -32,7 +32,10 @@ namespace Cpg.Studio.Undo
 		
 		public void Undo()
 		{
-			foreach (IAction action in d_actions)
+			List<IAction> reversed = new List<IAction>(d_actions);
+			reversed.Reverse();
+
+			foreach (IAction action in reversed)
 			{
 				action.Undo();
 			}

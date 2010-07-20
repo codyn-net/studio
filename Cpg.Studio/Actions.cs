@@ -120,12 +120,94 @@ namespace Cpg.Studio
 			Do(new Undo.Group(actions));
 		}
 		
-		public void Group()
+		public void Group(Wrappers.Group parent, Wrappers.Wrapper[] selection)
 		{
+			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
+
+			if (OnlyLinks(sel))
+			{
+				return;
+			}
+			
+			// Collect all objects and link fully encapsulated in the group
+			// and all the links that are partially in the group separately
+			List<Wrappers.Wrapper> ingroup = new List<Wrappers.Wrapper>();
+			List<Wrappers.Link> outgroup = new List<Wrappers.Link>();
+			
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			foreach (Wrappers.Wrapper wrapper in sel)
+			{
+				Wrappers.Link link = wrapper as Wrappers.Link;
+				
+				if (link == null || (sel.Contains(link.To) && sel.Contains(link.From)))
+				{
+					ingroup.Add(wrapper);
+				}
+				else
+				{
+					outgroup.Add(link);
+				}
+				
+				// Also fill the first actions that remove all the objects from the parent
+				actions.Add(new Undo.RemoveObject(parent, wrapper));
+			}
+			
+			// After objects are removed, we create a new group
+			double x;
+			double y;
+
+			Utils.MeanPosition(ingroup, out x, out y);
+
+			Wrappers.Group newGroup = new Wrappers.Group();
+			newGroup.Allocation.X = (int)x;
+			newGroup.Allocation.Y = (int)y;
+			
+			actions.Add(new Undo.AddObject(parent, newGroup));
+			
+			// Then we add all the 'ingroup' objects to the group
+
+			foreach (Wrappers.Wrapper wrapper in ingroup)
+			{
+				// Move object to center at 0, 0 in the group
+				if (!(wrapper is Wrappers.Link))
+				{
+					actions.Add(new Undo.MoveObject(wrapper, (int)(wrapper.Allocation.X - x), (int)(wrapper.Allocation.Y - y)));
+				}
+				
+				// Add object to the group
+				actions.Add(new Undo.AddObject(newGroup, wrapper));
+			}
+			
+			// Then reconnect the 'outgroup' links to the new group
+			foreach (Wrappers.Link link in outgroup)
+			{
+				actions.Add(new Undo.AttachLink(link, link.From, newGroup));
+			}
+			
+			Do(new Undo.AddGroup(newGroup, actions));
 		}
 		
-		public void Ungroup()
+		public void Ungroup(Wrappers.Group parent, Wrappers.Wrapper[] selection)
 		{
+			List<Wrappers.Group> sel = new List<Wrappers.Group>();
+			
+			foreach (Wrappers.Wrapper wrapper in selection)
+			{
+				Wrappers.Group grp = wrapper as Wrappers.Group;
+				
+				if (grp != null)
+				{
+					sel.Add(grp);
+				}
+			}
+			
+			if (sel.Count == 0)
+			{
+				return;
+			}
+
+			Do(new Undo.Ungroup(parent, sel.ToArray()));
 		}
 		
 		private Wrappers.Wrapper[] MakeCopy(Wrappers.Wrapper[] selection)

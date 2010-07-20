@@ -49,24 +49,14 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/AssemblyInfo.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Directories.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/DynamicIntegrator.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/FunctionsView.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Graph.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Grid.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Loader.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/MessageArea.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Monitor.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/ObjectView.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/PolynomialsView.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/PropertyView.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Range.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/RenderCache.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Saver.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Settings.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Simulation.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Stock.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Table.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Utils.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Window.cs" />
     <File subtype="Code" buildaction="EmbedAsResource" name="Cpg.Studio.Resources/monitor-ui.xml" />
     <File subtype="Code" buildaction="EmbedAsResource" name="Cpg.Studio.Resources/ui.xml" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Undo" />
@@ -98,6 +88,32 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Actions.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Clipboard" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Clipboard/Internal.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Window.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Table.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/PropertyView.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/PolynomialsView.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/ObjectView.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Grid.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Graph.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionsView.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/MessageArea.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Monitor.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/AddRemovePopup.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/TreeView.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/AttachLink.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/AddGroup.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/Ungroup.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
