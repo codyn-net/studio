@@ -206,7 +206,6 @@ namespace Cpg.Studio
 		private void HandleActiveGroupChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
 		{
 			Unselect(child);
-			child.Removed();
 			
 			if (child is Wrappers.Link)
 			{
