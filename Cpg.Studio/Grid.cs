@@ -189,9 +189,12 @@ namespace Cpg.Studio
 				d_activeGroup.ChildRemoved -= HandleActiveGroupChildRemoved;
 			}
 
-			grp.ChildAdded += HandleActiveGroupChildAdded;
-			grp.ChildRemoved += HandleActiveGroupChildRemoved;
-			
+			if (grp != null)
+			{
+				grp.ChildAdded += HandleActiveGroupChildAdded;
+				grp.ChildRemoved += HandleActiveGroupChildRemoved;
+			}
+
 			d_selection.Clear();
 			d_activeGroup = grp;
 			
