@@ -4,21 +4,22 @@ namespace Cpg.Studio.Undo
 {
 	public class Property
 	{
-		private Cpg.Property d_property;
 		private Wrappers.Wrapper d_wrapped;
+		private string d_name;
+		private string d_expression;
+		private Cpg.PropertyFlags d_flags;
 		
-		public Property(Wrappers.Wrapper wrapped, Cpg.Property property)
+		public Property(Wrappers.Wrapper wrapped, string name, string expression, Cpg.PropertyFlags flags)
 		{
-			d_property = property;
 			d_wrapped = wrapped;
+			
+			d_name = name;
+			d_expression = expression;
+			d_flags = flags;
 		}
 		
-		public Cpg.Property CpgProperty
+		public Property(Wrappers.Wrapper wrapped, Cpg.Property property) : this(wrapped, property.Name, property.Expression.AsString, property.Flags)
 		{
-			get
-			{
-				return d_property;
-			}
 		}
 		
 		public Wrappers.Wrapper Wrapped
@@ -29,14 +30,22 @@ namespace Cpg.Studio.Undo
 			}
 		}
 		
+		public string Name
+		{
+			get
+			{
+				return d_name;
+			}
+		}
+		
 		public void Add()
 		{
-			d_wrapped.AddProperty(d_property.Name, d_property.Expression.AsString, d_property.Flags);
+			d_wrapped.AddProperty(d_name, d_expression, d_flags);
 		}
 		
 		public void Remove()
 		{
-			d_wrapped.RemoveProperty(d_property.Name);
+			d_wrapped.RemoveProperty(d_name);
 		}
 		
 		public virtual bool CanMerge(IAction other)
