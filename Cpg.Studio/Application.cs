@@ -6,12 +6,13 @@
 using System;
 using Gtk;
 using System.IO;
+using Cpg.Studio.Widgets;
 
 namespace Cpg.Studio
 {
 	class Application
 	{
-		private Studio.Window d_window;
+		private Cpg.Studio.Widgets.Window d_window;
 		
 		private void RegisterNativeIntegrators(string dir)
 		{
@@ -60,7 +61,7 @@ namespace Cpg.Studio
 		{
 			RegisterNativeIntegrators();
 			
-			d_window = new Studio.Window();
+			d_window = new Widgets.Window();
 			d_window.Show();
 		}
 		

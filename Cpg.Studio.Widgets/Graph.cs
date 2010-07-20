@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Widgets
 {
 	public class Graph : Gtk.DrawingArea
 	{

@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using CCpg = Cpg;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Widgets
 {
 	[Gtk.Binding(Gdk.Key.Delete, "HandleDeleteBinding")]
 	[Gtk.Binding(Gdk.Key.Insert, "HandleAddBinding")]
@@ -22,7 +22,6 @@ namespace Cpg.Studio
 		private Wrappers.Wrapper d_object;
 		private ListStore d_store;
 		private TreeView d_treeview;
-		private Button d_removeButton;
 		private bool d_selectProperty;
 		private ListStore d_comboStore;
 		private ListStore d_actionStore;
@@ -31,6 +30,7 @@ namespace Cpg.Studio
 		private ListStore d_flagsStore;
 		private List<KeyValuePair<string, Cpg.PropertyFlags>> d_flaglist;
 		private Actions d_actions;
+		private AddRemovePopup d_propertyControls;
 		
 		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base()
 		{
@@ -60,7 +60,7 @@ namespace Cpg.Studio
 			vw.ShadowType = ShadowType.EtchedIn;
 			
 			d_actionStore = new Gtk.ListStore(typeof(Wrappers.Link.Action), typeof(string), typeof(string));
-			d_actionView = new Gtk.TreeView(d_actionStore);
+			d_actionView = new TreeView(d_actionStore);
 			
 			vw.Add(d_actionView);
 			
@@ -228,11 +228,11 @@ namespace Cpg.Studio
 			Gtk.VBox vbox = new Gtk.VBox(false, 3);
 			Add1(vbox);
 			
-			Gtk.Label label = new Label("<b>Properties</b>");
+			/*Gtk.Label label = new Label("<b>Properties</b>");
 			label.Xalign = 0;
 			label.UseMarkup = true;
 			
-			vbox.PackStart(label, false, true, 0);
+			vbox.PackStart(label, false, true, 0);*/
 			
 			ScrolledWindow vw = new ScrolledWindow();
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
@@ -304,20 +304,6 @@ namespace Cpg.Studio
 			column.MinWidth = 50;
 			d_treeview.AppendColumn(column);
 
-			HBox hbox = new HBox(false, 3);
-			vbox.PackStart(hbox, false, false, 0);
-			
-			d_removeButton = new Button();
-			d_removeButton.Add(new Image(Gtk.Stock.Remove, IconSize.Menu));
-			d_removeButton.Sensitive = false;
-			d_removeButton.Clicked += DoRemoveProperty;
-			hbox.PackStart(d_removeButton, false, false ,0);
-
-			Button but = new Button();
-			but.Add(new Image(Gtk.Stock.Add, IconSize.Menu));
-			but.Clicked += DoAddProperty;
-			hbox.PackStart(but, false, false, 0);
-
 			d_treeview.Selection.Changed += DoSelectionChanged;
 			
 			if (d_object != null)
@@ -338,6 +324,12 @@ namespace Cpg.Studio
 			d_treeview.AppendColumn(column);
 			
 			ShowAll();
+			
+			d_propertyControls = new AddRemovePopup(d_treeview);
+			d_propertyControls.AddButton.Clicked += DoAddProperty;
+			d_propertyControls.RemoveButton.Clicked += DoRemoveProperty;
+			
+			UpdateSensitivity();
 		}
 		
 		private void HandleRenderName(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
@@ -488,11 +480,15 @@ namespace Cpg.Studio
 			}
 		}
 		
-		private void DoSelectionChanged(object source, EventArgs args)
+		private void UpdateSensitivity()
 		{
 			TreeIter iter;
-
-			d_removeButton.Sensitive = d_treeview.Selection.GetSelected(out iter);
+			d_propertyControls.RemoveButton.Sensitive = d_treeview.Selection.GetSelected(out iter);
+		}
+		
+		private void DoSelectionChanged(object source, EventArgs args)
+		{
+			UpdateSensitivity();			
 		}
 		
 		private void DoActionSelectionChanged(object source, EventArgs args)
@@ -660,12 +656,10 @@ namespace Cpg.Studio
 		}
 		
 		private bool FindProperty(string name, out TreePath path, out TreeIter iter)
-		{
-			TreeModel model = d_treeview.Model;
-			
+		{			
 			path = null;
 			
-			if (!model.GetIterFirst(out iter))
+			if (!d_store.GetIterFirst(out iter))
 			{
 				return false;
 			}
@@ -676,10 +670,10 @@ namespace Cpg.Studio
 
 				if (property.Name == name)
 				{
-					path = model.GetPath(iter);
+					path = d_store.GetPath(iter);
 					return true;
 				}
-			} while (model.IterNext(ref iter));	
+			} while (d_store.IterNext(ref iter));	
 			
 			return false;
 		}

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Widgets
 {
 	public class Monitor : Gtk.Window
 	{
@@ -94,7 +94,7 @@ namespace Cpg.Studio
 		private ObjectView d_objectView;
 		private ScrolledWindow d_objectViewScrolledWindow;
 		private Dictionary<Wrappers.Wrapper, List<State>> d_map;
-		private Cpg.Studio.Table d_content;
+		private Cpg.Studio.Widgets.Table d_content;
 		private Range d_range;
 		private uint d_configureSourceId;
 		
@@ -135,8 +135,8 @@ namespace Cpg.Studio
 			d_hpaned.BorderWidth = 6;
 			CreateObjectView();
 			
-			Cpg.Studio.Table table = new Cpg.Studio.Table(1, 1, true);
-			table.Expand = Cpg.Studio.Table.ExpandType.Down;
+			Widgets.Table table = new Widgets.Table(1, 1, true);
+			table.Expand = Widgets.Table.ExpandType.Down;
 			table.RowSpacing = 1;
 			table.ColumnSpacing = 1;
 			d_content = table;

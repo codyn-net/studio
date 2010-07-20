@@ -1,7 +1,7 @@
 using System;
 using Gtk;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Widgets
 {
 	public class MessageArea : HBox
 	{

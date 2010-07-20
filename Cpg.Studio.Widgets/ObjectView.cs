@@ -2,7 +2,7 @@ using System;
 using Gtk;
 using System.Collections.Generic;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Widgets
 {
 	public class ObjectView : TreeView
 	{

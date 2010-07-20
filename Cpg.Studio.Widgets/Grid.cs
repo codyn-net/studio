@@ -4,7 +4,7 @@ using Gtk;
 using System.Drawing;
 using System.Reflection;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Widgets
 {
 	public class Grid : DrawingArea
 	{
@@ -517,6 +517,19 @@ namespace Cpg.Studio
 			QueueDraw();
 		}
 		
+		public void CenterView(Wrappers.Wrapper obj)
+		{
+			SetActiveGroup(obj.Parent);
+			
+			d_gridSize = d_defaultGridSize;
+
+			ActiveGroup.X = (int)((obj.Allocation.X * d_gridSize) - (Allocation.Width / 2.0f));
+			ActiveGroup.Y = (int)((obj.Allocation.Y * d_gridSize) - (Allocation.Height / 2.0f));
+
+			ModifiedView(this, new EventArgs());
+			QueueDraw();
+		}
+		
 		private void DoZoom(bool zoomIn, System.Drawing.Point where)
 		{
 			int nsize = d_gridSize + (int)Math.Floor(d_gridSize * 0.2 * (zoomIn ? 1 : -1));
@@ -550,8 +563,10 @@ namespace Cpg.Studio
 					
 					Utils.MeanPosition(grp.Children, out x, out y);
 					
-					grp.X = (int)(x * d_defaultGridSize - where.X);
-					grp.Y = (int)(y * d_defaultGridSize - where.Y);
+					d_gridSize = d_minSize;
+					
+					grp.X = (int)(x * d_gridSize - where.X);
+					grp.Y = (int)(y * d_gridSize - where.Y);
 					
 					SetActiveGroup(grp);
 					return;
@@ -560,6 +575,8 @@ namespace Cpg.Studio
 			else if (lowerReached && d_activeGroup.Parent != null)
 			{
 				Wrappers.Group newActive = d_activeGroup.Parent;
+				
+				d_gridSize = d_maxSize;
 				
 				double x, y;
 				Utils.MeanPosition(newActive.Children, out x, out y);

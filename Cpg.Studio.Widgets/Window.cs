@@ -5,7 +5,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace Cpg.Studio
+namespace Cpg.Studio.Widgets
 {
 	public class Window : Gtk.Window
 	{
@@ -174,7 +174,7 @@ namespace Cpg.Studio
 			
 			d_grid = new Grid(d_network, d_actions);
 			d_vpaned = new VPaned();
-			d_vpaned.Position = 300;
+			d_vpaned.Position = 250;
 			d_vpaned.Pack1(d_grid, true, true);
 			
 			d_vboxContents.PackStart(d_vpaned, true, true, 0);
@@ -225,18 +225,19 @@ namespace Cpg.Studio
 				d_hboxPath.Remove(d_hboxPath.Children[0]);
 			}
 			
-			Queue<Wrappers.Group> parents = new Queue<Wrappers.Group>();
+			Stack<Wrappers.Group> parents = new Stack<Wrappers.Group>();
 			Wrappers.Group parent = d_grid.ActiveGroup;
 			
 			while (parent != null)
 			{
-				parents.Enqueue(parent);
+				parents.Push(parent);
 				parent = parent.Parent;
 			}
 			
 			while (parents.Count != 0)
 			{
-				PushPath(parents.Dequeue());
+				parent = parents.Pop();
+				PushPath(parent, parents.Count == 0);
 			}
 		}
 		
@@ -362,7 +363,7 @@ namespace Cpg.Studio
 			hbox.PackEnd(but, false, false, 0);
 		}
 		
-		private void PushPath(Wrappers.Group obj)
+		private void PushPath(Wrappers.Group obj, bool selected)
 		{
 			if (obj != d_network)
 			{
@@ -372,14 +373,21 @@ namespace Cpg.Studio
 			}
 			
 			Button but = new Button(obj.ToString());
-			but.Relief = ReliefStyle.None;
+			but.Relief = selected ? ReliefStyle.Half : ReliefStyle.None;
 			but.Show();
 			
 			d_hboxPath.PackStart(but, false, false, 0);
 			
-			but.Clicked += delegate(object source, EventArgs args) {
-				d_grid.ActiveGroup = obj;
-			};
+			if (selected)
+			{
+				but.Sensitive = false;
+			}
+			else
+			{
+				but.Clicked += delegate(object source, EventArgs args) {
+					d_grid.ActiveGroup = obj;
+				};
+			}
 		}
 		
 		private void Clear()
@@ -1257,12 +1265,12 @@ namespace Cpg.Studio
 		
 		private void OnGroupActivated(object sender, EventArgs args)
 		{
-			d_actions.Group();
+			d_actions.Group(d_grid.ActiveGroup, d_grid.Selection);
 		}
 		
 		private void OnUngroupActivated(object sender, EventArgs args)
 		{
-			d_actions.Ungroup();
+			d_actions.Ungroup(d_grid.ActiveGroup, d_grid.Selection);
 		}
 		
 		private void OnAddStateActivated(object sender, EventArgs args)
@@ -1281,7 +1289,7 @@ namespace Cpg.Studio
 			if (action is Undo.Property)
 			{
 				Undo.Property property = (Undo.Property)action;
-				d_grid.Select(property.Wrapped);
+				d_grid.CenterView(property.Wrapped);
 			}
 			else if (action is Undo.Object)
 			{
@@ -1289,7 +1297,16 @@ namespace Cpg.Studio
 				
 				if (obj.Wrapped.Parent != null)
 				{
-					d_grid.Select(obj.Wrapped);
+					d_grid.CenterView(obj.Wrapped);
+				}
+			}
+			else if (action is Undo.AddGroup)
+			{
+				Undo.AddGroup obj = (Undo.AddGroup)action;
+				
+				if (obj.Group.Parent != null)
+				{
+					d_grid.CenterView(obj.Group);
 				}
 			}
 		}

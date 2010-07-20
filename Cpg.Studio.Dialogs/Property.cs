@@ -1,5 +1,6 @@
 using System;
 using Gtk;
+using Cpg.Studio.Widgets;
 
 namespace Cpg.Studio.Dialogs
 {
@@ -8,15 +9,13 @@ namespace Cpg.Studio.Dialogs
 		Wrappers.Wrapper d_object;
 		PropertyView d_view;
 		
-		public Property(Window parent, Wrappers.Wrapper obj)
+		public Property(Widgets.Window parent, Wrappers.Wrapper obj)
 		{
 			d_object = obj;
 			
 			DestroyWithParent = true;
 			TransientFor = parent;
 			HasSeparator = false;
-			
-			BorderWidth = 12;
 			
 			if (obj is Wrappers.Link)
 			{
@@ -27,9 +26,8 @@ namespace Cpg.Studio.Dialogs
 				SetDefaultSize(400, 300);
 			}
 			
-			VBox.Spacing = 6;
-			
 			d_view = new PropertyView(parent.Actions, d_object);
+			d_view.BorderWidth = 6;
 			VBox.PackStart(d_view, true, true, 0);
 			
 			d_object.PropertyChanged += delegate(Wrappers.Wrapper source, Cpg.Property name) {

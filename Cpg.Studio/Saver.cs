@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using System.Reflection;
+using Cpg.Studio.Widgets;
 
 namespace Cpg.Studio.Serialization
 {

@@ -1,5 +1,6 @@
 using System;
 using Gtk;
+using Cpg.Studio.Widgets;
 
 namespace Cpg.Studio.Dialogs
 {
@@ -7,7 +8,7 @@ namespace Cpg.Studio.Dialogs
 	{
 		private Wrappers.Network d_network;
 
-		public Functions(Window parent, Wrappers.Network network)
+		public Functions(Widgets.Window parent, Wrappers.Network network)
 		{
 			d_network = network;
 			
@@ -16,10 +17,8 @@ namespace Cpg.Studio.Dialogs
 			DestroyWithParent = true;
 			HasSeparator = false;
 			TransientFor = parent;
-			BorderWidth = 10;
 			
 			SetDefaultSize(600, 300);
-			VBox.Spacing = 6;
 			
 			AddButton(Gtk.Stock.Close, ResponseType.Close);
 			
@@ -30,6 +29,7 @@ namespace Cpg.Studio.Dialogs
 		{
 			Notebook notebook = new Notebook();
 			notebook.Show();
+			notebook.BorderWidth = 6;
 			
 			FunctionsView fv = new FunctionsView(d_network);
 			fv.Show();
