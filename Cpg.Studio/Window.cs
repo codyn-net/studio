@@ -111,8 +111,8 @@ namespace Cpg.Studio
 				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", OnPasteActivated),
 				new ActionEntry("GroupAction", null, "Group", "<Control>g", "Group objects", OnGroupActivated),
 				new ActionEntry("UngroupAction", null, "Ungroup", "<Control>u", "Ungroup object", OnUngroupActivated),
-				new ActionEntry("EditGlobalsAction", null, "Globals", null, "Edit the network globals", OnEditGlobalsActivated),
-				new ActionEntry("EditFunctionsAction", null, "Functions", null, "Edit the network custom functions", OnEditFunctionsActivated),
+				new ActionEntry("EditGlobalsAction", null, "Globals", "<Control>g", "Edit the network globals", OnEditGlobalsActivated),
+				new ActionEntry("EditFunctionsAction", null, "Functions", "<Control>f", "Edit the network custom functions", OnEditFunctionsActivated),
 
 				new ActionEntry("AddStateAction", Studio.Stock.State, null, null, "Add state", OnAddStateActivated),
 				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", OnAddLinkActivated),
