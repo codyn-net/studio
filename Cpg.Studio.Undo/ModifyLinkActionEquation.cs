@@ -36,5 +36,10 @@ namespace Cpg.Studio.Undo
 		public void Merge(IAction other)
 		{
 		}
+		
+		public bool Verify()
+		{
+			return true;
+		}
 	}
 }

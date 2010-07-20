@@ -47,6 +47,11 @@ namespace Cpg.Studio.Undo
 		public virtual void Merge(IAction other)
 		{
 		}
+		
+		public virtual bool Verify()
+		{
+			return true;
+		}
 	}
 }
 

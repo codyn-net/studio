@@ -9,5 +9,7 @@ namespace Cpg.Studio.Undo
 		
 		bool CanMerge(IAction other);
 		void Merge(IAction other);
+		
+		bool Verify();
 	}
 }

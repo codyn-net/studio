@@ -80,5 +80,18 @@ namespace Cpg.Studio.Undo
 				d_actions[i].Merge(grp.d_actions[i]);
 			}
 		}
+		
+		public bool Verify()
+		{
+			foreach (IAction action in d_actions)
+			{
+				if (!action.Verify())
+				{
+					return false;
+				}
+			}
+			
+			return true;
+		}
 	}
 }

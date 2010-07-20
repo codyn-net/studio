@@ -114,8 +114,11 @@ namespace Cpg.Studio.Undo
 		
 		public void Do(IAction action)
 		{
-			Add(action);
-			action.Redo();
+			if (action.Verify())
+			{
+				Add(action);
+				action.Redo();
+			}
 		}
 		
 		public void Clear()

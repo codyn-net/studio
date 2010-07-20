@@ -17,6 +17,13 @@ namespace Cpg.Studio.Undo
 		{
 			Remove();
 		}
+		
+		public override bool Verify()
+		{
+			// Will throw an exception
+			Wrapped.WrappedObject.VerifyRemoveProperty(Name);
+			return true;
+		}
 	}
 }
 
