@@ -1257,31 +1257,57 @@ namespace Cpg.Studio.Widgets
 			Gtk.Application.Quit();
 		}
 		
+		private delegate void ErrorThrowingHandler();
+		
+		private void HandleError(ErrorThrowingHandler handler, string primary)
+		{
+			try
+			{
+				handler();
+			}
+			catch (Exception e)
+			{
+				Message(Gtk.Stock.DialogError, primary, e);
+			}
+		}
+		
 		private void OnPasteActivated(object sender, EventArgs args)
 		{
 			int[] center = d_grid.Center;
-			d_actions.Paste(d_grid.ActiveGroup, d_grid.Selection, center[0], center[1]);
+			
+			HandleError(delegate () {
+				d_actions.Paste(d_grid.ActiveGroup, d_grid.Selection, center[0], center[1]);
+			}, "An error occurred while pasting");
 		}
 		
 		private void OnGroupActivated(object sender, EventArgs args)
 		{
-			d_actions.Group(d_grid.ActiveGroup, d_grid.Selection);
+			HandleError(delegate () {
+				d_actions.Group(d_grid.ActiveGroup, d_grid.Selection);
+			}, "An error occurred while grouping");
 		}
 		
 		private void OnUngroupActivated(object sender, EventArgs args)
 		{
-			d_actions.Ungroup(d_grid.ActiveGroup, d_grid.Selection);
+			HandleError(delegate () {
+				d_actions.Ungroup(d_grid.ActiveGroup, d_grid.Selection);
+			}, "An error occurred while ungrouping");
 		}
 		
 		private void OnAddStateActivated(object sender, EventArgs args)
 		{
 			int[] center = d_grid.Center;
-			d_actions.AddState(d_grid.ActiveGroup, center[0], center[1]);
+			
+			HandleError(delegate () {
+				d_actions.AddState(d_grid.ActiveGroup, center[0], center[1]);
+			}, "An error occurred while adding a state");
 		}
 		
 		private void OnAddLinkActivated(object sender, EventArgs args)
 		{
-			d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection);
+			HandleError(delegate () {
+				d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection);
+			}, "An error occurred while adding a link");
 		}
 		
 		private void SelectFromAction(Undo.IAction action)
@@ -1483,17 +1509,23 @@ namespace Cpg.Studio.Widgets
 		
 		private void OnCutActivated(object sender, EventArgs args)
 		{
-			d_actions.Cut(d_grid.ActiveGroup, d_grid.Selection);
+			HandleError(delegate () {
+				d_actions.Cut(d_grid.ActiveGroup, d_grid.Selection);
+			}, "An error occurred while cutting");
 		}
 		
 		private void OnCopyActivated(object sender, EventArgs args)
 		{
-			d_actions.Copy(d_grid.Selection);
+			HandleError(delegate () {
+				d_actions.Copy(d_grid.Selection);
+			}, "An error occurred while copying");
 		}
 		
 		private void OnDeleteActivated(object sender, EventArgs args)
 		{
-			d_actions.Delete(d_grid.ActiveGroup, d_grid.Selection);
+			HandleError(delegate () {
+				d_actions.Delete(d_grid.ActiveGroup, d_grid.Selection);
+			}, "An error occurred while deleting");
 		}
 		
 		private void DoError(object sender, string error, string message)
