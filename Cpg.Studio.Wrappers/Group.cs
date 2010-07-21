@@ -57,6 +57,11 @@ namespace Cpg.Studio.Wrappers
 			ChildRemoved(this, args.Object);
 		}
 		
+		public bool PropertyIsProxy(string name)
+		{
+			return WrappedObject.PropertyIsProxy(name);
+		}
+		
 		public Group() : this(new Cpg.Group("group", null))
 		{
 		}
