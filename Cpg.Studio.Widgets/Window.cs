@@ -1634,7 +1634,7 @@ namespace Cpg.Studio.Widgets
 			else if (error.LinkAction != null)
 			{
 				title += "»" + error.LinkAction.Target.Name;
-				expression = error.LinkAction.Expression.AsString;
+				expression = error.LinkAction.Equation.AsString;
 			}
 			else if (error.Object is Cpg.Function)
 			{
