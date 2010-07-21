@@ -5,73 +5,22 @@ using System.Drawing;
 namespace Cpg.Studio.Wrappers
 {
 	public class Link : Wrapper
-	{
-		public class Action
-		{
-			Link d_link;
-			LinkAction d_action;
-			
-			public Action(Link link, LinkAction action)
-			{
-				d_link = link;
-				d_action = action;
-			}
-			
-			public Action() : this(null, null)
-			{
-			}
+	{		
+		public delegate void ActionEventHandler(object source, Cpg.LinkAction action);
 
-			public string Target
-			{
-				get
-				{
-					return d_action.Target.Name;
-				}
-				set
-				{
-					d_action = d_link.UpdateAction(this, value, Equation);
-				}
-			}
-			
-			public Cpg.Property Property
-			{
-				get
-				{
-					return d_action.Target;
-				}
-			}
-			
-			public LinkAction LinkAction
-			{
-				get
-				{
-					return d_action;
-				}
-			}
-
-			public string Equation
-			{
-				get
-				{
-					return d_action.Expression.AsString;
-				}
-				set
-				{
-					d_action = d_link.UpdateAction(this, d_action.Target.Name, value);
-				}
-			}
-		}
+		public event ActionEventHandler ActionAdded = delegate {};
+		public event ActionEventHandler ActionRemoved = delegate {};
 		
-		Wrappers.Wrapper d_from;
-		Wrappers.Wrapper d_to;
+		private Wrappers.Wrapper d_from;
+		private Wrappers.Wrapper d_to;
 		
-		int d_offset;
+		private int d_offset;
 		
-		double[] d_selectedColor;
-		double[] d_normalColor;
-		double[] d_hoverColor;
+		private double[] d_selectedColor;
+		private double[] d_normalColor;
+		private double[] d_hoverColor;
 		
-		float d_arrowSize;
+		private float d_arrowSize;
 		
 		public Link(Cpg.Link obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
 		{
@@ -98,6 +47,19 @@ namespace Cpg.Studio.Wrappers
 			
 			obj.AddNotification("to", OnToChanged);
 			obj.AddNotification("from", OnFromChanged);
+			
+			obj.ActionAdded += HandleActionAdded;
+			obj.ActionRemoved += HandleActionRemoved;
+		}
+
+		private void HandleActionRemoved(object o, ActionRemovedArgs args)
+		{
+			ActionRemoved(this, args.Action);
+		}
+
+		private void HandleActionAdded(object o, ActionAddedArgs args)
+		{
+			ActionAdded(this, args.Action);
 		}
 		
 		private void UpdateFrom()
@@ -208,67 +170,36 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Action[] Actions
+		public Cpg.LinkAction[] Actions
 		{
 			get
 			{
-				List<Action> actions = new List<Action>();
-				
-				foreach (LinkAction action in (d_object as Cpg.Link).Actions)
-				{
-					actions.Add(new Action(this, action));
-				}
-				
-				return actions.ToArray();
+				return WrappedObject.Actions;
 			}
 		}
 		
-		public Action AddAction(string property, string expression)
+		public Cpg.LinkAction AddAction(string property, Cpg.Expression expression)
 		{
 			Cpg.Property prop = d_to[property];
-			Action action;
 			
 			if (prop != null)
 			{
-				action = new Action(this, WrappedObject.AddAction(prop, expression));
+				return WrappedObject.AddAction(prop, expression);
 			}
 			else
 			{
-				action = null;
-			}
-			
-			return action;
-		}
-		
-		public Action GetAction(string target)
-		{
-			Cpg.LinkAction ret = WrappedObject.GetAction(target);
-			
-			if (ret == null)
-			{
 				return null;
 			}
-			
-			return new Action(this, ret);
 		}
 		
-		public bool RemoveAction(Action action)
+		public Cpg.LinkAction GetAction(string target)
 		{
-			return (d_object as Cpg.Link).RemoveAction(action.LinkAction);
+			return WrappedObject.GetAction(target);
 		}
 		
-		public Cpg.LinkAction UpdateAction(Action action, string property, string expression)
+		public bool RemoveAction(Cpg.LinkAction action)
 		{
-			Cpg.Link link = d_object as Cpg.Link;
-			Cpg.Property prop = link.To.Property(property);
-			
-			if (prop == null)
-				return action.LinkAction;
-				
-			if (!RemoveAction(action))
-				return action.LinkAction;
-
-			return link.AddAction(prop, expression);
+			return WrappedObject.RemoveAction(action);
 		}
 		
 		public new Cpg.Link WrappedObject
