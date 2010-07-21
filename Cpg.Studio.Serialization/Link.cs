@@ -7,48 +7,7 @@ namespace Cpg.Studio.Serialization
 {
 	[XmlType("link")]
 	public class Link : Object
-	{
-		[XmlType("action")]
-		public class Action
-		{
-			Wrappers.Link.Action d_action;
-			
-			public Action(Wrappers.Link.Action action)
-			{
-				d_action = action;
-			}
-			
-			public Action() : this(null)
-			{
-			}
-			
-			[XmlAttribute("target")]
-			public string Target
-			{
-				get
-				{
-					return d_action.Target;
-				}
-				set
-				{
-					// NOOP
-				}
-			}
-			
-			[XmlText()]
-			public string Equation
-			{
-				get
-				{
-					return d_action.Equation;
-				}
-				set
-				{
-					// NOOP
-				}
-			}
-		}
-		
+	{	
 		public Link(Wrappers.Link link) : base(link)
 		{
 		}
@@ -72,53 +31,6 @@ namespace Cpg.Studio.Serialization
 			get
 			{
 				return As<Wrappers.Link>();
-			}
-		}
-		
-		[XmlAttribute("from")]
-		public string From
-		{
-			get
-			{
-				return As<Wrappers.Link>().From.Id;
-			}
-			set
-			{
-				// NOOP
-			}
-		}
-		
-		[XmlAttribute("to")]
-		public string To
-		{
-			get
-			{
-				return As<Wrappers.Link>().To.Id;
-			}
-			set
-			{
-				// NOOP
-			}
-		}
-		
-		[XmlElement("action", typeof(Action))]
-		public Action[] Actions
-		{
-			get
-			{
-				Wrappers.Link link = As<Wrappers.Link>();
-				List<Action> actions = new List<Action>();
-				
-				foreach (Wrappers.Link.Action action in link.Actions)
-				{
-					actions.Add(new Action(action));
-				}
-				
-				return actions.ToArray();
-			}
-			set
-			{
-				// NOOP
 			}
 		}
 	}
