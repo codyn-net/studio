@@ -8,6 +8,10 @@ namespace Cpg.Studio.Undo
 		{
 		}
 		
+		public AddProperty(Wrappers.Wrapper wrapped, Cpg.Property prop) : this(wrapped, prop.Name, prop.Expression.AsString, prop.Flags)
+		{
+		}
+		
 		public void Undo()
 		{
 			Remove();
