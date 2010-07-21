@@ -1323,7 +1323,16 @@ namespace Cpg.Studio.Widgets
 				
 				if (obj.Wrapped.Parent != null)
 				{
-					d_grid.CenterView(obj.Wrapped);
+					if (obj is Undo.MoveObject)
+					{
+						d_grid.ActiveGroup = obj.Wrapped.Parent;
+						d_grid.UnselectAll();
+						d_grid.Select(obj.Wrapped);
+					}
+					else
+					{
+						d_grid.CenterView(obj.Wrapped);
+					}
 				}
 			}
 			else if (action is Undo.AddGroup)
@@ -1333,6 +1342,22 @@ namespace Cpg.Studio.Widgets
 				if (obj.Group.Parent != null)
 				{
 					d_grid.CenterView(obj.Group);
+				}
+			}
+			else if (action is Undo.Ungroup)
+			{
+				Undo.Ungroup obj = (Undo.Ungroup)action;
+				
+				d_grid.ActiveGroup = obj.Parent;
+				d_grid.CenterView();
+			}
+			else if (action is Undo.LinkAction)
+			{
+				Undo.LinkAction obj = (Undo.LinkAction)action;
+				
+				if (obj.Link.Parent != null)
+				{
+					d_grid.CenterView(obj.Link);
 				}
 			}
 		}
