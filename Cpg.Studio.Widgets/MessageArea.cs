@@ -77,9 +77,6 @@ namespace Cpg.Studio.Widgets
 			
 			vbox.PackStart(sec, false, true, 0);
 			
-			prim.StyleSet += ret.OnStyleSet;
-			sec.StyleSet += ret.OnStyleSet;
-			
 			content.ShowAll();
 			
 			ret.Contents = content;
