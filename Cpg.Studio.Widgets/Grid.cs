@@ -8,18 +8,6 @@ namespace Cpg.Studio.Widgets
 {
 	public class Grid : DrawingArea
 	{
-		struct StackItem
-		{
-			public Wrappers.Group Group;
-			public int GridSize;
-			
-			public StackItem(Wrappers.Group group, int gridSize)
-			{
-				this.Group = group;
-				this.GridSize = gridSize;
-			}
-		}
-		
 		public delegate void ObjectEventHandler(object source, Wrappers.Wrapper obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
 		public delegate void ErrorHandler(object source, string error, string message);
