@@ -182,8 +182,9 @@ namespace Cpg.Studio.Widgets
 				grp.ChildAdded += HandleActiveGroupChildAdded;
 				grp.ChildRemoved += HandleActiveGroupChildRemoved;
 			}
+			
+			UnselectAll();
 
-			d_selection.Clear();
 			d_activeGroup = grp;
 			
 			QueueDraw();
