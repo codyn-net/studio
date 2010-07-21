@@ -510,10 +510,27 @@ namespace Cpg.Studio.Widgets
 		{
 			SetActiveGroup(obj.Parent);
 			
+			UnselectAll();
+			Select(obj);
+			
 			d_gridSize = d_defaultGridSize;
+			
+			double x;
+			double y;
+			
+			if (obj is Wrappers.Link)
+			{
+				Wrappers.Link link = (Wrappers.Link)obj;
+				Utils.MeanPosition(new Wrappers.Wrapper[] {link.From, link.To}, out x, out y);
+			}
+			else
+			{
+				x = obj.Allocation.X;
+				y = obj.Allocation.Y;
+			}
 
-			ActiveGroup.X = (int)((obj.Allocation.X * d_gridSize) - (Allocation.Width / 2.0f));
-			ActiveGroup.Y = (int)((obj.Allocation.Y * d_gridSize) - (Allocation.Height / 2.0f));
+			ActiveGroup.X = (int)(x * d_gridSize - Allocation.Width / 2.0f);
+			ActiveGroup.Y = (int)(y * d_gridSize - Allocation.Height / 2.0f);
 
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
