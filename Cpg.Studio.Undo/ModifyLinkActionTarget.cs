@@ -2,13 +2,13 @@ using System;
 
 namespace Cpg.Studio.Undo
 {
-	public class ModifyLinkActionTarget : IAction
+	public class ModifyLinkActionTarget : Object, IAction
 	{
 		private Wrappers.Link d_link;
 		private string d_oldTarget;
 		private string d_newTarget;
 
-		public ModifyLinkActionTarget(Wrappers.Link link, string oldTarget, string newTarget)
+		public ModifyLinkActionTarget(Wrappers.Link link, string oldTarget, string newTarget) : base(link.Parent, link)
 		{
 			d_link = link;
 			d_oldTarget = oldTarget;
@@ -17,26 +17,12 @@ namespace Cpg.Studio.Undo
 		
 		public void Undo()
 		{
-			d_link.GetAction(d_newTarget).Target = d_oldTarget;
+			d_link.GetAction(d_newTarget).Target = d_link.To.Property(d_oldTarget);
 		}
 		
 		public void Redo()
 		{
-			d_link.GetAction(d_oldTarget).Target = d_newTarget;
-		}
-		
-		public bool CanMerge(IAction other)
-		{
-			return false;
-		}
-		
-		public void Merge(IAction other)
-		{
-		}
-		
-		public bool Verify()
-		{
-			return true;
+			d_link.GetAction(d_oldTarget).Target = d_link.To.Property(d_newTarget);
 		}
 	}
 }

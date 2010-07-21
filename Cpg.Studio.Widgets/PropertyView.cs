@@ -26,14 +26,20 @@ namespace Cpg.Studio.Widgets
 		private ListStore d_comboStore;
 		private ListStore d_actionStore;
 		private TreeView d_actionView;
-		private Button d_removeActionButton;
 		private ListStore d_flagsStore;
 		private List<KeyValuePair<string, Cpg.PropertyFlags>> d_flaglist;
 		private Actions d_actions;
 		private AddRemovePopup d_propertyControls;
+		private ListStore d_proxyStore;
+		private ComboBox d_proxyCombo;
+		private AddRemovePopup d_actionControls;
+		private bool d_selectAction;
 		
 		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base()
 		{
+			d_selectProperty = false;
+			d_selectAction = false;
+
 			d_actions = actions;
 
 			Initialize(obj);
@@ -41,7 +47,6 @@ namespace Cpg.Studio.Widgets
 		
 		public PropertyView(Actions actions) : this(actions, null)
 		{
-			d_selectProperty = false;
 		}
 		
 		private void AddEquationsUI()
@@ -59,102 +64,120 @@ namespace Cpg.Studio.Widgets
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			vw.ShadowType = ShadowType.EtchedIn;
 			
-			d_actionStore = new Gtk.ListStore(typeof(Wrappers.Link.Action), typeof(string), typeof(string));
+			d_actionStore = new Gtk.ListStore(typeof(Cpg.LinkAction));
 			d_actionView = new TreeView(d_actionStore);
 			
 			vw.Add(d_actionView);
 			
 			CellRendererCombo comboRenderer = new CellRendererCombo();
-			d_comboStore = new ListStore(typeof(string));
+			d_comboStore = new ListStore(typeof(string), typeof(Cpg.Property));
 			comboRenderer.Model = d_comboStore;
 			comboRenderer.TextColumn = 0;
 			comboRenderer.Editable = true;
 			comboRenderer.HasEntry = false;
 			
-			comboRenderer.Edited += delegate(object o, EditedArgs args) {
-				TreeIter iter;
-				
-				if (!d_actionStore.GetIter(out iter, new TreePath(args.Path)))
-				{
-					return;
-				}
-				
-				Wrappers.Link.Action action = d_actionStore.GetValue(iter, 0) as Wrappers.Link.Action;
-				
-				if (action.Target == args.NewText)
-				{
-					return;
-				}
+			comboRenderer.Edited += HandleLinkActionTargetEdited;
 
-				action.Target = args.NewText;
-				d_actionStore.SetValue(iter, 1, action.Target);
-			};
-
-			Gtk.TreeViewColumn column = new Gtk.TreeViewColumn("Target", comboRenderer, "text", 1);
+			Gtk.TreeViewColumn column = new Gtk.TreeViewColumn("Target", comboRenderer);
 			column.MinWidth = 80;
+			
+			column.SetCellDataFunc(comboRenderer, HandleRenderActionTarget);
+			
 			d_actionView.AppendColumn(column);
 			
 			CellRendererText renderer = new CellRendererText();
 			renderer.Editable = true;
 			
-			renderer.Edited += delegate(object o, EditedArgs args) {
-				TreeIter iter;
-				
-				if (!d_actionStore.GetIter(out iter, new TreePath(args.Path)))
-				{
-					return;
-				}
-				
-				Wrappers.Link.Action action = d_actionStore.GetValue(iter, 0) as Wrappers.Link.Action;
-				
-				if (action.Equation == args.NewText)
-				{
-					return;
-				}
-				
-				action.Equation = args.NewText;
-				d_actionStore.SetValue(iter, 2, action.Equation);
-			};
+			renderer.Edited += HandleLinkActionEquationEdited;
 			
-			column = new Gtk.TreeViewColumn("Equation", renderer, "text", 2);
+			column = new Gtk.TreeViewColumn("Equation", renderer);
+			column.SetCellDataFunc(renderer, HandleRenderActionEquation);
+
 			d_actionView.AppendColumn(column);
 			
 			vbox.PackStart(vw, true, true, 0);
-			
-			HBox hbox = new HBox(false, 3);
-			vbox.PackStart(hbox, false, false, 0);
-			
-			d_removeActionButton = new Button();
-			d_removeActionButton.Add(new Image(Gtk.Stock.Remove, IconSize.Menu));
-			d_removeActionButton.Sensitive = false;
-			d_removeActionButton.Clicked += DoRemoveAction;
-			hbox.PackStart(d_removeActionButton, false, false ,0);
 
-			Button but = new Button();
-			but.Add(new Image(Gtk.Stock.Add, IconSize.Menu));
-			but.Clicked += DoAddAction;
-			hbox.PackStart(but, false, false, 0);
+			d_actionControls = new AddRemovePopup(d_actionView);
+			d_actionControls.AddButton.Clicked += DoAddAction;
+			d_actionControls.RemoveButton.Clicked += DoRemoveAction;
+			
+			UpdateActionSensitivity();
 			
 			Wrappers.Link link = d_object as Wrappers.Link;
+
 			link.To.PropertyAdded += DoTargetPropertyAdded;
 			link.To.PropertyRemoved += DoTargetPropertyRemoved;
 			
 			foreach (Cpg.Property prop in link.To.Properties)
 			{
-				d_comboStore.AppendValues(prop);
+				d_comboStore.AppendValues(prop.Name, prop);
 			}
 			
-			foreach (Wrappers.Link.Action action in link.Actions)
+			foreach (Cpg.LinkAction action in link.Actions)
 			{
-				d_actionStore.AppendValues(action, action.Target, action.Equation);
+				AddLinkAction(action);
 			}
 			
 			d_actionView.Selection.Changed += DoActionSelectionChanged;
 		}
+		
+		private void HandleRenderActionTarget(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
+		{
+			Cpg.LinkAction action = LinkActionFromStore(piter);
+			CellRendererText renderer = (CellRendererText)cell;
+			
+			renderer.Text = action.Target.Name;
+		}
+		
+		private void HandleRenderActionEquation(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
+		{
+			Cpg.LinkAction action = LinkActionFromStore(piter);
+			CellRendererText renderer = (CellRendererText)cell;
+			
+			renderer.Text = action.Equation.AsString;
+		}
+		
+		private void HandleLinkActionTargetEdited(object o, EditedArgs args)
+		{
+			TreeIter iter;
+			
+			if (!d_actionStore.GetIter(out iter, new TreePath(args.Path)))
+			{
+				return;
+			}
+			
+			Cpg.LinkAction action = LinkActionFromStore(iter);
+			
+			if (action.Target.Name == args.NewText)
+			{
+				return;
+			}
+
+			d_actions.Do(new Undo.ModifyLinkActionTarget((Wrappers.Link)d_object, action.Target.Name, args.NewText));
+		}
+		
+		private void HandleLinkActionEquationEdited(object o, EditedArgs args)
+		{
+			TreeIter iter;
+			
+			if (!d_actionStore.GetIter(out iter, new TreePath(args.Path)))
+			{
+				return;
+			}
+			
+			Cpg.LinkAction action = LinkActionFromStore(iter);
+			
+			if (action.Equation.AsString == args.NewText)
+			{
+				return;
+			}
+			
+			d_actions.Do(new Undo.ModifyLinkActionEquation((Wrappers.Link)d_object, action.Target.Name, args.NewText));
+		}
 
 		private void DoTargetPropertyAdded(Wrappers.Wrapper obj, Cpg.Property prop)
 		{
-			d_comboStore.AppendValues(prop);
+			d_comboStore.AppendValues(prop.Name, prop);
 		}
 		
 		private void DoTargetPropertyRemoved(Wrappers.Wrapper obj, Cpg.Property prop)
@@ -168,7 +191,7 @@ namespace Cpg.Studio.Widgets
 			
 			do
 			{
-				Cpg.Property val = d_comboStore.GetValue(iter, 0) as Cpg.Property;
+				Cpg.Property val = d_comboStore.GetValue(iter, 1) as Cpg.Property;
 				
 				if (val == prop)
 				{
@@ -212,6 +235,241 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private void AddGroupUI(VBox vbox)
+		{
+			HBox hbox = new HBox(false, 6);
+			hbox.Show();
+			
+			Label label = new Label("Proxy:");
+			label.Show();
+			
+			hbox.PackStart(label, false, false, 0);
+			
+			ListStore store = new ListStore(typeof(string), typeof(Wrappers.Wrapper), typeof(bool));
+			Wrappers.Group grp = (Wrappers.Group)d_object;
+			List<Wrappers.Wrapper> children = new List<Wrappers.Wrapper>(grp.Children);
+			
+			children.RemoveAll(item => item is Wrappers.Link);
+			children.Sort(delegate (Wrappers.Wrapper a, Wrappers.Wrapper b) {
+				return a.Id.CompareTo(b.Id);
+			});
+			
+			ComboBox box = new ComboBox(store);
+			TreeIter iter;
+			
+			iter = store.AppendValues("None", null, false);
+			
+			if (grp.Proxy == null)
+			{
+				box.SetActiveIter(iter);	
+			}
+
+			store.AppendValues(null, null, true);
+			
+			foreach (Wrappers.Wrapper child in children)
+			{
+				iter = store.AppendValues(child.Id, child, false);
+				
+				if (child == grp.Proxy)
+				{
+					box.SetActiveIter(iter);
+				}
+			}
+
+			box.RowSeparatorFunc = delegate (TreeModel model, TreeIter it) {
+				return (bool)model.GetValue(it, 2);
+			};
+			
+			box.Changed += OnChangeProxy;
+			
+			box.Show();
+
+			CellRendererText renderer = new CellRendererText();
+
+			box.PackStart(renderer, true);
+			box.AddAttribute(renderer, "text", 0);
+			
+			hbox.PackStart(box, false, false, 0);
+			vbox.PackStart(hbox, false, false, 0);
+			
+			d_proxyStore = store;
+			d_proxyCombo = box;
+		}
+		
+		private void HandleProxyChanged(object sender, GLib.NotifyArgs args)
+		{
+			TreeIter iter;
+
+			if (!d_proxyStore.GetIterFirst(out iter))
+			{
+				return;
+			}
+			
+			Wrappers.Group grp = (Wrappers.Group)d_object;
+			
+			do
+			{
+				Wrappers.Wrapper proxy = (Wrappers.Wrapper)d_proxyStore.GetValue(iter, 1);
+				
+				if (proxy == grp.Proxy)
+				{
+					d_proxyCombo.Changed -= OnChangeProxy;
+					d_proxyCombo.SetActiveIter(iter);
+					d_proxyCombo.Changed += OnChangeProxy;
+					return;
+				}
+			} while (d_proxyStore.IterNext(ref iter));
+			
+			d_proxyCombo.Active = 0;
+		}
+
+		private void OnChangeProxy(object sender, EventArgs e)
+		{
+			Wrappers.Wrapper proxy;
+			TreeIter iter;
+
+			if (!d_proxyCombo.GetActiveIter(out iter))
+			{
+				proxy = null;
+			}
+			else
+			{
+				proxy = (Wrappers.Wrapper)d_proxyStore.GetValue(iter, 1);
+			}
+			
+			d_actions.Do(new Undo.ModifyProxy((Wrappers.Group)d_object, proxy));
+		}
+		
+		private void Disconnect()
+		{
+			if (d_object == null)
+			{
+				return;
+			}
+			
+			d_object.PropertyAdded -= DoPropertyAdded;
+			d_object.PropertyRemoved -= DoPropertyRemoved;
+			
+			foreach (TreeIter iter in ForeachProperty())
+			{
+				Cpg.Property property = PropertyFromStore(iter);
+
+				property.RemoveNotification("expression", HandlePropertyChanged);
+				property.RemoveNotification("flags", HandlePropertyChanged);
+				property.RemoveNotification("name", HandlePropertyChanged);
+			}
+			
+			if (d_object is Wrappers.Group)
+			{
+				Wrappers.Group grp = (Wrappers.Group)d_object;
+				
+				grp.WrappedObject.RemoveNotification("proxy", HandleProxyChanged);
+			}
+			else if (d_object is Wrappers.Link)
+			{
+				Wrappers.Link link = (Wrappers.Link)d_object;
+				
+				link.ActionAdded -= HandleLinkActionAdded;
+				link.ActionRemoved -= HandleLinkActionRemoved;
+				
+				foreach (TreeIter iter in ForeachLinkAction())
+				{
+					Cpg.LinkAction action = LinkActionFromStore(iter);
+	
+					action.RemoveNotification("target", HandleLinkActionChanged);
+					action.RemoveNotification("equation", HandleLinkActionChanged);
+				}
+			}
+		}
+		
+		private void Connect()
+		{
+			if (d_object == null)
+			{
+				return;
+			}
+			
+			d_object.PropertyAdded += DoPropertyAdded;
+			d_object.PropertyRemoved += DoPropertyRemoved;
+			
+			if (d_object is Wrappers.Group)
+			{
+				Wrappers.Group grp = (Wrappers.Group)d_object;
+				
+				grp.WrappedObject.AddNotification("proxy", HandleProxyChanged);
+			}
+			else if (d_object is Wrappers.Link)
+			{
+				Wrappers.Link link = (Wrappers.Link)d_object;
+				
+				link.ActionAdded += HandleLinkActionAdded;
+				link.ActionRemoved += HandleLinkActionRemoved;
+			}
+		}
+		
+		private bool FindLinkAction(Cpg.LinkAction action, out TreePath path, out TreeIter iter)
+		{
+			path = null;
+			
+			if (!d_actionStore.GetIterFirst(out iter))
+			{
+				return false;
+			}
+			
+			do
+			{
+				Cpg.LinkAction ac = LinkActionFromStore(iter);
+				
+				if (ac == action)
+				{
+					path = d_actionStore.GetPath(iter);
+					return true;
+				}
+			} while (d_actionStore.IterNext(ref iter));
+			
+			return false;
+		}
+		
+		private bool FindLinkAction(Cpg.LinkAction action, out TreeIter iter)
+		{
+			TreePath path;
+			return FindLinkAction(action, out path, out iter);
+		}
+
+		private void HandleLinkActionRemoved(object source, Cpg.LinkAction action)
+		{
+			TreeIter iter;
+
+			if (FindLinkAction(action, out iter))
+			{
+				d_actionStore.Remove(ref iter);
+			}
+		}
+
+		private void HandleLinkActionAdded(object source, Cpg.LinkAction action)
+		{
+			AddLinkAction(action);
+		}
+		
+		private void AddLinkAction(Cpg.LinkAction action)
+		{
+			TreeIter iter;
+			
+			iter = d_actionStore.AppendValues(action);
+			
+			if (d_selectAction)
+			{
+				d_actionView.Selection.UnselectAll();
+				d_actionView.Selection.SelectIter(iter);
+				
+				TreePath path = d_actionStore.GetPath(iter);					
+				d_actionView.SetCursor(path, d_actionView.GetColumn(0), true);
+			}
+			
+			action.AddNotification("target", HandleLinkActionChanged);
+			action.AddNotification("equation", HandleLinkActionChanged);
+		}
+		
 		public void Initialize(Wrappers.Wrapper obj)
 		{
 			Clear();
@@ -228,11 +486,20 @@ namespace Cpg.Studio.Widgets
 			Gtk.VBox vbox = new Gtk.VBox(false, 3);
 			Add1(vbox);
 			
-			/*Gtk.Label label = new Label("<b>Properties</b>");
-			label.Xalign = 0;
-			label.UseMarkup = true;
-			
-			vbox.PackStart(label, false, true, 0);*/
+			if (d_object != null && d_object is Wrappers.Group)
+			{
+				AddGroupUI(vbox);
+			}
+			else if (d_object != null && d_object is Wrappers.Link)
+			{
+				Label label = new Label("<b>Properties</b>");
+				label.UseMarkup = true;
+				label.Xalign = 0;
+
+				label.Show();
+				
+				vbox.PackStart(label, false, true, 0);
+			}
 			
 			ScrolledWindow vw = new ScrolledWindow();
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
@@ -306,12 +573,10 @@ namespace Cpg.Studio.Widgets
 
 			d_treeview.Selection.Changed += DoSelectionChanged;
 			
+			Connect();
+			
 			if (d_object != null)
 			{
-				d_object.PropertyAdded += DoPropertyAdded;
-				d_object.PropertyChanged += DoPropertyChanged;
-				d_object.PropertyRemoved += DoPropertyRemoved;
-			
 				InitStore();
 				Sensitive = true;
 			}
@@ -385,6 +650,24 @@ namespace Cpg.Studio.Widgets
 			{
 				AddProperty(prop);
 			}
+		}
+		
+		private Cpg.LinkAction LinkActionFromStore(string path)
+		{
+			return LinkActionFromStore(new TreePath(path));
+		}
+		
+		private Cpg.LinkAction LinkActionFromStore(TreePath path)
+		{
+			TreeIter iter;
+			
+			d_store.GetIter(out iter, path);
+			return LinkActionFromStore(iter);
+		}
+		
+		private Cpg.LinkAction LinkActionFromStore(TreeIter iter)
+		{
+			return (Cpg.LinkAction)d_actionStore.GetValue(iter, 0);
 		}
 		
 		private Cpg.Property PropertyFromStore(string path)
@@ -491,16 +774,21 @@ namespace Cpg.Studio.Widgets
 			UpdateSensitivity();			
 		}
 		
-		private void DoActionSelectionChanged(object source, EventArgs args)
+		private void UpdateActionSensitivity()
 		{
 			if (d_actionView.Selection.CountSelectedRows() == 0)
 			{
-				d_removeActionButton.Sensitive = false;
+				d_actionControls.RemoveButton.Sensitive = false;
 			}
 			else
 			{
-				d_removeActionButton.Sensitive = true;
+				d_actionControls.RemoveButton.Sensitive = true;
 			}
+		}
+		
+		private void DoActionSelectionChanged(object source, EventArgs args)
+		{
+			UpdateActionSensitivity();
 		}
 		
 		private void HandleAddBinding()
@@ -534,6 +822,19 @@ namespace Cpg.Studio.Widgets
 			prop.AddNotification("expression", HandlePropertyChanged);
 			prop.AddNotification("flags", HandlePropertyChanged);
 			prop.AddNotification("name", HandlePropertyChanged);
+		}
+		
+		private void HandleLinkActionChanged(object source, GLib.NotifyArgs args)
+		{
+			Cpg.LinkAction action = (Cpg.LinkAction)source;
+			
+			TreeIter iter;
+			TreePath path;
+			
+			if (FindLinkAction(action, out path, out iter))
+			{
+				d_actionStore.EmitRowChanged(path, iter);
+			}
 		}
 		
 		private void HandlePropertyChanged(object source, GLib.NotifyArgs args)
@@ -591,7 +892,6 @@ namespace Cpg.Studio.Widgets
 
 			try
 			{
-				// FIXME: if one fails, the others are still removed, but not undoable!
 				d_actions.Do(new Undo.Group(actions));
 			}
 			catch (GLib.GException err)
@@ -608,27 +908,23 @@ namespace Cpg.Studio.Widgets
 			List<Cpg.Property> props = new List<Cpg.Property>(link.To.Properties);
 		
 			// Remove properties that already have actions
-			foreach (Wrappers.Link.Action ac in link.Actions)
+			foreach (Cpg.LinkAction ac in link.Actions)
 			{
-				if (props.Contains(ac.Property))
+				if (props.Contains(ac.Target))
 				{
-					props.Remove(ac.Property);
+					props.Remove(ac.Target);
 				}
 			}
 			
 			if (props.Count == 0)
 			{
+				Error(this, new Exception("There are no available target properties in the link target"));
 				return;
 			}
 			
-			Wrappers.Link.Action action = link.AddAction(props[0].Name, "");
-			TreeIter iter = d_actionStore.AppendValues(action, action.Target, action.Equation);
-			
-			TreePath path = d_actionStore.GetPath(iter);
-			d_actionView.Selection.UnselectAll();
-			
-			d_actionView.Selection.SelectPath(path);
-			d_actionView.SetCursor(path, d_actionView.Columns[0], true);
+			d_selectAction = true;
+			d_actions.Do(new Undo.AddLinkAction(link, props[0].Name, ""));
+			d_selectAction = false;
 		}
 		
 		private void DoRemoveAction(object source, EventArgs args)
@@ -637,22 +933,48 @@ namespace Cpg.Studio.Widgets
 			TreeIter iter;
 			
 			if (!d_actionView.Selection.GetSelected(out model, out iter))
-				return;
-			
-			Wrappers.Link.Action val = model.GetValue(iter, 0) as Wrappers.Link.Action;	
-	
-			if ((d_object as Wrappers.Link).RemoveAction(val))
 			{
-				if (d_actionStore.Remove(ref iter))
-				{
-					d_actionView.Selection.SelectIter(iter);
-				}
+				return;
 			}
+			
+			Cpg.LinkAction val = LinkActionFromStore(iter);
+	
+			d_actions.Do(new Undo.RemoveLinkAction((Wrappers.Link)d_object, val));
 		}
 		
 		private void DoPropertyAdded(Wrappers.Wrapper obj, Cpg.Property prop)
 		{
 			AddProperty(prop);
+		}
+		
+		private IEnumerable<TreeIter> ForeachLinkAction()
+		{
+			TreeIter iter;
+
+			if (!d_actionStore.GetIterFirst(out iter))
+			{
+				return false;
+			}
+			
+			do
+			{
+				yield return iter;
+			} while (d_actionStore.IterNext(ref iter));
+		}
+		
+		private IEnumerable<TreeIter> ForeachProperty()
+		{
+			TreeIter iter;
+
+			if (!d_store.GetIterFirst(out iter))
+			{
+				return false;
+			}
+			
+			do
+			{
+				yield return iter;
+			} while (d_store.IterNext(ref iter));
 		}
 		
 		private bool FindProperty(string name, out TreePath path, out TreeIter iter)
@@ -711,6 +1033,8 @@ namespace Cpg.Studio.Widgets
 		
 		private void Clear()
 		{
+			Disconnect();
+
 			while (Children.Length > 0)
 			{
 				Remove(Children[0]);
@@ -746,9 +1070,9 @@ namespace Cpg.Studio.Widgets
 			
 			do
 			{
-				Wrappers.Link.Action o = d_actionStore.GetValue(iter, 0) as Wrappers.Link.Action;
+				Cpg.LinkAction o = LinkActionFromStore(iter);
 				
-				if (o.LinkAction.Handle == action.Handle)
+				if (o == action)
 				{
 					d_actionView.Selection.SelectIter(iter);
 					return;
