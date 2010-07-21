@@ -166,7 +166,7 @@ namespace Cpg.Studio
 			column.MinWidth = 75;
 
 			d_treeview.AppendColumn(column);			
-			ScrolledWindow vw = new ScrolledWindow();
+			ScrolledWindow vw = new Widgets.ScrolledWindow();
 
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			vw.ShadowType = ShadowType.EtchedIn;
@@ -181,7 +181,13 @@ namespace Cpg.Studio
 			HBox hbox = new HBox(false, 3);
 			hbox.Show();
 			
-			PackStart(hbox, false, false, 0);
+			Alignment align = new Alignment(0, 0, 1, 1);
+			align.SetPadding(0, 0, 6, 0);
+			align.Show();
+			
+			align.Add(hbox);
+			
+			PackStart(align, false, false, 0);
 
 			d_treeview.KeyPressEvent += DoTreeViewKeyPress;
 			
@@ -241,7 +247,7 @@ namespace Cpg.Studio
 
 			d_pieceTreeview.AppendColumn(column);
 			
-			vw = new ScrolledWindow();
+			vw = new Widgets.ScrolledWindow();
 
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			vw.ShadowType = ShadowType.EtchedIn;
@@ -282,7 +288,7 @@ namespace Cpg.Studio
 			but.Clicked += DoInterpolate;
 			but.ShowAll();
 			
-			hbox.PackEnd(but, false, false, 0);
+			hbox.PackEnd(but, false, false, 6);
 
 			d_pieceTreeview.NodeSelection.Changed += DoPieceSelectionChanged;
 			d_paned.Add2(vbox);

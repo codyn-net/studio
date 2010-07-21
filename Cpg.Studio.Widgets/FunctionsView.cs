@@ -181,7 +181,13 @@ namespace Cpg.Studio.Widgets
 			HBox hbox = new HBox(false, 3);
 			hbox.Show();
 			
-			PackStart(hbox, false, false, 0);
+			Alignment align = new Alignment(0, 0, 1, 1);
+			align.Show();
+
+			align.SetPadding(0, 0, 6, 0);
+			align.Add(hbox);
+			
+			PackStart(align, false, false, 0);
 
 			d_treeview.KeyPressEvent += DoTreeViewKeyPress;
 			
@@ -191,7 +197,7 @@ namespace Cpg.Studio.Widgets
 			d_removeButton.Clicked += DoRemove;
 			d_removeButton.ShowAll();
 
-			hbox.PackStart(d_removeButton, false, false ,0);
+			hbox.PackStart(d_removeButton, false, false, 0);
 
 			Button but = new Button();
 			but.Add(new Image(Gtk.Stock.Add, IconSize.Menu));
