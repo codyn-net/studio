@@ -2,7 +2,7 @@ using System;
 
 namespace Cpg.Studio.Undo
 {
-	public class AttachLink : IAction
+	public class AttachLink : Object, IAction
 	{
 		private Wrappers.Wrapper d_from;
 		private Wrappers.Wrapper d_prevFrom;
@@ -10,7 +10,7 @@ namespace Cpg.Studio.Undo
 		private Wrappers.Wrapper d_prevTo;
 		private Wrappers.Link d_link;
 
-		public AttachLink(Wrappers.Link link, Wrappers.Wrapper from, Wrappers.Wrapper to)
+		public AttachLink(Wrappers.Link link, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(link.Parent, link)
 		{
 			d_from = from;
 			d_to = to;
@@ -27,20 +27,6 @@ namespace Cpg.Studio.Undo
 		public void Redo()
 		{
 			d_link.Attach(d_to, d_from);
-		}
-		
-		public bool Verify()
-		{
-			return true;
-		}
-		
-		public bool CanMerge(IAction other)
-		{
-			return false;
-		}
-		
-		public void Merge(IAction other)
-		{
 		}
 	}
 }
