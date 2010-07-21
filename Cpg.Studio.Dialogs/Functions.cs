@@ -27,19 +27,31 @@ namespace Cpg.Studio.Dialogs
 		
 		private void InitUi()
 		{
-			Notebook notebook = new Notebook();
+			Widgets.Notebook notebook = new Widgets.Notebook();
 			notebook.Show();
 			notebook.BorderWidth = 6;
 			
 			FunctionsView fv = new FunctionsView(d_network);
 			fv.Show();
+
+			Alignment align = new Alignment(0, 0, 1, 1);
+			align.SetPadding(6, 6, 0, 0);
+			align.Show();
 			
-			notebook.AppendPage(fv, new Label("Functions"));
+			align.Add(fv);
+
+			notebook.AppendPage(align, new Label("Functions"));
 			
 			PolynomialsView pv = new PolynomialsView(d_network);
 			pv.Show();
 			
-			notebook.AppendPage(pv, new Label("Polynomials"));
+			align = new Alignment(0, 0, 1, 1);
+			align.SetPadding(6, 6, 0, 0);
+			align.Show();
+			
+			align.Add(pv);
+			
+			notebook.AppendPage(align, new Label("Polynomials"));
 
 			VBox.Add(notebook);
 		}
