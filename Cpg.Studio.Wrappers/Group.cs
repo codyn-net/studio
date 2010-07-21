@@ -33,12 +33,16 @@ namespace Cpg.Studio.Wrappers
 		
 		protected override void ConnectWrapped()
 		{
+			base.ConnectWrapped();
+
 			WrappedObject.ChildAdded += HandleChildAdded;
 			WrappedObject.ChildRemoved += HandleChildRemoved;
 		}
 		
 		protected override void DisconnectWrapped()
 		{
+			base.DisconnectWrapped();
+
 			WrappedObject.ChildAdded -= HandleChildAdded;
 			WrappedObject.ChildRemoved -= HandleChildRemoved;
 		}
