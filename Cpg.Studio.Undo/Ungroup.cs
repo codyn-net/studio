@@ -5,12 +5,18 @@ namespace Cpg.Studio.Undo
 	public class Ungroup : Group
 	{
 		private Wrappers.Group d_parent;
-		private Wrappers.Group[] d_groups;
 
-		public Ungroup(Wrappers.Group parent, Wrappers.Group[] groups)
+		public Ungroup(Wrappers.Group parent, IAction[] actions) : base(actions)
 		{
 			d_parent = parent;
-			d_groups = groups;
+		}
+		
+		public Wrappers.Group Parent
+		{
+			get
+			{
+				return d_parent;
+			}
 		}
 	}
 }
