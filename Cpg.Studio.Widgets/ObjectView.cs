@@ -24,8 +24,8 @@ namespace Cpg.Studio.Widgets
 		{
 			ObjectType = 0,
 			Object = 1,
-			Property = 1,
-			Activity = 2
+			Property = 2,
+			Activity = 3
 		}
 		
 		private enum Activity
@@ -43,7 +43,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void Build()
 		{
-			d_store = new TreeStore(typeof(ObjectType), typeof(object), typeof(Activity));
+			d_store = new TreeStore(typeof(ObjectType), typeof(Wrappers.Wrapper), typeof(Cpg.Property), typeof(Activity));
 			
 			d_store.SetSortFunc(1, DoRowSort);
 			d_store.SetSortColumnId(1, SortType.Ascending);
@@ -109,22 +109,55 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private void Disconnect(Wrappers.Wrapper obj)
+		{
+			obj.PropertyAdded -= HandlePropertyAdded;
+			obj.PropertyRemoved -= HandlePropertyRemoved;
+			
+			if (obj is Wrappers.Group)
+			{
+				Wrappers.Group grp = (Wrappers.Group)obj;
+				
+				grp.ChildAdded -= HandleChildAdded;
+				grp.ChildRemoved -= HandleChildRemoved;
+			}
+		}
+		
+		private void HandlePropertyNameChanged(object source, GLib.NotifyArgs args)
+		{
+			Cpg.Property prop = (Cpg.Property)source;
+			TreeIter parent;
+			
+			if (Find(prop.Object, out parent))
+			{
+				TreeIter iter;
+
+				if (FindProperty(parent, prop, out iter))
+				{
+					TreePath path = d_store.GetPath(iter);
+					d_store.EmitRowChanged(path, iter);
+				}
+			}
+		}
+		
+		private void Disconnect(Cpg.Property prop)
+		{
+			prop.RemoveNotification("name", HandlePropertyNameChanged);
+		}
+		
 		private void Disconnect(TreeIter iter, bool getChildren)
 		{
-			if (FromStore<ObjectType>(iter, Column.ObjectType) == ObjectType.Object)
+			ObjectType type = FromStore<ObjectType>(iter, Column.ObjectType);
+
+			if (type == ObjectType.Object)
 			{
 				Wrappers.Wrapper obj = FromStore<Wrappers.Wrapper>(iter, Column.Object);
-
-				obj.PropertyAdded -= HandlePropertyAdded;
-				obj.PropertyRemoved -= HandlePropertyRemoved;
-				
-				if (obj is Wrappers.Group)
-				{
-					Wrappers.Group grp = (Wrappers.Group)obj;
-					
-					grp.ChildAdded -= HandleChildAdded;
-					grp.ChildRemoved -= HandleChildRemoved;
-				}
+				Disconnect(obj);
+			}
+			else
+			{
+				Cpg.Property prop = FromStore<Cpg.Property>(iter, Column.Property);
+				Disconnect(prop);
 			}
 			
 			TreeIter child;
@@ -153,8 +186,10 @@ namespace Cpg.Studio.Widgets
 		{
 			TreeIter child;
 
-			d_store.GetIterFirst(out child);
-			Disconnect(child, false);
+			if (d_store.GetIterFirst(out child))
+			{
+				Disconnect(child, false);
+			}
 		}
 		
 		private void InitStore()
@@ -162,7 +197,13 @@ namespace Cpg.Studio.Widgets
 			Disconnect();
 			d_store.Clear();
 			
-			AddObject(d_network);
+			foreach (Wrappers.Wrapper child in d_network.Children)
+			{
+				AddObject(child);
+			}
+			
+			d_network.ChildAdded += HandleChildAdded;
+			d_network.ChildRemoved += HandleChildRemoved;
 		}
 		
 		private void ToggleProperty(TreeIter iter, Wrappers.Wrapper obj, Cpg.Property property, Activity activity)
@@ -218,13 +259,11 @@ namespace Cpg.Studio.Widgets
 		
 		private int DoRowSort(TreeModel model, TreeIter a, TreeIter b)
 		{
-			object o1 = model.GetValue(a, 0);
-			object o2 = model.GetValue(b, 0);
-			
-			string o3 = (model.GetValue(a, 1) as Cpg.Property).Name;
-			
-			if (o3 == null)
+			if (FromStore<ObjectType>(a, Column.ObjectType) == ObjectType.Object)
 			{
+				Wrappers.Wrapper o1 = FromStore<Wrappers.Wrapper>(a, Column.Object);
+				Wrappers.Wrapper o2 = FromStore<Wrappers.Wrapper>(b, Column.Object);
+
 				bool aat = o1 is Wrappers.Link;
 				bool bat = o2 is Wrappers.Link;
 				
@@ -238,12 +277,25 @@ namespace Cpg.Studio.Widgets
 				}
 				else
 				{
+					if (o1 == null || o2 == null)
+					{
+						return 0;
+					}
+
 					return o1.ToString().CompareTo(o2.ToString());
 				}
 			}
 			else
 			{
-				return o3.CompareTo((model.GetValue(b, 1) as Cpg.Property).Name); 
+				Cpg.Property p1 = FromStore<Cpg.Property>(a, Column.Property);
+				Cpg.Property p2 = FromStore<Cpg.Property>(b, Column.Property);
+				
+				if (p1 == null || p2 == null)
+				{
+					return 0;
+				}
+
+				return p1.Name.CompareTo(p2.Name); 
 			}
 		}
 		
@@ -292,7 +344,7 @@ namespace Cpg.Studio.Widgets
 			
 			Wrappers.Group parent = obj.Parent;
 			
-			while (parent != null)
+			while (parent != null && parent.Parent != null)
 			{
 				parents.Enqueue(parent);
 				parent = parent.Parent;
@@ -336,6 +388,19 @@ namespace Cpg.Studio.Widgets
 			if (Find(obj, out iter))
 			{
 				d_store.Remove(ref iter);
+				Disconnect(obj);
+			}
+		}
+		
+		private void HandleObjectIdChanged(object source, GLib.NotifyArgs args)
+		{
+			Wrappers.Wrapper wrapped = Wrappers.Wrapper.Wrap((Cpg.Object)source);
+			TreeIter iter;
+			
+			if (Find(wrapped, out iter))
+			{
+				TreePath path = d_store.GetPath(iter);
+				d_store.EmitRowChanged(path, iter);
 			}
 		}
 		
@@ -348,6 +413,8 @@ namespace Cpg.Studio.Widgets
 			
 			obj.PropertyAdded += HandlePropertyAdded;
 			obj.PropertyRemoved += HandlePropertyRemoved;
+			
+			obj.WrappedObject.AddNotification("id", HandleObjectIdChanged);
 			
 			if (obj is Wrappers.Group)
 			{
@@ -369,7 +436,7 @@ namespace Cpg.Studio.Widgets
 		{
 			TreeIter iter;
 
-			iter = d_store.AppendValues(parent, ObjectType.Object, obj, Activity.Inactive);
+			iter = d_store.AppendValues(parent, ObjectType.Object, obj, null, Activity.Inactive);
 			Connect(obj, iter);
 		}
 		
@@ -377,18 +444,15 @@ namespace Cpg.Studio.Widgets
 		{
 			TreeIter parent;
 			
-			if (obj.Parent != null)
+			if (obj.Parent != null && Find(obj.Parent, out parent))
 			{
-				if (Find(obj.Parent, out parent))
-				{
-					AddObject(obj, parent);
-				}
+				AddObject(obj, parent);
 			}
 			else
 			{
 				TreeIter iter;
-
-				iter = d_store.AppendValues(ObjectType.Object, obj, Activity.Inactive);
+				
+				iter = d_store.AppendValues(ObjectType.Object, obj, null, Activity.Inactive);
 				
 				Connect(obj, iter);
 			}
@@ -459,7 +523,9 @@ namespace Cpg.Studio.Widgets
 		
 		private void AddProperty(TreeIter parent, Wrappers.Wrapper obj, Cpg.Property prop)
 		{
-			d_store.AppendValues(parent, ObjectType.Property, prop, Activity.Inactive);
+			d_store.AppendValues(parent, ObjectType.Property, null, prop, Activity.Inactive);
+			
+			prop.AddNotification("name", HandlePropertyNameChanged);
 			
 			ExpandRow(d_store.GetPath(parent), false);
 			PropertyAdded(this, obj, prop);
