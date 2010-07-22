@@ -31,15 +31,15 @@ namespace Cpg.Studio.Wrappers.Renderers
 			ret[3] = 0.6;
 			
 			for (int i = 0; i < color.Length; ++i)
+			{
 				ret[i] = color[i] * 0.6;
+			}
 			
 			return ret;
 		}
 		
-		private void DrawRect(Cairo.Context graphics, double x, double y, double width, double height, double[] color)
+		private void SetColor(Cairo.Context graphics, double[] color)
 		{
-			graphics.Rectangle(x, y, width, height);
-			
 			if (color.Length == 3)
 			{
 				graphics.SetSourceRGB(color[0], color[1], color[2]);
@@ -48,6 +48,37 @@ namespace Cpg.Studio.Wrappers.Renderers
 			{
 				graphics.SetSourceRGBA(color[0], color[1], color[2], color[3]);
 			}
+		}
+		
+		private void DrawArrow(Cairo.Context graphics, double x, double y, double width, double height, double[] color)
+		{
+			graphics.MoveTo(x + width, y);
+			graphics.LineTo(x, y + height);
+			
+			if (Detail == "ungroup")
+			{
+				graphics.LineTo(x, y);
+			}
+			else
+			{
+				graphics.LineTo(x + width, y + height);
+			}
+			
+			graphics.ClosePath();
+			SetColor(graphics, color);
+			
+			graphics.FillPreserve();
+			
+			double[] darker = Darken(color);
+			
+			graphics.SetSourceRGBA(darker[0], darker[1], darker[2], darker[3]);
+			graphics.Stroke();}
+		
+		private void DrawRect(Cairo.Context graphics, double x, double y, double width, double height, double[] color)
+		{
+			graphics.Rectangle(x, y, width, height);
+			
+			SetColor(graphics, color);
 			
 			graphics.FillPreserve();
 			
@@ -64,25 +95,44 @@ namespace Cpg.Studio.Wrappers.Renderers
 			graphics.Save();
 			double uw = graphics.LineWidth;
 			
-			graphics.LineWidth = uw * 2;
+			double off;
 			
-			double off = uw * 2 + alloc.Width * 0.1f;
+			if (Style == DrawStyle.Normal)
+			{
+				graphics.LineWidth = uw * 2;
+				off = uw * 2 + alloc.Width * 0.1f;
+			}
+			else
+			{
+				off = 0;
+			}
+			
 			double w = (alloc.Width - 2 * off) * 0.4;
 			double h = (alloc.Height - 2 * off) * 0.4;
 			
-			DrawRect(graphics, off, off, w, h, d_colors[0]);
-			DrawRect(graphics, off, alloc.Height - h - off, w, h, d_colors[1]);
-			DrawRect(graphics, alloc.Width - w - off, alloc.Height - h - off, w, h, d_colors[2]);
-			DrawRect(graphics, alloc.Width - w - off, off, w, h, d_colors[3]);
+			if (Detail == "group" || Detail == "ungroup")
+			{
+				DrawArrow(graphics, off, off, w, h, d_colors[0]);
+				DrawArrow(graphics, off, alloc.Height - off, w, -h, d_colors[1]);
+				DrawArrow(graphics, alloc.Width - off, alloc.Height - off, -w, -h, d_colors[2]);
+				DrawArrow(graphics, alloc.Width - off, off, -w, h, d_colors[3]);
+			}
+			else
+			{
+				DrawRect(graphics, off, off, w, h, d_colors[0]);
+				DrawRect(graphics, off, alloc.Height - h - off, w, h, d_colors[1]);
+				DrawRect(graphics, alloc.Width - w - off, alloc.Height - h - off, w, h, d_colors[2]);
+				DrawRect(graphics, alloc.Width - w - off, off, w, h, d_colors[3]);
+			}
 			
-			w = (alloc.Width - 2 * off) * 0.5f;
-			h = (alloc.Height - 2 * off) * 0.5f;
+			double w2 = (alloc.Width - 2 * off) * 0.5f;
+			double h2 = (alloc.Height - 2 * off) * 0.5f;
 			
-			double x = (alloc.Width - w) / 2.0;
-			double y = (alloc.Height - h) / 2.0;
+			double x = (alloc.Width - w2) / 2.0;
+			double y = (alloc.Height - h2) / 2.0;
 			
-			DrawRect(graphics, x, y, w, h, d_colors[4]);
-			
+			DrawRect(graphics, x, y, w2, h2, d_colors[4]);
+
 			graphics.Restore();
 		}
 	}
