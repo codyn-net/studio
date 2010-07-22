@@ -14,12 +14,16 @@ namespace Cpg.Studio.Serialization
 		[XmlAttribute("y")]
 		public int Y;
 		
+		[XmlAttribute("zoom")]
+		public int Zoom;
+		
 		private List<Object> d_children;
 
 		public Group()
 		{
 			X = 0;
 			Y = 0;
+			Zoom = Widgets.Grid.DefaultGridSize;
 			
 			d_children = new List<Object>();
 		}

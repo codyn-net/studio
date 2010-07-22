@@ -174,6 +174,7 @@ namespace Cpg.Studio.Serialization
 		{
 			orig.X = meta.X;
 			orig.Y = meta.Y;
+			orig.Zoom = meta.Zoom;
 			
 			List<Wrappers.Wrapper> origChildren = new List<Wrappers.Wrapper>(orig.Children);
 			
@@ -302,6 +303,7 @@ namespace Cpg.Studio.Serialization
 		{
 			meta.X = orig.X;
 			meta.Y = orig.Y;
+			meta.Zoom = orig.Zoom;
 
 			foreach (Wrappers.Wrapper child in orig.Children)
 			{
