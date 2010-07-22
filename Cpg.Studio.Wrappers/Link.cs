@@ -437,9 +437,13 @@ namespace Cpg.Studio.Wrappers
 					pos = (float)Math.Atan(diff.Y / diff.X);
 					
 					if (diff.X < 0)
+					{
 						pos += (float)Math.PI;
+					}
 					else if (diff.Y < 0)
+					{
 						pos += 2 * (float)Math.PI;
+					}
 				}
 				
 				pos += 0.5f * (float)Math.PI;
