@@ -5,21 +5,22 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using System.Reflection;
-
-using CCpg = Cpg;
+using Cpg.Studio.Widgets;
 
 namespace Cpg.Studio.Serialization
 {
 	public class Saver
 	{
-		Cpg d_cpg;
+		Main d_cpg;
 		
 		public Saver(Window window, List<Wrappers.Wrapper> objects)
 		{
 			Wrappers.Group group = new Wrappers.Group();
 			
 			foreach (Wrappers.Wrapper obj in objects)
+			{
 				group.Add(obj);
+			}
 		
 			Initialize(window, group);
 		}
@@ -31,29 +32,9 @@ namespace Cpg.Studio.Serialization
 		
 		public void Initialize(Window window, Wrappers.Group group)
 		{
-			CCpg.Network network = new CCpg.Network();
-			network.Merge(window.Network);
-			
-			Dictionary<string, bool> selection = Collect(group);
-			
-			foreach (CCpg.Object o in network.States)
-			{
-				if (!selection.ContainsKey(o.Id))
-				{
-					network.RemoveObject(o);
-				}
-			}
-			
-			foreach (CCpg.Link o in network.Links)
-			{
-				if (!selection.ContainsKey(o.Id))
-				{
-					network.RemoveObject(o);
-				}
-			}
+			d_cpg = new Main(window.Network.WrappedObject);
 
-			d_cpg = new Cpg(network);
-			
+			d_cpg.Network.Children.AddRange(Collect(group));
 			d_cpg.Project.Window = window;
 			d_cpg.Project.Root = new Group(group);
 		}
@@ -120,8 +101,8 @@ namespace Cpg.Studio.Serialization
 		{
 			XmlAttributeOverrides overrides = new XmlAttributeOverrides();
 			
-			Ignore<Cpg>(overrides, "Network");
-			Ignore<Simulated>(overrides, "Properties");
+			Ignore<Main>(overrides, "Network");
+			Ignore<Object>(overrides, "Properties");
 			Ignore<Link>(overrides, "From", "To", "Actions");
 			
 			return overrides;
@@ -140,7 +121,7 @@ namespace Cpg.Studio.Serialization
 			stream = new StreamWriter(memstream);
 			
 			writer = XmlWriter.Create(stream, settings);
-			serializer = new XmlSerializer(typeof(Cpg), overrides);
+			serializer = new XmlSerializer(typeof(Main), overrides);
 
 			serializer.Serialize(writer, d_cpg, Namespace());
 			
@@ -153,12 +134,16 @@ namespace Cpg.Studio.Serialization
 		
 		private XmlDocument MakeNetworkDocument()
 		{
-			StringReader stream = new StringReader(d_cpg.Network.CNetwork.WriteToXml());
+			/*
+				TODO:
+			Cpg.NetworkSerializer serializer = new Cpg.NetworkSerializer(d_cpg.Network, d_cpg.Network);
+			StringReader stream = new StringReader(serializer.);
 			XmlDocument doc = new XmlDocument();
 			doc.Load(stream);
-			stream.Close();
+			stream.Close();&/
 			
-			return doc;
+			return doc;*/
+			return null;
 		}
 		
 		public string Save()
@@ -223,21 +208,23 @@ namespace Cpg.Studio.Serialization
 			SaveToFile(filename, Save());			
 		}
 		
-		private void Collect(List<Wrappers.Wrapper> objects, Dictionary<string, Wrappers.Wrapper> ret)
+		private List<Object> Collect(List<Wrappers.Wrapper> objects)
 		{
+			List<Object> list = new List<Object>();
+			
 			foreach (Wrappers.Wrapper obj in objects)
 			{
 				if (obj is Wrappers.Group)
 				{
-					Collect((obj as Wrappers.Group).Children, ret);
+					list.AddRange(Collect(new List<Wrappers.Wrapper>((obj as Wrappers.Group).Children)));
 				}
 				else
 				{
-					CCpg.Simulated sim = obj as CCpg.Simulated;
+					Object o = Object.Create(obj);
 					
-					if (sim != null)
+					if (o != null)
 					{
-						ret[sim.FullId] = true;
+						list.Add(o);
 					}
 				}
 			}
@@ -246,7 +233,7 @@ namespace Cpg.Studio.Serialization
 			return list;
 		}
 		
-		private Dictionary<string, bool> Collect(Wrappers.Group group)
+		private List<Object> Collect(Wrappers.Group group)
 		{
 			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
 			
