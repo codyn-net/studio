@@ -116,6 +116,9 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/Ungroup.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/ScrolledWindow.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Notebook.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/TemplatesMenu.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyObjectId.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Link.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
