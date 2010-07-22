@@ -288,6 +288,8 @@ namespace Cpg.Studio.Serialization
 				obj.Id = child.Id;
 				obj.Allocation = child.Allocation.Copy();
 				
+				meta.Children.Add(obj);
+				
 				if (obj is Group)
 				{
 					CreateMeta((Wrappers.Group)child, (Group)obj);

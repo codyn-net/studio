@@ -24,19 +24,18 @@ namespace Cpg.Studio.Serialization
 			d_children = new List<Object>();
 		}
 		
-		[XmlElement("state"),
-		 XmlElement("link"),
-		 XmlElement("group")]
-		public Object[] Children
+		[XmlElement(typeof(State)),
+		 XmlElement(typeof(Link)),
+		 XmlElement(typeof(Group))]
+		public List<Object> Children
 		{
 			get
 			{
-				return d_children.ToArray();
+				return d_children;
 			}
 			set
 			{
-				d_children.Clear();
-				d_children.AddRange(value);
+				d_children = value;
 			}
 		}
 	}
