@@ -22,6 +22,7 @@
       <menuitem name="Copy" action="CopyAction"/>
       <menuitem name="Paste" action="PasteAction"/>
       <separator/>
+      <menuitem name="Delete" action="DeleteAction"/>
       <menuitem name="Group" action="GroupAction"/>
       <menuitem name="Ungroup" action="UngroupAction"/>
       <separator/>
@@ -49,18 +50,10 @@
       <menuitem name="ZoomOut" action="ZoomOutAction"/>
     </menu>
     <menu name="InsertMenu" action="InsertMenuAction">
-      <menuitem name="AddState" action="AddStateAction"/>
-      <menuitem name="AddLink" action="AddLinkAction"/>
-      <separator/>
-      <placeholder name="InsertTemplates"/>
     </menu>
   </menubar>
   <popup>
     <menu name="InsertMenu" action="InsertMenuAction">
-      <menuitem name="AddState" action="AddStateAction"/>
-      <menuitem name="AddLink" action="AddLinkAction"/>
-      <separator/>
-      <placeholder name="InsertTemplates"/>
     </menu>
     <separator/>
     <menuitem name="Properties" action="PropertiesAction"/>
@@ -89,11 +82,6 @@
     <toolitem name="Paste" action="PasteAction"/>
     <separator/>
     <toolitem name="Delete" action="DeleteAction"/>
-    <separator/>
-    <toolitem name="AddState" action="AddStateAction"/>
-    <toolitem name="AddLink" action="AddLinkAction"/>
-    <separator/>
-    <placeholder name="ToolItems"/>
   </toolbar>
 </ui>
 

@@ -81,8 +81,81 @@ namespace Cpg.Studio.Widgets
 		{
 			d_normalGroup.GetAction("UndoAction").Sensitive = d_undoManager.CanUndo;
 			d_normalGroup.GetAction("RedoAction").Sensitive = d_undoManager.CanRedo;
+		}
+		
+		private void CreateInsertMenu(string path)
+		{
+			Gtk.MenuItem item = (Gtk.MenuItem)d_uimanager.GetWidget(path);
+			Gtk.Menu menu = (Gtk.Menu)item.Submenu;
+
+			Gtk.MenuItem stateItem = new Gtk.MenuItem("State");
+			Gtk.Menu stateMenu = new Gtk.Menu();
+			stateItem.Submenu = stateMenu;
 			
-			// TODO
+			Gtk.MenuItem defaultStateItem = new Gtk.MenuItem("Default");
+			defaultStateItem.Activated += OnAddStateActivated;
+
+			stateMenu.Append(defaultStateItem);
+			stateMenu.Append(new Gtk.SeparatorMenuItem());
+
+			new TemplatesMenu(stateMenu, d_network.TemplateGroup, false, FilterStates);
+
+			stateItem.ShowAll();
+			menu.Append(stateItem);
+			
+			Gtk.MenuItem linkItem = new Gtk.MenuItem("Link");
+			Gtk.Menu linkMenu = new Gtk.Menu();
+			linkItem.Submenu = linkMenu;
+			
+			Gtk.MenuItem defaultLinkItem = new Gtk.MenuItem("Default");
+			defaultLinkItem.Activated += OnAddLinkActivated;
+
+			linkMenu.Append(defaultLinkItem);
+			linkMenu.Append(new Gtk.SeparatorMenuItem());
+
+			new TemplatesMenu(linkMenu, d_network.TemplateGroup, false, FilterLinks);
+
+			linkItem.ShowAll();
+			menu.Append(linkItem);
+		}
+		
+		private bool FilterStates(Wrappers.Wrapper wrapper)
+		{
+			return !(wrapper is Wrappers.Link);
+		}
+		
+		private bool FilterLinks(Wrappers.Wrapper wrapper)
+		{
+			return wrapper is Wrappers.Link;
+		}
+		
+		private void CreateTemplatesTool()
+		{
+			Toolbar tb = (Toolbar)d_uimanager.GetWidget("/toolbar");
+			SeparatorToolItem sep = new SeparatorToolItem();
+			
+			sep.Show();
+			tb.Add(sep);
+			
+			MenuToolButton button = new MenuToolButton(Stock.State);
+			button.Clicked += OnAddStateActivated;
+			button.Show();
+			
+			TemplatesMenu temp = new TemplatesMenu(d_network.TemplateGroup, false);
+			button.Menu = temp.Menu;
+			temp.Menu.ShowAll();
+
+			tb.Add(button);
+			
+			button = new MenuToolButton(Stock.Link);
+			button.Clicked += OnAddLinkActivated;
+			button.Show();
+			
+			temp = new TemplatesMenu(d_network.TemplateGroup, false, FilterLinks);
+			button.Menu = temp.Menu;
+			temp.Menu.ShowAll();
+
+			tb.Add(button);
 		}
 
 		private void Build()
@@ -94,6 +167,7 @@ namespace Cpg.Studio.Widgets
 
 			d_normalGroup.Add(new ActionEntry[] {
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
+				new ActionEntry("AddStateMenuAction", null, null, null, null, null),
 				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG network", OnFileNew),
 				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", OnOpenActivated),
 				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, null, "Revert changes", OnRevertActivated),
@@ -109,13 +183,10 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("UndoAction", Gtk.Stock.Undo, null, "<control>Z", "Undo last action", OnUndoActivated),
 				new ActionEntry("RedoAction", Gtk.Stock.Redo, null, "<control><shift>Z", "Redo last action", OnRedoActivated),
 				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", OnPasteActivated),
-				new ActionEntry("GroupAction", null, "Group", "<Control>G", "Group objects", OnGroupActivated),
-				new ActionEntry("UngroupAction", null, "Ungroup", "<Control><Shift>G", "Ungroup object", OnUngroupActivated),
+				new ActionEntry("GroupAction", Stock.Group, "Group", "<Control>G", "Group objects", OnGroupActivated),
+				new ActionEntry("UngroupAction", Stock.Ungroup, "Ungroup", "<Control><Shift>G", "Ungroup object", OnUngroupActivated),
 				new ActionEntry("EditGlobalsAction", null, "Globals", "<Control>H", "Edit the network globals", OnEditGlobalsActivated),
 				new ActionEntry("EditFunctionsAction", null, "Functions", "<Control>F", "Edit the network custom functions", OnEditFunctionsActivated),
-
-				new ActionEntry("AddStateAction", Studio.Stock.State, null, null, "Add state", OnAddStateActivated),
-				new ActionEntry("AddLinkAction", Studio.Stock.Link, null, null, "Link objects", OnAddLinkActivated),
 
 				new ActionEntry("SimulateMenuAction", null, "_Simulate", null, null, null),
 				new ActionEntry("StepAction", Gtk.Stock.MediaNext, "Step", "<Control>t", "Execute one simulation step", OnStepActivated),
@@ -159,12 +230,18 @@ namespace Cpg.Studio.Widgets
 			AddAccelGroup(d_uimanager.AccelGroup);
 			
 			VBox vbox = new VBox(false, 0);
+			
+			CreateInsertMenu("/menubar/InsertMenu");
+			CreateInsertMenu("/popup/InsertMenu");
+			CreateTemplatesTool();
 
 			vbox.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
 			
 			d_toolbar = d_uimanager.GetWidget("/toolbar");
 			vbox.PackStart(d_toolbar, false, false, 0);
-			
+
+			d_uimanager.EnsureUpdate();
+
 			d_hboxPath = new HBox(false, 0);
 			d_hboxPath.BorderWidth = 1;
 			vbox.PackStart(d_hboxPath, false, false, 0);
