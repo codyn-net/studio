@@ -27,7 +27,7 @@ namespace Cpg.Studio.Widgets
 		private UIManager d_uimanager;
 		private ActionGroup d_popupActionGroup;
 		private Dictionary<Wrappers.Wrapper, Dialogs.Property> d_propertyEditors;
-		private Wrappers.Network d_network;
+		private Serialization.Project d_project;
 		private Monitor d_monitor;
 		private Simulation d_simulation;
 		private string d_prevOpen;
@@ -36,22 +36,21 @@ namespace Cpg.Studio.Widgets
 		private ComboBox d_integratorCombo;
 		
 		private bool d_modified;
-		private string d_filename;
 		
 		private Undo.Manager d_undoManager;
 		private Actions d_actions;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
-			d_network = new Wrappers.Network();
+			d_project = new Serialization.Project();
 			
-			d_network.WrappedObject.CompileError += OnCompileError;
+			d_project.Network.WrappedObject.CompileError += OnCompileError;
 
-			d_network.WrappedObject.AddNotification("integrator", delegate (object sender, GLib.NotifyArgs args) {
+			d_project.Network.WrappedObject.AddNotification("integrator", delegate (object sender, GLib.NotifyArgs args) {
 				UpdateCurrentIntegrator();
 			});
 
-			d_simulation = new Simulation(d_network);
+			d_simulation = new Simulation(d_project.Network);
 
 			d_undoManager = new Undo.Manager();
 			d_undoManager.OnChanged += delegate (object source) {
@@ -98,7 +97,7 @@ namespace Cpg.Studio.Widgets
 			stateMenu.Append(defaultStateItem);
 			stateMenu.Append(new Gtk.SeparatorMenuItem());
 
-			new TemplatesMenu(stateMenu, d_network.TemplateGroup, false, FilterStates);
+			new TemplatesMenu(stateMenu, Network.TemplateGroup, false, FilterStates);
 
 			stateItem.ShowAll();
 			menu.Append(stateItem);
@@ -113,7 +112,7 @@ namespace Cpg.Studio.Widgets
 			linkMenu.Append(defaultLinkItem);
 			linkMenu.Append(new Gtk.SeparatorMenuItem());
 
-			new TemplatesMenu(linkMenu, d_network.TemplateGroup, false, FilterLinks);
+			new TemplatesMenu(linkMenu, Network.TemplateGroup, false, FilterLinks);
 
 			linkItem.ShowAll();
 			menu.Append(linkItem);
@@ -141,7 +140,7 @@ namespace Cpg.Studio.Widgets
 			button.Clicked += OnAddStateActivated;
 			button.Show();
 			
-			TemplatesMenu temp = new TemplatesMenu(d_network.TemplateGroup, false);
+			TemplatesMenu temp = new TemplatesMenu(Network.TemplateGroup, false);
 			button.Menu = temp.Menu;
 			temp.Menu.ShowAll();
 
@@ -151,7 +150,7 @@ namespace Cpg.Studio.Widgets
 			button.Clicked += OnAddLinkActivated;
 			button.Show();
 			
-			temp = new TemplatesMenu(d_network.TemplateGroup, false, FilterLinks);
+			temp = new TemplatesMenu(Network.TemplateGroup, false, FilterLinks);
 			button.Menu = temp.Menu;
 			temp.Menu.ShowAll();
 
@@ -249,7 +248,7 @@ namespace Cpg.Studio.Widgets
 			d_vboxContents = new VBox(false, 3);
 			vbox.PackStart(d_vboxContents, true, true, 0);
 			
-			d_grid = new Grid(d_network, d_actions);
+			d_grid = new Grid(Network, d_actions);
 			d_vpaned = new VPaned();
 			d_vpaned.Position = 250;
 			d_vpaned.Pack1(d_grid, true, true);
@@ -323,7 +322,7 @@ namespace Cpg.Studio.Widgets
 			d_integratorStore.Foreach(delegate (TreeModel model, TreePath path, TreeIter piter) {
 				Cpg.Integrator intgr = (Cpg.Integrator)model.GetValue(piter, 0);
 				
-				if (intgr.Id == d_network.Integrator.Id)
+				if (intgr.Id == Network.Integrator.Id)
 				{
 					d_integratorCombo.SetActiveIter(piter);
 					
@@ -362,7 +361,7 @@ namespace Cpg.Studio.Widgets
 
 				TreeIter piter = store.AppendValues(integrator);
 					
-				if (integrator.Id == d_network.Integrator.Id)
+				if (integrator.Id == Network.Integrator.Id)
 				{
 					combo.SetActiveIter(piter);
 				}
@@ -392,7 +391,7 @@ namespace Cpg.Studio.Widgets
 			combo.GetActiveIter(out piter);
 			Cpg.Integrator integrator = (Cpg.Integrator)combo.Model.GetValue(piter, 0);
 			
-			d_network.Integrator = integrator;
+			Network.Integrator = integrator;
 			d_modified = true;
 			
 			UpdateTitle();
@@ -442,7 +441,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void PushPath(Wrappers.Group obj, bool selected)
 		{
-			if (obj != d_network)
+			if (obj != Network)
 			{
 				Arrow arrow = new Arrow(ArrowType.Right, ShadowType.None);
 				arrow.Show();
@@ -508,9 +507,9 @@ namespace Cpg.Studio.Widgets
 		{
 			string extra = d_modified ? "*" : "";
 			
-			if (!String.IsNullOrEmpty(d_filename))
+			if (!String.IsNullOrEmpty(d_project.Filename))
 			{
-				Title = extra + System.IO.Path.GetFileName(d_filename) + " - CPG Studio";
+				Title = extra + System.IO.Path.GetFileName(d_project.Filename) + " - CPG Studio";
 			}
 			else
 			{
@@ -550,7 +549,7 @@ namespace Cpg.Studio.Widgets
 			d_normalGroup.GetAction("ControlMenuAction").Visible = false;
 			d_normalGroup.GetAction("ViewControlAction").Visible = false;
 			
-			d_normalGroup.GetAction("RevertAction").Sensitive = d_filename != null;
+			d_normalGroup.GetAction("RevertAction").Sensitive = d_project.Filename != null;
 		}
 					
 		public Grid Grid
@@ -896,7 +895,7 @@ namespace Cpg.Studio.Widgets
 
 			Clear();
 			
-			d_filename = null;
+			d_project.Clear();
 			d_modified = false;
 			
 			UpdateSensitivity();
@@ -926,11 +925,11 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			Clear();
-			d_filename = filename;
+			d_project.Filename = filename;
 			
 			try
 			{				
-				d_network.Integrator = cpg.Network.CNetwork.Integrator;
+				Network.Integrator = cpg.Network.CNetwork.Integrator;
 			}
 			catch (Exception e)
 			{
@@ -939,7 +938,7 @@ namespace Cpg.Studio.Widgets
 				Clear();
 
 				d_modified = false;
-				d_filename = null;
+				d_project.Filename = null;
 
 				UpdateTitle();
 				return;
@@ -1005,9 +1004,9 @@ namespace Cpg.Studio.Widgets
 			                                              Gtk.Stock.Cancel, Gtk.ResponseType.Cancel,
 			                                              Gtk.Stock.Open, Gtk.ResponseType.Accept);
 		
-			if (d_filename != null)
+			if (d_project.Filename != null)
 			{
-				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
+				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_project.Filename));
 			}
 			else if (d_prevOpen != null)
 			{
@@ -1033,7 +1032,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void OnRevertActivated(object sender, EventArgs args)
 		{
-			string filename = d_filename;
+			string filename = d_project.Filename;
 			
 			Clear();
 			d_modified = false;
@@ -1042,17 +1041,73 @@ namespace Cpg.Studio.Widgets
 				DoLoadXml(filename);
 		}
 		
+		private void DoSave(string filename)
+		{
+			d_project.Save(filename);
+						
+			UpdateSensitivity();
+			UpdateTitle();
+			
+			StatusMessage("Saved network: " + filename);
+		}
+		
+		private FileChooserDialog DoSaveAs()
+		{
+			FileChooserDialog dlg = new FileChooserDialog("Save As",
+			                                              this,
+			                                              FileChooserAction.Save,
+			                                              Gtk.Stock.Cancel, Gtk.ResponseType.Cancel,
+			                                              Gtk.Stock.Save, Gtk.ResponseType.Accept);
+
+			if (d_project.Filename != null)
+			{
+				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_project.Filename));
+			}
+			else if (d_prevOpen != null)
+			{
+				dlg.SetCurrentFolder(d_prevOpen);
+			}
+			
+			CheckButton check = new CheckButton("Save project settings in a separate file");
+			check.Show();
+			
+			check.Active = (d_project.Filename != null ? d_project.ProjectIsExternal : true);
+			dlg.ExtraWidget = check;
+			
+			dlg.Response += delegate(object o, ResponseArgs args) {
+					d_prevOpen = dlg.CurrentFolder;
+
+					if (args.ResponseId == ResponseType.Accept)
+					{
+						string filename = dlg.Filename;
+						
+						try
+						{
+							DoSave(filename);
+						}
+						catch (Exception e)
+						{
+							Message(Gtk.Stock.DialogError, "An error occurred while saving the network", e);
+						}
+					}
+					
+					dlg.Destroy();		
+			};
+			
+			dlg.Show();
+			
+			return dlg;
+		}
+		
 		private FileChooserDialog DoSave()
 		{
-			if (d_filename != null)
-			{
-				DoSaveXml(d_filename);
-				return null;
-			}
-			else
+			if (d_project.Filename == null)
 			{
 				return DoSaveAs();
 			}
+			
+			DoSave(d_project.Filename);
+			return null;
 		}
 		
 		private void OnSaveActivated(object sender, EventArgs args)
@@ -1060,42 +1115,14 @@ namespace Cpg.Studio.Widgets
 			DoSave();
 		}
 		
-		private bool ExportXml(string filename, List<Wrappers.Wrapper> objects)
-		{
-			Serialization.Saver saver;
-			
-			if (objects == null)
-			{
-				saver = new Serialization.Saver(this, d_grid.ActiveGroup);
-			}
-			else
-			{
-				saver = new Serialization.Saver(this, objects);
-			}
-			
-			try
-			{
-				saver.Save(filename);
-				return true;
-			}
-			catch (Exception e)
-			{
-				Message(Gtk.Stock.DialogError, "Error while saving network", e);
-				return false;
-			}
-		}
-		
-		private bool ExportXml(string filename)
-		{
-			return ExportXml(filename, null);
-		}
-		
 		public void StatusMessage(string message)
 		{
 			d_statusbar.Push(0, message);
 			
 			if (d_statusTimeout != 0)
+			{
 				GLib.Source.Remove(d_statusTimeout);
+			}
 			
 			d_statusTimeout = GLib.Timeout.Add(3000, delegate () {
 				d_statusTimeout = 0;
@@ -1143,192 +1170,23 @@ namespace Cpg.Studio.Widgets
 		public void Message(string icon, string primary, Exception exception)
 		{
 			while (exception.InnerException != null)
+			{
 				exception = exception.InnerException;
+			}
 			
 			Message(icon, primary, exception.Message);
 			
 			if (d_messageArea != null)
+			{
 				d_messageArea.TooltipText = exception.StackTrace;
-		}
-		
-		private bool DoSaveXml(string filename)
-		{
-			if (ExportXml(filename))
-			{
-				StatusMessage("Saved " + filename + "...");
-				
-				d_modified = false;
-				d_filename = filename;
-				
-				UpdateTitle();
-				return true;
-			}
-			else
-			{
-				return false;
 			}
 		}
-		
-		private FileChooserDialog DoSaveAs()
-		{
-			FileChooserDialog dlg = new FileChooserDialog("Save As",
-			                                              this,
-			                                              FileChooserAction.Save,
-			                                              Gtk.Stock.Cancel, Gtk.ResponseType.Cancel,
-			                                              Gtk.Stock.Save, Gtk.ResponseType.Accept);
-
-			if (d_filename != null)
-			{
-				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
-			}
-			else if (d_prevOpen != null)
-			{
-				dlg.SetCurrentFolder(d_prevOpen);
-			}
-			
-			dlg.Response += delegate(object o, ResponseArgs args) {
-					d_prevOpen = dlg.CurrentFolder;
-
-					if (args.ResponseId == ResponseType.Accept)
-					{
-						string filename = dlg.Filename;
-						
-						if (DoSaveXml(filename))
-						{
-							d_filename = filename;
-							UpdateSensitivity();
-							UpdateTitle();
-						}
-					}
-					
-					dlg.Destroy();		
-			};
-			
-			dlg.Show();
-			
-			return dlg;
-		}
-		
 		
 		private void OnSaveAsActivated(object sender, EventArgs args)
 		{
 			DoSaveAs();
 		}
-		
-		/*private void OnImportActivated(object sender, EventArgs args)
-		{
-			FileChooserDialog dlg = new FileChooserDialog("Import network",
-			                                              this,
-			                                              FileChooserAction.Open,
-			                                              Gtk.Stock.Cancel, ResponseType.Cancel,
-			                                              Gtk.Stock.Open, ResponseType.Accept);
 
-			if (d_filename != null)
-			{
-				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
-			}
-			else if (d_prevOpen != null)
-			{
-				dlg.SetCurrentFolder(d_prevOpen);
-			}
-
-			dlg.Response += delegate(object o, ResponseArgs a) {
-				d_prevOpen = dlg.CurrentFolder;
-
-				if (a.ResponseId == ResponseType.Accept)
-				{
-					ImportFromFile(dlg.Filename);
-				}
-				
-				dlg.Destroy();
-			};
-			
-			dlg.Show();
-		}*/
-		
-		/*private string ExportToXml(Wrappers.Wrapper[] objects)
-		{
-			Serialization.Saver saver;
-			
-			if (objects.Length != 0)
-			{
-				List<Wrappers.Wrapper> objs = new List<Wrappers.Wrapper>();
-				objs.AddRange(objects);
-				
-				List<Wrappers.Wrapper> normalized = d_grid.Normalize(objs);
-				
-				if (normalized.Count == 0)
-					return null;
-
-				saver = new Serialization.Saver(this, normalized);
-			}
-			else
-			{
-				saver = new Serialization.Saver(this, d_grid.Root);
-			}
-			
-			string doc;
-			
-			try
-			{
-				doc = saver.Save();
-			}
-			catch (Exception e)
-			{
-				Message(Gtk.Stock.DialogError, "Error while exporting network", e);
-				return null;
-			}
-			
-			return doc;
-		}*/
-		
-		/*private void OnExportActivated(object sender, EventArgs args)
-		{
-			FileChooserDialog dlg = new FileChooserDialog("Save As",
-			                                              this,
-			                                              FileChooserAction.Save,
-			                                              Gtk.Stock.Cancel, Gtk.ResponseType.Cancel,
-			                                              Gtk.Stock.Save, Gtk.ResponseType.Accept);
-
-			if (d_filename != null)
-			{
-				dlg.SetCurrentFolder(System.IO.Path.GetDirectoryName(d_filename));
-			}
-			else if (d_prevOpen != null)
-			{
-				dlg.SetCurrentFolder(d_prevOpen);
-			}
-			
-			string doc = ExportToXml(d_grid.Selection);
-			
-			if (doc == null)
-				return;
-			
-			dlg.Response += delegate(object o, ResponseArgs a) {
-				d_prevOpen = dlg.CurrentFolder;
-
-				if (a.ResponseId == ResponseType.Accept)
-				{
-					string filename = dlg.Filename;
-					
-					try
-					{
-						Serialization.Saver.SaveToFile(filename, doc);
-						
-						StatusMessage("Exported network to " + filename + "...");
-					}
-					catch (Exception e)
-					{
-						Message(Gtk.Stock.DialogError, "Error while exporting network", e);
-					}
-				}
-				
-				dlg.Destroy();		
-			};
-			
-			dlg.Show();
-		}*/
-		
 		private void OnQuitActivated(object sender, EventArgs args)
 		{
 			Gtk.Application.Quit();
@@ -1463,7 +1321,7 @@ namespace Cpg.Studio.Widgets
 
 		private void OnEditGlobalsActivated(object sender, EventArgs args)
 		{
-			DoObjectActivated(sender, d_network);
+			DoObjectActivated(sender, Network);
 		}
 		
 		private void OnCenterViewActivated(object sender, EventArgs args)
@@ -1580,7 +1438,7 @@ namespace Cpg.Studio.Widgets
 			if (d_monitor != null)
 				return;
 			
-			d_monitor = new Monitor(d_network, d_simulation);
+			d_monitor = new Monitor(Network, d_simulation);
 			d_monitor.TransientFor = this;
 			
 			d_monitor.Realize();
@@ -1760,7 +1618,7 @@ namespace Cpg.Studio.Widgets
 		{
 			get
 			{
-				return d_network;
+				return d_project.Network;
 			}
 		}
 		
@@ -1768,7 +1626,7 @@ namespace Cpg.Studio.Widgets
 		{
 			if (d_functionsDialog == null)
 			{
-				d_functionsDialog = new Dialogs.Functions(this, d_network);
+				d_functionsDialog = new Dialogs.Functions(this, Network);
 
 				d_functionsDialog.Response += delegate(object o, ResponseArgs a1) {
 					d_functionsDialog.Destroy();

@@ -4,8 +4,8 @@ using System.Xml.Serialization;
 
 namespace Cpg.Studio.Serialization
 {
-	[XmlType("state")]
-	public class State : Object
+	[XmlType("templates")]
+	public class Templates : Group
 	{
 	}
 }

@@ -30,14 +30,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Box.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/State.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Serialization" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Main.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Network.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Property.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/State.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Link.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Project.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Object.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Group.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Interpolators" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Interpolators/IInterpolator.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Interpolators/Interpolation.cs" />
@@ -49,10 +41,8 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/AssemblyInfo.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Directories.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/DynamicIntegrator.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Loader.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Range.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/RenderCache.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Saver.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Settings.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Simulation.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Stock.cs" />
@@ -119,6 +109,17 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/TemplatesMenu.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyObjectId.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Link.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Project.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Group.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Object.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/State.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Link.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Network.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Templates.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
