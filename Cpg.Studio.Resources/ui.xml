@@ -82,6 +82,8 @@
     <toolitem name="Paste" action="PasteAction"/>
     <separator/>
     <toolitem name="Delete" action="DeleteAction"/>
+    <toolitem name="Group" action="GroupAction"/>
+    <toolitem name="Ungroup" action="UngroupAction"/>
   </toolbar>
 </ui>
 
