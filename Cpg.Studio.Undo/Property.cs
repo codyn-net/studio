@@ -8,6 +8,7 @@ namespace Cpg.Studio.Undo
 		private string d_name;
 		private string d_expression;
 		private Cpg.PropertyFlags d_flags;
+		private Cpg.Property d_property;
 		
 		public Property(Wrappers.Wrapper wrapped, string name, string expression, Cpg.PropertyFlags flags)
 		{
@@ -20,6 +21,7 @@ namespace Cpg.Studio.Undo
 		
 		public Property(Wrappers.Wrapper wrapped, Cpg.Property property) : this(wrapped, property.Name, property.Expression.AsString, property.Flags)
 		{
+			d_property = property;
 		}
 		
 		public Wrappers.Wrapper Wrapped
@@ -27,6 +29,14 @@ namespace Cpg.Studio.Undo
 			get
 			{
 				return d_wrapped;
+			}
+		}
+		
+		public Cpg.Property Prop
+		{
+			get
+			{
+				return d_property;
 			}
 		}
 		
