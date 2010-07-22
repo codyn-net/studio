@@ -126,13 +126,13 @@ namespace Cpg.Studio
 			Do(new Undo.Group(actions));
 		}
 		
-		public void Group(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		public Wrappers.Group Group(Wrappers.Group parent, Wrappers.Wrapper[] selection)
 		{
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 
 			if (OnlyLinks(sel))
 			{
-				return;
+				return null;
 			}
 
 			// Collect all the links that go from or to the group, but are not fully in there

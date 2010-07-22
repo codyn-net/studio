@@ -1360,7 +1360,13 @@ namespace Cpg.Studio.Widgets
 		private void OnGroupActivated(object sender, EventArgs args)
 		{
 			HandleError(delegate () {
-				d_actions.Group(d_grid.ActiveGroup, d_grid.Selection);
+				Wrappers.Group grp = d_actions.Group(d_grid.ActiveGroup, d_grid.Selection);
+				
+				if (grp != null)
+				{
+					d_grid.UnselectAll();
+					d_grid.Select(grp);
+				}
 			}, "An error occurred while grouping");
 		}
 		
