@@ -6,14 +6,47 @@ namespace Cpg.Studio.Wrappers.Renderers
 	public class Renderer
 	{
 		protected Wrappers.Wrapper d_object;
+		private DrawStyle d_style;
+		private string d_detail;
+		
+		public enum DrawStyle
+		{
+			Normal = 0,
+			Icon
+		}
 
 		public Renderer(Wrappers.Wrapper obj)
 		{
 			d_object = obj;
+			d_style = DrawStyle.Normal;
 		}
 		
 		public Renderer() : this(null)
 		{
+		}
+		
+		public DrawStyle Style
+		{
+			get
+			{
+				return d_style;
+			}
+			set
+			{
+				d_style = value;
+			}
+		}
+		
+		public string Detail
+		{
+			get
+			{
+				return d_detail;
+			}
+			set
+			{
+				d_detail = value;
+			}
 		}
 		
 		public virtual void Draw(Cairo.Context graphics)
@@ -39,6 +72,8 @@ namespace Cpg.Studio.Wrappers.Renderers
 		{
 			Cairo.ImageSurface surface = new Cairo.ImageSurface(Cairo.Format.Argb32, size, size);
 			Gdk.Pixbuf ret;
+			
+			Style = DrawStyle.Icon;
 			
 			using (Cairo.Context ct = new Cairo.Context(surface))
 			{
@@ -70,7 +105,9 @@ namespace Cpg.Studio.Wrappers.Renderers
 					ret = new Gdk.Pixbuf(filename);
 					System.IO.File.Delete(filename);
 				}
-			}	
+			}
+			
+			Style = DrawStyle.Normal;
 			
 			return ret;
 		}

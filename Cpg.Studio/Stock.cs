@@ -18,8 +18,15 @@ namespace Cpg.Studio
 		
 		static Gtk.IconSet MakeIcons(Wrappers.Renderers.Renderer renderer)
 		{
+			return MakeIcons(renderer, null);
+		}
+
+		static Gtk.IconSet MakeIcons(Wrappers.Renderers.Renderer renderer, string detail)
+		{
 			Gtk.IconSet s = new Gtk.IconSet();
 			Gtk.IconSource source;
+			
+			renderer.Detail = detail;
 			
 			Gtk.IconSize[] sizes = new Gtk.IconSize[] {
 				Gtk.IconSize.Button,
