@@ -158,7 +158,7 @@ namespace Cpg.Studio
 					proxyLinks.Add(link);
 				}
 			}
-
+			
 			// Collect all objects and link fully encapsulated in the group
 			List<Wrappers.Wrapper> ingroup = new List<Wrappers.Wrapper>();
 			List<Undo.IAction> actions = new List<Undo.IAction>();
@@ -170,6 +170,11 @@ namespace Cpg.Studio
 				if (link == null || (sel.Contains(link.To) && sel.Contains(link.From)))
 				{
 					ingroup.Add(wrapper);
+				}
+				
+				if (proxy == null && !(wrapper is Wrappers.Link))
+				{
+					proxy = wrapper;
 				}
 				
 				// Also fill the first actions that remove all the objects from the parent
@@ -221,6 +226,7 @@ namespace Cpg.Studio
 			}
 			
 			Do(new Undo.AddGroup(newGroup, actions));
+			return newGroup;
 		}
 		
 		public void Ungroup(Wrappers.Group parent, Wrappers.Wrapper[] selection)
@@ -273,6 +279,12 @@ namespace Cpg.Studio
 			
 			List<Undo.IAction> actions = new List<Undo.IAction>();
 			
+			// Unset the proxy so that the undo also sets the proxy again
+			if (grp.Proxy != null)
+			{
+				actions.Add(new Undo.ModifyProxy(grp, null));
+			}
+			
 			// Remove all objects from the group
 			foreach (Wrappers.Wrapper wrapper in grp.Children)
 			{
@@ -305,7 +317,11 @@ namespace Cpg.Studio
 			// Reattach any links coming from or going to the group, redirect to proxy
 			foreach (Wrappers.Link link in Utils.FilterLink(grp.Parent.Children))
 			{
-				if (link.To == grp)
+				if (link.To == grp && link.From == grp)
+				{
+					actions.Add(new Undo.AttachLink(link, grp.Proxy, grp.Proxy));
+				}
+				else if (link.To == grp)
 				{
 					actions.Add(new Undo.AttachLink(link, link.From, grp.Proxy));
 				}
