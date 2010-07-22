@@ -137,6 +137,7 @@ namespace Cpg.Studio
 
 			// Collect all the links that go from or to the group, but are not fully in there
 			Wrappers.Wrapper proxy = null;
+
 			List<Wrappers.Link> proxyLinks = new List<Wrappers.Link>();
 
 			foreach (Wrappers.Link link in Utils.FilterLink(parent.Children))
@@ -152,11 +153,20 @@ namespace Cpg.Studio
 					}
 					else if ((containsTo && link.To != proxy) || (containsFrom && link.From != proxy))
 					{
-						throw new Exception(String.Format("Links outside the group are acting on different objects in the group. This is not possible when grouping."));
+						throw new Exception(String.Format("Links outside the group are acting on different objects in the group. The current behavior of the network cannot be preserved."));
 					}
 					
 					proxyLinks.Add(link);
 				}
+			}
+			
+			if (proxy != null && parent.Proxy != null && parent.Proxy != proxy)
+			{
+				throw new Exception(String.Format("Links outside the group are acting on an object which is different from the proxy of the current parent. The current behavior of the network cannot be preserved."));
+			}
+			else if (proxy == null)
+			{
+				proxy = parent.Proxy;
 			}
 			
 			// Collect all objects and link fully encapsulated in the group
@@ -193,13 +203,18 @@ namespace Cpg.Studio
 			
 			actions.Add(new Undo.AddObject(parent, newGroup));
 			
+			if (proxy == parent.Proxy)
+			{
+				actions.Add(new Undo.ModifyProxy(parent, newGroup));
+			}
+			
 			// Then we add all the 'ingroup' objects to the group
 			foreach (Wrappers.Wrapper wrapper in ingroup)
 			{
 				// Move object to center at 0, 0 in the group
 				if (!(wrapper is Wrappers.Link))
 				{
-					actions.Add(new Undo.MoveObject(wrapper, (int)(wrapper.Allocation.X - x), (int)(wrapper.Allocation.Y - y)));
+					actions.Add(new Undo.MoveObject(wrapper, -(int)x, -(int)y));
 				}
 				
 				// Add object to the group
