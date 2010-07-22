@@ -28,9 +28,6 @@ namespace Cpg.Studio.Serialization
 			[XmlElement("pane-position")]
 			public int PanePosition;
 			
-			[XmlElement("zoom")]
-			public int Zoom;
-			
 			[XmlElement("simulate-period")]
 			public string SimulatePeriod;
 			
@@ -47,9 +44,8 @@ namespace Cpg.Studio.Serialization
 				SimulateBar = true;
 				StatusBar = true;
 				PanePosition = 250;
-				Zoom = Widgets.Grid.DefaultGridSize;
 				SimulatePeriod = "0:0.01:1";
-				Allocation = new Allocation(0, 0, 700, 600);
+				Allocation = new Allocation(-1, -1, 700, 600);
 				ActiveGroup = "";
 			}
 		}
@@ -228,7 +224,7 @@ namespace Cpg.Studio.Serialization
 		public void Load(string filename)
 		{
 			d_filename = filename;
-			d_network = new Wrappers.Network(filename);
+			d_network.LoadFromPath(filename);
 
 			XmlDocument doc = new XmlDocument();
 			doc.Load(filename);

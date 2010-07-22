@@ -46,6 +46,16 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
+		public bool LoadFromPath(string filename)
+		{
+			return WrappedObject.LoadFromPath(filename);
+		}
+		
+		public bool LoadFromXml(string xml)
+		{
+			return WrappedObject.LoadFromXml(xml);
+		}
+		
 		public void Merge(Network other)
 		{
 			WrappedObject.Merge(other);

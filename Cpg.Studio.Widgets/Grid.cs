@@ -87,7 +87,6 @@ namespace Cpg.Studio.Widgets
 
 			QueueDraw();
 
-			d_network.Clear();
 			d_selection.Clear();
 			
 			SelectionChanged(this, new EventArgs());
@@ -476,10 +475,11 @@ namespace Cpg.Studio.Widgets
 		{
 			ActiveGroup.X += (int)(((where.X + ActiveGroup.X) * (double)size / d_gridSize) - (where.X + ActiveGroup.X));
 			ActiveGroup.Y += (int)(((where.Y + ActiveGroup.Y) * (double)size / d_gridSize) - (where.Y + ActiveGroup.Y));
-			
+			ActiveGroup.Zoom = size;
+
 			bool changed = (size != d_gridSize);
 			d_gridSize = size;
-			
+					
 			if (changed)
 			{
 				ModifiedView(this, new EventArgs());

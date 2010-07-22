@@ -68,8 +68,6 @@ namespace Cpg.Studio.Widgets
 			
 			Clear();
 			
-			d_modified = false;
-			
 			UpdateUndoState();
 			UpdateTitle();
 			
@@ -468,6 +466,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void Clear()
 		{
+			Network.Clear();
 			d_grid.Clear();
 			
 			if (d_messageArea != null)
@@ -492,6 +491,9 @@ namespace Cpg.Studio.Widgets
 			d_grid.GrabFocus();
 			
 			d_simulation.Range = new Range(d_periodEntry.Text);
+			
+			d_modified = false;
+			d_undoManager.Clear();
 		}
 		
 		private void UpdateModified()
@@ -822,7 +824,17 @@ namespace Cpg.Studio.Widgets
 			}
 			set
 			{
-				d_vpaned.Position = value;
+				ToggleAction action = d_normalGroup.GetAction("ViewPropertyEditorAction") as ToggleAction;
+			
+				if (value == -1)
+				{
+					action.Active = false;
+				}
+				else
+				{
+					action.Active = true;
+					d_vpaned.Position = d_vpaned.Allocation.Height - value;
+				}
 			}
 		}
 		
@@ -896,75 +908,18 @@ namespace Cpg.Studio.Widgets
 			Clear();
 			
 			d_project.Clear();
-			d_modified = false;
 			
 			UpdateSensitivity();
 			UpdateTitle();
 		}
 		
-		public void DoLoadXml(string filename)
+		private void RestoreSettings()
 		{
-			// TODO
-			/*if (!AskUnsavedModified())
+			if (d_project.Settings.Allocation != null)
 			{
-				return;
-			}
-			
-			Serialization.Main cpg;
-			
-			try
-			{
-				Serialization.Loader loader = new Serialization.Loader();
-				cpg = loader.Load(filename);
-			}
-			catch (Exception e)
-			{
-				Message(Gtk.Stock.DialogError, "Error while loading network", e);
+				Allocation alloc = d_project.Settings.Allocation;
 
-				return;
-			}
-			
-			Clear();
-			d_project.Filename = filename;
-			
-			try
-			{				
-				Network.Integrator = cpg.Network.CNetwork.Integrator;
-			}
-			catch (Exception e)
-			{
-				Message(Gtk.Stock.DialogError, "Error while loading network", e);
-				
-				Clear();
-
-				d_modified = false;
-				d_project.Filename = null;
-
-				UpdateTitle();
-				return;
-			}
-			
-			// Load project settings
-			Allocation alloc = cpg.Project.Allocation;
-
-			d_grid.Container.X = cpg.Project.Root.X;
-			d_grid.Container.Y = cpg.Project.Root.Y;
-						
-			// Select container
-			if (!String.IsNullOrEmpty(cpg.Project.Container))
-				d_grid.LevelDown(cpg.Project.Container);
-
-			d_grid.GridSize = cpg.Project.Zoom;
-
-			if (!String.IsNullOrEmpty(cpg.Project.Period))
-			{
-				d_periodEntry.Text = cpg.Project.Period;
-				d_simulation.Range = new Range(cpg.Project.Period);
-			}
-			
-			if (alloc != null)
-			{
-				if (!Visible)
+				if (!Visible && alloc.X >= 0 && alloc.Y >= 0)
 				{
 					Move((int)alloc.X, (int)alloc.Y);
 				}
@@ -972,28 +927,40 @@ namespace Cpg.Studio.Widgets
 				Resize((int)alloc.Width, (int)alloc.Height);
 			}
 			
-			ToggleAction action = d_normalGroup.GetAction("ViewPropertyEditorAction") as ToggleAction;
-			
-			if (cpg.Project.PanePosition == -1)
-			{
-				action.Active = false;
-			}
-			else
-			{
-				action.Active = true;
+			PanePosition = d_project.Settings.PanePosition;
 
-				d_vpaned.Position = d_vpaned.Allocation.Height - cpg.Project.PanePosition;
-			}
+			ShowToolbar = d_project.Settings.ToolBar;
+			ShowPathbar = d_project.Settings.PathBar;
+			ShowSimulateButtons = d_project.Settings.SimulateBar;
+			ShowStatusbar = d_project.Settings.StatusBar;
 			
-			(d_normalGroup.GetAction("ViewToolbarAction") as ToggleAction).Active = cpg.Project.ShowToolbar;
-			(d_normalGroup.GetAction("ViewPathbarAction") as ToggleAction).Active = cpg.Project.ShowPathbar;
-			(d_normalGroup.GetAction("ViewSimulateButtonsAction") as ToggleAction).Active = cpg.Project.ShowSimulateButtons;
-			(d_normalGroup.GetAction("ViewStatusbarAction") as ToggleAction).Active = cpg.Project.ShowStatusbar;
+			d_periodEntry.Text = d_project.Settings.SimulatePeriod;
+		}
+		
+		public void DoLoad(string filename)
+		{
+			if (!AskUnsavedModified())
+			{
+				return;
+			}
 
-			d_modified = false;
+			Clear();
+
+			try
+			{
+				d_project.Load(filename);
+			}
+			catch (Exception e)
+			{
+				Message(Gtk.Stock.DialogError, "Error while loading network", e);
+				return;
+			}
+					
+			RestoreSettings();
+
 			UpdateTitle();
 			
-			StatusMessage("Loaded network from " + filename + "...");*/
+			StatusMessage("Loaded network from " + filename + "...");
 		}
 		
 		private void OnOpenActivated(object sender, EventArgs args)
@@ -1024,7 +991,9 @@ namespace Cpg.Studio.Widgets
 				dlg.Destroy();
 				
 				if (a.ResponseId == ResponseType.Accept)
-					DoLoadXml(filename);		
+				{
+					DoLoad(filename);
+				}
 			};
 			
 			dlg.Show();
@@ -1039,7 +1008,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (filename != null)
 			{
-				DoLoadXml(filename);
+				DoLoad(filename);
 			}
 		}
 		
@@ -1050,7 +1019,6 @@ namespace Cpg.Studio.Widgets
 			d_project.Settings.StatusBar = ShowStatusbar;
 			d_project.Settings.ToolBar = ShowToolbar;
 			d_project.Settings.PanePosition = PanePosition;
-			d_project.Settings.Zoom = d_grid.GridSize;
 			d_project.Settings.SimulatePeriod = d_periodEntry.Text;
 			
 			int x;
