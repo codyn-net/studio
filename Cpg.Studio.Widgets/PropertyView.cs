@@ -8,7 +8,7 @@ namespace Cpg.Studio.Widgets
 {
 	[Gtk.Binding(Gdk.Key.Delete, "HandleDeleteBinding")]
 	[Gtk.Binding(Gdk.Key.Insert, "HandleAddBinding")]
-	public class PropertyView : HPaned
+	public class PropertyView : VBox
 	{
 		enum Column
 		{
@@ -34,8 +34,11 @@ namespace Cpg.Studio.Widgets
 		private ComboBox d_proxyCombo;
 		private AddRemovePopup d_actionControls;
 		private bool d_selectAction;
+		private HBox d_extraControl;
+		private HPaned d_paned;
+		private Entry d_entry;
 		
-		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base()
+		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base(false, 3)
 		{
 			d_selectProperty = false;
 			d_selectAction = false;
@@ -52,13 +55,7 @@ namespace Cpg.Studio.Widgets
 		private void AddEquationsUI()
 		{
 			Gtk.VBox vbox = new Gtk.VBox(false, 3);
-			Add2(vbox);
-			
-			Gtk.Label label = new Label("<b>Actions</b>");
-			label.Xalign = 0;
-			label.UseMarkup = true;
-			
-			vbox.PackStart(label, false, true, 0);
+			d_paned.Add2(vbox);
 			
 			ScrolledWindow vw = new ScrolledWindow();
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
@@ -207,7 +204,7 @@ namespace Cpg.Studio.Widgets
 
 			foreach (KeyValuePair<string, Cpg.PropertyFlags> pair in d_flaglist)
 			{
-				if ((pair.Value & flags) != 0)
+				if ((pair.Value & flags) != 0 && pair.Value != PropertyFlags.Integrated)
 				{
 					parts.Add(pair.Key);
 				}
@@ -228,14 +225,15 @@ namespace Cpg.Studio.Widgets
 			{
 				Cpg.PropertyFlags flags = (Cpg.PropertyFlags)values.GetValue(i);
 				
-				if ((int)flags != 0)
+				// Don't show 'None' and Integrated is handled separately
+				if ((int)flags != 0 && flags != PropertyFlags.Integrated)
 				{
 					d_flaglist.Add(new KeyValuePair<string, Cpg.PropertyFlags>(names[i], flags));
 				}
 			}
 		}
 		
-		private void AddGroupUI(VBox vbox)
+		private void AddGroupUI()
 		{
 			HBox hbox = new HBox(false, 6);
 			hbox.Show();
@@ -290,7 +288,8 @@ namespace Cpg.Studio.Widgets
 			box.AddAttribute(renderer, "text", 0);
 			
 			hbox.PackStart(box, false, false, 0);
-			vbox.PackStart(hbox, false, false, 0);
+			
+			d_extraControl.PackEnd(hbox, false, false, 0);
 			
 			d_proxyStore = store;
 			d_proxyCombo = box;
@@ -350,6 +349,8 @@ namespace Cpg.Studio.Widgets
 			d_object.PropertyAdded -= DoPropertyAdded;
 			d_object.PropertyRemoved -= DoPropertyRemoved;
 			
+			d_object.WrappedObject.RemoveNotification("id", HandleIdChanged);
+			
 			foreach (TreeIter iter in ForeachProperty())
 			{
 				Cpg.Property property = PropertyFromStore(iter);
@@ -391,6 +392,8 @@ namespace Cpg.Studio.Widgets
 			
 			d_object.PropertyAdded += DoPropertyAdded;
 			d_object.PropertyRemoved += DoPropertyRemoved;
+			
+			d_object.WrappedObject.AddNotification("id", HandleIdChanged);
 			
 			if (d_object is Wrappers.Group)
 			{
@@ -470,6 +473,52 @@ namespace Cpg.Studio.Widgets
 			action.AddNotification("equation", HandleLinkActionChanged);
 		}
 		
+		private void AddIdUI()
+		{
+			HBox hbox = new HBox(false, 6);
+			hbox.Show();
+
+			Label lbl = new Label("Id:");
+			lbl.Show();
+			
+			hbox.PackStart(lbl, false, false, 0);
+			
+			d_entry = new Entry();
+			d_entry.Show();
+			
+			d_entry.Text = d_object.Id;
+			
+			d_entry.Activated += delegate {
+				ModifyId();
+			};
+			
+			d_entry.FocusOutEvent += delegate {
+				ModifyId();
+			};
+			
+			d_entry.KeyPressEvent += delegate(object o, KeyPressEventArgs args) {
+				if (args.Event.Key == Gdk.Key.Escape)
+				{
+					d_entry.Text = d_object.Id;
+					d_entry.Position = d_entry.Text.Length;
+				}
+			};
+			
+			hbox.PackStart(d_entry, false, false, 0);
+			d_extraControl.PackStart(hbox, false, false, 0);
+		}
+
+		private void ModifyId()
+		{ 
+			if (d_object.Id == d_entry.Text || d_entry.Text == "")
+			{
+				d_entry.Text = d_object.Id;
+				return;
+			}
+			
+			d_actions.Do(new Undo.ModifyObjectId(d_object, d_entry.Text));
+		}
+		
 		public void Initialize(Wrappers.Wrapper obj)
 		{
 			Clear();
@@ -478,29 +527,36 @@ namespace Cpg.Studio.Widgets
 			
 			d_object = obj;
 			
+			d_paned = new HPaned();
+
+			d_paned.Realized += delegate {
+				d_paned.Position = Allocation.Width / 2;
+			};
+			
 			if (d_object != null && d_object is Wrappers.Link)
 			{
 				AddEquationsUI();
 			}
 			
 			Gtk.VBox vbox = new Gtk.VBox(false, 3);
-			Add1(vbox);
+			d_paned.Add1(vbox);
+
+			d_extraControl = new HBox(false, 12);
+			d_extraControl.Show();
+			PackStart(d_extraControl, false, false, 0);
+			
+			PackStart(d_paned, true, true, 0);
+			
+			if (d_object != null)
+			{
+				AddIdUI();
+			}
 			
 			if (d_object != null && d_object is Wrappers.Group)
 			{
-				AddGroupUI(vbox);
+				AddGroupUI();
 			}
-			else if (d_object != null && d_object is Wrappers.Link)
-			{
-				Label label = new Label("<b>Properties</b>");
-				label.UseMarkup = true;
-				label.Xalign = 0;
 
-				label.Show();
-				
-				vbox.PackStart(label, false, true, 0);
-			}
-			
 			ScrolledWindow vw = new ScrolledWindow();
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			vw.ShadowType = ShadowType.EtchedIn;
@@ -550,6 +606,19 @@ namespace Cpg.Studio.Widgets
 			
 			column.SetCellDataFunc(renderer, HandleRenderValue);
 			d_treeview.AppendColumn(column);
+			
+			// Add column for the integrated
+			CellRendererToggle toggle = new CellRendererToggle();
+			column = new TreeViewColumn("Integrated", toggle);
+			column.Resizable = false;
+			
+			if (d_object != null)
+			{
+				toggle.Toggled += DoIntegratedToggled;
+			}
+			
+			column.SetCellDataFunc(toggle, HandleRenderIntegrated);
+			d_treeview.AppendColumn(column);			
 				
 			// Add column for property flags
 			CellRendererCombo combo = new CellRendererCombo();
@@ -595,6 +664,14 @@ namespace Cpg.Studio.Widgets
 			d_propertyControls.RemoveButton.Clicked += DoRemoveProperty;
 			
 			UpdateSensitivity();
+		}
+		
+		private void HandleRenderIntegrated(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
+		{
+			Cpg.Property property = PropertyFromStore(piter);
+			CellRendererToggle renderer = (CellRendererToggle)cell;
+			
+			renderer.Active = (property.Flags & PropertyFlags.Integrated) != PropertyFlags.None;
 		}
 		
 		private void HandleRenderName(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
@@ -688,6 +765,24 @@ namespace Cpg.Studio.Widgets
 			return (Cpg.Property)d_store.GetValue(iter, 0);
 		}
 		
+		private void DoIntegratedToggled(object source, ToggledArgs args)
+		{
+			Cpg.Property property = PropertyFromStore(args.Path);
+			PropertyFlags flags = property.Flags;
+			CellRendererToggle toggle = (CellRendererToggle)source;
+			
+			if (!toggle.Active)
+			{
+				flags |= PropertyFlags.Integrated;
+			}
+			else
+			{
+				flags &= ~PropertyFlags.Integrated;
+			}
+			
+			d_actions.Do(new Undo.ModifyProperty(d_object, property, flags));
+		}
+		
 		private void DoFlagsEdited(object source, EditedArgs args)
 		{
 			Cpg.Property property = PropertyFromStore(args.Path);
@@ -718,7 +813,7 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(property, newflags));
+			d_actions.Do(new Undo.ModifyProperty(d_object, property, newflags));
 		}
 		
 		private void DoValueEdited(object source, EditedArgs args)
@@ -730,7 +825,7 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(property, args.NewText));
+			d_actions.Do(new Undo.ModifyProperty(d_object, property, args.NewText));
 		}
 		
 		private void DoNameEdited(object source, EditedArgs args)
@@ -822,6 +917,11 @@ namespace Cpg.Studio.Widgets
 			prop.AddNotification("expression", HandlePropertyChanged);
 			prop.AddNotification("flags", HandlePropertyChanged);
 			prop.AddNotification("name", HandlePropertyChanged);
+		}
+		
+		private void HandleIdChanged(object source, GLib.NotifyArgs args)
+		{
+			d_entry.Text = d_object.Id;
 		}
 		
 		private void HandleLinkActionChanged(object source, GLib.NotifyArgs args)
@@ -1084,7 +1184,7 @@ namespace Cpg.Studio.Widgets
 		{
 			base.OnRealized();
 			
-			Position = Allocation.Width / 2;
+			d_paned.Position = Allocation.Width / 2;
 		}
 
 	}
