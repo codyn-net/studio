@@ -72,7 +72,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void Move()
 		{
-			Gdk.Window treewindow = d_treeview.BinWindow;
+			Gdk.Window treewindow = d_treeview.GdkWindow;
 			
 			Realize();
 			
