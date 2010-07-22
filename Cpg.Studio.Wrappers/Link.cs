@@ -62,18 +62,66 @@ namespace Cpg.Studio.Wrappers
 			ActionAdded(this, args.Action);
 		}
 		
+		private void RecalculateLinkOffsets(Wrappers.Wrapper o1, Wrappers.Wrapper o2)
+		{
+			if (o1 == null || o2 == null)
+			{
+				return;
+			}
+			
+			// See how many links there are between o1 and o2
+			List<Wrappers.Link> d1 = new List<Wrappers.Link>();
+			
+			// From o1 to o2
+			foreach (Wrappers.Link l in o2.Links)
+			{
+				if (l.From == o1)
+				{
+					d1.Add(l);
+				}
+			}
+			
+			List<Wrappers.Link> d2 = new List<Wrappers.Link>();
+			
+			// From o2 to o1
+			foreach (Wrappers.Link l in o1.Links)
+			{
+				if (l.From == o2)
+				{
+					d2.Add(l);
+				}
+			}
+			
+			int baseOffset = (d1.Count == 0 || d2.Count == 0) ? 0 : 1;
+			
+			for (int i = 0; i < d1.Count; ++i)
+			{
+				d1[i].Offset = i + baseOffset;
+			}
+			
+			for (int i = 0; i < d2.Count; ++i)
+			{
+				d2[i].Offset = i + baseOffset;
+			}
+		}
+		
 		private void UpdateFrom()
 		{
 			if (d_from != null)
 			{
 				d_from.Moved -= OnFromMoved;
 			}
-
+			
+			Wrappers.Wrapper oldFrom = d_from;
 			d_from = WrappedObject.From;
+			
+			RecalculateLinkOffsets(oldFrom, d_to);
 			
 			if (d_from != null)
 			{
 				d_from.Moved += OnFromMoved;
+				
+				RecalculateLinkOffsets(d_from, d_to);
 			}
 		}
 		
@@ -84,11 +132,16 @@ namespace Cpg.Studio.Wrappers
 				d_to.Unlink(this);
 			}
 			
+			Wrappers.Wrapper oldTo = d_to;			
 			d_to = WrappedObject.To;
+			
+			RecalculateLinkOffsets(d_from, oldTo);
 			
 			if (d_to != null)
 			{
 				d_to.Link(this);
+				
+				RecalculateLinkOffsets(d_from, d_to);
 			}
 		}
 		

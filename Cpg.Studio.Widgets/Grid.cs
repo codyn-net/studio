@@ -194,35 +194,13 @@ namespace Cpg.Studio.Widgets
 
 		private void HandleActiveGroupChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
 		{
-			Unselect(child);
-			
-			if (child is Wrappers.Link)
-			{
-				Wrappers.Link link = (Wrappers.Link)child;
-				
-				if (link.From != null && link.To != null)
-				{
-					CheckLinkOffsets(link.From, link.To);
-				}
-			}
-
+			Unselect(child);			
 			QueueDraw();
 		}
 
 		private void HandleActiveGroupChildAdded(Wrappers.Group source, Wrappers.Wrapper child)
 		{
 			child.RequestRedraw += OnRequestRedraw;
-			
-			if (child is Wrappers.Link)
-			{
-				Wrappers.Link link = (Wrappers.Link)child;
-				
-				if (link.From != null && link.To != null)
-				{
-					CheckLinkOffsets(link.From, link.To);
-				}
-			}
-			
 			QueueDraw();
 		}
 		
@@ -802,77 +780,6 @@ namespace Cpg.Studio.Widgets
 			
 			graphics.SetSourceRGBA(0, 0.3, 0, 0.6);
 			graphics.Stroke();
-		}
-		
-		private void CheckLinkOffsets()
-		{
-			foreach (Wrappers.Wrapper obj in ActiveGroup.Children)
-			{
-				Wrappers.Link link = obj as Wrappers.Link;
-				
-				if (link != null)
-				{
-					CheckLinkOffsets(link.From, link.To);
-				}
-			}
-		}
-		
-		private void CheckLinkOffsets(Wrappers.Wrapper from, Wrappers.Wrapper to)
-		{
-			if (from == null)
-			{
-				foreach (Wrappers.Link l1 in to.Links)
-				{
-					CheckLinkOffsets(l1.From, l1.To);
-				}
-			}
-			else
-			{
-				bool flexor = false;
-				
-				List<Wrappers.Link> first = new List<Wrappers.Link>();
-				List<Wrappers.Link> second = new List<Wrappers.Link>();
-				
-				foreach (Wrappers.Link l1 in to.Links)
-				{
-					if (l1.From == from)
-					{
-						first.Add(l1);
-					}
-				}
-				
-				foreach (Wrappers.Link l1 in from.Links)
-				{
-					if (l1.From == to)
-					{
-						second.Add(l1);
-					}
-				}
-				
-				flexor = second.Count > 0;
-				int offset = 0;
-				
-				if (first.Count == 0)
-				{
-					flexor = true;
-					offset -= 1;
-				}
-				
-				if (flexor)
-				{
-					foreach (Wrappers.Link l1 in second)
-					{
-						l1.Offset = ++offset;
-					}
-					
-					offset = 1;
-				}
-				
-				foreach (Wrappers.Link l1 in first)
-				{
-					l1.Offset = offset++;
-				}
-			}
 		}
 		
 		public int GridSize
