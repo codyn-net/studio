@@ -211,14 +211,14 @@ namespace Cpg.Studio.Widgets
 			if (activity != FromStore<Activity>(iter, Column.Activity))
 			{
 				ToStore(iter, Column.Activity, activity);
-				
-				TreeIter parent;
-				
-				d_store.IterParent(out parent, iter);
-				CheckConsistency(parent);
-
-				Toggled(this, obj, property);
 			}
+				
+			TreeIter parent;
+				
+			d_store.IterParent(out parent, iter);
+			CheckConsistency(parent);
+
+			Toggled(this, obj, property);
 		}
 		
 		public void SetActive(Wrappers.Wrapper obj, Cpg.Property prop, bool active)
