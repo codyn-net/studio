@@ -1038,17 +1038,52 @@ namespace Cpg.Studio.Widgets
 			d_modified = false;
 			
 			if (filename != null)
+			{
 				DoLoadXml(filename);
+			}
 		}
 		
-		private void DoSave(string filename)
+		private void SaveProjectSettings()
 		{
+			d_project.Settings.PathBar = ShowPathbar;
+			d_project.Settings.SimulateBar = ShowSimulateButtons;
+			d_project.Settings.StatusBar = ShowStatusbar;
+			d_project.Settings.ToolBar = ShowToolbar;
+			d_project.Settings.PanePosition = PanePosition;
+			d_project.Settings.Zoom = d_grid.GridSize;
+			d_project.Settings.SimulatePeriod = d_periodEntry.Text;
+			
+			int x;
+			int y;
+			int width;
+			int height;
+
+			GetPosition(out x, out y);
+			GetSize(out width, out height);
+			
+			d_project.Settings.Allocation.X = x;
+			d_project.Settings.Allocation.Y = y;
+			d_project.Settings.Allocation.Width = width;
+			d_project.Settings.Allocation.Height = height;
+			
+			d_project.Settings.ActiveGroup = d_grid.ActiveGroup.FullId;
+		}
+		
+		private void DoSave(string filename, bool externalProject)
+		{
+			d_project.SaveProjectExternally = externalProject;
+			
+			SaveProjectSettings();
+			
 			d_project.Save(filename);
+			
+			d_modified = false;
+			d_undoManager.MarkUnmodified();
 						
 			UpdateSensitivity();
 			UpdateTitle();
 			
-			StatusMessage("Saved network: " + filename);
+			StatusMessage("Saved network to " + filename + "...");
 		}
 		
 		private FileChooserDialog DoSaveAs()
@@ -1071,8 +1106,10 @@ namespace Cpg.Studio.Widgets
 			CheckButton check = new CheckButton("Save project settings in a separate file");
 			check.Show();
 			
-			check.Active = (d_project.Filename != null ? d_project.ProjectIsExternal : true);
+			check.Active = d_project.SaveProjectExternally;
 			dlg.ExtraWidget = check;
+			
+			dlg.DoOverwriteConfirmation = true;
 			
 			dlg.Response += delegate(object o, ResponseArgs args) {
 					d_prevOpen = dlg.CurrentFolder;
@@ -1083,7 +1120,7 @@ namespace Cpg.Studio.Widgets
 						
 						try
 						{
-							DoSave(filename);
+							DoSave(filename, check.Active);
 						}
 						catch (Exception e)
 						{
@@ -1106,7 +1143,7 @@ namespace Cpg.Studio.Widgets
 				return DoSaveAs();
 			}
 			
-			DoSave(d_project.Filename);
+			DoSave(d_project.Filename, d_project.SaveProjectExternally);
 			return null;
 		}
 		

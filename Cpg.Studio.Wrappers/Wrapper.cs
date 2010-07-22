@@ -328,5 +328,24 @@ namespace Cpg.Studio.Wrappers
 		public virtual void Removed()
 		{
 		}
+		
+		public string FullId
+		{
+			get
+			{
+				if (Parent != null && Parent.Parent != null)
+				{
+					return Parent.FullId + "." + Id;
+				}
+				else if (Parent == null)
+				{
+					return "";
+				}
+				else
+				{
+					return Id;
+				}
+			}
+		}
 	}
 }

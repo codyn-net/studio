@@ -10,36 +10,53 @@ namespace Cpg.Studio.Serialization
 {
 	public class Project
 	{
-		[XmlType("show")]
-		public class Show
+		[XmlType("settings")]
+		public class SettingsType
 		{
 			[XmlElement("tool-bar")]
 			public bool ToolBar;
 			
 			[XmlElement("path-bar")]
 			public bool PathBar;
-			
-			[XmlElement("property-pane")]
-			public bool PropertyPane;
-			
+					
 			[XmlElement("simulate-bar")]
 			public bool SimulateBar;
 			
 			[XmlElement("status-bar")]
 			public bool StatusBar;
+
+			[XmlElement("pane-position")]
+			public int PanePosition;
 			
-			public Show()
+			[XmlElement("zoom")]
+			public int Zoom;
+			
+			[XmlElement("simulate-period")]
+			public string SimulatePeriod;
+			
+			[XmlElement("allocation")]
+			public Allocation Allocation;
+			
+			[XmlElement("active-group")]
+			public string ActiveGroup;
+
+			public SettingsType()
 			{
 				ToolBar = true;
 				PathBar = true;
-				PropertyPane = true;
 				SimulateBar = true;
 				StatusBar = true;
+				PanePosition = 250;
+				Zoom = Widgets.Grid.DefaultGridSize;
+				SimulatePeriod = "0:0.01:1";
+				Allocation = new Allocation(0, 0, 700, 600);
+				ActiveGroup = "";
 			}
 		}
 		
-		private Show d_show;
+		private SettingsType d_settings;
 		private string d_filename;
+		private bool d_saveProjectExternally;
 		private string d_externalProjectFile;
 		private Wrappers.Network d_network;
 		private Network d_metaNetwork;
@@ -50,6 +67,7 @@ namespace Cpg.Studio.Serialization
 			Clear();
 			
 			d_network = new Wrappers.Network();
+			d_saveProjectExternally = true;
 		}
 
 		public string ExternalProjectFile
@@ -72,11 +90,15 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		public bool ProjectIsExternal
+		public bool SaveProjectExternally
 		{
 			get
 			{
-				return d_externalProjectFile != null;
+				return d_saveProjectExternally;
+			}
+			set
+			{
+				d_saveProjectExternally = value;
 			}
 		}
 		
@@ -104,11 +126,11 @@ namespace Cpg.Studio.Serialization
 			}
 		}
 		
-		public Show ShowSettings
+		public SettingsType Settings
 		{
 			get
 			{
-				return d_show;
+				return d_settings;
 			}
 		}
 		
@@ -117,7 +139,7 @@ namespace Cpg.Studio.Serialization
 			d_metaNetwork = new Network();
 			d_metaTemplates = new Templates();
 
-			d_show = new Show();
+			d_settings = new SettingsType();
 
 			d_externalProjectFile = null;
 			d_filename = null;
@@ -158,6 +180,13 @@ namespace Cpg.Studio.Serialization
 			foreach (Object o in meta.Children)
 			{
 				Wrappers.Wrapper origObj = orig.FindObject(o.Id);
+				
+				if (origObj == null || origObj is Wrappers.Link)
+				{
+					// Ignore
+					continue;
+				}
+
 				Type t = TypeMap(origObj.GetType());
 				
 				if (t == null || t != o.GetType())
@@ -232,11 +261,11 @@ namespace Cpg.Studio.Serialization
 		private void ExtractAnnotations(XmlNode node)
 		{
 			// Extract show settings
-			XmlNode show = node.SelectSingleNode("show");
+			XmlNode settings = node.SelectSingleNode("settings");
 			
-			if (show != null)
+			if (settings != null)
 			{
-				d_show = Deserialize<Project.Show>(show);
+				d_settings = Deserialize<Project.SettingsType>(settings);
 			}
 			
 			// Extract the object metadata
@@ -276,6 +305,11 @@ namespace Cpg.Studio.Serialization
 
 			foreach (Wrappers.Wrapper child in orig.Children)
 			{
+				if (child is Wrappers.Link)
+				{
+					continue;
+				}
+
 				Type t = TypeMap(child.GetType());
 				
 				if (t == null)
@@ -368,8 +402,9 @@ namespace Cpg.Studio.Serialization
 			
 			XmlNode networkNode = Serialize(d_metaNetwork);
 			XmlNode templatesNode = Serialize(d_metaTemplates);
+			XmlNode settingsNode = Serialize(d_settings);
 			
-			if (ProjectIsExternal)
+			if (SaveProjectExternally)
 			{
 				// Write to separate files
 				string xml = serializer.SerializeMemory();
@@ -386,6 +421,7 @@ namespace Cpg.Studio.Serialization
 				
 				XmlElement projectNode = ext.CreateElement("project");
 				
+				projectNode.AppendChild(ext.ImportNode(settingsNode, true));
 				projectNode.AppendChild(ext.ImportNode(networkNode, true));
 				projectNode.AppendChild(ext.ImportNode(templatesNode, true));
 				
@@ -406,6 +442,8 @@ namespace Cpg.Studio.Serialization
 				XmlNode root = doc.SelectSingleNode("cpg");
 				
 				XmlElement projectNode = doc.CreateElement("project");
+
+				projectNode.AppendChild(doc.ImportNode(settingsNode, true));
 				projectNode.AppendChild(doc.ImportNode(networkNode, true));
 				projectNode.AppendChild(doc.ImportNode(templatesNode, true));
 
