@@ -14,11 +14,13 @@ namespace Cpg.Studio.Wrappers
 
 		private int d_x;
 		private int d_y;
+		private int d_zoom;
 		
 		public Group(Cpg.Group obj) : base(obj)
 		{
 			d_x = 0;
 			d_y = 0;
+			d_zoom = Widgets.Grid.DefaultGridSize;
 		}
 		
 		public static implicit operator Cpg.Object(Group obj)
@@ -84,6 +86,12 @@ namespace Cpg.Studio.Wrappers
 		{
 			get { return d_y; }
 			set { d_y = value; }
+		}
+		
+		public int Zoom
+		{
+			get { return d_zoom; }
+			set { d_zoom = value; }
 		}
 		
 		public override Renderers.Renderer Renderer

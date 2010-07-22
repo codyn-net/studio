@@ -8,6 +8,8 @@ namespace Cpg.Studio.Widgets
 {
 	public class Grid : DrawingArea
 	{
+		public static int DefaultGridSize = 50;
+
 		public delegate void ObjectEventHandler(object source, Wrappers.Wrapper obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
 		public delegate void ErrorHandler(object source, string error, string message);
@@ -22,7 +24,6 @@ namespace Cpg.Studio.Widgets
 		
 		private int d_maxSize;
 		private int d_minSize;
-		private int d_defaultGridSize;
 		private int d_gridSize;
 		private Allocation d_mouseRect;
 		private PointF d_origPosition;
@@ -65,8 +66,7 @@ namespace Cpg.Studio.Widgets
 			
 			d_maxSize = 160;
 			d_minSize = 10;
-			d_defaultGridSize = 50;
-			d_gridSize = d_defaultGridSize;
+			d_gridSize = DefaultGridSize;
 			d_focus = null;
 			
 			d_gridBackground = new float[] {1f, 1f, 1f};
@@ -170,17 +170,21 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			Wrappers.Group prev = d_activeGroup;
-
+			
 			if (d_activeGroup != null)
 			{
 				d_activeGroup.ChildAdded -= HandleActiveGroupChildAdded;
 				d_activeGroup.ChildRemoved -= HandleActiveGroupChildRemoved;
+				
+				d_activeGroup.Zoom = d_gridSize;
 			}
 
 			if (grp != null)
 			{
 				grp.ChildAdded += HandleActiveGroupChildAdded;
 				grp.ChildRemoved += HandleActiveGroupChildRemoved;
+				
+				d_gridSize = grp.Zoom;
 			}
 			
 			UnselectAll();
@@ -491,7 +495,7 @@ namespace Cpg.Studio.Widgets
 			UnselectAll();
 			Select(obj);
 			
-			d_gridSize = d_defaultGridSize;
+			d_gridSize = DefaultGridSize;
 			
 			double x;
 			double y;
@@ -547,12 +551,13 @@ namespace Cpg.Studio.Widgets
 					
 					Utils.MeanPosition(grp.Children, out x, out y);
 					
-					d_gridSize = d_minSize;
-					
-					grp.X = (int)(x * d_gridSize - where.X);
-					grp.Y = (int)(y * d_gridSize - where.Y);
+					grp.X = (int)(x * d_minSize - where.X);
+					grp.Y = (int)(y * d_minSize - where.Y);
 					
 					SetActiveGroup(grp);
+
+					d_gridSize = d_minSize;
+
 					return;
 				}
 			}
@@ -560,15 +565,15 @@ namespace Cpg.Studio.Widgets
 			{
 				Wrappers.Group newActive = d_activeGroup.Parent;
 				
-				d_gridSize = d_maxSize;
-				
 				double x, y;
 				Utils.MeanPosition(newActive.Children, out x, out y);
 					
-				newActive.X = (int)(x * d_gridSize - where.X);
-				newActive.Y = (int)(y * d_gridSize - where.Y);
+				newActive.X = (int)(x * d_maxSize - where.X);
+				newActive.Y = (int)(y * d_maxSize - where.Y);
 				
 				SetActiveGroup(newActive);
+				d_gridSize = d_maxSize;
+
 				return;
 			}
 			
@@ -593,7 +598,7 @@ namespace Cpg.Studio.Widgets
 		public void ZoomDefault()
 		{
 			System.Drawing.Point pt = new Point((int)(Allocation.Width / 2), (int)(Allocation.Height / 2));
-			SetGridSize(d_defaultGridSize,pt);
+			SetGridSize(DefaultGridSize, pt);
 		}
 		
 		private void DoMove(int dx, int dy, bool moveCanvas)
