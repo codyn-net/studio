@@ -29,6 +29,12 @@ namespace Cpg.Studio
 			if (sel.Count > 0)
 			{
 				Wrappers.Wrapper last = sel[sel.Count - 1];
+				
+				if (sel.Count == 1)
+				{
+					// Self link
+					yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(last, last);
+				}
 			
 				for (int i = 0; i < sel.Count - 1; ++i)
 				{
