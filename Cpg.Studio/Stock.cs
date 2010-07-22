@@ -15,6 +15,8 @@ namespace Cpg.Studio
 		public static string Sensor = "cpg-sensor";
 		public static string Chain = "cpg-chain";
 		public static string ChainBroken = "cpg-chain-broken";
+		public static string Group = "cpg-group";
+		public static string Ungroup = "cpg-ungroup";
 		
 		static Gtk.IconSet MakeIcons(Wrappers.Renderers.Renderer renderer)
 		{
@@ -62,15 +64,19 @@ namespace Cpg.Studio
 				new Gtk.StockItem(Stock.State, "State", 0, 0, null),
 				new Gtk.StockItem(Stock.Link, "Link", 0, 0, null),
 				new Gtk.StockItem(Stock.Chain, "Chain", 0, 0, null),
-				new Gtk.StockItem(Stock.ChainBroken, "Chain Broken", 0, 0, null)
+				new Gtk.StockItem(Stock.ChainBroken, "Chain Broken", 0, 0, null),
+				new Gtk.StockItem(Stock.Group, "Group", 0, 0, null),
+				new Gtk.StockItem(Stock.Ungroup, "Ungroup", 0, 0, null)
 			});
 			
 			Gtk.IconFactory factory = new Gtk.IconFactory();
 
 			factory.Add(Stock.State, MakeIcons(new Wrappers.Renderers.State()));
-			factory.Add(Stock.Link, new Gtk.IconSet(Gdk.Pixbuf.LoadFromResource("link.png")));
+			factory.Add(Stock.Link, MakeIcons(new Wrappers.Renderers.Link()));
 			factory.Add(Stock.Chain, new Gtk.IconSet(Gdk.Pixbuf.LoadFromResource("chain.png")));
 			factory.Add(Stock.ChainBroken, new Gtk.IconSet(Gdk.Pixbuf.LoadFromResource("chain-broken.png")));
+			factory.Add(Stock.Group, MakeIcons(new Wrappers.Renderers.Default(), "group"));
+			factory.Add(Stock.Ungroup, MakeIcons(new Wrappers.Renderers.Default(), "ungroup"));
 			
 			factory.AddDefault();
 		}
