@@ -29,6 +29,7 @@ namespace Cpg.Studio.Widgets
 		private PointF d_buttonPress;
 		private PointF d_dragState;
 		private bool d_isDragging;
+		private List<Wrappers.Wrapper> d_beforeDragSelection;
 		
 		private Wrappers.Wrapper d_focus;
 		
@@ -71,6 +72,7 @@ namespace Cpg.Studio.Widgets
 			d_hover = new List<Wrappers.Wrapper>();
 			d_selection = new List<Wrappers.Wrapper>();
 			d_mouseRect = new Allocation(0f, 0f, 0f, 0f);
+			d_beforeDragSelection = null;
 			
 			d_gridCache = new RenderCache();
 		
@@ -402,23 +404,33 @@ namespace Cpg.Studio.Widgets
 			return new PointF(d_dragState.X - (rect.X - aobj.X), d_dragState.Y - (rect.Y - aobj.Y));
 		}
 		
-		private void DoDragRect(Gdk.EventMotion evnt)
+		private void DoDragRect(int x, int y, Gdk.ModifierType state)
 		{
 			Allocation rect = d_mouseRect.FromRegion();
 			rect.GrowBorder(2);
 			QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 			
-			d_mouseRect.Width = (int)evnt.X;
-			d_mouseRect.Height = (int)evnt.Y;
+			d_mouseRect.Width = x;
+			d_mouseRect.Height = y;
 
 			List<Wrappers.Wrapper> objects = HitTest(d_mouseRect.FromRegion());
+			state &= Gtk.Accelerator.DefaultModMask;
+
+			if ((state & Gdk.ModifierType.ShiftMask) != 0)
+			{
+				objects.AddRange(d_beforeDragSelection);
+			}
 			
-			Wrappers.Wrapper[] selection = new Wrappers.Wrapper[d_selection.Count];
-			d_selection.CopyTo(selection, 0);
-		
+			if ((state & Gdk.ModifierType.ControlMask) != 0)
+			{
+				objects.RemoveAll(item => ((state & Gdk.ModifierType.Mod1Mask) == 0) == (item is Wrappers.Link));
+			}
+			
+			List<Wrappers.Wrapper> selection = new List<Wrappers.Wrapper>(d_selection);
+			
 			foreach (Wrappers.Wrapper obj in selection)
 			{
-				if (objects.IndexOf(obj) == -1)
+				if (!objects.Contains(obj))
 				{
 					Unselect(obj);
 				}
@@ -871,6 +883,7 @@ namespace Cpg.Studio.Widgets
 			
 			d_isDragging = false;
 			d_mouseRect = new Allocation(0, 0, 0, 0);
+			d_beforeDragSelection = null;
 			
 			if (evnt.Type == Gdk.EventType.ButtonRelease)
 			{
@@ -904,7 +917,12 @@ namespace Cpg.Studio.Widgets
 				
 				if (d_mouseRect.Width != 0 && d_mouseRect.Height != 0)
 				{
-					DoDragRect(evnt);
+					if (d_beforeDragSelection == null)
+					{
+						d_beforeDragSelection = new List<Wrappers.Wrapper>(d_selection);
+					}
+
+					DoDragRect((int)evnt.X, (int)evnt.Y, evnt.State);
 				}
 				
 				return true;
@@ -1101,10 +1119,65 @@ namespace Cpg.Studio.Widgets
 			}
 			else
 			{
+				if (d_beforeDragSelection != null)
+				{
+					Gdk.ModifierType state = evnt.State;
+					
+					if (evnt.Key == Gdk.Key.Shift_L || evnt.Key == Gdk.Key.Shift_R)
+					{
+						state |= Gdk.ModifierType.ShiftMask;
+					}
+					else if (evnt.Key == Gdk.Key.Control_L || evnt.Key == Gdk.Key.Control_R)
+					{
+						state |= Gdk.ModifierType.ControlMask;
+					}
+					else if (evnt.Key == Gdk.Key.Alt_L || evnt.Key == Gdk.Key.Alt_R)
+					{
+						state |= Gdk.ModifierType.Mod1Mask;
+					}
+					
+					int x;
+					int y;			
+					
+					GetPointer(out x, out y);
+					DoDragRect(x, y, state);
+				}
+
 				return false;
 			}
 			
 			return true;
+		}
+
+		protected override bool OnKeyReleaseEvent(Gdk.EventKey evnt)
+		{
+			base.OnKeyReleaseEvent(evnt);
+			
+			if (d_beforeDragSelection != null)
+			{
+				Gdk.ModifierType state = evnt.State;
+					
+				if (evnt.Key == Gdk.Key.Shift_L || evnt.Key == Gdk.Key.Shift_R)
+				{
+					state &= ~Gdk.ModifierType.ShiftMask;
+				}
+				else if (evnt.Key == Gdk.Key.Control_L || evnt.Key == Gdk.Key.Control_R)
+				{
+					state &= ~Gdk.ModifierType.ControlMask;
+				}
+				else if (evnt.Key == Gdk.Key.Alt_L || evnt.Key == Gdk.Key.Alt_R)
+				{
+					state &= ~Gdk.ModifierType.Mod1Mask;
+				}
+	
+				int x;
+				int y;			
+				
+				GetPointer(out x, out y);
+				DoDragRect(x, y, state);
+			}
+
+			return false;
 		}
 		
 		public void UnselectAll()
