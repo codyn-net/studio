@@ -38,7 +38,11 @@ namespace Cpg.Studio.Widgets
 		public ObjectView(Wrappers.Network network)
 		{
 			d_network = network;
+
 			Build();
+	
+			d_network.ChildAdded += HandleChildAdded;
+			d_network.ChildRemoved += HandleChildRemoved;
 		}
 		
 		private void Build()
@@ -164,7 +168,10 @@ namespace Cpg.Studio.Widgets
 
 			if (getChildren)
 			{
-				d_store.IterChildren(out child, iter);
+				if (!d_store.IterChildren(out child, iter))
+				{
+					return;
+				}
 			}
 			else
 			{
@@ -189,7 +196,7 @@ namespace Cpg.Studio.Widgets
 			if (d_store.GetIterFirst(out child))
 			{
 				Disconnect(child, false);
-			}
+			}			
 		}
 		
 		private void InitStore()
@@ -201,9 +208,6 @@ namespace Cpg.Studio.Widgets
 			{
 				AddObject(child);
 			}
-			
-			d_network.ChildAdded += HandleChildAdded;
-			d_network.ChildRemoved += HandleChildRemoved;
 		}
 		
 		private void ToggleProperty(TreeIter iter, Wrappers.Wrapper obj, Cpg.Property property, Activity activity)
@@ -335,22 +339,25 @@ namespace Cpg.Studio.Widgets
 		
 		private bool Find(Wrappers.Wrapper obj, out TreeIter iter)
 		{
+			return Find(obj.Parent, obj, out iter);
+		}
+		
+		private bool Find(Wrappers.Group parent, Wrappers.Wrapper obj, out TreeIter iter)
+		{
 			if (!d_store.GetIterFirst(out iter))
 			{
 				return false;
 			}
 
-			Queue<Wrappers.Wrapper> parents = new Queue<Wrappers.Wrapper>();
+			Stack<Wrappers.Wrapper> parents = new Stack<Wrappers.Wrapper>();
 			
-			Wrappers.Group parent = obj.Parent;
+			parents.Push(obj);
 			
 			while (parent != null && parent.Parent != null)
 			{
-				parents.Enqueue(parent);
+				parents.Push(parent);
 				parent = parent.Parent;
 			}
-			
-			parents.Enqueue(obj);
 		
 			while (true)
 			{
@@ -358,16 +365,24 @@ namespace Cpg.Studio.Widgets
 				{
 					Wrappers.Wrapper wrap = FromStore<Wrappers.Wrapper>(iter, Column.Object);
 					
-					if (wrap.Equals(parents.Peek()))
+					if (wrap == parents.Peek())
 					{
-						parents.Dequeue();
+						parents.Pop();
 						
 						if (parents.Count == 0)
 						{
 							return true;
 						}
 						
-						d_store.IterChildren(out iter, iter);
+						TreeIter child;
+
+						if (!d_store.IterChildren(out child, iter))
+						{
+							break;
+						}
+
+						iter = child;
+
 						continue;
 					}
 				}
@@ -383,9 +398,14 @@ namespace Cpg.Studio.Widgets
 		
 		private void RemoveObject(Wrappers.Wrapper obj)
 		{
+			RemoveObject(obj.Parent, obj);
+		}
+		
+		private void RemoveObject(Wrappers.Group parent, Wrappers.Wrapper obj)
+		{
 			TreeIter iter;
 			
-			if (Find(obj, out iter))
+			if (Find(parent, obj, out iter))
 			{
 				d_store.Remove(ref iter);
 				Disconnect(obj);
@@ -406,6 +426,8 @@ namespace Cpg.Studio.Widgets
 		
 		private void Connect(Wrappers.Wrapper obj, TreeIter iter)
 		{
+			TreeRowReference iterPath = new TreeRowReference(d_store, d_store.GetPath(iter));
+
 			foreach (Cpg.Property property in obj.Properties)
 			{
 				AddProperty(iter, obj, property);
@@ -429,15 +451,19 @@ namespace Cpg.Studio.Widgets
 				grp.ChildRemoved += HandleChildRemoved;
 			}
 			
-			ExpandRow(d_store.GetPath(iter), false);
+			ExpandToPath(iterPath.Path);
 		}
 		
 		private void AddObject(Wrappers.Wrapper obj, TreeIter parent)
 		{
 			TreeIter iter;
+			
+			TreeRowReference parentPath = new TreeRowReference(d_store, d_store.GetPath(parent));
 
 			iter = d_store.AppendValues(parent, ObjectType.Object, obj, null, Activity.Inactive);
 			Connect(obj, iter);
+			
+			ExpandToPath(parentPath.Path);
 		}
 		
 		private void AddObject(Wrappers.Wrapper obj)
@@ -460,7 +486,7 @@ namespace Cpg.Studio.Widgets
 
 		private void HandleChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
 		{
-			RemoveObject(child);
+			RemoveObject(source, child);
 		}
 
 		private void HandleChildAdded(Wrappers.Group source, Wrappers.Wrapper child)
@@ -523,11 +549,13 @@ namespace Cpg.Studio.Widgets
 		
 		private void AddProperty(TreeIter parent, Wrappers.Wrapper obj, Cpg.Property prop)
 		{
+			TreeRowReference path = new TreeRowReference(d_store, d_store.GetPath(parent));
+
 			d_store.AppendValues(parent, ObjectType.Property, null, prop, Activity.Inactive);
 			
 			prop.AddNotification("name", HandlePropertyNameChanged);
 			
-			ExpandRow(d_store.GetPath(parent), false);
+			ExpandToPath(path.Path);
 			PropertyAdded(this, obj, prop);
 		}
 		
@@ -610,6 +638,16 @@ namespace Cpg.Studio.Widgets
 					ToggleProperty(iter, obj, FromStore<Cpg.Property>(iter, Column.Property), activity);
 				}
 			} while (d_store.IterNext(ref iter));
+		}
+		
+		protected override void OnDestroyed()
+		{		
+			Disconnect();
+			
+			d_network.ChildAdded -= HandleChildAdded;
+			d_network.ChildRemoved -= HandleChildRemoved;
+			
+			base.OnDestroyed();
 		}
 	}
 }
