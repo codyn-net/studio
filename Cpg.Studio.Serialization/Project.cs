@@ -10,6 +10,23 @@ namespace Cpg.Studio.Serialization
 {
 	public class Project
 	{
+		[XmlType("monitor")]
+		public class Monitor
+		{
+			[XmlElement("id")]
+			public List<string> Id;
+			
+			public Monitor()
+			{
+				Id = new List<string>();
+			}
+			
+			public Monitor(params string[] id)
+			{
+				Id = new List<string>(id);
+			}
+		}
+
 		[XmlType("settings")]
 		public class SettingsType
 		{
@@ -36,7 +53,23 @@ namespace Cpg.Studio.Serialization
 			
 			[XmlElement("active-group")]
 			public string ActiveGroup;
-
+			
+			public struct MonitorsType
+			{
+				[XmlElement("graph"),
+				 XmlElement(typeof(Monitor))]
+				public List<Monitor> Graphs;
+				
+				[XmlAttribute("rows")]
+				public uint Rows;
+				
+				[XmlAttribute("columns")]
+				public uint Columns;
+			}
+			
+			[XmlElement("monitors")]
+			public MonitorsType Monitors;
+			
 			public SettingsType()
 			{
 				ToolBar = true;
@@ -47,6 +80,10 @@ namespace Cpg.Studio.Serialization
 				SimulatePeriod = "0:0.01:1";
 				Allocation = new Allocation(-1, -1, 700, 600);
 				ActiveGroup = "";
+
+				Monitors.Graphs = new List<Monitor>();
+				Monitors.Rows = 0;
+				Monitors.Columns = 0;
 			}
 		}
 		

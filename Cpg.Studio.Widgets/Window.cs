@@ -972,12 +972,14 @@ namespace Cpg.Studio.Widgets
 		
 		private void SaveProjectSettings()
 		{
-			d_project.Settings.PathBar = ShowPathbar;
-			d_project.Settings.SimulateBar = ShowSimulateButtons;
-			d_project.Settings.StatusBar = ShowStatusbar;
-			d_project.Settings.ToolBar = ShowToolbar;
-			d_project.Settings.PanePosition = PanePosition;
-			d_project.Settings.SimulatePeriod = d_periodEntry.Text;
+			Serialization.Project.SettingsType s = d_project.Settings;
+
+			s.PathBar = ShowPathbar;
+			s.SimulateBar = ShowSimulateButtons;
+			s.StatusBar = ShowStatusbar;
+			s.ToolBar = ShowToolbar;
+			s.PanePosition = PanePosition;
+			s.SimulatePeriod = d_periodEntry.Text;
 			
 			int x;
 			int y;
@@ -987,12 +989,34 @@ namespace Cpg.Studio.Widgets
 			GetPosition(out x, out y);
 			GetSize(out width, out height);
 			
-			d_project.Settings.Allocation.X = x;
-			d_project.Settings.Allocation.Y = y;
-			d_project.Settings.Allocation.Width = width;
-			d_project.Settings.Allocation.Height = height;
+			s.Allocation.X = x;
+			s.Allocation.Y = y;
+			s.Allocation.Width = width;
+			s.Allocation.Height = height;
 			
-			d_project.Settings.ActiveGroup = d_grid.ActiveGroup.FullId;
+			s.ActiveGroup = d_grid.ActiveGroup.FullId;
+			s.Monitors.Graphs.Clear();
+			s.Monitors.Rows = 0;
+			s.Monitors.Columns = 0;
+			
+			// Save monitor state
+			if (d_monitor != null)
+			{
+				foreach (List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>> monitor in d_monitor.Monitors)
+				{
+					Serialization.Project.Monitor mon = new Serialization.Project.Monitor();
+					
+					foreach (KeyValuePair<Wrappers.Wrapper, Cpg.Property> prop in monitor)
+					{
+						mon.Id.Add(prop.Value.FullName);
+					}
+					
+					s.Monitors.Graphs.Add(mon);
+				}
+				
+				s.Monitors.Rows = d_monitor.Rows;
+				s.Monitors.Columns = d_monitor.Columns;
+			}
 		}
 		
 		private void DoSave(string filename, bool externalProject)
@@ -1399,7 +1423,9 @@ namespace Cpg.Studio.Widgets
 		private void EnsureMonitor()
 		{
 			if (d_monitor != null)
+			{
 				return;
+			}
 			
 			d_monitor = new Monitor(Network, d_simulation);
 			d_monitor.TransientFor = this;
