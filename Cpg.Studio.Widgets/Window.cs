@@ -873,7 +873,9 @@ namespace Cpg.Studio.Widgets
 		
 		private void RestoreSettings()
 		{
-			if (d_project.Settings.Allocation != null)
+			Serialization.Project.SettingsType s = d_project.Settings;
+
+			if (s.Allocation != null)
 			{
 				Allocation alloc = d_project.Settings.Allocation;
 
@@ -885,14 +887,59 @@ namespace Cpg.Studio.Widgets
 				Resize((int)alloc.Width, (int)alloc.Height);
 			}
 			
-			PanePosition = d_project.Settings.PanePosition;
+			PanePosition = s.PanePosition;
 
-			ShowToolbar = d_project.Settings.ToolBar;
-			ShowPathbar = d_project.Settings.PathBar;
-			ShowSimulateButtons = d_project.Settings.SimulateBar;
-			ShowStatusbar = d_project.Settings.StatusBar;
+			ShowToolbar = s.ToolBar;
+			ShowPathbar = s.PathBar;
+			ShowSimulateButtons = s.SimulateBar;
+			ShowStatusbar = s.StatusBar;
 			
-			d_periodEntry.Text = d_project.Settings.SimulatePeriod;
+			d_periodEntry.Text = s.SimulatePeriod;
+			
+			// Restore active group
+			if (!String.IsNullOrEmpty(s.ActiveGroup))
+			{
+				Wrappers.Group w = Network.FindObject(s.ActiveGroup) as Wrappers.Group;
+				
+				if (w != null)
+				{
+					d_grid.ActiveGroup = w;
+				}
+			}
+			
+			// Restore monitors
+			Serialization.Project.SettingsType.MonitorsType mons = s.Monitors;
+			
+			if (mons.Columns > 0 && mons.Rows > 0)
+			{
+				EnsureMonitor();
+				
+				if (mons.Allocation != null)
+				{
+					d_monitor.Resize((int)mons.Allocation.Width, (int)mons.Allocation.Height);
+					d_monitor.Move((int)mons.Allocation.X, (int)mons.Allocation.Y);
+				}
+				
+				for (int i = 0; i < mons.Graphs.Count; ++i)
+				{
+					int col = (int)(i % mons.Columns);
+					int row = (int)(i / mons.Columns);
+					
+					List<Cpg.Property> props = new List<Cpg.Property>();
+					
+					foreach (string p in mons.Graphs[i].Id)
+					{
+						Cpg.Property prop = Network.FindProperty(p);
+						
+						if (prop != null)
+						{
+							props.Add(prop);
+						}
+					}
+					
+					d_monitor.AddHook(props.ToArray(), row, col);
+				}
+			}
 		}
 		
 		public void DoLoad(string filename)
@@ -970,6 +1017,19 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private Allocation WindowAllocation(Gtk.Window win)
+		{
+			int x;
+			int y;
+			int width;
+			int height;
+
+			win.GetPosition(out x, out y);
+			win.GetSize(out width, out height);
+			
+			return new Allocation(x, y, width, height);
+		}
+		
 		private void SaveProjectSettings()
 		{
 			Serialization.Project.SettingsType s = d_project.Settings;
@@ -981,18 +1041,7 @@ namespace Cpg.Studio.Widgets
 			s.PanePosition = PanePosition;
 			s.SimulatePeriod = d_periodEntry.Text;
 			
-			int x;
-			int y;
-			int width;
-			int height;
-
-			GetPosition(out x, out y);
-			GetSize(out width, out height);
-			
-			s.Allocation.X = x;
-			s.Allocation.Y = y;
-			s.Allocation.Width = width;
-			s.Allocation.Height = height;
+			s.Allocation = WindowAllocation(this);
 			
 			s.ActiveGroup = d_grid.ActiveGroup.FullId;
 			s.Monitors.Graphs.Clear();
@@ -1016,6 +1065,8 @@ namespace Cpg.Studio.Widgets
 				
 				s.Monitors.Rows = d_monitor.Rows;
 				s.Monitors.Columns = d_monitor.Columns;
+				
+				s.Monitors.Allocation = WindowAllocation(d_monitor);
 			}
 		}
 		
@@ -1504,7 +1555,7 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (Wrappers.Wrapper obj in objs)
 			{
-				d_monitor.AddHook(obj, obj.Property(property));
+				d_monitor.AddHook(obj.Property(property));
 			}
 		}
 

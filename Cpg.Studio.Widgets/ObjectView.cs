@@ -221,11 +221,11 @@ namespace Cpg.Studio.Widgets
 			Toggled(this, obj, property);
 		}
 		
-		public void SetActive(Wrappers.Wrapper obj, Cpg.Property prop, bool active)
+		public void SetActive(Cpg.Property prop, bool active)
 		{
 			TreeIter parent;
 			
-			if (!Find(obj, out parent))
+			if (!Find(prop.Object, out parent))
 			{
 				return;
 			}
@@ -234,7 +234,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (FindProperty(parent, prop, out child))
 			{
-				ToggleProperty(child, obj, prop, active ? Activity.Active : Activity.Inactive);
+				ToggleProperty(child, prop.Object, prop, active ? Activity.Active : Activity.Inactive);
 			}
 		}
 		

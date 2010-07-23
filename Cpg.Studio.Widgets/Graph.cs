@@ -143,12 +143,18 @@ namespace Cpg.Studio.Widgets
 				get
 				{
 					if (idx < 0)
+					{
 						idx = d_data.Count + idx;
+					}
 					
 					if (idx >= d_data.Count)
+					{
 						return 0;
+					}
 					else
+					{
 						return d_data[idx];
+					}
 				}
 			}
 		}
@@ -167,6 +173,7 @@ namespace Cpg.Studio.Widgets
 		
 		private static Cairo.Color[] s_colors;
 		private static int s_colorIndex;
+
 		static Graph()
 		{
 			s_colors = new Cairo.Color[] {
@@ -283,6 +290,14 @@ namespace Cpg.Studio.Widgets
 			get
 			{
 				return d_data.Count;
+			}
+		}
+		
+		public Container[] Plots
+		{
+			get
+			{
+				return d_data.ToArray();
 			}
 		}
 		

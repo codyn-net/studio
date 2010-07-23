@@ -204,11 +204,11 @@ namespace Cpg.Studio.Widgets
 		{
 			if (source.GetActive(obj, property))
 			{
-				AddHook(obj, property);
+				AddHook(property);
 			}
 			else
 			{
-				RemoveHook(obj, property);
+				RemoveHook(property);
 			}
 		}
 		
@@ -217,8 +217,10 @@ namespace Cpg.Studio.Widgets
 			return d_map.ContainsKey(obj);
 		}
 		
-		private bool HasHook(Wrappers.Wrapper obj, Cpg.Property property)
+		private bool HasHook(Cpg.Property property)
 		{
+			Wrappers.Wrapper obj = property.Object;
+
 			if (!d_map.ContainsKey(obj))
 			{
 				return false;
@@ -241,7 +243,31 @@ namespace Cpg.Studio.Widgets
 			d_map[obj] = new List<State>();
 			
 			obj.PropertyRemoved += HandlePropertyRemoved;
-			obj.PropertyChanged += HandlePropertyChanged;
+			
+			if (obj.Parent != null && HasHook(obj.Parent))
+			{
+				InstallObject(obj.Parent);
+			}
+			
+			if (obj is Wrappers.Group)
+			{
+				Wrappers.Group grp = (Wrappers.Group)obj;
+				
+				grp.ChildRemoved += HandleChildRemoved;
+			}
+		}
+
+		private void HandleChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
+		{
+			if (d_map.ContainsKey(child))
+			{
+				List<Monitor.State> states = new List<Monitor.State>(d_map[child]);
+				
+				foreach (Monitor.State state in states)
+				{
+					RemoveAllHooks(state.Property);
+				}
+			}
 		}
 		
 		private string PropertyName(Wrappers.Wrapper obj, Cpg.Property property, bool longname)
@@ -256,6 +282,22 @@ namespace Cpg.Studio.Widgets
 			
 			return s;
 		}
+		
+		private void UpdateTitle(Graph.Container plot, Cpg.Property prop)
+		{
+			plot.Label = PropertyName(prop.Object, prop, true);
+		}
+		
+		private void UpdateTitle(Cpg.Property prop)
+		{
+			Wrappers.Wrapper obj = prop.Object;
+			Monitor.State s = FindHook(obj, prop);
+			
+			if (s != null)
+			{
+				UpdateTitle(s.Plot, prop);
+			}
+		}
 
 		private void UpdateTitle(Wrappers.Wrapper obj)
 		{
@@ -266,19 +308,10 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (Monitor.State state in d_map[obj])
 			{
-				state.Plot.Label = PropertyName(obj, state.Property, true);
+				UpdateTitle(state.Plot, state.Property);
 			}
 		}
 
-		private void HandlePropertyChanged(Wrappers.Wrapper source, Cpg.Property prop)
-		{
-			// TODO: this works differently now
-			/*if (name == "id")
-			{
-				UpdateTitle(source);
-			}*/
-		}
-		
 		public uint Columns
 		{
 			get
@@ -366,7 +399,6 @@ namespace Cpg.Studio.Widgets
 		
 		private List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> FindForPosition(int row, int col)
 		{
-			Console.WriteLine("{0} {1} {2}", row, col, d_content.At(row, col));
 			return FindForWidget(d_content.At(col, row));
 		}
 		
@@ -388,8 +420,9 @@ namespace Cpg.Studio.Widgets
 			return ret;
 		}
 		
-		private void RemoveAllHooks(Wrappers.Wrapper obj, Cpg.Property property)
+		private void RemoveAllHooks(Cpg.Property property)
 		{
+			Wrappers.Wrapper obj = property.Object;
 			Monitor.State state = FindHook(obj, property);
 			
 			if (state == null)
@@ -401,22 +434,13 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> s in all)
 			{
-				RemoveHook(s.Key, s.Value.Property);
+				RemoveHook(s.Value.Property);
 			}
 		}
 		
-		private void MergeWith(Wrappers.Wrapper obj, Cpg.Property property, Widget widget)
+		private void MergeWith(Container cont, List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all, Widget widget)
 		{
-			Monitor.State state = FindHook(obj, property);
-			
-			if (state == null)
-			{
-				return;
-			}
-			
-			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all = FindForWidget(state.Widget);
 			Monitor.State toitem = FindForWidget(widget)[0].Value;
-			Widget orig = state.Widget;
 			
 			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> s in all)
 			{
@@ -425,59 +449,129 @@ namespace Cpg.Studio.Widgets
 				s2.Plot = toitem.Graph.Add(s2.Plot.Data.ToArray(), s2.Plot.Label, s2.Plot.Color);
 				s2.Graph = toitem.Graph;
 				s2.Widget = widget;
+				
+				UpdateTitle(s2.Plot, s2.Property);
 			}
 			
-			UpdateTitle(obj);
-			orig.Destroy();
+			cont.Destroy();
 			
 			QueueDraw();
 		}
 		
-		private void DoMerge(Wrappers.Wrapper obj, Cpg.Property property, Point direction)
+		private void DoMerge(Container cont, Point direction)
 		{
-			Monitor.State state = FindHook(obj, property);
+			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> states = FindForWidget(cont);
 			
-			if (state == null)
+			if (states.Count == 0)
+			{
 				return;
+			}
 			
-			Gtk.Widget to = d_content.Find(state.Widget, direction.X, direction.Y);
+			Gtk.Widget to = d_content.Find(cont, direction.X, direction.Y);
 			
 			if (to == null)
+			{
 				return;
+			}
 			
-			MergeWith(obj, property, to);
+			MergeWith(cont, states, to);
 		}
 		
-		private void MakeMergeMenuItem(Wrappers.Wrapper obj, Cpg.Property property, Menu menu, Point pos, string stockid, string label, Point dir)
+		private void MakeMergeMenuItem(Container cont, Menu menu, Point pos, string stockid, string label, Point dir)
 		{
 			if (pos.X + dir.X < 0 || pos.X + dir.X >= d_content.NColumns)
+			{
 				return;
+			}
 			
 			if (pos.Y + dir.Y < 0 || pos.Y + dir.Y >= d_content.NRows)
+			{
 				return;
+			}
 			
 			ImageMenuItem item = new ImageMenuItem(label);
 			item.Image = new Gtk.Image(stockid, IconSize.Menu);
 			
 			item.Activated += delegate(object sender, EventArgs e) {
-				DoMerge(obj, property, dir);
+				DoMerge(cont, dir);
 			};
 			
 			menu.Append(item);
 			item.Show();
 		}
 		
-		private void ShowMergeMenu(Wrappers.Wrapper obj, Cpg.Property property)
+		private void MakeUnmergeMenuItems(Gtk.Menu menu, Container cont, List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> states)
 		{
-			Monitor.State state = FindHook(obj, property);
+			if (menu.Children.Length != 0)
+			{
+				Gtk.SeparatorMenuItem sep = new Gtk.SeparatorMenuItem();
+				sep.Show();
+
+				menu.Add(sep);
+			}
+			
+			Gtk.MenuItem parent = new Gtk.MenuItem("Unmerge");
+			parent.Show();
+			
+			Gtk.Menu sub = new Gtk.Menu();
+			sub.Show();
+			
+			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in states)
+			{
+				Monitor.State s = state.Value;
+				Wrappers.Wrapper obj = state.Key;
+				Cpg.Property property = s.Property;
+
+
+				Gtk.MenuItem item = new Gtk.MenuItem(PropertyName(obj, property, true));
+				item.Show();
+				
+				item.Activated += delegate {
+					DoUnmerge(s);
+				};
+				
+				sub.Append(item);
+			}
+			
+			parent.Submenu = sub;			
+			menu.Append(parent);
+		}
+		
+		private void DoUnmerge(Monitor.State state)
+		{
+			System.Drawing.Point pt = d_content.GetPosition(state.Widget);
+
+			RemoveHook(state.Property);
+			AddHook(state.Property);
+			
+			State sn = FindHook(state.Property.Object, state.Property);
+			sn.Plot.Color = state.Plot.Color;
+			
+			d_content.SetPosition(sn.Widget, pt.X, pt.Y + 1);
+		}
+		
+		private void ShowMergeMenu(Container cont)
+		{
+			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> states = FindForWidget(cont);
+			
+			if (states.Count == 0)
+			{
+				return;
+			}
+
 			Menu menu = new Menu();
 			
-			Point pos = d_content.GetPosition(state.Widget);
+			Point pos = d_content.GetPosition(cont);
 			
-			MakeMergeMenuItem(obj, property, menu, pos, Gtk.Stock.GotoTop, "Merge Up", new Point(0, -1));
-			MakeMergeMenuItem(obj, property, menu, pos, Gtk.Stock.GotoBottom, "Merge Down", new Point(0, 1));
-			MakeMergeMenuItem(obj, property, menu, pos, Gtk.Stock.GotoLast, "Merge Right", new Point(1, 0));
-			MakeMergeMenuItem(obj, property, menu, pos, Gtk.Stock.GotoFirst, "Merge Left", new Point(-1, 0));
+			MakeMergeMenuItem(cont, menu, pos, Gtk.Stock.GotoTop, "Merge Up", new Point(0, -1));
+			MakeMergeMenuItem(cont, menu, pos, Gtk.Stock.GotoBottom, "Merge Down", new Point(0, 1));
+			MakeMergeMenuItem(cont, menu, pos, Gtk.Stock.GotoLast, "Merge Right", new Point(1, 0));
+			MakeMergeMenuItem(cont, menu, pos, Gtk.Stock.GotoFirst, "Merge Left", new Point(-1, 0));
+			
+			if (states.Count > 1)
+			{
+				MakeUnmergeMenuItems(menu, cont, states);
+			}
 			
 			if (menu.Children.Length != 0)
 			{
@@ -497,7 +591,7 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private bool AddHookReal(Wrappers.Wrapper obj, Cpg.Property property, Monitor.State state)
+		private bool AddHookReal(Cpg.Property[] properties, int row, int col)
 		{
 			Graph graph = new Graph(SampleWidth, new Graph.Range(-3, 3));
 			graph.SetSizeRequest(-1, 50);
@@ -511,44 +605,60 @@ namespace Cpg.Studio.Widgets
 					break;
 				}
 			}
-			
+
 			Container cont = new Container(graph);
 			
 			cont.Close.Clicked += delegate(object sender, EventArgs e) {
-				RemoveAllHooks(obj, property);
+				RemoveAllHooks(properties[0]);
 			};
 			
 			cont.Merge.Clicked += delegate(object sender, EventArgs e) {
-				ShowMergeMenu(obj, property);
+				ShowMergeMenu(cont);
 			};
 			
 			cont.ShowAll();
-			d_content.Add(cont);
+			
+			d_content.Add(cont, row, col);
 			
 			graph.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
 				if (d_linkRulers && graph.ShowRuler)
+				{
 					DoLinkRulers(graph);
+				}
 				
 				UpdateTimeLabel(graph, args.Event);
 			};
 			
 			graph.LeaveNotifyEvent += delegate(object o, LeaveNotifyEventArgs args) {
 				if (d_linkRulers && graph.ShowRuler)
+				{
 					DoLinkRulersLeave(graph);
+				}
 			};
 			
 			graph.EnterNotifyEvent += delegate(object o, EnterNotifyEventArgs args)
 			{
 				if (d_linkRulers && graph.ShowRuler)
+				{
 					DoLinkRulers(graph);
+				}
 			};
 			
-			state.Graph = graph;
-			state.Widget = cont;
-			state.Monitor = new Cpg.Monitor(d_simulation.Network, property);
-			state.Plot = graph.Add(new double[] {}, PropertyName(obj, property, true));
-
-			d_map[obj].Add(state);
+			foreach (Cpg.Property prop in properties)
+			{
+				Monitor.State s = new Monitor.State(prop);
+				Wrappers.Wrapper obj = prop.Object;
+				
+				s.Graph = graph;
+				s.Widget = cont;
+				s.Monitor = new Cpg.Monitor(d_simulation.Network, prop);
+				s.Plot = graph.Add(new double[] {}, PropertyName(obj, prop, true));
+				
+				s.Property.AddNotification("name", HandlePropertyNameChanged);
+				
+				d_map[obj].Add(s);
+			}
+		
 
 			if (!graph.Data.ContainsKey("HandleConfigureEvent"))
 			{
@@ -561,34 +671,59 @@ namespace Cpg.Studio.Widgets
 			return true;
 		}
 
-		void HandlePropertyRemoved(Wrappers.Wrapper source, Cpg.Property prop)
+		private void HandlePropertyRemoved(Wrappers.Wrapper source, Cpg.Property prop)
 		{
-			RemoveHook(source, prop);
+			RemoveHook(prop);
 		}
 		
-		public bool AddHook(Wrappers.Wrapper obj, Cpg.Property property)
+		public bool AddHook(Cpg.Property[] properties, int row, int col)
 		{
-			if (!HasHook(obj))
+			List<Cpg.Property> props = new List<Cpg.Property>(properties);
+
+			foreach (Cpg.Property p in properties)
 			{
-				InstallObject(obj);
+				if (!HasHook(p.Object))
+				{
+					InstallObject(p.Object);
+				}
+				
+				if (HasHook(p))
+				{
+					props.Remove(p);
+				}
 			}
 			
-			if (HasHook(obj, property))
+			if (props.Count == 0)
 			{
 				return false;
 			}
-			
-			if (!AddHookReal(obj, property, new Monitor.State(property)))
+
+			if (!AddHookReal(props.ToArray(), row, col))
 			{
 				return false;
 			}
-			
+
 			if (d_objectView != null)
 			{
-				d_objectView.SetActive(obj, property, true);
+				foreach (Cpg.Property p in properties)
+				{
+					d_objectView.SetActive(p, true);
+				}
 			}
 			
 			return true;
+		}
+		
+		public bool AddHook(Cpg.Property property)
+		{
+			return AddHook(new Cpg.Property[] {property}, -1, -1);
+		}
+		
+		private void HandlePropertyNameChanged(object source, GLib.NotifyArgs args)
+		{
+			Cpg.Property prop = (Cpg.Property)source;
+			
+			UpdateTitle(prop);
 		}
 		
 		private bool RemoveHookReal(Wrappers.Wrapper obj, Monitor.State state)
@@ -605,6 +740,8 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 			
+			state.Property.RemoveNotification("name", HandlePropertyNameChanged);
+			
 			state.Monitor.Dispose();
 			return true;
 		}
@@ -612,15 +749,23 @@ namespace Cpg.Studio.Widgets
 		private void Disconnect(Wrappers.Wrapper obj)
 		{
 			obj.PropertyRemoved -= HandlePropertyRemoved;
-			obj.PropertyChanged -= HandlePropertyChanged;
+			
+			if (obj is Wrappers.Group)
+			{
+				Wrappers.Group grp = (Wrappers.Group)obj;
+				
+				grp.ChildRemoved -= HandleChildRemoved;
+			}
 		}
 		
-		private void RemoveHook(Wrappers.Wrapper obj, Cpg.Property property)
+		private void RemoveHook(Cpg.Property property)
 		{
-			if (!HasHook(obj, property))
+			if (!HasHook(property))
 			{
 				return;
 			}
+			
+			Wrappers.Wrapper obj = property.Object;
 			
 			d_map[obj].RemoveAll(delegate (Monitor.State state) {
 				return (property == null || property == state.Property) && RemoveHookReal(obj, state);
@@ -634,7 +779,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (d_objectView != null)
 			{
-				d_objectView.SetActive(obj, property, false);
+				d_objectView.SetActive(property, false);
 			}
 		}
 		
@@ -694,7 +839,7 @@ namespace Cpg.Studio.Widgets
 			AddAccelGroup(d_uimanager.AccelGroup);
 		}
 
-		void DoClose(object source, EventArgs args)
+		private void DoClose(object source, EventArgs args)
 		{
 			Destroy();
 		}
@@ -746,7 +891,7 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		void DoAutoAxis(object source, EventArgs args)
+		private void DoAutoAxis(object source, EventArgs args)
 		{
 			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 			{
@@ -767,14 +912,14 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		void DoLinkAxis(object source, EventArgs args)
+		private void DoLinkAxis(object source, EventArgs args)
 		{
 			bool active = (source as ToggleAction).Active;
 			
 			LinkAxis(active);
 		}
 		
-		void DoSelectToggled(object source, EventArgs args)
+		private void DoSelectToggled(object source, EventArgs args)
 		{
 			d_objectViewScrolledWindow.Visible = (source as Gtk.ToggleAction).Active;
 			d_hpaned.QueueDraw();
@@ -796,7 +941,9 @@ namespace Cpg.Studio.Widgets
 			bool ret = base.OnConfigureEvent(evnt);
 			
 			if (d_configured)
+			{
 				return ret;
+			}
 			
 			d_hpaned.Position = Allocation.Width - 150;
 			d_configured = true;
@@ -804,7 +951,7 @@ namespace Cpg.Studio.Widgets
 			return ret;
 		}
 		
-		void DoStep(object source, double timestep)
+		private void DoStep(object source, double timestep)
 		{
 			// TODO
 		}
@@ -831,7 +978,9 @@ namespace Cpg.Studio.Widgets
 			for (int i = 0; i < data.Length; ++i)
 			{
 				if (double.IsInfinity(data[i]) || double.IsNaN(data[i]))
+				{
 					data[i] = 0;
+				}
 			}
 			
 			int mindw = 10;
@@ -857,25 +1006,6 @@ namespace Cpg.Studio.Widgets
 			{
 				SetMonitorData(state.Key, state.Value);
 			}			
-		}
-		
-		public void SetMonitorPosition(Wrappers.Wrapper obj, Cpg.Property property, Point pt)
-		{
-			Monitor.State state = FindHook(obj, property);
-			
-			if (state == null)
-				return;
-			
-			Widget w = d_content.At(pt.X, pt.Y);
-			
-			if (w != null && w != d_content.RealChild(state.Widget))
-			{
-				MergeWith(obj, property, w);
-			}
-			else if (w != null)
-			{
-				d_content.PositionChild(w, (uint)pt.X, (uint)pt.Y);
-			}
 		}
 		
 		private void UpdateMonitorData()

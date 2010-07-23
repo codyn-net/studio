@@ -65,6 +65,9 @@ namespace Cpg.Studio.Serialization
 				
 				[XmlAttribute("columns")]
 				public uint Columns;
+				
+				[XmlElement("allocation")]
+				public Allocation Allocation;
 			}
 			
 			[XmlElement("monitors")]

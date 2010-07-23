@@ -55,7 +55,9 @@ namespace Cpg.Studio.Widgets
 		public Gtk.Widget RealChild(Gtk.Widget child)
 		{
 			while (child != null && child.Parent != this)
+			{
 				child = child.Parent;
+			}
 			
 			return child;
 		}
@@ -70,12 +72,35 @@ namespace Cpg.Studio.Widgets
 			ChildSetProperty(child, "bottom-attach", new GLib.Value(top + 1));
 		}
 		
+		public void SetPosition(Gtk.Widget child, int left, int top)
+		{
+			if (At(left, top) == null)
+			{
+				PositionChild(child, (uint)left, (uint)top);
+				return;
+			}
+			
+			for (uint i = NRows - 2; i >= top; --i)
+			{
+				Gtk.Widget c = At(left, (int)i);
+				
+				if (c != null)
+				{
+					PositionChild(c, (uint)left, i + 1);
+				}
+			}
+			
+			PositionChild(child, (uint)left, (uint)top);
+		}
+		
 		public Point GetPosition(Gtk.Widget child)
 		{
 			child = RealChild(child);
 			
 			if (child == null)
+			{
 				return new Point(0, 0);
+			}
 			
 			Point ret = new Point();
 			ret.X = (int)(uint)ChildGetProperty(child, "left-attach").Val;
@@ -87,7 +112,9 @@ namespace Cpg.Studio.Widgets
 		private void MoveTo(Gtk.Widget from, Gtk.Widget to)
 		{
 			foreach (string attr in new string[] {"left", "right", "top", "bottom"})
+			{
 				ChildSetProperty(from, attr + "-attach", ChildGetProperty(to, attr + "-attach"));
+			}
 		}
 		
 		private void DoUpdateDragging(int x, int y)
@@ -118,7 +145,9 @@ namespace Cpg.Studio.Widgets
 			for (int i = 0; i < NColumns; ++i)
 			{
 				if (columns[i] == null)
+				{
 					continue;
+				}
 				
 				Point pt = (Point)columns[i];
 				
@@ -134,7 +163,9 @@ namespace Cpg.Studio.Widgets
 			for (int i = 0; i < NRows; ++i)
 			{
 				if (rows[i] == null)
+				{
 					continue;
+				}
 				
 				Point pt = (Point)rows[i];
 				
@@ -146,15 +177,21 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			if (row == -1 || col == -1)
+			{
 				return;
+			}
 			
 			Gtk.Widget found = mtx[col, row];
 			
 			if (found == d_dragging)
+			{
 				return;
+			}
 			
 			if (d_swapped != null)
+			{
 				MoveTo(d_swapped, d_dragging);
+			}
 			
 			if (d_swapped != null && d_swapped == found)
 			{
@@ -168,7 +205,9 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			if (found != null)
+			{
 				PositionChild(found, (uint)d_dragPos.X, (uint)d_dragPos.Y);
+			}
 		}
 		
 		private Point FindEmpty()
@@ -178,7 +217,9 @@ namespace Cpg.Studio.Widgets
 			for (int x = 0; x < NColumns; ++x)
 			{
 				for (int y = 0; y < NRows; ++y)
+				{
 					all.Add(new Point(x, y));
+				}
 			}
 			
 			if (d_expand == ExpandType.Down)
@@ -191,7 +232,9 @@ namespace Cpg.Studio.Widgets
 			foreach (Gtk.Widget child in Children)
 			{
 				if (child is Placeholder)
+				{
 					continue;
+				}
 			
 				Point pos = ChildPosition(child);
 				
@@ -201,7 +244,9 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			if (all.Count > 0)
+			{
 				return all[0];
+			}
 			
 			/* Resize is imminent */
 			if (d_expand == ExpandType.Right)
@@ -221,7 +266,9 @@ namespace Cpg.Studio.Widgets
 			child = RealChild(child);
 			
 			if (child == null)
+			{
 				return new Point();
+			}
 			
 			int left = (int)(uint)ChildGetProperty(child, "left-attach").Val;
 			int top = (int)(uint)ChildGetProperty(child, "top-attach").Val;
@@ -231,7 +278,22 @@ namespace Cpg.Studio.Widgets
 		
 		public new void Add(Gtk.Widget child)
 		{
-			Point pos = FindEmpty();
+			Add(child, -1, -1);
+		}
+		
+		public new void Add(Gtk.Widget child, int row, int col)
+		{
+			Point pos;
+			
+			if (row == -1 || col == -1 || At(col, row) != null)
+			{
+				pos = FindEmpty();
+			}
+			else
+			{
+				EnsureSize((uint)row + 1, (uint)col + 1);
+				pos = new Point(col, row);
+			}
 
 			if (child.IsNoWindow)
 			{
@@ -266,9 +328,13 @@ namespace Cpg.Studio.Widgets
 			System.Reflection.MethodInfo info = child.GetType().GetMethod("CreateDragIcon");
 			
 			if (info != null)
+			{
 				icon = info.Invoke(child, new object[] {}) as Gdk.Pixbuf;
+			}
 			else
+			{
 				icon = Gdk.Pixbuf.FromDrawable(child.GdkWindow, child.GdkWindow.Colormap, 0, 0, 0, 0, alloc.Width, alloc.Height);
+			}
 					
 			Gtk.Drag.SetIconPixbuf(context, icon, icon.Width / 2, icon.Height / 2);
 			
@@ -295,12 +361,16 @@ namespace Cpg.Studio.Widgets
 		private bool FindEmptyRow(ref uint idx)
 		{
 			if (NRows <= 1)
+			{
 				return false;
+			}
 			
 			for (idx = 0; idx < NRows; ++idx)
 			{
 				if (EmptyRow(idx))
+				{
 					return true;
+				}
 			}
 			
 			return false;
@@ -309,12 +379,16 @@ namespace Cpg.Studio.Widgets
 		private bool FindEmptyColumn(ref uint idx)
 		{
 			if (NColumns <= 1)
+			{
 				return false;
+			}
 			
 			for (idx = 0; idx < NColumns; ++idx)
 			{
 				if (EmptyColumn(idx))
+				{
 					return true;
+				}
 			}
 			
 			return false;							
@@ -340,7 +414,9 @@ namespace Cpg.Studio.Widgets
 			child = RealChild(child);
 			
 			if (child == null)
+			{
 				return null;
+			}
 			
 			Point pt = GetPosition(child);
 			
@@ -395,10 +471,14 @@ namespace Cpg.Studio.Widgets
 		
 			uint idx = 0;
 			while (FindEmptyRow(ref idx))
+			{
 				RemoveRow(idx);
+			}
 			
 			while (FindEmptyColumn(ref idx))
+			{
 				RemoveColumn(idx);
+			}
 		
 			d_compacting = false;
 		}
@@ -414,7 +494,9 @@ namespace Cpg.Studio.Widgets
 			base.OnRemoved(widget);
 			
 			if (!d_compacting)
+			{
 				Compact();
+			}
 		}
 
 		private void FindEmptyRowCol(uint last, string what, out Gtk.Widget child, out Placeholder placeholder)
@@ -448,10 +530,14 @@ namespace Cpg.Studio.Widgets
 			FindEmptyRowCol(last, "top", out child, out placeholder);
 			
 			if (child != null)
+			{
 				return false;
+			}
 		
 			if (placeholder != null)
+			{
 				placeholder.Destroy();
+			}
 		
 			RemoveRow(last);
 			
@@ -467,36 +553,56 @@ namespace Cpg.Studio.Widgets
 			FindEmptyRowCol(last, "left", out child, out placeholder);
 			
 			if (child != null)
+			{
 				return false;
+			}
 		
 			if (placeholder != null)
+			{
 				placeholder.Destroy();
+			}
 		
 			RemoveColumn(last);
 			
 			return true;
 		}
 		
+		private void EnsureSize(uint rows, uint cols)
+		{
+			uint origRows = NRows;
+			uint origCols = NColumns;
+			
+			Resize(Math.Max(origRows, rows), Math.Max(origCols, cols));
+
+			for (uint i = origRows; i < rows; ++i)
+			{
+				Attach(new Placeholder(), 0, 1, i, i + 1);
+			}
+			
+			for (uint i = origCols; i < cols; ++i)
+			{
+				Attach(new Placeholder(), i, i + 1, 0, 1);
+			}
+			
+			QueueDraw();
+		}
+		
 		protected override bool OnKeyPressEvent(Gdk.EventKey evnt)
 		{
 			if ((evnt.State & Gdk.ModifierType.ControlMask) == 0)
+			{
 				return false;
+			}
 			
 			switch (evnt.Key)
 			{
 				case Gdk.Key.Down:
 					return RemoveEmptyRow();
 				case Gdk.Key.Up:
-					Resize(NRows + 1, NColumns);
-					Attach(new Placeholder(), 0, 1, NRows - 1, NRows);
-					QueueDraw();
-					
+					EnsureSize(NRows + 1, NColumns);
 					return true;
 				case Gdk.Key.Left:
-					Resize(NRows, NColumns + 1);
-					Attach(new Placeholder(), NColumns - 1, NColumns, 0, 1);
-					QueueDraw();
-					
+					EnsureSize(NRows, NColumns + 1);
 					return true;
 				case Gdk.Key.Right:
 					return RemoveEmptyColumn();
@@ -531,7 +637,9 @@ namespace Cpg.Studio.Widgets
 		protected override bool OnDragDrop(Gdk.DragContext context, int x, int y, uint time_)
 		{
 			if (d_dragging == null)
+			{
 				return false;
+			}
 			
 			Gtk.Drag.Finish(context, true, false, time_);
 			return true;
