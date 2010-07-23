@@ -611,26 +611,25 @@ namespace Cpg.Studio.Widgets
 			};
 		}
 		
-		private Cpg.Property[] CommonProperties(Wrappers.Wrapper[] objects)
+		private string[] CommonProperties(Wrappers.Wrapper[] objects)
 		{
 			if (objects.Length == 0)
 			{
-				return new Cpg.Property[] {};
+				return new string[] {};
 			}
 			
-			Cpg.Property[] props = objects[0].Properties;
+			List<string> props = (new List<Cpg.Property>(objects[0].Properties)).ConvertAll<string>(item => item.Name);
 			int i = 1;
 			
-			while (props.Length > 0 && i < objects.Length)
+			while (props.Count > 0 && i < objects.Length)
 			{
-				Cpg.Property[] pp = objects[i].Properties;
+				List<string> pp = (new List<Cpg.Property>(objects[i].Properties)).ConvertAll<string>(item => item.Name);
 				
-				// TODO
-				props = Array.FindAll(props, delegate (Cpg.Property s) { return Utils.In(s, pp); });
+				props.RemoveAll(item => !pp.Contains(item));
 				++i;
 			}
 			
-			return props;
+			return props.ToArray();
 		}
 		
 		private void DoPopup(object source, int button, long time)
@@ -648,13 +647,14 @@ namespace Cpg.Studio.Widgets
 			// Merge monitor
 			Wrappers.Wrapper[] selection = d_grid.Selection;
 			
-			foreach (Cpg.Property prop in CommonProperties(selection))
+			foreach (string prop in CommonProperties(selection))
 			{
-				string name = "Monitor" + prop.Name;
+				string name = "Monitor" + prop;
+				string p = (string)prop.Clone();
 				
 				d_popupActionGroup.Add(new ActionEntry[] {
-					new ActionEntry(name + "Action", null, prop.Name.Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
-						OnStartMonitor(selection, prop);
+					new ActionEntry(name + "Action", null, p.Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
+						OnStartMonitor(selection, p);
 					})
 				});
 				
@@ -1462,13 +1462,13 @@ namespace Cpg.Studio.Widgets
 			Message(Gtk.Stock.DialogError, error, message);
 		}
 		
-		private void OnStartMonitor(Wrappers.Wrapper[] objs, Cpg.Property property)
+		private void OnStartMonitor(Wrappers.Wrapper[] objs, string property)
 		{
 			EnsureMonitor();
 			
 			foreach (Wrappers.Wrapper obj in objs)
 			{
-				d_monitor.AddHook(obj, property);
+				d_monitor.AddHook(obj, obj.Property(property));
 			}
 		}
 
