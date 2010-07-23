@@ -307,7 +307,9 @@ namespace Cpg.Studio.Widgets
 				
 				if (intgr.Id == Network.Integrator.Id)
 				{
+					d_integratorCombo.Changed -= DoIntegratorChanged;
 					d_integratorCombo.SetActiveIter(piter);
+					d_integratorCombo.Changed += DoIntegratorChanged;
 					
 					return true;
 				}
@@ -373,11 +375,14 @@ namespace Cpg.Studio.Widgets
 			
 			combo.GetActiveIter(out piter);
 			Cpg.Integrator integrator = (Cpg.Integrator)combo.Model.GetValue(piter, 0);
+
+			if (integrator != Network.Integrator)
+			{
+				d_actions.Do(new Undo.ModifyIntegrator(Network, integrator));
+				d_modified = true;
 			
-			Network.Integrator = integrator;
-			d_modified = true;
-			
-			UpdateTitle();
+				UpdateTitle();
+			}
 		}
 		
 		private void BuildButtonBar(HBox hbox)
