@@ -1011,6 +1011,11 @@ namespace Cpg.Studio.Widgets
 		{
 			base.OnScrollEvent(evnt);
 			
+			if (d_isDragging || (evnt.State & Gdk.ModifierType.Button2Mask) != 0)
+			{
+				return false;
+			}
+			
 			if (evnt.Direction == Gdk.ScrollDirection.Up)
 			{
 				DoZoom(true, new Point((int)evnt.X, (int)evnt.Y));
