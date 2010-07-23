@@ -347,5 +347,24 @@ namespace Cpg.Studio.Wrappers
 				}
 			}
 		}
+		
+		public Wrappers.Group TopParent
+		{
+			get
+			{
+				if (Parent == null)
+				{
+					return null;
+				}
+				else if (Parent.Parent == null)
+				{
+					return Parent;
+				}
+				else
+				{
+					return Parent.TopParent;
+				}
+			}
+		}
 	}
 }
