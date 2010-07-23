@@ -246,7 +246,7 @@ namespace Cpg.Studio.Widgets
 		
 		private string PropertyName(Wrappers.Wrapper obj, Cpg.Property property, bool longname)
 		{
-			string s = obj.ToString() + "." + property;
+			string s = longname ? property.FullName : (obj.Id + "." + property.Name);
 			
 			if (longname && obj is Wrappers.Link)
 			{
