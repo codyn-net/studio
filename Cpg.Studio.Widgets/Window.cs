@@ -589,6 +589,11 @@ namespace Cpg.Studio.Widgets
 		}
 		
 		private void DoObjectActivated(object source, Wrappers.Wrapper obj)
+		{
+			ObjectActivated(obj);
+		}
+		
+		private void ObjectActivated(Wrappers.Wrapper obj)
 		{			
 			if (d_propertyEditors.ContainsKey(obj))
 			{
@@ -1309,13 +1314,21 @@ namespace Cpg.Studio.Widgets
 			if (action is Undo.Property)
 			{
 				Undo.Property property = (Undo.Property)action;
-				d_grid.CenterView(property.Wrapped);
+				
+				if (property.Wrapped == Network)
+				{
+					ObjectActivated(Network);
+				}
+				else if (property.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
+				{
+					d_grid.CenterView(property.Wrapped);
+				}
 			}
 			else if (action is Undo.Object)
 			{
 				Undo.Object obj = (Undo.Object)action;
 				
-				if (obj.Wrapped.Parent != null)
+				if (obj.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
 				{
 					if (obj is Undo.MoveObject)
 					{
@@ -1333,7 +1346,7 @@ namespace Cpg.Studio.Widgets
 			{
 				Undo.AddGroup obj = (Undo.AddGroup)action;
 				
-				if (obj.Group.Parent != null)
+				if (obj.Group.TopParent == d_grid.ActiveGroup.TopParent)
 				{
 					d_grid.CenterView(obj.Group);
 				}
@@ -1342,14 +1355,17 @@ namespace Cpg.Studio.Widgets
 			{
 				Undo.Ungroup obj = (Undo.Ungroup)action;
 				
-				d_grid.ActiveGroup = obj.Parent;
-				d_grid.CenterView();
+				if (obj.Parent.TopParent == d_grid.ActiveGroup.TopParent || obj.Parent == d_grid.ActiveGroup.TopParent)
+				{
+					d_grid.ActiveGroup = obj.Parent;
+					d_grid.CenterView();
+				}
 			}
 			else if (action is Undo.LinkAction)
 			{
 				Undo.LinkAction obj = (Undo.LinkAction)action;
 				
-				if (obj.Link.Parent != null)
+				if (obj.Link.TopParent == d_grid.ActiveGroup.TopParent)
 				{
 					d_grid.CenterView(obj.Link);
 				}
@@ -1374,7 +1390,7 @@ namespace Cpg.Studio.Widgets
 
 		private void OnEditGlobalsActivated(object sender, EventArgs args)
 		{
-			DoObjectActivated(sender, Network);
+			ObjectActivated(Network);
 		}
 		
 		private void OnCenterViewActivated(object sender, EventArgs args)
@@ -1400,7 +1416,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (selection.Length != 0)
 			{
-				DoObjectActivated(sender, selection[0]);
+				ObjectActivated(selection[0]);
 			}
 		}
 							
