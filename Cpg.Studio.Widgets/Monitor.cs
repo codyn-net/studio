@@ -244,7 +244,7 @@ namespace Cpg.Studio.Widgets
 			
 			obj.PropertyRemoved += HandlePropertyRemoved;
 			
-			if (obj.Parent != null && HasHook(obj.Parent))
+			if (obj.Parent != null && !HasHook(obj.Parent))
 			{
 				InstallObject(obj.Parent);
 			}
