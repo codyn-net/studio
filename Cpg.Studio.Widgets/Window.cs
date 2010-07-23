@@ -11,7 +11,7 @@ namespace Cpg.Studio.Widgets
 	{
 		private ActionGroup d_normalGroup;
 		private ActionGroup d_selectionGroup;
-		private HBox d_hboxPath;
+		private Pathbar d_pathbar;
 		private VBox d_vboxContents;
 		private VPaned d_vpaned;
 		private Grid d_grid;
@@ -239,9 +239,10 @@ namespace Cpg.Studio.Widgets
 
 			d_uimanager.EnsureUpdate();
 
-			d_hboxPath = new HBox(false, 0);
-			d_hboxPath.BorderWidth = 1;
-			vbox.PackStart(d_hboxPath, false, false, 0);
+			d_pathbar = new Pathbar();
+			d_pathbar.BorderWidth = 1;
+
+			vbox.PackStart(d_pathbar, false, false, 0);
 			
 			d_vboxContents = new VBox(false, 3);
 			vbox.PackStart(d_vboxContents, true, true, 0);
@@ -274,7 +275,9 @@ namespace Cpg.Studio.Widgets
 			OnViewStatusbarActivated(d_normalGroup.GetAction("ViewStatusbarAction"), new EventArgs());
 
 			Add(vbox);
-			
+
+			d_pathbar.Update(d_grid.ActiveGroup);
+
 			d_grid.Activated += DoObjectActivated;
 			d_grid.Popup += DoPopup;
 
@@ -284,35 +287,17 @@ namespace Cpg.Studio.Widgets
 			d_grid.Error += DoError;
 			d_grid.ActiveGroupChanged += DoActiveGroupChanged;
 			
-			BuildButtonPath();
+			d_pathbar.Activated += HandlePathbarActivated;
 		}
 
-		private void DoActiveGroupChanged(object source, Wrappers.Wrapper obj)
+		private void HandlePathbarActivated(object source, Wrappers.Group grp)
 		{
-			BuildButtonPath();
+			d_grid.ActiveGroup = grp;
 		}
 		
-		private void BuildButtonPath()
+		private void DoActiveGroupChanged(object source, Wrappers.Wrapper prev)
 		{
-			while (d_hboxPath.Children.Length > 0)
-			{
-				d_hboxPath.Remove(d_hboxPath.Children[0]);
-			}
-			
-			Stack<Wrappers.Group> parents = new Stack<Wrappers.Group>();
-			Wrappers.Group parent = d_grid.ActiveGroup;
-			
-			while (parent != null)
-			{
-				parents.Push(parent);
-				parent = parent.Parent;
-			}
-			
-			while (parents.Count != 0)
-			{
-				parent = parents.Pop();
-				PushPath(parent, parents.Count == 0);
-			}
+			d_pathbar.Update(d_grid.ActiveGroup);
 		}
 		
 		private void UpdateCurrentIntegrator()
@@ -436,34 +421,7 @@ namespace Cpg.Studio.Widgets
 			but.TooltipText = "Reset running simulation";
 			hbox.PackEnd(but, false, false, 0);
 		}
-		
-		private void PushPath(Wrappers.Group obj, bool selected)
-		{
-			if (obj != Network)
-			{
-				Arrow arrow = new Arrow(ArrowType.Right, ShadowType.None);
-				arrow.Show();
-				d_hboxPath.PackStart(arrow, false, false, 0);
-			}
-			
-			Button but = new Button(obj.ToString());
-			but.Relief = selected ? ReliefStyle.Half : ReliefStyle.None;
-			but.Show();
-			
-			d_hboxPath.PackStart(but, false, false, 0);
-			
-			if (selected)
-			{
-				but.Sensitive = false;
-			}
-			else
-			{
-				but.Clicked += delegate(object source, EventArgs args) {
-					d_grid.ActiveGroup = obj;
-				};
-			}
-		}
-		
+
 		private void Clear()
 		{
 			Network.Clear();
@@ -1374,7 +1332,7 @@ namespace Cpg.Studio.Widgets
 		{
 			ToggleAction action = sender as ToggleAction;
 			
-			d_hboxPath.Visible = action.Active;
+			d_pathbar.Visible = action.Active;
 		}
 		
 		private void OnViewSimulateButtonsActivated(object sender, EventArgs args)
