@@ -503,6 +503,11 @@ namespace Cpg.Studio.Widgets
 		
 		public void CenterView(Wrappers.Wrapper obj)
 		{
+			if (obj.Parent == null)
+			{
+				return;
+			}
+
 			SetActiveGroup(obj.Parent);
 			
 			UnselectAll();
