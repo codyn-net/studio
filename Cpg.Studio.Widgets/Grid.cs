@@ -8,7 +8,9 @@ namespace Cpg.Studio.Widgets
 {
 	public class Grid : DrawingArea
 	{
-		public static int DefaultGridSize = 50;
+		public static int DefaultZoom = 50;
+		public static int MaxZoom = 160;
+		public static int MinZoom = 10;
 
 		public delegate void ObjectEventHandler(object source, Wrappers.Wrapper obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
@@ -22,9 +24,6 @@ namespace Cpg.Studio.Widgets
 		public event EventHandler Cleared = delegate {};
 		public event ObjectEventHandler ActiveGroupChanged = delegate {};
 		
-		private int d_maxSize;
-		private int d_minSize;
-		private int d_gridSize;
 		private Allocation d_mouseRect;
 		private PointF d_origPosition;
 		private PointF d_buttonPress;
@@ -64,9 +63,6 @@ namespace Cpg.Studio.Widgets
 
 			SelectionChanged += OnSelectionChanged;
 			
-			d_maxSize = 160;
-			d_minSize = 10;
-			d_gridSize = DefaultGridSize;
 			d_focus = null;
 			
 			d_gridBackground = new float[] {1f, 1f, 1f};
@@ -121,12 +117,32 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		public int ZoomLevel
+		{
+			get
+			{
+				return d_activeGroup != null ? d_activeGroup.Zoom : DefaultZoom;
+			}
+			set
+			{
+				int clipped = Math.Max(Math.Min(value, MaxZoom), MinZoom);
+
+				if (d_activeGroup != null && d_activeGroup.Zoom != clipped)
+				{
+					d_activeGroup.Zoom = clipped;
+					
+					ModifiedView(this, new EventArgs());
+					QueueDraw();
+				}
+			}
+		}
+		
 		public int[] Center
 		{
 			get
 			{
-				int cx = (int)Math.Round((ActiveGroup.X + Allocation.Width / 2.0) / (double)d_gridSize);
-				int cy = (int)Math.Round((ActiveGroup.Y + Allocation.Height / 2.0) / (double)d_gridSize);
+				int cx = (int)Math.Round((ActiveGroup.X + Allocation.Width / 2.0) / (double)ZoomLevel);
+				int cy = (int)Math.Round((ActiveGroup.Y + Allocation.Height / 2.0) / (double)ZoomLevel);
 				
 				return new int[] {cx, cy};
 			}
@@ -168,26 +184,21 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			Wrappers.Group prev = d_activeGroup;
-			
 			if (d_activeGroup != null)
 			{
 				d_activeGroup.ChildAdded -= HandleActiveGroupChildAdded;
 				d_activeGroup.ChildRemoved -= HandleActiveGroupChildRemoved;
-				
-				d_activeGroup.Zoom = d_gridSize;
 			}
 
 			if (grp != null)
 			{
 				grp.ChildAdded += HandleActiveGroupChildAdded;
 				grp.ChildRemoved += HandleActiveGroupChildRemoved;
-				
-				d_gridSize = grp.Zoom;
 			}
 			
 			UnselectAll();
 
+			Wrappers.Group prev = d_activeGroup;
 			d_activeGroup = grp;
 			
 			QueueDraw();
@@ -245,7 +256,7 @@ namespace Cpg.Studio.Widgets
 			
 			using (Cairo.Context graphics = Gdk.CairoHelper.Create(GdkWindow))
 			{
-				Allocation alloc = obj.Extents(d_gridSize, graphics);
+				Allocation alloc = obj.Extents(ZoomLevel, graphics);
 				alloc.Round();
 				
 				alloc.Offset(-ActiveGroup.X, -ActiveGroup.Y);			
@@ -256,7 +267,7 @@ namespace Cpg.Studio.Widgets
 		delegate double ScaledPredicate(double val);
 		private float Scaled(double pos, ScaledPredicate predicate)
 		{
-			return (float)(predicate != null ? predicate(pos / d_gridSize) : pos / d_gridSize);
+			return (float)(predicate != null ? predicate(pos / ZoomLevel) : pos / ZoomLevel);
 		}
 
 		private float Scaled(double pos)
@@ -327,7 +338,7 @@ namespace Cpg.Studio.Widgets
 				}
 				else
 				{
-					if ((obj as Wrappers.Link).HitTest(rect, d_gridSize))
+					if ((obj as Wrappers.Link).HitTest(rect, ZoomLevel))
 					{
 						res.Add(obj);
 					}
@@ -342,11 +353,8 @@ namespace Cpg.Studio.Widgets
 			double x, y;
 			Utils.MeanPosition(ActiveGroup.Children, out x, out y);
 			
-			x *= d_gridSize;
-			y *= d_gridSize;
-			
-			ActiveGroup.X = (int)(x - (Allocation.Width / 2.0f));
-			ActiveGroup.Y = (int)(y - (Allocation.Height / 2.0f));
+			ActiveGroup.X = (int)(x * ZoomLevel - (Allocation.Width / 2.0f));
+			ActiveGroup.Y = (int)(y * ZoomLevel - (Allocation.Height / 2.0f));
 			
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
@@ -471,21 +479,14 @@ namespace Cpg.Studio.Widgets
 			                  Scaled(Allocation.Height, new ScaledPredicate(Math.Ceiling)));
 		}
 		
-		private void SetGridSize(int size, System.Drawing.Point where)
+		private void ZoomAtPoint(int size, System.Drawing.Point where)
 		{
-			ActiveGroup.X += (int)(((where.X + ActiveGroup.X) * (double)size / d_gridSize) - (where.X + ActiveGroup.X));
-			ActiveGroup.Y += (int)(((where.Y + ActiveGroup.Y) * (double)size / d_gridSize) - (where.Y + ActiveGroup.Y));
-			ActiveGroup.Zoom = size;
-
-			bool changed = (size != d_gridSize);
-			d_gridSize = size;
-					
-			if (changed)
-			{
-				ModifiedView(this, new EventArgs());
-			}
+			size = Math.Max(Math.Min(size, MaxZoom), MinZoom);
 			
-			QueueDraw();
+			ActiveGroup.X += (int)(((where.X + ActiveGroup.X) * (double)size / ZoomLevel) - (where.X + ActiveGroup.X));
+			ActiveGroup.Y += (int)(((where.Y + ActiveGroup.Y) * (double)size / ZoomLevel) - (where.Y + ActiveGroup.Y));
+			
+			ZoomLevel = size;
 		}
 		
 		public void CenterView(Wrappers.Wrapper obj)
@@ -495,7 +496,7 @@ namespace Cpg.Studio.Widgets
 			UnselectAll();
 			Select(obj);
 			
-			d_gridSize = DefaultGridSize;
+			ZoomLevel = DefaultZoom;
 			
 			double x;
 			double y;
@@ -511,33 +512,36 @@ namespace Cpg.Studio.Widgets
 				y = obj.Allocation.Y;
 			}
 
-			ActiveGroup.X = (int)(x * d_gridSize - Allocation.Width / 2.0f);
-			ActiveGroup.Y = (int)(y * d_gridSize - Allocation.Height / 2.0f);
+			ActiveGroup.X = (int)(x * ZoomLevel - Allocation.Width / 2.0f);
+			ActiveGroup.Y = (int)(y * ZoomLevel - Allocation.Height / 2.0f);
 
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
 		}
 		
-		private void DoZoom(bool zoomIn, System.Drawing.Point where)
+		private void DoZoom(bool zoomIn, System.Drawing.Point pt)
 		{
-			int nsize = d_gridSize + (int)Math.Floor(d_gridSize * 0.2 * (zoomIn ? 1 : -1));
+			int nsize = ZoomLevel + (int)Math.Floor(ZoomLevel * 0.2 * (zoomIn ? 1 : -1));
+
 			bool upperReached = false;
 			bool lowerReached = false;
 			
-			if (nsize > d_maxSize)
+			if (nsize > MaxZoom)
 			{
-				nsize = d_maxSize;
+				nsize = MaxZoom;
 				upperReached = true;
 			}
-			else if (nsize < d_minSize)
+			else if (nsize < MinZoom)
 			{
-				nsize = d_minSize;
+				nsize = MinZoom;
 				lowerReached = true;
 			}
 			
+			ZoomAtPoint(nsize, pt);
+			
 			if (upperReached)
 			{
-				List<Wrappers.Wrapper> objects = HitTest(new Allocation(where.X, where.Y, 1f, 1f));
+				List<Wrappers.Wrapper> objects = HitTest(new Allocation(pt.X, pt.Y, 1f, 1f));
 				
 				foreach (Wrappers.Wrapper obj in objects)
 				{
@@ -551,14 +555,13 @@ namespace Cpg.Studio.Widgets
 					
 					Utils.MeanPosition(grp.Children, out x, out y);
 					
-					grp.X = (int)(x * d_minSize - where.X);
-					grp.Y = (int)(y * d_minSize - where.Y);
+					grp.X = (int)(x * MinZoom - pt.X);
+					grp.Y = (int)(y * MinZoom - pt.Y);
 					
 					SetActiveGroup(grp);
-
-					d_gridSize = d_minSize;
-
-					return;
+					ZoomLevel = MinZoom;
+					
+					break;
 				}
 			}
 			else if (lowerReached && d_activeGroup.Parent != null)
@@ -568,16 +571,12 @@ namespace Cpg.Studio.Widgets
 				double x, y;
 				Utils.MeanPosition(newActive.Children, out x, out y);
 					
-				newActive.X = (int)(x * d_maxSize - where.X);
-				newActive.Y = (int)(y * d_maxSize - where.Y);
+				newActive.X = (int)(x * MaxZoom - pt.X);
+				newActive.Y = (int)(y * MaxZoom - pt.Y);
 				
 				SetActiveGroup(newActive);
-				d_gridSize = d_maxSize;
-
-				return;
+				ZoomLevel = MaxZoom;
 			}
-			
-			SetGridSize(nsize, where);
 		}
 		
 		private void DoZoom(bool zoomIn)
@@ -598,7 +597,7 @@ namespace Cpg.Studio.Widgets
 		public void ZoomDefault()
 		{
 			System.Drawing.Point pt = new Point((int)(Allocation.Width / 2), (int)(Allocation.Height / 2));
-			SetGridSize(DefaultGridSize, pt);
+			ZoomAtPoint(DefaultZoom, pt);
 		}
 		
 		private void DoMove(int dx, int dy, bool moveCanvas)
@@ -610,8 +609,8 @@ namespace Cpg.Studio.Widgets
 			
 			if (moveCanvas)
 			{
-				ActiveGroup.X += dx * d_gridSize;
-				ActiveGroup.Y += dy * d_gridSize;
+				ActiveGroup.X += dx * ZoomLevel;
+				ActiveGroup.Y += dy * ZoomLevel;
 				
 				ModifiedView(this, new EventArgs());
 			}
@@ -688,13 +687,13 @@ namespace Cpg.Studio.Widgets
 		private void DrawGrid(Cairo.Context graphics)
 		{
 			// Calculate x/y offset of the grid lines
-			float ox = ActiveGroup.X % (float)d_gridSize;
-			float oy = ActiveGroup.Y % (float)d_gridSize;
+			float ox = ActiveGroup.X % (float)ZoomLevel;
+			float oy = ActiveGroup.Y % (float)ZoomLevel;
 			
 			graphics.Save();
-			graphics.Translate(-d_gridSize - ox, -d_gridSize - oy);
+			graphics.Translate(-ZoomLevel - ox, -ZoomLevel - oy);
 			
-			d_gridCache.Render(graphics, Allocation.Width + d_gridSize * 2, Allocation.Height + d_gridSize * 2, delegate (Cairo.Context ctx, int width, int height)
+			d_gridCache.Render(graphics, Allocation.Width + ZoomLevel * 2, Allocation.Height + ZoomLevel * 2, delegate (Cairo.Context ctx, int width, int height)
 			{
 				double offset = 0.5;
 				ctx.LineWidth = 1;
@@ -707,7 +706,7 @@ namespace Cpg.Studio.Widgets
 					ctx.MoveTo(i - offset, offset);
 					ctx.LineTo(i - offset, height + offset);
 					
-					i += d_gridSize;
+					i += ZoomLevel;
 				}
 				
 				i = 0;
@@ -716,7 +715,7 @@ namespace Cpg.Studio.Widgets
 					ctx.MoveTo(offset, i - offset);
 					ctx.LineTo(width + offset, i - offset);
 					
-					i += d_gridSize;
+					i += ZoomLevel;
 				}
 				
 				ctx.Stroke();
@@ -745,8 +744,8 @@ namespace Cpg.Studio.Widgets
 			graphics.Save();
 			
 			graphics.Translate(-ActiveGroup.X, -ActiveGroup.Y);
-			graphics.Scale(d_gridSize, d_gridSize);
-			graphics.LineWidth = 1.0 / d_gridSize;
+			graphics.Scale(ZoomLevel, ZoomLevel);
+			graphics.LineWidth = 1.0 / ZoomLevel;
 
 			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
 			
@@ -785,19 +784,6 @@ namespace Cpg.Studio.Widgets
 			
 			graphics.SetSourceRGBA(0, 0.3, 0, 0.6);
 			graphics.Stroke();
-		}
-		
-		public int GridSize
-		{
-			get
-			{
-				return d_gridSize;
-			}
-			set
-			{
-				d_gridSize = Math.Max(Math.Min(value, d_maxSize), d_minSize);
-				QueueDraw();
-			}
 		}
 		
 		/* Callbacks */
@@ -927,8 +913,8 @@ namespace Cpg.Studio.Widgets
 			PointF position = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
 			PointF size = UnitSize();
 			
-			int pxn = (int)Math.Floor((double)(ActiveGroup.X / d_gridSize));
-			int pyn = (int)Math.Floor((double)(ActiveGroup.Y / d_gridSize));
+			int pxn = (int)Math.Floor((double)(ActiveGroup.X / ZoomLevel));
+			int pyn = (int)Math.Floor((double)(ActiveGroup.Y / ZoomLevel));
 			
 			List<float> maxx = new List<float>();
 			List<float> minx = new List<float>();
@@ -1151,7 +1137,7 @@ namespace Cpg.Studio.Widgets
 		
 		protected override bool OnExposeEvent(Gdk.EventExpose evnt)
 		{
-			using ( Cairo.Context graphics = Gdk.CairoHelper.Create(evnt.Window) )
+			using (Cairo.Context graphics = Gdk.CairoHelper.Create(evnt.Window))
 			{
 				graphics.Rectangle(evnt.Area.X, evnt.Area.Y, evnt.Area.Width, evnt.Area.Height);
 				graphics.Clip();

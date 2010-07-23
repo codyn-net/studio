@@ -20,7 +20,7 @@ namespace Cpg.Studio.Wrappers
 		{
 			d_x = 0;
 			d_y = 0;
-			d_zoom = Widgets.Grid.DefaultGridSize;
+			d_zoom = Widgets.Grid.DefaultZoom;
 		}
 		
 		public static implicit operator Cpg.Object(Group obj)

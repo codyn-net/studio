@@ -23,7 +23,7 @@ namespace Cpg.Studio.Serialization
 		{
 			X = 0;
 			Y = 0;
-			Zoom = Widgets.Grid.DefaultGridSize;
+			Zoom = Widgets.Grid.DefaultZoom;
 			
 			d_children = new List<Object>();
 		}
