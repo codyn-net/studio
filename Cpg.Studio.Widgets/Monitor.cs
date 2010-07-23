@@ -260,7 +260,9 @@ namespace Cpg.Studio.Widgets
 		private void UpdateTitle(Wrappers.Wrapper obj)
 		{
 			if (!HasHook(obj))
+			{
 				return;
+			}
 			
 			foreach (Monitor.State state in d_map[obj])
 			{
@@ -275,6 +277,54 @@ namespace Cpg.Studio.Widgets
 			{
 				UpdateTitle(source);
 			}*/
+		}
+		
+		public uint Columns
+		{
+			get
+			{
+				return d_content.NColumns;
+			}
+		}
+		
+		public uint Rows
+		{
+			get
+			{
+				return d_content.NRows;
+			}
+		}
+		
+		public List<List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>>> Monitors
+		{
+			get
+			{
+				List<List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>>> ret = new List<List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>>>();
+				
+				for (int row = 0; row < d_content.NRows; ++row)
+				{
+					for (int col = 0; col < d_content.NColumns; ++col)
+					{
+						List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> states = FindForPosition(row, col);
+					
+						if (states == null)
+						{
+							continue;
+						}
+
+						List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>> item = new List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>>();
+					
+						foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in states)
+						{
+							item.Add(new KeyValuePair<Wrappers.Wrapper, Cpg.Property>(state.Key, state.Value.Property));
+						}
+
+						ret.Add(item);
+					}
+				}
+				
+				return ret;
+			}
 		}
 		
 		private void DoLinkRulers(Graph graph)
@@ -312,6 +362,12 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			return null;
+		}
+		
+		private List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> FindForPosition(int row, int col)
+		{
+			Console.WriteLine("{0} {1} {2}", row, col, d_content.At(row, col));
+			return FindForWidget(d_content.At(col, row));
 		}
 		
 		private List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> FindForWidget(Widget w)
