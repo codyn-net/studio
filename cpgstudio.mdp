@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="cpgstudio" />
       <Build debugmode="True" target="Exe" />
-      <Execution consolepause="True" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
+      <Execution consolepause="True" commandlineparameters="test.cpg" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
     <Configuration name="Release" ctype="DotNetProjectConfiguration">
@@ -121,6 +121,7 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Network.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Templates.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Pathbar.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyIntegrator.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
