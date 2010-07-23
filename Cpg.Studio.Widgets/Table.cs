@@ -80,7 +80,18 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			for (uint i = NRows - 2; i >= top; --i)
+			uint max;
+			
+			if (GetPosition(child).X == left)
+			{
+				max = NRows - 2;
+			}
+			else
+			{
+				max = NRows - 1;
+			}
+			
+			for (uint i = max; i >= top; --i)
 			{
 				Gtk.Widget c = At(left, (int)i);
 				
