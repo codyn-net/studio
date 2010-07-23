@@ -1222,19 +1222,29 @@ namespace Cpg.Studio.Widgets
 			}, "An error occurred while ungrouping");
 		}
 		
+		private void Select<T>(IEnumerable<T> objs) where T : Wrappers.Wrapper
+		{
+			d_grid.UnselectAll();
+
+			foreach (Wrappers.Wrapper wrapper in objs)
+			{
+				d_grid.Select(wrapper);
+			}
+		}
+		
 		private void OnAddStateActivated(object sender, EventArgs args)
 		{
 			int[] center = d_grid.Center;
 			
 			HandleError(delegate () {
-				d_actions.AddState(d_grid.ActiveGroup, center[0], center[1]);
+				Select(d_actions.AddState(d_grid.ActiveGroup, center[0], center[1]));
 			}, "An error occurred while adding a state");
 		}
 		
 		private void OnAddLinkActivated(object sender, EventArgs args)
 		{
 			HandleError(delegate () {
-				d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection);
+				Select(d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection));
 			}, "An error occurred while adding a link");
 		}
 		

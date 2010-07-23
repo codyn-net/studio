@@ -12,12 +12,14 @@ namespace Cpg.Studio
 			d_undoManager = undoManager;
 		}
 		
-		public void AddState(Wrappers.Group parent, int x, int y)
+		public Wrappers.State[] AddState(Wrappers.Group parent, int x, int y)
 		{
 			Wrappers.State state = new Wrappers.State();
 			state.Allocation = new Allocation(x, y, 1, 1);
 			
 			Do(new Undo.AddObject(parent, state));
+			
+			return new Wrappers.State[] {state};
 		}
 		
 		private IEnumerable<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>> GetLinkPairs(Wrappers.Wrapper[] selection)
@@ -43,18 +45,22 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public void AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection)
 		{
 			// Add links between each first selected N-1 objects and selected object N
 			List<Undo.IAction> actions = new List<Undo.IAction>();
+			List<Wrappers.Link> ret = new List<Wrappers.Link>();
 			
 			foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper> pair in GetLinkPairs(selection))
 			{
 				Wrappers.Link link = new Wrappers.Link(new Cpg.Link("link", pair.Key, pair.Value));
+				
+				ret.Add(link);
 				actions.Add(new Undo.AddObject(parent, link));
 			}
 
 			Do(new Undo.Group(actions));
+			return ret.ToArray();
 		}
 		
 		private bool OnlyLinks(List<Wrappers.Wrapper> wrappers)
