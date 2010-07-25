@@ -16,6 +16,69 @@ namespace Cpg.Studio.Wrappers
 		public event PropertyHandler PropertyChanged = delegate {};
 		
 		public static string WrapperDataKey = "CpgStudioWrapperDataKey";
+		
+		private static Dictionary<Type, ConstructorInfo> s_typeMapping;
+		
+		private static ConstructorInfo WrapperConstructor(Type wrapperType, Type cpgType)
+		{
+			BindingFlags binding = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+			
+			return wrapperType.GetConstructor(binding, null, new Type[] {cpgType}, null);
+		}
+		
+		private static Dictionary<string, Type> ScanWrappers()
+		{
+			Dictionary<string, Type> ret = new Dictionary<string, Type>();
+
+			foreach (Type type in Assembly.GetExecutingAssembly().GetTypes())
+			{
+				if (type.IsSubclassOf(typeof(Wrappers.Wrapper)))
+				{
+					ret[type.Name] = type;
+				}
+			}
+
+			return ret;
+		}
+		
+		static Wrapper()
+		{
+			s_typeMapping = new Dictionary<Type, ConstructorInfo>();
+			Dictionary<string, Type> wrapperTypes = ScanWrappers();
+			
+			Type cpgObjectType = typeof(Cpg.Object);
+			
+			foreach (Type type in cpgObjectType.Assembly.GetTypes())
+			{
+				if (type.IsSubclassOf(cpgObjectType))
+				{
+					// Then find the wrapper for it
+					Type child = type;
+					
+					while (child != cpgObjectType && !s_typeMapping.ContainsKey(child))
+					{
+						// Find corresponding wrapper
+						if (wrapperTypes.ContainsKey(child.Name))
+						{
+							Type wrapperType = wrapperTypes[child.Name];
+							ConstructorInfo info = WrapperConstructor(wrapperType, child);
+							
+							if (info != null)
+							{
+								s_typeMapping[child] = info;
+								break;
+							}
+							else
+							{
+								Console.Error.WriteLine("Could not find constructor for wrapper `{0}' => `{1}'", wrapperType, child);
+							}
+						}
+						
+						child = child.BaseType;
+					}
+				}
+			}
+		}
 
 		public static Wrapper Wrap(Cpg.Object obj)
 		{
@@ -28,32 +91,16 @@ namespace Cpg.Studio.Wrappers
 			{
 				return obj.Data[WrapperDataKey] as Wrapper;
 			}
-
-			Type type = obj.GetType();
-			Wrapper ret;
-
-			if (type == typeof(Cpg.Network))
-			{
-				ret = new Wrappers.Network(obj as Cpg.Network);
-			}			
-			if (type == typeof(Cpg.Group))
-			{
-				ret = new Wrappers.Group(obj as Cpg.Group);
-			}
-			else if (type == typeof(Cpg.State))
-			{
-				ret = new Wrappers.State(obj as Cpg.State);
-			}
-			else if (type == typeof(Cpg.Link))
-			{
-				ret = new Wrappers.Link(obj as Cpg.Link);
-			}
-			else
-			{
-				return null;
-			}
 			
-			return ret;
+			Type cpgType = obj.GetType();
+			
+			if (!s_typeMapping.ContainsKey(cpgType))
+			{
+				Console.Error.WriteLine("Could not find wrapper for type `{0}'", cpgType);
+				return null;
+			}	
+			
+			return (Wrapper)s_typeMapping[cpgType].Invoke(new object[] {obj});			
 		}
 		
 		public static Wrapper[] Wrap(Cpg.Object[] objs)
@@ -93,7 +140,7 @@ namespace Cpg.Studio.Wrappers
 			return Wrap(obj);
 		}
 		
-		public Wrapper(Cpg.Object obj) : base()
+		protected Wrapper(Cpg.Object obj) : base()
 		{
 			d_links = new List<Link>();
 
@@ -153,9 +200,23 @@ namespace Cpg.Studio.Wrappers
 			return d_object.HasProperty(name);
 		}
 		
+		public bool AddProperty(Cpg.Property property)
+		{
+			return d_object.AddProperty(property);
+		}
+		
 		public Cpg.Property AddProperty(string name, string val, Cpg.PropertyFlags flags)
 		{
-			return d_object.AddProperty(name, val, flags);
+			Cpg.Property prop = new Cpg.Property(name, val, flags);
+			
+			if (AddProperty(prop))
+			{
+				return prop;
+			}
+			else
+			{
+				return null;
+			}
 		}
 		
 		public Cpg.Property AddProperty(string name, string val)

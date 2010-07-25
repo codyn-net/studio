@@ -22,6 +22,14 @@ namespace Cpg.Studio.Wrappers
 		
 		private float d_arrowSize;
 		
+		protected Link(Cpg.Link obj) : this(obj, null, null)
+		{
+		}
+		
+		public Link() : this(new Cpg.Link("link", null, null), null, null)
+		{
+		}
+		
 		public Link(Cpg.Link obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
 		{
 			if (obj != null && from != null)
@@ -159,14 +167,6 @@ namespace Cpg.Studio.Wrappers
 		{
 			DoRequestRedraw();
 		}
-		
-		public Link(Cpg.Link obj) : this(obj, null, null)
-		{
-		}
-		
-		public Link() : this(null, null, null)
-		{
-		}
 
 		public static implicit operator Cpg.Link(Link obj)
 		{
@@ -231,18 +231,23 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Cpg.LinkAction AddAction(string property, Cpg.Expression expression)
+		public Cpg.LinkAction AddAction(string target, Cpg.Expression expression)
 		{
-			Cpg.Property prop = d_to[property];
+			Cpg.LinkAction action = new Cpg.LinkAction(target, expression);
 			
-			if (prop != null)
+			if (AddAction(action))
 			{
-				return WrappedObject.AddAction(prop, expression);
+				return action;
 			}
 			else
 			{
 				return null;
 			}
+		}
+		
+		public bool AddAction(Cpg.LinkAction action)
+		{
+			return WrappedObject.AddAction(action);
 		}
 		
 		public Cpg.LinkAction GetAction(string target)

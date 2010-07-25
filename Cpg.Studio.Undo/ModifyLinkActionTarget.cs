@@ -17,12 +17,12 @@ namespace Cpg.Studio.Undo
 		
 		public void Undo()
 		{
-			d_link.GetAction(d_newTarget).Target = d_link.To.Property(d_oldTarget);
+			d_link.GetAction(d_newTarget).Target = d_oldTarget;
 		}
 		
 		public void Redo()
 		{
-			d_link.GetAction(d_oldTarget).Target = d_link.To.Property(d_newTarget);
+			d_link.GetAction(d_oldTarget).Target = d_newTarget;
 		}
 	}
 }

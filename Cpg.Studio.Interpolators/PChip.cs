@@ -11,64 +11,97 @@ namespace Cpg.Studio.Interpolators
 		
 		public Interpolation Interpolate(double[] t, double[] p)
 		{
-			if (t.Length != p.Length || t.Length < 2)
+			if (t.Length != p.Length || t.Length < 3)
 			{
 				return null;
 			}
 			
 			int size = t.Length;
 
-			double[] m = new double[size];
-			double[] dk = new double[size];
+			double[] dt = new double[size];
+			double[] dpdt = new double[size];
+			double[] slopes = new double[size];
 			
-			// Initialize derivatives such that sgn(d_i) = sgn(d_{i + 1}) = sgn(\delta_i)
-			m[0] = dk[0] = (p[1] - p[0]) / (t[1] / t[0]);
-			m[size - 1] = dk[size - 1] = (p[size - 1] - p[size - 2]) / (t[size - 1] / t[size - 2]);
-			
-			// Three point derivatives
-			for (int i = 1; i < size - 1; ++i)
+			for (int i = 0; i < size - 1; ++i)
 			{
-				double d1 = t[i] - t[i - 1];
-                double d2 = t[i + 1] - t[i];
-                
-                double p1 = d1 == 0 ? 0 : (p[i] - p[i - 1]) / d1;
-                double p2 = d2 == 0 ? 0 : (p[i + 1] - p[i]) / d2;
-                
-                dk[i] = p2;
-                m[i] = 0.5 * (p1 + p2);
+				double dp = (p[i + 1] - p[i]);
+				dt[i] = (t[i + 1] - t[i]);
+
+				dpdt[i] = dt[i] == 0 ? 0 : (dp / dt[i]);
 			}
 			
-			// Ensure monoticity
-	        for (int i = 1; i < size - 1; ++i)
-	        {
-                if (dk[i] == 0)
-                {
-                        m[i] = m[i + 1] = 0;
-                }
-                else
-                {
-                    // Restrict position vector (alpha, beta) to circle of radius 3
-                    double alpha = m[i] / (dk[i] != 0 ? dk[i] : 1);
-                    double beta = m[i + 1] / (dk[i] != 0 ? dk[i] : 1);
-                    
-                    if (alpha + beta - 2 > 0 &&
-                        alpha + 2 * beta - 3 > 0 &&
-                        alpha - ((2 * alpha + beta - 3) * (2 * alpha + beta - 3)) / 3 * (alpha + beta - 2) < 0)
-                    {
-                            double tk = 3.0 / System.Math.Sqrt(alpha * alpha + beta * beta);
-                            m[i] = tk * alpha * dk[i];
-                            m[i + 1] = tk * beta * dk[i];
-                    }
-                }
-	        }
+			dpdt[size - 1] = 0;
+			bool[] samesign = new bool[size - 1];
+			
+			for (int i = 0; i < size - 2; ++i)
+			{
+				samesign[i] = (Math.Sign(dpdt[i]) == Math.Sign(dpdt[i + 1])) && dpdt[i] != 0;
+			}
 
+			// Three point derivative
+			for (int i = 0; i < size - 2; ++i)
+			{
+				double dpdt1 = dpdt[i];
+				double dpdt2 = dpdt[i + 1];
+		
+				if (samesign[i])
+				{
+					double hs = dt[i] + dt[i + 1];
+		
+					double w1 = (dt[i] + hs) / (3 * hs);
+					double w2 = (hs + dt[i + 1]) / (3 * hs);
+		
+					double mindpdt;
+					double maxdpdt;
+		
+					if (dpdt1 > dpdt2)
+					{
+						maxdpdt = dpdt1;
+						mindpdt = dpdt2;
+					}
+					else
+					{
+						maxdpdt = dpdt2;
+						mindpdt = dpdt1;
+					}
+		
+					slopes[i + 1] = mindpdt / (w1 * (dpdt[i] / maxdpdt) + w2 * (dpdt[i + 1] / maxdpdt));
+				}
+				else
+				{
+					slopes[i + 1] = 0;
+				}
+			}
+			
+			slopes[0] = ((2 * dt[0] + dt[1]) * dpdt[0] - dt[0] * dpdt[1]) / (dt[0] + dt[1]);
+
+			if (Math.Sign(slopes[0]) != Math.Sign(dpdt[0]))
+			{
+				slopes[0] = 0;
+			}
+			else if (Math.Sign(dpdt[0]) != Math.Sign(dpdt[1]) && Math.Abs(slopes[0]) > Math.Abs(3 * dpdt[0]))
+			{
+				slopes[0] = 3 * dpdt[0];
+			}
+		
+			slopes[size - 1] = ((2 * dt[size - 2] + dt[size - 3]) * dpdt[size - 2] - dt[size - 2] * dpdt[size - 3]) / (dt[size - 2] + dt[size - 3]);
+		
+			if (Math.Sign(slopes[size - 1]) != Math.Sign(dpdt[size - 2]))
+			{
+				slopes[size - 1] = 0;
+			}
+			else if (Math.Sign(dpdt[size - 2]) != Math.Sign(dpdt[size - 3]) && Math.Abs(slopes[size - 1]) > Math.Abs(3 * dpdt[size - 2]))
+			{
+				slopes[size - 1] = 3 * dpdt[size - 2];
+			}
+			
 			// Generate piece polynomials
 			List<Interpolation.Piece> pieces = new List<Interpolation.Piece>();
 			
 			for (int i = 0; i < size - 1; ++i)
 			{
-				double m1 = m[i];
-				double m2 = m[i + 1];
+				double s1 = slopes[i];
+				double s2 = slopes[i + 1];
 				
 				double p1 = p[i];
 				double p2 = p[i + 1];
@@ -76,9 +109,9 @@ namespace Cpg.Studio.Interpolators
 				double h = t[i + 1] - t[i];
 				
 				// Order: 0, 1, 2, 3, see definition of hermite spline
-				double[] coefficients = new double[] {2 * (p1 - p2) + h * (m1 + m2),
-				                                      3 * (-p1 + p2) - h * (2 * m1 + m2),
-				                                      h * m1,
+				double[] coefficients = new double[] {2 * (p1 - p2) + h * (s1 + s2),
+				                                      3 * (p2 - p1) - h * (2 * s1 + s2),
+				                                      h * s1,
 				                                      p1};
 				
 				pieces.Add(new Interpolation.Piece(t[i], t[i + 1], coefficients));

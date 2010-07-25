@@ -4,7 +4,7 @@ namespace Cpg.Studio.Wrappers
 {
 	public class Network : Group
 	{
-		public Network(Cpg.Network obj) : base (obj)
+		protected Network(Cpg.Network obj) : base (obj)
 		{
 		}
 		
@@ -94,16 +94,16 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 
-		public Cpg.Function[] Functions
+		public Wrappers.Function[] Functions
 		{
 			get
 			{
 				Cpg.Object[] children = WrappedObject.FunctionGroup.Children;
-				Cpg.Function[] ret = new Cpg.Function[children.Length];
+				Wrappers.Function[] ret = new Wrappers.Function[children.Length];
 
 				for (int i = 0; i < children.Length; ++i)
 				{
-					ret[i] = (Cpg.Function)children[i];
+					ret[i] = (Wrappers.Function)Wrappers.Wrapper.Wrap(children[i]);
 				}
 				
 				return ret;

@@ -122,6 +122,16 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Templates.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Pathbar.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyIntegrator.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Function.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionArguments.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyExpression.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/Function.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/NodeStore.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/FunctionPolynomial.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionsHelper.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionNode.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionPolynomialNode.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/GenericFunctionNode.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />

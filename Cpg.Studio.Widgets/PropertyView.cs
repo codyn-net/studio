@@ -123,7 +123,7 @@ namespace Cpg.Studio.Widgets
 			Cpg.LinkAction action = LinkActionFromStore(piter);
 			CellRendererText renderer = (CellRendererText)cell;
 			
-			renderer.Text = action.Target.Name;
+			renderer.Text = action.Target;
 		}
 		
 		private void HandleRenderActionEquation(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
@@ -145,12 +145,12 @@ namespace Cpg.Studio.Widgets
 			
 			Cpg.LinkAction action = LinkActionFromStore(iter);
 			
-			if (action.Target.Name == args.NewText)
+			if (action.Target == args.NewText)
 			{
 				return;
 			}
 
-			d_actions.Do(new Undo.ModifyLinkActionTarget((Wrappers.Link)d_object, action.Target.Name, args.NewText));
+			d_actions.Do(new Undo.ModifyLinkActionTarget((Wrappers.Link)d_object, action.Target, args.NewText));
 		}
 		
 		private void HandleLinkActionEquationEdited(object o, EditedArgs args)
@@ -169,7 +169,7 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyLinkActionEquation((Wrappers.Link)d_object, action.Target.Name, args.NewText));
+			d_actions.Do(new Undo.ModifyLinkActionEquation((Wrappers.Link)d_object, action.Target, args.NewText));
 		}
 
 		private void DoTargetPropertyAdded(Wrappers.Wrapper obj, Cpg.Property prop)
@@ -1010,9 +1010,9 @@ namespace Cpg.Studio.Widgets
 			// Remove properties that already have actions
 			foreach (Cpg.LinkAction ac in link.Actions)
 			{
-				if (props.Contains(ac.Target))
+				if (props.Contains(ac.TargetProperty))
 				{
-					props.Remove(ac.Target);
+					props.Remove(ac.TargetProperty);
 				}
 			}
 			

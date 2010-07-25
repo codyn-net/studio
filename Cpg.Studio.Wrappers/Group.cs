@@ -16,7 +16,11 @@ namespace Cpg.Studio.Wrappers
 		private int d_y;
 		private int d_zoom;
 		
-		public Group(Cpg.Group obj) : base(obj)
+		public Group() : this(new Cpg.Group("group", null))
+		{
+		}
+		
+		protected Group(Cpg.Group obj) : base(obj)
 		{
 			d_x = 0;
 			d_y = 0;
@@ -62,10 +66,6 @@ namespace Cpg.Studio.Wrappers
 		public bool PropertyIsProxy(string name)
 		{
 			return WrappedObject.PropertyIsProxy(name);
-		}
-		
-		public Group() : this(new Cpg.Group("group", null))
-		{
 		}
 		
 		public new Cpg.Group WrappedObject

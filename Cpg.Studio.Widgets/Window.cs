@@ -1309,6 +1309,12 @@ namespace Cpg.Studio.Widgets
 			}, "An error occurred while adding a link");
 		}
 		
+		private void SelectFunction(Wrappers.Function function)
+		{
+			ShowFunctions();
+			d_functionsDialog.Select(function);
+		}
+		
 		private void SelectFromAction(Undo.IAction action)
 		{
 			if (action is Undo.Property)
@@ -1328,7 +1334,11 @@ namespace Cpg.Studio.Widgets
 			{
 				Undo.Object obj = (Undo.Object)action;
 				
-				if (obj.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
+				if (obj.Wrapped is Wrappers.Function)
+				{
+					SelectFunction((Wrappers.Function)obj.Wrapped);
+				}
+				else if (obj.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
 				{
 					if (obj is Undo.MoveObject)
 					{
@@ -1369,6 +1379,10 @@ namespace Cpg.Studio.Widgets
 				{
 					d_grid.CenterView(obj.Link);
 				}
+			}
+			else if (action is Undo.ModifyFunctionArguments)
+			{
+				SelectFunction(((Undo.ModifyFunctionArguments)action).WrappedObject);
 			}
 		}
 		
@@ -1645,7 +1659,7 @@ namespace Cpg.Studio.Widgets
 			}
 			else if (error.LinkAction != null)
 			{
-				title += "»" + error.LinkAction.Target.Name;
+				title += "»" + error.LinkAction.Target;
 				expression = error.LinkAction.Equation.AsString;
 			}
 			else if (error.Object is Cpg.Function)
@@ -1697,7 +1711,7 @@ namespace Cpg.Studio.Widgets
 		{
 			if (d_functionsDialog == null)
 			{
-				d_functionsDialog = new Dialogs.Functions(this, Network);
+				d_functionsDialog = new Dialogs.Functions(d_actions, this, Network);
 
 				d_functionsDialog.Response += delegate(object o, ResponseArgs a1) {
 					d_functionsDialog.Destroy();

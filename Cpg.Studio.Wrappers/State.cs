@@ -4,7 +4,7 @@ namespace Cpg.Studio.Wrappers
 {
 	public class State : Wrapper
 	{		
-		public State(Cpg.State obj) : base(obj)
+		protected State(Cpg.State obj) : base(obj)
 		{
 			Renderer = new Renderers.State(this);
 		}
