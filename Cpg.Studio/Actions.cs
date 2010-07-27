@@ -22,6 +22,11 @@ namespace Cpg.Studio
 			return new Wrappers.State[] {state};
 		}
 		
+		public void AddObject(Wrappers.Group parent, Wrappers.Wrapper wrapper)
+		{
+			Do(new Undo.AddObject(parent, wrapper));
+		}
+		
 		private IEnumerable<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>> GetLinkPairs(Wrappers.Wrapper[] selection)
 		{
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
@@ -53,7 +58,7 @@ namespace Cpg.Studio
 			
 			foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper> pair in GetLinkPairs(selection))
 			{
-				Wrappers.Link link = new Wrappers.Link(new Cpg.Link("link", pair.Key, pair.Value));
+				Wrappers.Link link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link("link", pair.Key, pair.Value));
 				
 				ret.Add(link);
 				actions.Add(new Undo.AddObject(parent, link));
