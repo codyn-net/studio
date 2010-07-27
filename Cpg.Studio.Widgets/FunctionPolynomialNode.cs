@@ -13,6 +13,7 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		[PrimaryKey]
 		public new Wrappers.FunctionPolynomial Function
 		{
 			get
