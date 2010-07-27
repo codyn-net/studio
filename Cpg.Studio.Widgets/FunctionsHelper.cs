@@ -114,8 +114,6 @@ namespace Cpg.Studio.Widgets
 		
 		private void RemoveFunction(Wrappers.Function function)
 		{
-			Console.WriteLine("{0} {1}", function.GetType(), typeof(FunctionType));
-			
 			if (function.GetType() != typeof(FunctionType))
 			{
 				return;
