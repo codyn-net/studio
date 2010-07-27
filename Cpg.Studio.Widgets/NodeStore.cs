@@ -792,7 +792,7 @@ namespace Cpg.Studio.Widgets
 		
 		public Node Find(object obj)
 		{
-			if (!d_primaryKeys.ContainsKey(obj.GetType()))
+			if (obj == null || !d_primaryKeys.ContainsKey(obj.GetType()))
 			{
 				return null;
 			}
