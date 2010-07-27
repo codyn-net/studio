@@ -114,6 +114,8 @@ namespace Cpg.Studio.Widgets
 		
 		private void RemoveFunction(Wrappers.Function function)
 		{
+			Console.WriteLine("{0} {1}", function.GetType(), typeof(FunctionType));
+			
 			if (function.GetType() != typeof(FunctionType))
 			{
 				return;
@@ -122,7 +124,7 @@ namespace Cpg.Studio.Widgets
 			d_store.Remove((FunctionType)function);
 		}
 		
-				public void Select(Wrappers.Function f)
+		public void Select(Wrappers.Function f)
 		{
 			TreeIter iter;
 			

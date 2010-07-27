@@ -12,6 +12,14 @@ namespace Cpg.Studio.Widgets
 				return Function.Id;
 			}
 		}
+		
+		public new Wrappers.FunctionPolynomial Function
+		{
+			get
+			{
+				return (Wrappers.FunctionPolynomial)base.Function;
+			}
+		}
 	}
 
 }

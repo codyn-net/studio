@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Cpg.Studio.Widgets
 {
+	[AttributeUsage(AttributeTargets.Property)]
 	public class NodeColumnAttribute : Attribute
 	{
 		private int d_index;
@@ -25,10 +26,12 @@ namespace Cpg.Studio.Widgets
 		}
 	}
 	
+	[AttributeUsage(AttributeTargets.Property)]
 	public class PrimaryKeyAttribute : Attribute
 	{
 	}
 	
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple=true)]
 	public class CustomRendererAttribute : Attribute
 	{
 		private int d_column;
@@ -347,6 +350,14 @@ namespace Cpg.Studio.Widgets
 		{
 			Changed(this);
 		}
+		
+		public void Clear()
+		{
+			foreach (Node child in d_children.ToArray())
+			{
+				Remove(child);
+			}
+		}
 	}
 
 	public class NodeStore<T> : Node, TreeModelImplementor where T : Node
@@ -393,10 +404,24 @@ namespace Cpg.Studio.Widgets
 				CustomRenderer rend = renderer;
 				TreeViewColumn col = view.GetColumn(rend.Column);
 				
-				col.SetCellDataFunc(col.CellRenderers[rend.Renderer], delegate (TreeViewColumn column, CellRenderer cell, TreeModel model, TreeIter iter) {
-					Node node = GetFromIter<Node>(iter);
-					rend.Method.Invoke(node, new object[] {cell});
-				});
+				if (col != null)
+				{
+					if (col.CellRenderers.Length > rend.Renderer)
+					{
+						col.SetCellDataFunc(col.CellRenderers[rend.Renderer], delegate (TreeViewColumn column, CellRenderer cell, TreeModel model, TreeIter iter) {
+							Node node = GetFromIter<Node>(iter);
+							rend.Method.Invoke(node, new object[] {cell});
+						});
+					}
+					else
+					{
+						Console.Error.WriteLine("Missing renderer {0}", rend.Renderer);
+					}
+				}
+				else
+				{
+					Console.Error.WriteLine("Missing column {0}", rend.Column);
+				}
 			}
 		}
 		
@@ -517,10 +542,11 @@ namespace Cpg.Studio.Widgets
 			{
 				object[] attrs = info.GetCustomAttributes(typeof(CustomRendererAttribute), false);
 				
-				if (attrs.Length > 0)
+				foreach (object attr in attrs)
 				{
-					CustomRendererAttribute attr = (CustomRendererAttribute)attrs[0];
-					d_customRenderers.Add(new CustomRenderer(attr.Column, attr.Renderer, info));
+					CustomRendererAttribute at = (CustomRendererAttribute)attr;
+					
+					d_customRenderers.Add(new CustomRenderer(at.Column, at.Renderer, info));
 				}
 			}
 			

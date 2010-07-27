@@ -6,36 +6,37 @@ namespace Cpg.Studio.Widgets
 {
 	public class PolynomialsView : FunctionsHelper<FunctionPolynomialNode, Wrappers.FunctionPolynomial>
 	{
-		//private NodeStore d_pieceStore;
-		//private NodeView d_pieceTreeview;
+		private HPaned d_paned;
+		private Button d_removeButton;
+		private Button d_pieceRemoveButton;
+		private FunctionPolynomialNode d_selected;
 		
-		private Gtk.Button d_removeButton;
-		private Gtk.Button d_pieceRemoveButton;
+		private NodeStore<FunctionPolynomialPieceNode> d_store;
+		private TreeView d_treeview;
+		private bool d_selectPiece;
 		
-		private Gtk.HPaned d_paned;
-
 		public PolynomialsView(Actions actions, Wrappers.Network network) : base(actions, network)
 		{
 			InitUi();
 		}
 		
-		private void InitUi()
+		private void InitFunctionsUi()
 		{
-			d_paned = new Gtk.HPaned();
-			d_paned.Show();
-			
-			PackStart(d_paned, true, true, 0);
+			TreeViewColumn column;
+			CellRendererText renderer;
 			
 			// Name column
-			CellRendererText renderer = new CellRendererText();
+			renderer = new CellRendererText();
+			column = new TreeViewColumn("Name", renderer, "text", 0);
+
 			renderer.Editable = true;
 			renderer.Edited += DoNameEdited;
 
-			TreeViewColumn column = new TreeViewColumn("Name", renderer, "text", 0);
 			column.Resizable = true;
 			column.MinWidth = 75;
 
-			TreeView.AppendColumn(column);			
+			TreeView.AppendColumn(column);
+			
 			ScrolledWindow vw = new Widgets.ScrolledWindow();
 
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
@@ -46,8 +47,11 @@ namespace Cpg.Studio.Widgets
 			TreeView.Show();
 			vw.Show();
 
-			d_paned.Add1(vw);
+			VBox box = new VBox(false, 3);
+			box.Show();
 			
+			box.PackStart(vw);
+
 			HBox hbox = new HBox(false, 3);
 			hbox.Show();
 			
@@ -57,7 +61,7 @@ namespace Cpg.Studio.Widgets
 			
 			align.Add(hbox);
 			
-			PackStart(align, false, false, 0);
+			box.PackStart(align, false, false, 0);
 
 			d_removeButton = new Button();
 			d_removeButton.Add(new Image(Gtk.Stock.Remove, IconSize.Menu));
@@ -78,64 +82,76 @@ namespace Cpg.Studio.Widgets
 
 			TreeView.Selection.Changed += DoSelectionChanged;
 			
-			/*
-			// Pieces
-			d_pieceStore = new PieceNodeStore();
-			d_pieceTreeview = new NodeView(d_pieceStore);
+			NodeStore.Bind(TreeView);
+			
+			d_paned.Add1(box);
+		}
+		
+		private void InitPiecesUi()
+		{
+			d_store = new NodeStore<FunctionPolynomialPieceNode>();
+			d_treeview = new TreeView(new TreeModelAdapter(d_store));
+			d_treeview.Show();
+
+			d_treeview.HeadersVisible = true;
+			d_treeview.ShowExpanders = false;
+			d_treeview.RulesHint = true;
+			
+			ScrolledWindow vw = new Widgets.ScrolledWindow();
+			vw.Show();
+
+			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+			vw.ShadowType = ShadowType.EtchedIn;
+			
+			vw.Add(d_treeview);
+			
+			CellRendererText renderer;
+			TreeViewColumn column;
 			
 			// Begin column
 			renderer = new CellRendererText();
 			renderer.Editable = true;
 			renderer.Edited += DoBeginEdited;
 
-			column = new TreeViewColumn("Begin", renderer, new object[] {"text", 0});
+			column = new TreeViewColumn("Begin", renderer, "text", 0);
 			column.Resizable = true;
 			column.MinWidth = 75;
 
-			d_pieceTreeview.AppendColumn(column);
+			d_treeview.AppendColumn(column);
 			
 			// End column
 			renderer = new CellRendererText();
 			renderer.Editable = true;
 			renderer.Edited += DoEndEdited;
 
-			column = new TreeViewColumn("End", renderer, new object[] {"text", 1});
+			column = new TreeViewColumn("End", renderer, "text", 1);
 			column.Resizable = true;
 			column.MinWidth = 75;
 
-			d_pieceTreeview.AppendColumn(column);
+			d_treeview.AppendColumn(column);
 			
 			// Coefficients column
 			renderer = new CellRendererText();
 			renderer.Editable = true;
 			renderer.Edited += DoCoefficientsEdited;
 
-			column = new TreeViewColumn("Coefficients", renderer, new object[] {"text", 2});
+			column = new TreeViewColumn("Coefficients", renderer, "text", 2);
 			column.Resizable = true;
 			column.MinWidth = 200;
 
-			d_pieceTreeview.AppendColumn(column);
-			
-			vw = new Widgets.ScrolledWindow();
-
-			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
-			vw.ShadowType = ShadowType.EtchedIn;
-			
-			vw.Add(d_pieceTreeview);
-
-			d_pieceTreeview.Show();
-			vw.Show();
+			d_treeview.AppendColumn(column);
 			
 			VBox vbox = new VBox(false, 3);
 			vbox.Show();
+
 			vbox.PackStart(vw, true, true, 0);
 			
-			hbox = new HBox(false, 3);
+			HBox hbox = new HBox(false, 3);
 			hbox.Show();
 			
 			vbox.PackStart(hbox, false, false, 0);
 
-			d_pieceTreeview.KeyPressEvent += DoPieceTreeViewKeyPress;
+			d_treeview.KeyPressEvent += DoPieceTreeViewKeyPress;
 			
 			d_pieceRemoveButton = new Button();
 			d_pieceRemoveButton.Add(new Image(Gtk.Stock.Remove, IconSize.Menu));
@@ -145,6 +161,7 @@ namespace Cpg.Studio.Widgets
 
 			hbox.PackStart(d_pieceRemoveButton, false, false ,0);
 
+			Button but;
 			but = new Button();
 			but.Add(new Image(Gtk.Stock.Add, IconSize.Menu));
 			but.Clicked += DoAddPiece;
@@ -159,11 +176,23 @@ namespace Cpg.Studio.Widgets
 			
 			hbox.PackEnd(but, false, false, 6);
 
-			d_pieceTreeview.NodeSelection.Changed += DoPieceSelectionChanged;
+			d_treeview.Selection.Changed += DoPieceSelectionChanged;
 			d_paned.Add2(vbox);
+		}
+		
+		private void InitUi()
+		{
+			d_paned = new HPaned();
+			d_paned.Show();
+			
+			PackStart(d_paned, true, true, 0);
+			
+			InitFunctionsUi();
+			InitPiecesUi();
 			
 			d_paned.Position = 150;
-			FillPieces();*/
+			
+			InitStore();
 		}
 		
 		private void DoAdd(object sender, EventArgs args)
@@ -196,107 +225,173 @@ namespace Cpg.Studio.Widgets
 
 			Actions.Do(new Undo.ModifyObjectId(node.Function, args.NewText.Trim()));
 		}
+		
+		private void SetSelected(FunctionPolynomialNode node)
+		{
+			if (d_selected != null)
+			{
+				d_selected.Function.WrappedObject.PieceAdded -= HandlePieceAdded;
+				d_selected.Function.WrappedObject.PieceRemoved -= HandlePieceRemoved;
+			}
+			
+			d_selected = node;
+			
+			if (d_selected != null)
+			{
+				d_selected.Function.WrappedObject.PieceAdded += HandlePieceAdded;
+				d_selected.Function.WrappedObject.PieceRemoved += HandlePieceRemoved;
+			}
+		}
+		
+		private void HandlePieceAdded(object source, Cpg.PieceAddedArgs args)
+		{
+			TreeIter iter = d_store.Add(new FunctionPolynomialPieceNode(args.Piece));
+			
+			if (d_selectPiece)
+			{
+				d_treeview.Selection.UnselectAll();
+				d_treeview.Selection.SelectIter(iter);
+			}
+		}
+		
+		private void HandlePieceRemoved(object source, Cpg.PieceRemovedArgs args)
+		{
+			d_store.Remove(args.Piece);
+		}
 
 		private void DoSelectionChanged(object source, EventArgs args)
 		{
-			d_removeButton.Sensitive = TreeView.Selection.CountSelectedRows() != 0;
+			TreeSelection selection = TreeView.Selection;
+			d_removeButton.Sensitive = selection.CountSelectedRows() != 0;
 			
-			/*NodeSelection selection = source as NodeSelection;
-			FillPieces();*/
+			if (selection.CountSelectedRows() == 1)
+			{
+				SetSelected(FromStorage(selection.GetSelectedRows()[0]));
+			}
+			else
+			{
+				SetSelected(null);
+			}
+
+			InitStore();
 		}
 		
-		private void FillPieces()
+		private void InitStore()
 		{
-			/*NodeSelection selection = d_treeview.NodeSelection;
-			d_pieceStore.Clear();
+			d_store.Clear();
 			
-			if (selection.SelectedNodes.Length != 1)
+			if (d_selected == null)
 			{
 				d_paned.Child2.Sensitive = false;			
 				return;
 			}
 			
-			PolynomialNode node = (PolynomialNode)selection.SelectedNodes[0];
-			
 			d_paned.Child2.Sensitive = true;
-			d_pieceRemoveButton.Sensitive = d_pieceTreeview.NodeSelection.SelectedNodes.Length != 0;
+			d_pieceRemoveButton.Sensitive = true;
 			
-			foreach (Cpg.FunctionPolynomialPiece piece in node.Function.Pieces)
+			foreach (Cpg.FunctionPolynomialPiece piece in d_selected.Function.Pieces)
 			{
-				d_pieceStore.AddNode(new PieceNode(piece));
-			}*/
+				d_store.Add(new FunctionPolynomialPieceNode(piece));
+			}
 		}
 		
 		// Pieces
 		private void DoCoefficientsEdited(object source, EditedArgs args)
 		{
-			/*PieceNode node = (PieceNode)d_pieceStore.GetNode(new TreePath(args.Path));
-			node.Coefficients = args.NewText;*/
+			FunctionPolynomialPieceNode node = (FunctionPolynomialPieceNode)d_store.FindPath(args.Path);
+			
+			string[] parts = args.NewText.Split(new char[] {','});
+			double[] coefs = Array.ConvertAll<string, double>(parts, item => Double.Parse(item));
+
+			Actions.Do(new Undo.ModifyFunctionPolynomialPieceCoefficients(node.Piece, coefs));
 		}
 		
 		private void DoBeginEdited(object source, EditedArgs args)
 		{
-			//PieceNode node = (PieceNode)d_pieceStore.GetNode(new TreePath(args.Path));
-			//node.Begin = args.NewText;
+			FunctionPolynomialPieceNode node = (FunctionPolynomialPieceNode)d_store.FindPath(args.Path);
+			
+			double val = Double.Parse(args.NewText);
+			
+			if (node.Piece.Begin != val)
+			{
+				Actions.Do(new Undo.ModifyFunctionPolynomialPieceBegin(node.Piece, Double.Parse(args.NewText)));
+			}
 		}
 		
 		private void DoEndEdited(object source, EditedArgs args)
 		{
-			//PieceNode node = (PieceNode)d_pieceStore.GetNode(new TreePath(args.Path));
-			//node.End = args.NewText;
+			FunctionPolynomialPieceNode node = (FunctionPolynomialPieceNode)d_store.FindPath(args.Path);
+			
+			double val = Double.Parse(args.NewText);
+			
+			if (node.Piece.End != val)
+			{
+				Actions.Do(new Undo.ModifyFunctionPolynomialPieceEnd(node.Piece, val));
+			}
 		}
 		
 		private void DoPieceSelectionChanged(object source, EventArgs args)
 		{
-			//NodeSelection selection = source as NodeSelection;
+			TreeSelection selection = (TreeSelection)source;
 
-			//d_pieceRemoveButton.Sensitive = selection.SelectedNodes.Length != 0;
+			d_pieceRemoveButton.Sensitive = selection.CountSelectedRows() != 0;
+		}
+		
+		private void RemoveSelectedPieces()
+		{
+			TreeSelection selection = d_treeview.Selection;
+			List<Cpg.FunctionPolynomialPiece> pieces = new List<Cpg.FunctionPolynomialPiece>();
+			
+			foreach (TreePath path in selection.GetSelectedRows())
+			{
+				FunctionPolynomialPieceNode node = (FunctionPolynomialPieceNode)d_store.FindPath(path);
+				pieces.Add(node.Piece);
+			}
+			
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			foreach (Cpg.FunctionPolynomialPiece piece in pieces)
+			{
+				actions.Add(new Undo.RemoveFunctionPolynomialPiece(d_selected.Function, piece));
+			}
+			
+			Actions.Do(new Undo.Group(actions));
 		}
 		
 		private void DoPieceTreeViewKeyPress(object sender, KeyPressEventArgs args)
 		{
-			//if (args.Event.Key == Gdk.Key.Delete)
-			//{
-			//	DoRemovePiece(sender, new EventArgs());
-			//}
+			if (args.Event.Key == Gdk.Key.Delete)
+			{
+				RemoveSelectedPieces();
+			}
 		}
 		
 		private void DoRemovePiece(object sender, EventArgs args)
 		{
-			/*NodeSelection selection = d_pieceTreeview.NodeSelection;
-			PolynomialNode function = (PolynomialNode)d_treeview.NodeSelection.SelectedNodes[0];
-			
-			PieceNode[] nodes = new PieceNode[selection.SelectedNodes.Length];
-			selection.SelectedNodes.CopyTo(nodes, 0);
-			
-			foreach (PieceNode node in nodes)
-			{
-				function.Function.Remove(node.Polynomial);
-				d_pieceStore.RemoveNode(node);
-			}*/
+			RemoveSelectedPieces();
 		}
 		
-		private void DoAddPiece(object sender, EventArgs args)
+		private void AddPiece()
 		{
-			/*PolynomialNode node = (PolynomialNode)d_treeview.NodeSelection.SelectedNodes[0];
-			
-			FunctionPolynomialPiece[] pieces = node.Function.Pieces;
+			FunctionPolynomialPiece[] pieces = d_selected.Function.Pieces;
 			double begin = 0;
 			double end = 1;
 			
 			if (pieces.Length != 0)
 			{
 				begin = pieces[pieces.Length - 1].End;
-				end = begin + 1;
+				end = begin + (pieces[pieces.Length - 1].End - pieces[pieces.Length - 1].Begin);
 			}
 			
-			FunctionPolynomialPiece piece = new FunctionPolynomialPiece(begin, end, 0, 1);
-			node.Function.Add(piece);
-			
-			ITreeNode newnode = new PieceNode(piece);
-			d_pieceStore.AddNode(newnode);
-			
-			d_pieceTreeview.NodeSelection.SelectNode(newnode);*/
+			FunctionPolynomialPiece piece = new FunctionPolynomialPiece(begin, end, 0, 0, 0, 1);
+			Actions.Do(new Undo.AddFunctionPolynomialPiece(d_selected.Function, piece));
+		}
+		
+		private void DoAddPiece(object sender, EventArgs args)
+		{
+			d_selectPiece = true;
+			AddPiece();
+			d_selectPiece = false;
 		}
 		
 		private void DoInterpolate(object sender, EventArgs args)

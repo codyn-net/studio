@@ -4,49 +4,9 @@ namespace Cpg.Studio.Widgets
 {
 	public class FunctionNode : GenericFunctionNode
 	{
-		private FunctionArgument d_argument;
-		
-		private void Connect()
-		{
-			if (d_argument == null)
-			{
-				return;
-			}
-			
-			d_argument.AddNotification("name", HandleArgumentChanged);
-			d_argument.AddNotification("optional", HandleArgumentChanged);
-			d_argument.AddNotification("default", HandleArgumentChanged);
-		}
-		
 		private void HandleArgumentChanged(object source, GLib.NotifyArgs args)
 		{
 			EmitChanged();
-		}
-		
-		private void Disconnect()
-		{
-			if (d_argument == null)
-			{
-				return;
-			}
-			
-			d_argument.RemoveNotification("name", HandleArgumentChanged);
-			d_argument.RemoveNotification("optional", HandleArgumentChanged);
-			d_argument.RemoveNotification("default", HandleArgumentChanged);
-		}
-
-		public FunctionArgument Argument
-		{
-			get
-			{
-				return d_argument;
-			}
-			set
-			{
-				Disconnect();
-				d_argument = value;
-				Connect();
-			}
 		}
 
 		[NodeColumn(0)]

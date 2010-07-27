@@ -38,6 +38,24 @@ namespace Cpg.Studio.Wrappers
 
 			return (FunctionPolynomial)Wrap(obj);
 		}
+		
+		public Cpg.FunctionPolynomialPiece[] Pieces
+		{
+			get
+			{
+				return WrappedObject.Pieces;
+			}
+		}
+		
+		public void Add(Cpg.FunctionPolynomialPiece piece)
+		{
+			WrappedObject.Add(piece);
+		}
+		
+		public bool Remove(Cpg.FunctionPolynomialPiece piece)
+		{
+			return WrappedObject.Remove(piece);
+		}
 	}
 }
 

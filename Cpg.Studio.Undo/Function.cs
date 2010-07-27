@@ -2,11 +2,11 @@ using System;
 
 namespace Cpg.Studio.Undo
 {
-	public class Function
+	public class Function : Object
 	{
 		private Wrappers.Function d_function;
 			
-		public Function(Wrappers.Function function)
+		public Function(Wrappers.Function function) : base(function != null ? function.Parent : null, function)
 		{
 			d_function = function;
 		}
@@ -17,20 +17,6 @@ namespace Cpg.Studio.Undo
 			{
 				return d_function;
 			}
-		}
-
-		public bool Verify()
-		{
-			return true;
-		}
-		
-		public bool CanMerge(IAction other)
-		{
-			return false;
-		}
-		
-		public void Merge(IAction other)
-		{
 		}
 	}
 }
