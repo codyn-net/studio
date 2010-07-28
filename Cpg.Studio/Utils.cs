@@ -9,7 +9,6 @@ namespace Cpg.Studio
 	public class Utils
 	{
 		public delegate double SelectHandlerDouble(double first, double second);
-		public delegate float SelectHandlerFloat(float first, float second);
 		public delegate int SelectHandlerInt(int first, int second);
 
 		public static double Select(IEnumerable<double> list, SelectHandlerDouble handler)
@@ -18,28 +17,6 @@ namespace Cpg.Studio
 			double best = default(double);
 			
 			foreach (double item in list)
-			{
-				if (!hasitem)
-				{
-					best = item;
-				}
-				else
-				{
-					best = handler(best, item);
-				}
-				
-				hasitem = true;
-			}
-			
-			return best;
-		}
-			
-		public static float Select(IEnumerable<float> list, SelectHandlerFloat handler)
-		{
-			bool hasitem = false;
-			float best = default(float);
-			
-			foreach (float item in list)
 			{
 				if (!hasitem)
 				{
@@ -83,11 +60,6 @@ namespace Cpg.Studio
 			return Select(list, new SelectHandlerDouble(Math.Max));
 		}
 		
-		public static float Max(IEnumerable<float> list)
-		{
-			return Select(list, new SelectHandlerFloat(Math.Max));
-		}
-		
 		public static int Max(IEnumerable<int> list)
 		{
 			return Select(list, new SelectHandlerInt(Math.Max));
@@ -96,11 +68,6 @@ namespace Cpg.Studio
 		public static double Min(IEnumerable<double> list)
 		{
 			return Select(list, new SelectHandlerDouble(Math.Min));
-		}
-		
-		public static float Min(IEnumerable<float> list)
-		{
-			return Select(list, new SelectHandlerFloat(Math.Min));
 		}
 		
 		public static int Min(IEnumerable<int> list)

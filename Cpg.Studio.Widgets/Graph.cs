@@ -699,18 +699,20 @@ namespace Cpg.Studio.Widgets
 			
 			PointF scale = Scale;
 			
-			float dp = d_ruler.X / scale.X;
+			double dp = d_ruler.X / scale.X;
 			
 			if ((int)Math.Floor(dp) < start)
+			{
 				return;
+			}
 			
 			int dpb = (int)Math.Floor(dp);
 			int dpe = (int)Math.Ceiling(dp);
-			float factor = 1;
+			double factor = 1;
 			
 			if (dpb != dpe)
 			{
-				factor = (dpe - dp) / (float)(dpe - dpb);
+				factor = (dpe - dp) / (double)(dpe - dpb);
 			}
 			
 			int pos1 = dpb + offset - start;

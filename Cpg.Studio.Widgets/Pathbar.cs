@@ -1,6 +1,7 @@
 using System;
 using Gtk;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Cpg.Studio.Widgets
 {
@@ -13,11 +14,13 @@ namespace Cpg.Studio.Widgets
 		private List<Wrappers.Group> d_pathGroups;
 
 		private Wrappers.Group d_active;
+		private List<Wrappers.Group> d_roots;
 
-		public Pathbar() : base(false, 0)
+		public Pathbar(params Wrappers.Group[] roots) : base(false, 0)
 		{
 			d_pathWidgets = new Dictionary<Wrappers.Group, ToggleButton>();
 			d_pathGroups = new List<Wrappers.Group>();
+			d_roots = new List<Wrappers.Group>(roots);
 
 			d_active = null;
 		}
@@ -67,13 +70,25 @@ namespace Cpg.Studio.Widgets
 			but.Active = active;
 			but.Toggled += HandleGroupToggled;
 			
-			but.Sensitive = !active;
+			but.Sensitive = !active || d_roots.Contains(grp);
 			but.Relief = active ? ReliefStyle.Half : ReliefStyle.None;
 			
 			if (active)
 			{
 				d_active = grp;
 			}
+		}
+		
+		private string RootName(Wrappers.Group root)
+		{
+			string ret = root.ToString();
+			
+			if (ret.Length > 0 && char.IsLetter(ret[0]))
+			{
+				ret = ret.Substring(0, 1).ToUpper() + ret.Substring(1);
+			}
+			
+			return ret;
 		}
 		
 		public void Update(Wrappers.Group grp)
@@ -106,7 +121,29 @@ namespace Cpg.Studio.Widgets
 						PackStart(ar, false, false, 0);
 					}
 					
-					ToggleButton but = new ToggleButton(groups[i].ToString());
+					ToggleButton but = new ToggleButton();
+					HBox hbox = new HBox(false, 0);
+					hbox.Show();
+
+					Label lbl = new Label(i == 0 ? RootName(groups[i]) : groups[i].ToString());
+					lbl.Show();
+					
+					if (i == 0)
+					{
+						List<Wrappers.Group> roots = new List<Wrappers.Group>(d_roots);
+						roots.Remove(groups[0]);
+						
+						if (roots.Count != 0)
+						{
+							Arrow arrow = new Arrow(ArrowType.Down, ShadowType.None);
+							arrow.Show();
+							hbox.PackStart(arrow, false, false, 0);
+						}
+					}
+					
+					hbox.PackStart(lbl, false, false, 0);
+					but.Add(hbox);
+					
 					PackStart(but, false, false, 0);
 					
 					but.Data["WrappedGroup"] = groups[i];
@@ -154,13 +191,59 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 		}
+		
+		private void PopupRoots()
+		{
+			List<Wrappers.Group> roots = new List<Wrappers.Group>(d_roots);
+			roots.Remove(d_active);
+			
+			Menu menu = new Menu();
+			menu.Show();
+
+			foreach (Wrappers.Group root in d_roots)
+			{
+				MenuItem item = new MenuItem(RootName(root));
+				item.Show();
+				
+				Wrappers.Group grp = root;
+				
+				item.Activated += delegate {
+					Update(grp);
+					
+					Activated(this, d_active);
+				};
+
+				menu.Append(item);
+			}
+			
+			menu.Popup(null, null, null, 1, 0);
+		}
 
 		private void HandleGroupToggled(object sender, EventArgs e)
 		{
 			Widget w = (Widget)sender;
+			
+			ToggleButton toggle = (ToggleButton)w;
+			Wrappers.Group selected = (Wrappers.Group)w.Data["WrappedGroup"];
+			
+			if (selected == d_active)
+			{
+				if (!toggle.Active)
+				{
+					toggle.Active = true;
+					return;
+				}
+
+				if (d_roots.Contains(selected) && d_roots.Count > 1)
+				{
+					PopupRoots();
+				}
+
+				return;
+			}
 
 			SetActive(d_active, false);
-			SetActive((Wrappers.Group)w.Data["WrappedGroup"], true);
+			SetActive(selected, true);
 			
 			Activated(this, d_active);
 		}

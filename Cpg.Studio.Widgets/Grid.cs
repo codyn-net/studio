@@ -25,9 +25,9 @@ namespace Cpg.Studio.Widgets
 		public event ObjectEventHandler ActiveGroupChanged = delegate {};
 		
 		private Allocation d_mouseRect;
-		private PointF d_origPosition;
-		private PointF d_buttonPress;
-		private PointF d_dragState;
+		private System.Drawing.Point d_origPosition;
+		private Point d_buttonPress;
+		private Point d_dragState;
 		private bool d_isDragging;
 		private List<Wrappers.Wrapper> d_beforeDragSelection;
 		
@@ -40,8 +40,8 @@ namespace Cpg.Studio.Widgets
 		private Wrappers.Group d_activeGroup;
 		private List<Wrappers.Wrapper> d_selection;
 		
-		private float[] d_gridBackground;
-		private float[] d_gridLine;
+		private double[] d_gridBackground;
+		private double[] d_gridLine;
 		
 		private RenderCache d_gridCache;
 		
@@ -66,13 +66,16 @@ namespace Cpg.Studio.Widgets
 			
 			d_focus = null;
 			
-			d_gridBackground = new float[] {1f, 1f, 1f};
-			d_gridLine = new float[] {0.95f, 0.95f, 0.95f};
+			d_gridBackground = new double[] {1, 1, 1};
+			d_gridLine = new double[] {0.95, 0.95, 0.95};
 
 			d_hover = new List<Wrappers.Wrapper>();
 			d_selection = new List<Wrappers.Wrapper>();
-			d_mouseRect = new Allocation(0f, 0f, 0f, 0f);
+			d_mouseRect = new Allocation(0, 0, 0, 0);
 			d_beforeDragSelection = null;
+			
+			d_buttonPress = new Point();
+			d_dragState = new Point();
 			
 			d_gridCache = new RenderCache();
 		
@@ -115,7 +118,7 @@ namespace Cpg.Studio.Widgets
 		{
 			get
 			{
-				return new Point((int)ActiveGroup.X, (int)ActiveGroup.Y);
+				return new System.Drawing.Point((int)ActiveGroup.X, (int)ActiveGroup.Y);
 			}
 		}
 		
@@ -190,12 +193,22 @@ namespace Cpg.Studio.Widgets
 			{
 				d_activeGroup.ChildAdded -= HandleActiveGroupChildAdded;
 				d_activeGroup.ChildRemoved -= HandleActiveGroupChildRemoved;
+				
+				foreach (Wrappers.Wrapper child in d_activeGroup.Children)
+				{
+					Disconnect(child);
+				}
 			}
 
 			if (grp != null)
 			{
 				grp.ChildAdded += HandleActiveGroupChildAdded;
 				grp.ChildRemoved += HandleActiveGroupChildRemoved;
+				
+				foreach (Wrappers.Wrapper child in grp.Children)
+				{
+					Connect(child);
+				}
 			}
 			
 			UnselectAll();
@@ -207,16 +220,29 @@ namespace Cpg.Studio.Widgets
 			
 			ActiveGroupChanged(this, prev);
 		}
+		
+		private void Connect(Wrappers.Wrapper child)
+		{
+			child.RequestRedraw += OnRequestRedraw;
+		}
+		
+		private void Disconnect(Wrappers.Wrapper child)
+		{
+			child.RequestRedraw -= OnRequestRedraw;
+		}
 
 		private void HandleActiveGroupChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
 		{
+			Disconnect(child);
+
 			Unselect(child);			
 			QueueDraw();
 		}
 
 		private void HandleActiveGroupChildAdded(Wrappers.Group source, Wrappers.Wrapper child)
 		{
-			child.RequestRedraw += OnRequestRedraw;
+			Connect(child);
+
 			QueueDraw();
 		}
 		
@@ -261,33 +287,34 @@ namespace Cpg.Studio.Widgets
 				Allocation alloc = obj.Extents(ZoomLevel, graphics);
 				alloc.Round();
 				
-				alloc.Offset(-ActiveGroup.X, -ActiveGroup.Y);			
+				alloc.Offset(-ActiveGroup.X, -ActiveGroup.Y);
 				QueueDrawArea((int)alloc.X, (int)alloc.Y, (int)alloc.Width, (int)alloc.Height);				
 			};
 		}
 		
 		delegate double ScaledPredicate(double val);
-		private float Scaled(double pos, ScaledPredicate predicate)
+		
+		private double Scaled(double pos, ScaledPredicate predicate)
 		{
-			return (float)(predicate != null ? predicate(pos / ZoomLevel) : pos / ZoomLevel);
+			return (predicate != null ? predicate(pos / ZoomLevel) : pos / ZoomLevel);
 		}
 
-		private float Scaled(double pos)
+		private double Scaled(double pos)
 		{
 			return Scaled(pos, null);
 		}
 		
-		private PointF ScaledPosition(PointF position, ScaledPredicate predicate)
+		private Point ScaledPosition(Point position, ScaledPredicate predicate)
 		{
-			return new PointF(Scaled(position.X + ActiveGroup.X, predicate), Scaled(position.Y + ActiveGroup.Y, predicate));
+			return new Point(Scaled(position.X + ActiveGroup.X, predicate), Scaled(position.Y + ActiveGroup.Y, predicate));
 		}
 				
-		private PointF ScaledPosition(double x, double y, ScaledPredicate predicate)
+		private Point ScaledPosition(double x, double y, ScaledPredicate predicate)
 		{
-			return ScaledPosition(new PointF((float)x, (float)y), predicate);
+			return ScaledPosition(new Point(x, y), predicate);
 		}
 		
-		private PointF ScaledPosition(double x, double y)
+		private Point ScaledPosition(double x, double y)
 		{
 			return ScaledPosition(x, y, null);
 		}
@@ -319,7 +346,7 @@ namespace Cpg.Studio.Widgets
 		private List<Wrappers.Wrapper> HitTest(Allocation allocation)
 		{
 			List<Wrappers.Wrapper> res = new List<Wrappers.Wrapper>();
-			Allocation rect = new Allocation(allocation);
+			Allocation rect = allocation.Copy();
 			
 			rect.X += ActiveGroup.X;
 			rect.Y += ActiveGroup.Y;
@@ -331,7 +358,7 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (Wrappers.Wrapper obj in SortedObjects())
 			{				
-				if (!(obj is Wrappers.Link))
+				if (LinkFilter(obj))
 				{
 					if (obj.Allocation.Intersects(rect) && obj.HitTest(rect))
 					{
@@ -367,7 +394,7 @@ namespace Cpg.Studio.Widgets
 			return d_selection.IndexOf(obj) != -1;
 		}
 		
-		private void UpdateDragState(PointF position)
+		private void UpdateDragState(Point position)
 		{
 			if (d_selection.Count == 0)
 			{
@@ -377,7 +404,7 @@ namespace Cpg.Studio.Widgets
 			
 			/* The drag state contains the relative offset of the mouse to the first
 			 * object in the selection. x and y are in unit coordinates */
-			Wrappers.Wrapper first = d_selection.Find(delegate (Wrappers.Wrapper obj) { return !(obj is Wrappers.Link); });
+			Wrappers.Wrapper first = d_selection.Find(delegate (Wrappers.Wrapper obj) { return LinkFilter(obj); });
 			
 			if (first == null)
 			{
@@ -396,12 +423,17 @@ namespace Cpg.Studio.Widgets
 			d_isDragging = true;
 		}
 		
-		private PointF ScaledFromDragState(Wrappers.Wrapper obj)
+		private Point ScaledFromDragState(Wrappers.Wrapper obj)
 		{
 			Allocation rect = d_selection[0].Allocation;
 			Allocation aobj = obj.Allocation;
 			
-			return new PointF(d_dragState.X - (rect.X - aobj.X), d_dragState.Y - (rect.Y - aobj.Y));
+			return new Point(d_dragState.X - (rect.X - aobj.X), d_dragState.Y - (rect.Y - aobj.Y));
+		}
+		
+		private bool LinkFilter(Wrappers.Wrapper wrapped)
+		{
+			return !(wrapped is Wrappers.Link) || ((Wrappers.Link)wrapped).Empty;
 		}
 		
 		private void DoDragRect(int x, int y, Gdk.ModifierType state)
@@ -423,7 +455,7 @@ namespace Cpg.Studio.Widgets
 			
 			if ((state & Gdk.ModifierType.ControlMask) != 0)
 			{
-				objects.RemoveAll(item => ((state & Gdk.ModifierType.Mod1Mask) == 0) == (item is Wrappers.Link));
+				objects.RemoveAll(item => ((state & Gdk.ModifierType.Mod1Mask) == 0) == LinkFilter(item));
 			}
 			
 			List<Wrappers.Wrapper> selection = new List<Wrappers.Wrapper>(d_selection);
@@ -478,20 +510,20 @@ namespace Cpg.Studio.Widgets
 				}
 			});
 
-			if (objects.Count != 0 && d_hover.IndexOf(objects[0]) == -1)
+			if (objects.Count != 0 && !d_hover.Contains(objects[0]))
 			{
 				objects[0].MouseFocus = true;
 				d_hover.Add(objects[0]);
 			}
 		}
 		
-		private PointF UnitSize()
+		private Point UnitSize()
 		{
-			return new PointF(Scaled(Allocation.Width, new ScaledPredicate(Math.Ceiling)),
+			return new Point(Scaled(Allocation.Width, new ScaledPredicate(Math.Ceiling)),
 			                  Scaled(Allocation.Height, new ScaledPredicate(Math.Ceiling)));
 		}
 		
-		private void ZoomAtPoint(int size, System.Drawing.Point where)
+		private void ZoomAtPoint(int size, Point where)
 		{
 			size = Math.Max(Math.Min(size, MaxZoom), MinZoom);
 			
@@ -518,7 +550,7 @@ namespace Cpg.Studio.Widgets
 			double x;
 			double y;
 			
-			if (obj is Wrappers.Link)
+			if (!LinkFilter(obj))
 			{
 				Wrappers.Link link = (Wrappers.Link)obj;
 				Utils.MeanPosition(new Wrappers.Wrapper[] {link.From, link.To}, out x, out y);
@@ -536,7 +568,7 @@ namespace Cpg.Studio.Widgets
 			QueueDraw();
 		}
 		
-		private void DoZoom(bool zoomIn, System.Drawing.Point pt)
+		private void DoZoom(bool zoomIn, Point pt)
 		{
 			int nsize = ZoomLevel + (int)Math.Floor(ZoomLevel * 0.2 * (zoomIn ? 1 : -1));
 
@@ -558,7 +590,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (upperReached)
 			{
-				List<Wrappers.Wrapper> objects = HitTest(new Allocation(pt.X, pt.Y, 1f, 1f));
+				List<Wrappers.Wrapper> objects = HitTest(new Allocation(pt.X, pt.Y, 1, 1));
 				
 				foreach (Wrappers.Wrapper obj in objects)
 				{
@@ -598,7 +630,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void DoZoom(bool zoomIn)
 		{
-			DoZoom(zoomIn, new Point((int)(Allocation.Width / 2), (int)(Allocation.Height / 2)));
+			DoZoom(zoomIn, new Point(Allocation.Width / 2, Allocation.Height / 2));
 		}
 		
 		public void ZoomIn()
@@ -613,7 +645,7 @@ namespace Cpg.Studio.Widgets
 		
 		public void ZoomDefault()
 		{
-			System.Drawing.Point pt = new Point((int)(Allocation.Width / 2), (int)(Allocation.Height / 2));
+			Point pt = new Point(Allocation.Width / 2, Allocation.Height / 2);
 			ZoomAtPoint(DefaultZoom, pt);
 		}
 		
@@ -748,7 +780,7 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			Rectangle alloc = obj.Allocation;
+			Allocation alloc = obj.Allocation;
 			graphics.Save();
 			graphics.Translate(alloc.X, alloc.Y);
 
@@ -860,7 +892,7 @@ namespace Cpg.Studio.Widgets
 				
 				if (evnt.Button == 1)
 				{
-					PointF res = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
+					Point res = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
 					UpdateDragState(res);
 				}
 			}
@@ -897,7 +929,7 @@ namespace Cpg.Studio.Widgets
 				
 				if (first != null)
 				{
-					PointF pos = ScaledPosition(evnt.X, evnt.Y);
+					Point pos = ScaledPosition(evnt.X, evnt.Y);
 					first.Clicked(pos);
 				}
 			}
@@ -933,16 +965,16 @@ namespace Cpg.Studio.Widgets
 				return true;
 			}
 			
-			PointF position = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
-			PointF size = UnitSize();
+			Point position = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
+			Point size = UnitSize();
 			
 			int pxn = (int)Math.Floor((double)(ActiveGroup.X / ZoomLevel));
 			int pyn = (int)Math.Floor((double)(ActiveGroup.Y / ZoomLevel));
 			
-			List<float> maxx = new List<float>();
-			List<float> minx = new List<float>();
-			List<float> maxy = new List<float>();
-			List<float> miny = new List<float>();
+			List<double> maxx = new List<double>();
+			List<double> minx = new List<double>();
+			List<double> maxy = new List<double>();
+			List<double> miny = new List<double>();
 			
 			int[] translation = null;
 			
@@ -953,16 +985,11 @@ namespace Cpg.Studio.Widgets
 			
 			/* Check boundaries */
 			List<Wrappers.Wrapper> selection = new List<Wrappers.Wrapper>(d_selection);
-			selection.RemoveAll(item => item is Wrappers.Link);
+			selection.RemoveAll(item => !LinkFilter(item));
 			
-			if (selection.Count == 0)
-			{
-				return true;
-			}
-
 			foreach (Wrappers.Wrapper obj in selection)
 			{
-				PointF pt = ScaledFromDragState(obj);
+				Point pt = ScaledFromDragState(obj);
 				Allocation alloc = obj.Allocation;
 				
 				minx.Add(-pt.X + pxn);

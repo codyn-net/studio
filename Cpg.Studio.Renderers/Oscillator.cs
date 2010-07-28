@@ -7,7 +7,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 	[Name("Oscillator")]
 	public class Oscillator : Group
 	{
-		private float d_height;
+		private double d_height;
 		private Cairo.LinearGradient d_outer;
 		private Cairo.LinearGradient d_inner;
 		

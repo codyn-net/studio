@@ -243,7 +243,7 @@ namespace Cpg.Studio.Widgets
 
 			d_uimanager.EnsureUpdate();
 
-			d_pathbar = new Pathbar();
+			d_pathbar = new Pathbar(Network, Network.TemplateGroup);
 			d_pathbar.BorderWidth = 1;
 
 			vbox.PackStart(d_pathbar, false, false, 0);
@@ -910,6 +910,15 @@ namespace Cpg.Studio.Widgets
 			
 			d_periodEntry.Text = s.SimulatePeriod;
 			
+			// Restore root
+			if (!String.IsNullOrEmpty(s.ActiveRoot))
+			{
+				if (s.ActiveRoot == "templates")
+				{
+					d_grid.ActiveGroup = Network.TemplateGroup;
+				}
+			}
+			
 			// Restore active group
 			if (!String.IsNullOrEmpty(s.ActiveGroup))
 			{
@@ -1056,8 +1065,19 @@ namespace Cpg.Studio.Widgets
 			s.SimulatePeriod = d_periodEntry.Text;
 			
 			s.Allocation = WindowAllocation(this);
-			
 			s.ActiveGroup = d_grid.ActiveGroup.FullId;
+			
+			Console.WriteLine("Hmm: {0}", d_grid.ActiveGroup.TopParent);
+			
+			if (d_grid.ActiveGroup.TopParent == Network.TemplateGroup)
+			{
+				s.ActiveRoot = "templates";
+			}
+			else
+			{
+				s.ActiveRoot = null;
+			}
+
 			s.Monitors.Graphs.Clear();
 			s.Monitors.Rows = 0;
 			s.Monitors.Columns = 0;

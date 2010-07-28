@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 
 namespace Cpg.Studio.Wrappers
 {
@@ -16,12 +15,6 @@ namespace Cpg.Studio.Wrappers
 		
 		private int d_offset;
 		
-		private double[] d_selectedColor;
-		private double[] d_normalColor;
-		private double[] d_hoverColor;
-		
-		private float d_arrowSize;
-		
 		protected Link(Cpg.Link obj) : this(obj, null, null)
 		{
 		}
@@ -32,13 +25,14 @@ namespace Cpg.Studio.Wrappers
 		
 		public Link(Cpg.Link obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
 		{
+			Renderer = new Renderers.Link(this);
+
 			if (obj != null && from != null)
 			{
 				obj.From = from;
 			}
 
 			UpdateFrom();
-			
 			
 			if (obj != null && to != null)
 			{
@@ -47,17 +41,23 @@ namespace Cpg.Studio.Wrappers
 
 			UpdateTo();
 			
-			d_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
-			d_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
-			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
-			
-			d_arrowSize = 0.15f;
-			
 			obj.AddNotification("to", OnToChanged);
 			obj.AddNotification("from", OnFromChanged);
 			
 			obj.ActionAdded += HandleActionAdded;
 			obj.ActionRemoved += HandleActionRemoved;
+		}
+		
+		public new Renderers.Link Renderer
+		{
+			get
+			{
+				return (Renderers.Link)base.Renderer;
+			}
+			set
+			{
+				base.Renderer = value;
+			}
 		}
 
 		private void HandleActionRemoved(object o, ActionRemovedArgs args)
@@ -289,18 +289,18 @@ namespace Cpg.Studio.Wrappers
 		{
 			get
 			{
-				return From == null && To == null;
+				return From == null || To == null;
 			}
 		}
 
-		private bool RectHittest(PointF p1, PointF p2, PointF p3, PointF p4, Allocation rect, float gridSize)
+		private bool RectHittest(Point p1, Point p2, Point p3, Point p4, Allocation rect, double gridSize)
 		{
-			Allocation other = new Allocation(0, 0, 1f / gridSize, 1f / gridSize);
+			Allocation other = new Allocation(0, 0, 1.0 / gridSize, 1.0 / gridSize);
 			
 			for (int i = 0; i < 5; ++i)
 			{
-				other.X = EvaluateBezier(p1.X, p2.X, p3.X, p4.X, (float)i / 5);
-				other.Y = EvaluateBezier(p1.Y, p2.Y, p3.Y, p4.Y, (float)i / 5);
+				other.X = Renderers.Link.EvaluateBezier(p1.X, p2.X, p3.X, p4.X, i / 5.0);
+				other.Y = Renderers.Link.EvaluateBezier(p1.Y, p2.Y, p3.Y, p4.Y, i / 5.0);
 				
 				if (rect.Intersects(other))
 				{
@@ -311,53 +311,30 @@ namespace Cpg.Studio.Wrappers
 			return false;
 		}
 		
-		private float DistanceToLine(PointF start, PointF stop, PointF point)
-		{
-			PointF dx = new PointF(point.X - start.X, stop.X - start.X);
-			PointF dy = new PointF(point.Y - start.Y, stop.Y - start.Y);
-			
-			float dot = dx.X * dx.Y + dy.X * dy.Y;
-			float len_sq = dx.Y * dx.Y + dy.Y * dy.Y;
-			float param = dot / len_sq;
-			
-			PointF res = new PointF(0, 0);
-			
-			if (param < 0)
-			{
-				res = start;
-			}
-			else if (param > 1)
-			{
-				res = stop;
-			}
-			else
-			{
-				res.X = start.X + param * dx.Y;
-				res.Y = start.Y + param * dy.Y;
-			}
-			
-			return (float)Math.Sqrt((point.X - res.X) * (point.X - res.X) + (point.Y - res.Y) * (point.Y - res.Y));
-		}
-		
 		public bool HitTest(Allocation rect, int gridSize)
-		{			
-			PointF[] points = ControlPoints();
+		{
+			Point[] points = Renderer.ControlPoints();
+			
+			if (points == null)
+			{
+				return Allocation.Intersects(rect) && base.HitTest(rect);
+			}
 			
 			// Piece wise linearization
 			int num = 5;
-			List<float> dist = new List<float>();
+			List<double> dist = new List<double>();
 			
 			if (rect.Width * gridSize > 1.5 || rect.Height * gridSize > 1.5)
 			{
 				return RectHittest(points[0], points[1], points[2], points[3], rect, gridSize);
 			}
 
-			PointF prevp = points[0];
+			Point prevp = points[0];
 
 			for (int i = 1; i <= num; ++i)
 			{
-				PointF pt = EvaluateBezier(points[0], points[1], points[2], points[3], (float)i / num);
-				dist.Add(DistanceToLine(prevp, pt, new PointF(rect.X, rect.Y)));
+				Point pt = Renderers.Link.EvaluateBezier(points[0], points[1], points[2], points[3], (double)i / num);
+				dist.Add(Renderers.Link.DistanceToLine(prevp, pt, new Point(rect.X, rect.Y)));
 				
 				prevp = pt;
 			}
@@ -365,172 +342,25 @@ namespace Cpg.Studio.Wrappers
 			return (Utils.Min(dist) < 10.0f / gridSize);
 		}
 		
-		
-		private double[] StateColor()
+		protected override string Label
 		{
-			if (Selected)
-			{
-				return d_selectedColor;
-			}
-			else if (MouseFocus)
-			{
-				return d_hoverColor;
-			}
-			else
-			{
-				return d_normalColor;
-			}
-		}
-		
-		private PointF CalculateControl(PointF from, PointF to)
-		{
-			PointF diff = new PointF(to.X - from.X, to.Y - from.Y);
-			PointF point = new PointF(from.X + diff.X / 2, from.Y + diff.Y / 2);
-			
-			bool same = (diff.X == 0 && diff.Y == 0);
-			
-			// Offset perpendicular
-			float dist = 1 * d_offset;
-			float alpha = same ? 0 : (float)Math.Atan(diff.X / -diff.Y);
-			
-			if (diff.Y >= 0)
-				alpha += (float)Math.PI;
-		
-			return new PointF(point.X + (float)Math.Cos(alpha) * dist, point.Y + (float)Math.Sin(alpha) * dist);
-		}
-		
-		public float EvaluateBezier(float p0, float p1, float p2, float p3, float t)
-		{
-			return (float)Math.Pow(1 - t, 3) * p0 + 3 * t * (float)Math.Pow(1 - t, 2) * p1 + 3 * (float)Math.Pow(t, 2) * (1 - t) * p2 + (float)Math.Pow(t, 3) * p3;
-		}
-		
-		public PointF EvaluateBezier(PointF p0, PointF p1, PointF p2, PointF p3, float t)
-		{
-			return new PointF(
-				EvaluateBezier(p0.X, p1.X, p2.X, p3.X, t),
-				EvaluateBezier(p0.Y, p1.Y, p2.Y, p3.Y, t)
-			);
-		}
-		
-		private PointF[] ControlPoints()
-		{
-			if (d_from == null || d_to == null)
+			get
 			{
 				return null;
 			}
-
-			Allocation a1 = d_from.Allocation;
-			Allocation a2 = d_to.Allocation;
-			
-			PointF from = new PointF(a1.X + a1.Width / 2, a1.Y + a1.Height / 2);
-			PointF to = new PointF(a2.X + a2.Width / 2, a2.Y + a2.Height / 2);
-			PointF control = CalculateControl(from, to);
-			
-			if (from.X == to.X && from.Y == to.Y)
-			{
-				PointF pts = new PointF(2, (d_offset) + 0.5f);
-
-				return new PointF[] {
-					from,
-					new PointF(to.X - pts.X, to.Y - pts.Y),
-					new PointF(to.X + pts.X, to.Y - pts.Y),
-					to
-				};
-			}
-			else
-			{
-				return new PointF[] {from, control, control, to};
-			}
-		}
-		
-		public override void Draw(Cairo.Context graphics)
-		{			
-			PointF[] points = ControlPoints();
-			
-			if (points == null)
-			{
-				return;
-			}
-			
-			graphics.Save();			
-
-			double[] color = StateColor();
-			
-			if (KeyFocus)
-			{
-				graphics.LineWidth *= 4;
-				graphics.SetDash(new double[] {graphics.LineWidth, graphics.LineWidth}, 0);
-			}
-			else if (MouseFocus)
-			{
-				graphics.LineWidth *= 2;
-			}
-
-			graphics.MoveTo(points[0].X, points[0].Y);
-			graphics.CurveTo(points[1].X, points[1].Y, points[2].X, points[2].Y, points[3].X, points[3].Y);
-			graphics.SetSourceRGBA(color[0], color[1], color[2], color[3]);
-
-			graphics.Stroke();
-			
-			PointF xy;
-			float pos;
-			
-			// Draw the arrow, first move to the center, then rotate, then draw the arrow
-			xy = EvaluateBezier(points[0], points[1], points[2], points[3], 0.5f);
-
-			if (points[0] == points[3])
-			{
-				pos = 1.5f * (float)Math.PI;
-			}
-			else
-			{
-				PointF diff = new PointF(points[3].X - points[0].X, points[3].Y - points[0].Y);
-				
-				if (diff.X == 0)
-				{
-					pos = (diff.Y < 0 ? 1.5f : 0.5f) * (float)Math.PI; 
-				}
-				else
-				{
-					pos = (float)Math.Atan(diff.Y / diff.X);
-					
-					if (diff.X < 0)
-					{
-						pos += (float)Math.PI;
-					}
-					else if (diff.Y < 0)
-					{
-						pos += 2 * (float)Math.PI;
-					}
-				}
-				
-				pos += 0.5f * (float)Math.PI;
-			}
-			
-			graphics.MoveTo(xy.X, xy.Y);
-			graphics.Rotate(pos);
-			graphics.RelMoveTo(0, (pos + 0.5 * Math.PI < Math.PI ? -1 : 1) * d_arrowSize / 2);
-
-			graphics.RelLineTo(-d_arrowSize, 0);
-			graphics.RelLineTo(d_arrowSize, -d_arrowSize);
-			graphics.RelLineTo(d_arrowSize, d_arrowSize);
-			graphics.RelLineTo(-d_arrowSize, 0);
-			
-			graphics.Fill();
-			graphics.Restore();
 		}
 
-		public override Allocation Extents(float scale, Cairo.Context graphics)
+		public override Allocation Extents(double scale, Cairo.Context graphics)
 		{
-			PointF[] points = ControlPoints();
-			
-			if (points == null)
+			if (Empty)
 			{
-				return new Allocation(0, 0, 0, 0);
+				return base.Extents(scale, graphics);
 			}
 			
-			List<float> xx = new List<float>();
-			List<float> yy = new List<float>();
+			Point[] points = Renderer.ControlPoints();
+			
+			List<double> xx = new List<double>();
+			List<double> yy = new List<double>();
 			
 			for (int i = 0; i < points.Length; ++i)
 			{
@@ -538,11 +368,11 @@ namespace Cpg.Studio.Wrappers
 				yy.Add(points[i].Y * scale);
 			}
 			
-			float ssize = d_arrowSize * scale;
-			float minx = Utils.Min(xx) - ssize;
-			float maxx = Utils.Max(xx) + ssize;
-			float miny = Utils.Min(yy) - ssize;
-			float maxy = Utils.Max(yy) + ssize;
+			double ssize = Renderers.Link.ArrowSize * scale;
+			double minx = Utils.Min(xx) - ssize;
+			double maxx = Utils.Max(xx) + ssize;
+			double miny = Utils.Min(yy) - ssize;
+			double maxy = Utils.Max(yy) + ssize;
 
 			return new Allocation(minx, miny, Math.Max(maxx - minx, ssize * 2), Math.Max(maxy - miny, ssize * 2));
 		}

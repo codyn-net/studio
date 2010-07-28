@@ -10,6 +10,65 @@ namespace Cpg.Studio.Widgets
 	[Gtk.Binding(Gdk.Key.Insert, "HandleAddBinding")]
 	public class PropertyView : VBox
 	{
+		private class LinkActionNode : Node
+		{
+			private LinkAction d_action;
+
+			public LinkActionNode(LinkAction action)
+			{
+				d_action = action;
+				
+				d_action.AddNotification("target", OnActionChanged);
+				d_action.AddNotification("equation", OnActionChanged);
+			}
+			
+			~LinkActionNode()
+			{
+				d_action.RemoveNotification("target", OnActionChanged);
+				d_action.RemoveNotification("equation", OnActionChanged);
+			}
+			
+			private void OnActionChanged(object source, GLib.NotifyArgs args)
+			{
+				EmitChanged();
+			}
+			
+			[PrimaryKey]
+			public LinkAction LinkAction
+			{
+				get
+				{
+					return d_action;
+				}
+			}
+			
+			[NodeColumn(0)]
+			public string Target
+			{
+				get
+				{
+					return d_action.Target;
+				}
+				set
+				{
+					d_action.Target = value;
+				}
+			}
+			
+			[NodeColumn(1)]
+			public string Equation
+			{
+				get
+				{
+					return d_action.Equation.AsString;
+				}
+				set
+				{
+					d_action.Equation.FromString = value;
+				}
+			}
+		}
+
 		enum Column
 		{
 			Property = 0
@@ -24,7 +83,7 @@ namespace Cpg.Studio.Widgets
 		private TreeView d_treeview;
 		private bool d_selectProperty;
 		private ListStore d_comboStore;
-		private ListStore d_actionStore;
+		private NodeStore<LinkActionNode> d_actionStore;
 		private TreeView d_actionView;
 		private ListStore d_flagsStore;
 		private List<KeyValuePair<string, Cpg.PropertyFlags>> d_flaglist;
@@ -61,35 +120,29 @@ namespace Cpg.Studio.Widgets
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			vw.ShadowType = ShadowType.EtchedIn;
 			
-			d_actionStore = new Gtk.ListStore(typeof(Cpg.LinkAction));
-			d_actionView = new TreeView(d_actionStore);
+			d_actionStore = new NodeStore<LinkActionNode>();
+			d_actionView = new TreeView(new TreeModelAdapter(d_actionStore));
+			
+			d_actionView.ShowExpanders = false;
+			d_actionView.RulesHint = true;
 			
 			vw.Add(d_actionView);
 			
-			CellRendererCombo comboRenderer = new CellRendererCombo();
-			d_comboStore = new ListStore(typeof(string), typeof(Cpg.Property));
-			comboRenderer.Model = d_comboStore;
-			comboRenderer.TextColumn = 0;
-			comboRenderer.Editable = true;
-			comboRenderer.HasEntry = false;
-			
-			comboRenderer.Edited += HandleLinkActionTargetEdited;
+			CellRendererText renderer = new CellRendererText();
+			renderer.Editable = true;			
+			renderer.Edited += HandleLinkActionTargetEdited;
 
-			Gtk.TreeViewColumn column = new Gtk.TreeViewColumn("Target", comboRenderer);
+			Gtk.TreeViewColumn column = new Gtk.TreeViewColumn("Target", renderer, "text", 0);
 			column.MinWidth = 80;
-			
-			column.SetCellDataFunc(comboRenderer, HandleRenderActionTarget);
 			
 			d_actionView.AppendColumn(column);
 			
-			CellRendererText renderer = new CellRendererText();
+			renderer = new CellRendererText();
 			renderer.Editable = true;
 			
 			renderer.Edited += HandleLinkActionEquationEdited;
 			
-			column = new Gtk.TreeViewColumn("Equation", renderer);
-			column.SetCellDataFunc(renderer, HandleRenderActionEquation);
-
+			column = new Gtk.TreeViewColumn("Equation", renderer, "text", 1);
 			d_actionView.AppendColumn(column);
 			
 			vbox.PackStart(vw, true, true, 0);
@@ -101,14 +154,6 @@ namespace Cpg.Studio.Widgets
 			UpdateActionSensitivity();
 			
 			Wrappers.Link link = d_object as Wrappers.Link;
-
-			link.To.PropertyAdded += DoTargetPropertyAdded;
-			link.To.PropertyRemoved += DoTargetPropertyRemoved;
-			
-			foreach (Cpg.Property prop in link.To.Properties)
-			{
-				d_comboStore.AppendValues(prop.Name, prop);
-			}
 			
 			foreach (Cpg.LinkAction action in link.Actions)
 			{
@@ -372,14 +417,6 @@ namespace Cpg.Studio.Widgets
 				
 				link.ActionAdded -= HandleLinkActionAdded;
 				link.ActionRemoved -= HandleLinkActionRemoved;
-				
-				foreach (TreeIter iter in ForeachLinkAction())
-				{
-					Cpg.LinkAction action = LinkActionFromStore(iter);
-	
-					action.RemoveNotification("target", HandleLinkActionChanged);
-					action.RemoveNotification("equation", HandleLinkActionChanged);
-				}
 			}
 		}
 		
@@ -409,44 +446,10 @@ namespace Cpg.Studio.Widgets
 				link.ActionRemoved += HandleLinkActionRemoved;
 			}
 		}
-		
-		private bool FindLinkAction(Cpg.LinkAction action, out TreePath path, out TreeIter iter)
-		{
-			path = null;
-			
-			if (!d_actionStore.GetIterFirst(out iter))
-			{
-				return false;
-			}
-			
-			do
-			{
-				Cpg.LinkAction ac = LinkActionFromStore(iter);
-				
-				if (ac == action)
-				{
-					path = d_actionStore.GetPath(iter);
-					return true;
-				}
-			} while (d_actionStore.IterNext(ref iter));
-			
-			return false;
-		}
-		
-		private bool FindLinkAction(Cpg.LinkAction action, out TreeIter iter)
-		{
-			TreePath path;
-			return FindLinkAction(action, out path, out iter);
-		}
 
 		private void HandleLinkActionRemoved(object source, Cpg.LinkAction action)
 		{
-			TreeIter iter;
-
-			if (FindLinkAction(action, out iter))
-			{
-				d_actionStore.Remove(ref iter);
-			}
+			d_actionStore.Remove(action);
 		}
 
 		private void HandleLinkActionAdded(object source, Cpg.LinkAction action)
@@ -458,7 +461,7 @@ namespace Cpg.Studio.Widgets
 		{
 			TreeIter iter;
 			
-			iter = d_actionStore.AppendValues(action);
+			iter = d_actionStore.Add(new LinkActionNode(action));
 			
 			if (d_selectAction)
 			{
@@ -467,10 +470,7 @@ namespace Cpg.Studio.Widgets
 				
 				TreePath path = d_actionStore.GetPath(iter);					
 				d_actionView.SetCursor(path, d_actionView.GetColumn(0), true);
-			}
-			
-			action.AddNotification("target", HandleLinkActionChanged);
-			action.AddNotification("equation", HandleLinkActionChanged);
+			}			
 		}
 		
 		private void AddIdUI()
@@ -744,7 +744,7 @@ namespace Cpg.Studio.Widgets
 		
 		private Cpg.LinkAction LinkActionFromStore(TreeIter iter)
 		{
-			return (Cpg.LinkAction)d_actionStore.GetValue(iter, 0);
+			return d_actionStore.GetFromIter<LinkActionNode>(iter).LinkAction;
 		}
 		
 		private Cpg.Property PropertyFromStore(string path)
@@ -924,19 +924,6 @@ namespace Cpg.Studio.Widgets
 			d_entry.Text = d_object.Id;
 		}
 		
-		private void HandleLinkActionChanged(object source, GLib.NotifyArgs args)
-		{
-			Cpg.LinkAction action = (Cpg.LinkAction)source;
-			
-			TreeIter iter;
-			TreePath path;
-			
-			if (FindLinkAction(action, out path, out iter))
-			{
-				d_actionStore.EmitRowChanged(path, iter);
-			}
-		}
-		
 		private void HandlePropertyChanged(object source, GLib.NotifyArgs args)
 		{
 			Cpg.Property prop = (Cpg.Property)source;
@@ -1005,25 +992,37 @@ namespace Cpg.Studio.Widgets
 		{
 			Wrappers.Link link = d_object as Wrappers.Link;
 			
-			List<Cpg.Property> props = new List<Cpg.Property>(link.To.Properties);
-		
-			// Remove properties that already have actions
-			foreach (Cpg.LinkAction ac in link.Actions)
+			List<string> props = new List<string>(Array.ConvertAll<LinkAction, string>(link.Actions, item => item.Target));
+			List<string> prefs = new List<string>();
+			
+			if (link.To != null)
 			{
-				if (props.Contains(ac.TargetProperty))
-				{
-					props.Remove(ac.TargetProperty);
-				}
+				prefs = new List<string>(Array.ConvertAll<Property, string>(link.To.Properties, item => item.Name));
+			}
+			else
+			{
+				prefs = new List<string>();
 			}
 			
-			if (props.Count == 0)
+			int i = 0;
+			string name;
+			
+			do
 			{
-				Error(this, new Exception("There are no available target properties in the link target"));
-				return;
-			}
+				if (i < prefs.Count)
+				{
+					name = prefs[i];
+				}
+				else
+				{
+					name = String.Format("x{0}", i - prefs.Count + 1);
+				}
+
+				++i;
+			} while (props.Contains(name));
 			
 			d_selectAction = true;
-			d_actions.Do(new Undo.AddLinkAction(link, props[0].Name, ""));
+			d_actions.Do(new Undo.AddLinkAction(link, name, ""));
 			d_selectAction = false;
 		}
 		
@@ -1045,21 +1044,6 @@ namespace Cpg.Studio.Widgets
 		private void DoPropertyAdded(Wrappers.Wrapper obj, Cpg.Property prop)
 		{
 			AddProperty(prop);
-		}
-		
-		private IEnumerable<TreeIter> ForeachLinkAction()
-		{
-			TreeIter iter;
-
-			if (!d_actionStore.GetIterFirst(out iter))
-			{
-				return false;
-			}
-			
-			do
-			{
-				yield return iter;
-			} while (d_actionStore.IterNext(ref iter));
 		}
 		
 		private IEnumerable<TreeIter> ForeachProperty()
@@ -1163,21 +1147,10 @@ namespace Cpg.Studio.Widgets
 		{
 			TreeIter iter;
 			
-			if (!d_actionStore.GetIterFirst(out iter))
+			if (d_actionStore.Find(action, out iter))
 			{
-				return;
+				d_actionView.Selection.SelectIter(iter);
 			}
-			
-			do
-			{
-				Cpg.LinkAction o = LinkActionFromStore(iter);
-				
-				if (o == action)
-				{
-					d_actionView.Selection.SelectIter(iter);
-					return;
-				}
-			} while (d_actionStore.IterNext(ref iter));
 		}
 		
 		protected override void OnRealized()

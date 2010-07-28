@@ -1,20 +1,21 @@
 using System;
-using System.Drawing;
 using System.Xml.Serialization;
 
 namespace Cpg.Studio
 {
 	public class Allocation
 	{
-		private RectangleF d_rectangle;
+		private double d_x;
+		private double d_y;
+		private double d_width;
+		private double d_height;
 		
-		public Allocation(RectangleF rect)
+		public Allocation(double x, double y, double width, double height)
 		{
-			d_rectangle = rect;
-		}
-
-		public Allocation(double x, double y, double width, double height) : this(new RectangleF((float)x, (float)y, (float)width, (float)height))
-		{
+			d_x = x;
+			d_y = y;
+			d_width = width;
+			d_height = height;
 		}
 		
 		public Allocation() : this(0, 0, 1, 1)
@@ -23,67 +24,73 @@ namespace Cpg.Studio
 		
 		public Allocation Copy()
 		{
-			return new Allocation(d_rectangle.X, d_rectangle.Y, d_rectangle.Width, d_rectangle.Height);
+			return new Allocation(d_x, d_y, d_width, d_height);
 		}
 		
 		[XmlAttribute("x")]
-		public float X
+		public double X
 		{
-			get { return d_rectangle.X; }
-			set { d_rectangle.X = value; }
+			get { return d_x; }
+			set { d_x = value; }
 		}
 		
 		[XmlAttribute("y")]
-		public float Y
+		public double Y
 		{
-			get { return d_rectangle.Y; }
-			set { d_rectangle.Y = value; }
+			get { return d_y; }
+			set { d_y = value; }
 		}
 		
 		[XmlAttribute("width")]
-		public float Width
+		public double Width
 		{
-			get { return d_rectangle.Width; }
-			set { d_rectangle.Width = value; }
+			get { return d_width; }
+			set { d_width = value; }
 		}
 		
 		[XmlAttribute("height")]
-		public float Height
+		public double Height
 		{
-			get { return d_rectangle.Height; }
-			set { d_rectangle.Height = value; }
+			get { return d_height; }
+			set { d_height = value; }
 		}
 		
 		public void Assign(double x, double y, double width, double height)
 		{
-			d_rectangle = new RectangleF((float)x, (float)y, (float)width, (float)height);
+			d_x = x;
+			d_y = y;
+			d_width = width;
+			d_height = height;
 		}
 		
 		public void Offset(double x, double y)
 		{
-			d_rectangle.Offset((float)x, (float)y);
+			d_x += x;
+			d_y += y;
 		}
 		
 		public void Move(double x, double y)
 		{
-			d_rectangle.X = (float)x;
-			d_rectangle.Y = (float)y;
+			d_x = x;
+			d_y = y;
 		}
 		
 		public Allocation FromRegion()
 		{
-			Allocation rect = new Allocation(this);
+			Allocation rect = Copy();
 
 			if (rect.Width < rect.X)
 			{
-				float tmp = rect.Width;
+				double tmp = rect.Width;
+
 				rect.Width = rect.X;
 				rect.X = tmp;
 			}
 			
 			if (rect.Height < rect.Y)
 			{
-				float tmp = rect.Height;
+				double tmp = rect.Height;
+
 				rect.Height = rect.Y;
 				rect.Y = tmp;
 			}
@@ -93,46 +100,39 @@ namespace Cpg.Studio
 
 		public bool Intersects(Allocation other)
 		{
-			return d_rectangle.IntersectsWith(other.d_rectangle);
+			return d_y + d_height >= other.Y &&
+			       d_y <= other.Y + other.Height &&
+			       d_x + d_width >= other.X &&
+			       d_x <= other.X + other.Width;
 		}
 		
-		public void Scale(float scale)
+		public void Scale(double scale)
 		{
-			d_rectangle.X *= scale;
-			d_rectangle.Y *= scale;
-			d_rectangle.Width *= scale;
-			d_rectangle.Height *= scale;
+			d_x *= scale;
+			d_x *= scale;
+			d_width *= scale;
+			d_height *= scale;
 		}
 		
-		public void GrowBorder(float num)
+		public void GrowBorder(double num)
 		{
-			d_rectangle.X -= num;
-			d_rectangle.Y -= num;
-			d_rectangle.Width += num * 2;
-			d_rectangle.Height += num * 2;
+			d_x -= num;
+			d_y -= num;
+			d_width += num * 2;
+			d_height += num * 2;
 		}
 		
 		public void Round()
 		{
-			Math.Round(d_rectangle.X);
-			Math.Round(d_rectangle.Y);
-			Math.Round(d_rectangle.Width);
-			Math.Round(d_rectangle.Height);
+			d_x = Math.Round(d_x);
+			d_y = Math.Round(d_y);
+			d_width = Math.Round(d_width);
+			d_height = Math.Round(d_height);
 		}
 		
 		public override string ToString()
 		{
-			return d_rectangle.ToString();
-		}
-		
-		public static implicit operator RectangleF(Allocation alloc)
-		{
-			return alloc.d_rectangle;
-		}
-		
-		public static implicit operator Rectangle(Allocation alloc)
-		{
-			return new Rectangle((int)alloc.X, (int)alloc.Y, (int)alloc.Width, (int)alloc.Height);
+			return String.Format("[Allocation: x = {0}, y = {1}, width = {2}, height = {3}]", d_x, d_y, d_width, d_height);
 		}
 	}
 }

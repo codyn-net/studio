@@ -146,6 +146,14 @@ namespace Cpg.Studio.Wrappers.Renderers
 		{
 			return FindByName(name, null);
 		}
+		
+		public Wrappers.Wrapper WrappedObject
+		{
+			get
+			{
+				return d_object;
+			}
+		}
 	}
 	
 	

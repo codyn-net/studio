@@ -47,7 +47,7 @@ namespace Cpg.Studio.Wrappers
 			{
 				d_state &= ~field;
 			}
-		
+			
 			if (d_state != old)
 			{
 				DoRequestRedraw();
@@ -126,7 +126,7 @@ namespace Cpg.Studio.Wrappers
 			return true;
 		}
 		
-		public virtual void Clicked(PointF position)
+		public virtual void Clicked(Point position)
 		{
 			// NOOP
 		}
@@ -151,8 +151,8 @@ namespace Cpg.Studio.Wrappers
 			int fw = 12;
 			int dw = 0;
 			
-			float w = Allocation.Width;
-			float h = Allocation.Height;
+			double w = Allocation.Width;
+			double h = Allocation.Height;
 			
 			graphics.SetSourceRGBA(0.6, 0.6, 0.6, 0.5);
 			
@@ -177,6 +177,53 @@ namespace Cpg.Studio.Wrappers
 			graphics.Stroke();
 		}
 		
+		protected virtual string Label
+		{
+			get
+			{
+				return ToString();
+			}
+		}
+		
+		protected virtual void DrawLabel(Cairo.Context graphics)
+		{
+			string s = Label;
+
+			if (String.IsNullOrEmpty(s))
+			{
+				return;
+			}
+
+			if (MouseFocus)
+			{
+				graphics.SetSourceRGB(0.3, 0.6, 0.3);
+			}
+			else
+			{
+				graphics.SetSourceRGB(0.3, 0.3, 0.3);
+			}
+						
+			double uw = graphics.LineWidth;
+			
+			graphics.Save();
+			graphics.Scale(uw, uw);
+			
+			Pango.Layout layout = Pango.CairoHelper.CreateLayout(graphics);
+			Pango.CairoHelper.UpdateLayout(graphics, layout);
+			layout.FontDescription = Settings.Font;
+
+			layout.SetText(s);
+			
+			int width, height;
+			layout.GetSize(out width, out height);
+			
+			width = (int)(width / Pango.Scale.PangoScale);
+			
+			graphics.MoveTo((Allocation.Width / uw - width) / 2.0, Allocation.Height / uw + 2);
+			Pango.CairoHelper.ShowLayout(graphics, layout);
+			graphics.Restore();
+		}
+
 		public virtual void Draw(Cairo.Context graphics)
 		{
 			if (Renderer != null)
@@ -184,39 +231,7 @@ namespace Cpg.Studio.Wrappers
 				Renderer.Draw(graphics);
 			}
 
-			string s = ToString();
-
-			if (s != String.Empty)
-			{
-				if (MouseFocus)
-				{
-					graphics.SetSourceRGB(0.3, 0.6, 0.3);
-				}
-				else
-				{
-					graphics.SetSourceRGB(0.3, 0.3, 0.3);
-				}
-							
-				double uw = graphics.LineWidth;
-				
-				graphics.Save();
-				graphics.Scale(uw, uw);
-				
-				Pango.Layout layout = Pango.CairoHelper.CreateLayout(graphics);
-				Pango.CairoHelper.UpdateLayout(graphics, layout);
-				layout.FontDescription = Settings.Font;
-
-				layout.SetText(s);
-				
-				int width, height;
-				layout.GetSize(out width, out height);
-				
-				width = (int)(width / Pango.Scale.PangoScale);
-				
-				graphics.MoveTo((Allocation.Width / uw - width) / 2.0, Allocation.Height / uw + 2);
-				Pango.CairoHelper.ShowLayout(graphics, layout);
-				graphics.Restore();
-			}
+			DrawLabel(graphics);
 			
 			if (Selected)
 			{
@@ -245,12 +260,12 @@ namespace Cpg.Studio.Wrappers
 			return Id;
 		}
 		
-		public void MoveRel(float x, float y)
+		public void MoveRel(double x, double y)
 		{
 			Move(d_allocation.X + x, d_allocation.Y + y);
 		}
 		
-		public void Move(float x, float y)
+		public void Move(double x, double y)
 		{
 			Moved(this, new EventArgs());
 			d_allocation.Move(x, y);
@@ -273,22 +288,27 @@ namespace Cpg.Studio.Wrappers
 			width = (int)(width / Pango.Scale.PangoScale);
 		}
 		
-		public virtual Allocation Extents(float scale, Cairo.Context graphics)
+		public virtual Allocation Extents(double scale, Cairo.Context graphics)
 		{
-			Allocation alloc = new Allocation(d_allocation);
+			Allocation alloc = d_allocation.Copy();
 			alloc.Scale(scale);
 			alloc.GrowBorder(3);
-		
-			int width, height;
-			MeasureString(graphics, ToString(), out width, out height);
 			
-			alloc.Height += height + 3;
-			
-			if (width > alloc.Width)
+			string lbl = Label;
+
+			if (!String.IsNullOrEmpty(lbl))
 			{
-				int off = (int)(width - alloc.Width / 2);
-				alloc.X -= off;
-				alloc.Width += off * 2;
+				int width, height;
+				MeasureString(graphics, lbl, out width, out height);
+			
+				alloc.Height += height + 3;
+			
+				if (width > alloc.Width)
+				{
+					int off = (int)(width - alloc.Width / 2);
+					alloc.X -= off;
+					alloc.Width += off * 2;
+				}
 			}
 
 			return alloc;

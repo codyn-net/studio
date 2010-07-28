@@ -467,7 +467,7 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			Gtk.Widget to = d_content.Find(cont, direction.X, direction.Y);
+			Gtk.Widget to = d_content.Find(cont, (int)direction.X, (int)direction.Y);
 			
 			if (to == null)
 			{
@@ -539,7 +539,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void DoUnmerge(Monitor.State state)
 		{
-			System.Drawing.Point pt = d_content.GetPosition(state.Widget);
+			Point pt = d_content.GetPosition(state.Widget);
 
 			RemoveHook(state.Property);
 			AddHook(state.Property);
@@ -547,7 +547,7 @@ namespace Cpg.Studio.Widgets
 			State sn = FindHook(state.Property.Object, state.Property);
 			sn.Plot.Color = state.Plot.Color;
 			
-			d_content.SetPosition(sn.Widget, pt.X, pt.Y + 1);
+			d_content.SetPosition(sn.Widget, (int)pt.X, (int)pt.Y + 1);
 		}
 		
 		private void ShowMergeMenu(Container cont)

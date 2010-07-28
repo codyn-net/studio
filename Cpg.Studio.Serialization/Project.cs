@@ -54,6 +54,9 @@ namespace Cpg.Studio.Serialization
 			[XmlElement("active-group")]
 			public string ActiveGroup;
 			
+			[XmlElement("active-root")]
+			public string ActiveRoot;
+			
 			public struct MonitorsType
 			{
 				[XmlElement("graph"),

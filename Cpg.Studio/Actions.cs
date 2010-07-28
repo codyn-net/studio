@@ -486,7 +486,7 @@ namespace Cpg.Studio
 		public void Move(List<Wrappers.Wrapper> all, int dx, int dy)
 		{
 			List<Wrappers.Wrapper> objs = new List<Wrappers.Wrapper>(all);
-			objs.RemoveAll(item => item is Wrappers.Link);
+			objs.RemoveAll(item => item is Wrappers.Link && !((Wrappers.Link)item).Empty);
 			
 			if (objs.Count == 0)
 			{

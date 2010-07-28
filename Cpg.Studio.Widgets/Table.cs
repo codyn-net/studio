@@ -431,7 +431,7 @@ namespace Cpg.Studio.Widgets
 			
 			Point pt = GetPosition(child);
 			
-			return At(pt.X + dx, pt.Y + dy);
+			return At((int)(pt.X + dx), (int)(pt.Y + dy));
 		}
 
 		private void RemoveRow(uint idx)

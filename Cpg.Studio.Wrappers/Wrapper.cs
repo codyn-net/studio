@@ -415,7 +415,7 @@ namespace Cpg.Studio.Wrappers
 			{
 				if (Parent == null)
 				{
-					return null;
+					return this as Wrappers.Group;
 				}
 				else if (Parent.Parent == null)
 				{
