@@ -36,37 +36,83 @@ namespace Cpg.Studio.Widgets
 			[PrimaryKey]
 			public LinkAction LinkAction
 			{
-				get
-				{
-					return d_action;
-				}
+				get	{ return d_action; }
 			}
 			
 			[NodeColumn(0)]
 			public string Target
 			{
-				get
-				{
-					return d_action.Target;
-				}
-				set
-				{
-					d_action.Target = value;
-				}
+				get { return d_action.Target; }
 			}
 			
 			[NodeColumn(1)]
 			public string Equation
 			{
-				get
-				{
-					return d_action.Equation.AsString;
-				}
-				set
-				{
-					d_action.Equation.FromString = value;
-				}
+				get { return d_action.Equation.AsString; }
 			}
+		}
+		
+		private class PropertyNode : Node
+		{
+			private Property d_property;
+
+			public PropertyNode(Property property)
+			{
+				d_property = property;
+				
+				d_property.AddNotification("name", OnPropertyChanged);
+				d_property.AddNotification("expression", OnPropertyChanged);
+				d_property.AddNotification("flags", OnPropertyChanged);
+			}
+			
+			~PropertyNode()
+			{
+				d_property.RemoveNotification("name", OnPropertyChanged);
+				d_property.RemoveNotification("expression", OnPropertyChanged);
+				d_property.RemoveNotification("flags", OnPropertyChanged);
+			}
+			
+			private void OnPropertyChanged(object source, GLib.NotifyArgs args)
+			{
+				EmitChanged();
+			}
+			
+			[PrimaryKey]
+			public Property Property
+			{
+				get	{ return d_property; }
+			}
+			
+			[NodeColumn(0), PrimaryKey]
+			public string Name
+			{
+				get { return d_property.Name; }
+			}
+			
+			[NodeColumn(1)]
+			public string Expression
+			{
+				get { return d_property.Expression.AsString; }
+			}
+			
+			[NodeColumn(2)]
+			public bool Integrated
+			{
+				
+				get { return (d_property.Flags & PropertyFlags.Integrated) != 0; }
+			}
+			
+			[NodeColumn(3)]
+			public string Flags
+			{
+				
+				get 
+				{
+					// Ignore integrated
+					PropertyFlags filt = d_property.Flags & ~PropertyFlags.Integrated;
+					return Property.FlagsToString(filt);
+				}
+			}			
 		}
 
 		enum Column
@@ -79,10 +125,9 @@ namespace Cpg.Studio.Widgets
 		public event ErrorHandler Error = delegate {};
 		
 		private Wrappers.Wrapper d_object;
-		private ListStore d_store;
+		private NodeStore<PropertyNode> d_store;
 		private TreeView d_treeview;
 		private bool d_selectProperty;
-		private ListStore d_comboStore;
 		private NodeStore<LinkActionNode> d_actionStore;
 		private TreeView d_actionView;
 		private ListStore d_flagsStore;
@@ -162,118 +207,47 @@ namespace Cpg.Studio.Widgets
 			
 			d_actionView.Selection.Changed += DoActionSelectionChanged;
 		}
-		
-		private void HandleRenderActionTarget(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
-		{
-			Cpg.LinkAction action = LinkActionFromStore(piter);
-			CellRendererText renderer = (CellRendererText)cell;
-			
-			renderer.Text = action.Target;
-		}
-		
-		private void HandleRenderActionEquation(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
-		{
-			Cpg.LinkAction action = LinkActionFromStore(piter);
-			CellRendererText renderer = (CellRendererText)cell;
-			
-			renderer.Text = action.Equation.AsString;
-		}
+
 		
 		private void HandleLinkActionTargetEdited(object o, EditedArgs args)
 		{
-			TreeIter iter;
+			LinkActionNode node = d_actionStore.FindPath(args.Path);
 			
-			if (!d_actionStore.GetIter(out iter, new TreePath(args.Path)))
-			{
-				return;
-			}
-			
-			Cpg.LinkAction action = LinkActionFromStore(iter);
-			
-			if (action.Target == args.NewText)
+			if (node.LinkAction.Target == args.NewText.Trim())
 			{
 				return;
 			}
 
-			d_actions.Do(new Undo.ModifyLinkActionTarget((Wrappers.Link)d_object, action.Target, args.NewText));
+			d_actions.Do(new Undo.ModifyLinkActionTarget((Wrappers.Link)d_object, node.LinkAction.Target, args.NewText.Trim()));
 		}
 		
 		private void HandleLinkActionEquationEdited(object o, EditedArgs args)
 		{
-			TreeIter iter;
+			LinkActionNode node = d_actionStore.FindPath(args.Path);
 			
-			if (!d_actionStore.GetIter(out iter, new TreePath(args.Path)))
+			if (node.LinkAction.Equation.AsString == args.NewText.Trim())
 			{
 				return;
 			}
 			
-			Cpg.LinkAction action = LinkActionFromStore(iter);
-			
-			if (action.Equation.AsString == args.NewText)
-			{
-				return;
-			}
-			
-			d_actions.Do(new Undo.ModifyLinkActionEquation((Wrappers.Link)d_object, action.Target, args.NewText));
-		}
-
-		private void DoTargetPropertyAdded(Wrappers.Wrapper obj, Cpg.Property prop)
-		{
-			d_comboStore.AppendValues(prop.Name, prop);
-		}
-		
-		private void DoTargetPropertyRemoved(Wrappers.Wrapper obj, Cpg.Property prop)
-		{
-			TreeIter iter;
-			
-			if (!d_comboStore.GetIterFirst(out iter))
-			{
-				return;
-			}
-			
-			do
-			{
-				Cpg.Property val = d_comboStore.GetValue(iter, 1) as Cpg.Property;
-				
-				if (val == prop)
-				{
-					d_comboStore.Remove(ref iter);
-					break;
-				}				
-			} while (d_comboStore.IterNext(ref iter));
-		}
-		
-		private string FlagsToString(Cpg.PropertyFlags flags)
-		{
-			List<string> parts = new List<string>();
-
-			foreach (KeyValuePair<string, Cpg.PropertyFlags> pair in d_flaglist)
-			{
-				if ((pair.Value & flags) != 0 && pair.Value != PropertyFlags.Integrated)
-				{
-					parts.Add(pair.Key);
-				}
-			}
-			
-			return String.Join(", ", parts.ToArray());
+			d_actions.Do(new Undo.ModifyLinkActionEquation((Wrappers.Link)d_object, node.LinkAction.Target, args.NewText.Trim()));
 		}
 		
 		private void InitializeFlagsList()
 		{
 			d_flaglist = new List<KeyValuePair<string, Cpg.PropertyFlags>>();
 			Type type = typeof(Cpg.PropertyFlags);
-			
-			string[] names = Enum.GetNames(type);
+
 			Array values = Enum.GetValues(type);
 			
-			for (int i = 0; i < names.Length; ++i)
+			for (int i = 0; i < values.Length; ++i)
 			{
 				Cpg.PropertyFlags flags = (Cpg.PropertyFlags)values.GetValue(i);
 				
 				// Don't show 'None' and Integrated is handled separately
 				if ((int)flags != 0 && flags != PropertyFlags.Integrated)
 				{
-					d_flaglist.Add(new KeyValuePair<string, Cpg.PropertyFlags>(names[i], flags));
+					d_flaglist.Add(new KeyValuePair<string, Cpg.PropertyFlags>(Property.FlagsToString(flags), flags));
 				}
 			}
 		}
@@ -396,19 +370,9 @@ namespace Cpg.Studio.Widgets
 			
 			d_object.WrappedObject.RemoveNotification("id", HandleIdChanged);
 			
-			foreach (TreeIter iter in ForeachProperty())
-			{
-				Cpg.Property property = PropertyFromStore(iter);
-
-				property.RemoveNotification("expression", HandlePropertyChanged);
-				property.RemoveNotification("flags", HandlePropertyChanged);
-				property.RemoveNotification("name", HandlePropertyChanged);
-			}
-			
 			if (d_object is Wrappers.Group)
 			{
 				Wrappers.Group grp = (Wrappers.Group)d_object;
-				
 				grp.WrappedObject.RemoveNotification("proxy", HandleProxyChanged);
 			}
 			else if (d_object is Wrappers.Link)
@@ -486,6 +450,8 @@ namespace Cpg.Studio.Widgets
 			d_entry = new Entry();
 			d_entry.Show();
 			
+			d_entry.WidthChars = 15;
+			
 			d_entry.Text = d_object.Id;
 			
 			d_entry.Activated += delegate {
@@ -505,6 +471,19 @@ namespace Cpg.Studio.Widgets
 			};
 			
 			hbox.PackStart(d_entry, false, false, 0);
+			
+			Wrappers.Wrapper[] templates = d_object.AppliedTemplates;
+			
+			if (templates.Length != 0)
+			{
+				string text = String.Join(", ", Array.ConvertAll<Wrappers.Wrapper, string>(templates, item => item.ToString()));
+
+				lbl = new Label("« (" + text + ")");
+				lbl.Show();
+
+				hbox.PackStart(lbl, false, false, 0);
+			}
+			
 			d_extraControl.PackStart(hbox, false, false, 0);
 		}
 
@@ -561,8 +540,8 @@ namespace Cpg.Studio.Widgets
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			vw.ShadowType = ShadowType.EtchedIn;
 			
-			d_store = new ListStore(typeof(Cpg.Property));
-			d_treeview = new TreeView(d_store);	
+			d_store = new NodeStore<PropertyNode>();
+			d_treeview = new TreeView(new TreeModelAdapter(d_store));	
 			
 			d_treeview.ShowExpanders = false;
 			
@@ -580,7 +559,7 @@ namespace Cpg.Studio.Widgets
 			renderer = new CellRendererText();
 			renderer.Editable = true;
 			
-			column = new TreeViewColumn("Name", renderer);
+			column = new TreeViewColumn("Name", renderer, "text", 0);
 			column.Resizable = true;
 			column.MinWidth = 75;
 			
@@ -589,7 +568,6 @@ namespace Cpg.Studio.Widgets
 				renderer.Edited += DoNameEdited;
 			}
 			
-			column.SetCellDataFunc(renderer, HandleRenderName);
 			d_treeview.AppendColumn(column);
 			
 			// Add column for the value
@@ -601,23 +579,21 @@ namespace Cpg.Studio.Widgets
 				renderer.Edited += DoValueEdited;
 			}
 				
-			column = new TreeViewColumn("Value", renderer);
+			column = new TreeViewColumn("Value", renderer, "text", 1);
 			column.Resizable = true;
-			
-			column.SetCellDataFunc(renderer, HandleRenderValue);
+
 			d_treeview.AppendColumn(column);
 			
 			// Add column for the integrated
 			CellRendererToggle toggle = new CellRendererToggle();
-			column = new TreeViewColumn("Integrated", toggle);
+			column = new TreeViewColumn("Integrated", toggle, "active", 2);
 			column.Resizable = false;
 			
 			if (d_object != null)
 			{
 				toggle.Toggled += DoIntegratedToggled;
 			}
-			
-			column.SetCellDataFunc(toggle, HandleRenderIntegrated);
+
 			d_treeview.AppendColumn(column);			
 				
 			// Add column for property flags
@@ -625,9 +601,8 @@ namespace Cpg.Studio.Widgets
 			combo.Editable = true;
 			combo.Sensitive = true;
 			
-			column = new TreeViewColumn("Flags", combo);
+			column = new TreeViewColumn("Flags", combo, "text", 3);
 			column.Resizable = true;
-			column.SetCellDataFunc(combo, HandleRenderFlags);
 			
 			combo.EditingStarted += DoEditingStarted;
 			combo.Edited += DoFlagsEdited;
@@ -666,38 +641,6 @@ namespace Cpg.Studio.Widgets
 			UpdateSensitivity();
 		}
 		
-		private void HandleRenderIntegrated(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
-		{
-			Cpg.Property property = PropertyFromStore(piter);
-			CellRendererToggle renderer = (CellRendererToggle)cell;
-			
-			renderer.Active = (property.Flags & PropertyFlags.Integrated) != PropertyFlags.None;
-		}
-		
-		private void HandleRenderName(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
-		{
-			Cpg.Property property = PropertyFromStore(piter);
-			CellRendererText renderer = (CellRendererText)cell;
-			
-			renderer.Text = property.Name;
-		}
-		
-		private void HandleRenderValue(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
-		{
-			Cpg.Property property = PropertyFromStore(piter);
-			CellRendererText renderer = (CellRendererText)cell;
-			
-			renderer.Text = property.Expression.AsString;
-		}
-		
-		private void HandleRenderFlags(TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter)
-		{
-			Cpg.Property property = PropertyFromStore(piter);
-			CellRendererText renderer = (CellRendererText)cell;
-			
-			renderer.Text = FlagsToString(property.Flags);
-		}
-		
 		private void FillFlagsStore(Cpg.Property property)
 		{
 			d_flagsStore.Clear();
@@ -718,7 +661,7 @@ namespace Cpg.Studio.Widgets
 
 		private void DoEditingStarted(object o, EditingStartedArgs args)
 		{
-			FillFlagsStore(PropertyFromStore(args.Path));
+			FillFlagsStore(d_store.FindPath(args.Path).Property);
 		}
 		
 		private void InitStore()
@@ -729,46 +672,10 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private Cpg.LinkAction LinkActionFromStore(string path)
-		{
-			return LinkActionFromStore(new TreePath(path));
-		}
-		
-		private Cpg.LinkAction LinkActionFromStore(TreePath path)
-		{
-			TreeIter iter;
-			
-			d_store.GetIter(out iter, path);
-			return LinkActionFromStore(iter);
-		}
-		
-		private Cpg.LinkAction LinkActionFromStore(TreeIter iter)
-		{
-			return d_actionStore.GetFromIter<LinkActionNode>(iter).LinkAction;
-		}
-		
-		private Cpg.Property PropertyFromStore(string path)
-		{
-			return PropertyFromStore(new TreePath(path));
-		}
-		
-		private Cpg.Property PropertyFromStore(TreePath path)
-		{
-			TreeIter iter;
-			
-			d_store.GetIter(out iter, path);
-			return PropertyFromStore(iter);
-		}
-		
-		private Cpg.Property PropertyFromStore(TreeIter iter)
-		{
-			return (Cpg.Property)d_store.GetValue(iter, 0);
-		}
-		
 		private void DoIntegratedToggled(object source, ToggledArgs args)
 		{
-			Cpg.Property property = PropertyFromStore(args.Path);
-			PropertyFlags flags = property.Flags;
+			PropertyNode node = d_store.FindPath(args.Path);
+			PropertyFlags flags = node.Property.Flags;
 			CellRendererToggle toggle = (CellRendererToggle)source;
 			
 			if (!toggle.Active)
@@ -780,15 +687,20 @@ namespace Cpg.Studio.Widgets
 				flags &= ~PropertyFlags.Integrated;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_object, property, flags));
+			d_actions.Do(new Undo.ModifyProperty(d_object, node.Property, flags));
 		}
 		
 		private void DoFlagsEdited(object source, EditedArgs args)
 		{
-			Cpg.Property property = PropertyFromStore(args.Path);
+			PropertyNode node = d_store.FindPath(args.Path);
 
 			bool wason = false;
 			string name = args.NewText;
+			
+			if (String.IsNullOrEmpty(name))
+			{
+				return;
+			}
 			
 			if (name.StartsWith("• "))
 			{
@@ -796,8 +708,8 @@ namespace Cpg.Studio.Widgets
 				name = name.Substring(2);
 			}
 
-			Cpg.PropertyFlags flags = (Cpg.PropertyFlags)Enum.Parse(typeof(Cpg.PropertyFlags), name);
-			Cpg.PropertyFlags newflags = property.Flags;
+			Cpg.PropertyFlags flags = Property.FlagsFromString(name);
+			Cpg.PropertyFlags newflags = node.Property.Flags;
 			
 			if (wason)
 			{
@@ -808,24 +720,24 @@ namespace Cpg.Studio.Widgets
 				newflags |= flags;
 			}
 			
-			if (newflags == property.Flags)
+			if (newflags == node.Property.Flags)
 			{
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_object, property, newflags));
+			d_actions.Do(new Undo.ModifyProperty(d_object, node.Property, newflags));
 		}
 		
 		private void DoValueEdited(object source, EditedArgs args)
 		{
-			Cpg.Property property = PropertyFromStore(args.Path);
+			PropertyNode node = d_store.FindPath(args.Path);
 			
-			if (args.NewText == property.Expression.AsString)
+			if (args.NewText.Trim() == node.Property.Expression.AsString)
 			{
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_object, property, args.NewText));
+			d_actions.Do(new Undo.ModifyProperty(d_object, node.Property, args.NewText.Trim()));
 		}
 		
 		private void DoNameEdited(object source, EditedArgs args)
@@ -835,16 +747,17 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			Cpg.Property property = PropertyFromStore(args.Path);
+			PropertyNode node = d_store.FindPath(args.Path);
 			
-			if (args.NewText == property.Name)
+			if (args.NewText.Trim() == node.Property.Name)
 			{
 				return;
 			}
 
 			List<Undo.IAction> actions = new List<Undo.IAction>();
-			actions.Add(new Undo.RemoveProperty(d_object, property));
-			actions.Add(new Undo.AddProperty(d_object, args.NewText, property.Expression.AsString, property.Flags));
+
+			actions.Add(new Undo.RemoveProperty(d_object, node.Property));
+			actions.Add(new Undo.AddProperty(d_object, args.NewText.Trim(), node.Property.Expression.AsString, node.Property.Flags));
 			
 			try
 			{
@@ -903,7 +816,7 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			TreeIter iter = d_store.AppendValues(prop);
+			TreeIter iter = d_store.Add(new PropertyNode(prop));
 			
 			if (d_selectProperty)
 			{
@@ -912,11 +825,7 @@ namespace Cpg.Studio.Widgets
 				
 				TreePath path = d_store.GetPath(iter);					
 				d_treeview.SetCursor(path, d_treeview.GetColumn(0), true);
-			}
-			
-			prop.AddNotification("expression", HandlePropertyChanged);
-			prop.AddNotification("flags", HandlePropertyChanged);
-			prop.AddNotification("name", HandlePropertyChanged);
+			}			
 		}
 		
 		private void HandleIdChanged(object source, GLib.NotifyArgs args)
@@ -924,23 +833,9 @@ namespace Cpg.Studio.Widgets
 			d_entry.Text = d_object.Id;
 		}
 		
-		private void HandlePropertyChanged(object source, GLib.NotifyArgs args)
-		{
-			Cpg.Property prop = (Cpg.Property)source;
-			
-			TreeIter iter;
-			TreePath path;
-			
-			if (FindProperty(prop.Name, out path, out iter))
-			{
-				d_store.EmitRowChanged(path, iter);
-			}
-		}
-		
 		private bool PropertyExists(string name)
 		{
-			TreeIter iter;
-			return FindProperty(name, out iter);
+			return d_store.Find(name) != null;
 		}
 		
 		private void DoAddProperty(object source, EventArgs args)
@@ -973,8 +868,8 @@ namespace Cpg.Studio.Widgets
 
 			foreach (TreePath path in d_treeview.Selection.GetSelectedRows())
 			{
-				Cpg.Property prop = PropertyFromStore(path);
-				actions.Add(new Undo.RemoveProperty(d_object, prop));
+				PropertyNode node = d_store.FindPath(path);
+				actions.Add(new Undo.RemoveProperty(d_object, node.Property));
 			}
 
 			try
@@ -1028,17 +923,16 @@ namespace Cpg.Studio.Widgets
 		
 		private void DoRemoveAction(object source, EventArgs args)
 		{
-			TreeModel model;
-			TreeIter iter;
-			
-			if (!d_actionView.Selection.GetSelected(out model, out iter))
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+
+			foreach (TreePath path in d_actionView.Selection.GetSelectedRows())
 			{
-				return;
+				LinkActionNode node = d_actionStore.FindPath(path);
+
+				actions.Add(new Undo.RemoveLinkAction((Wrappers.Link)d_object, node.LinkAction));
 			}
 			
-			Cpg.LinkAction val = LinkActionFromStore(iter);
-	
-			d_actions.Do(new Undo.RemoveLinkAction((Wrappers.Link)d_object, val));
+			d_actions.Do(new Undo.Group(actions));
 		}
 		
 		private void DoPropertyAdded(Wrappers.Wrapper obj, Cpg.Property prop)
@@ -1046,73 +940,9 @@ namespace Cpg.Studio.Widgets
 			AddProperty(prop);
 		}
 		
-		private IEnumerable<TreeIter> ForeachProperty()
-		{
-			TreeIter iter;
-
-			if (!d_store.GetIterFirst(out iter))
-			{
-				return false;
-			}
-			
-			do
-			{
-				yield return iter;
-			} while (d_store.IterNext(ref iter));
-		}
-		
-		private bool FindProperty(string name, out TreePath path, out TreeIter iter)
-		{			
-			path = null;
-			
-			if (!d_store.GetIterFirst(out iter))
-			{
-				return false;
-			}
-			
-			do
-			{
-				Cpg.Property property = PropertyFromStore(iter);
-
-				if (property.Name == name)
-				{
-					path = d_store.GetPath(iter);
-					return true;
-				}
-			} while (d_store.IterNext(ref iter));	
-			
-			return false;
-		}
-		
-		private bool FindProperty(string name, out TreeIter iter)
-		{
-			TreePath path;
-			return FindProperty(name, out path, out iter);
-		}
-		
-		private void DoPropertyChanged(Wrappers.Wrapper obj, Cpg.Property prop)
-		{
-			TreePath path;
-			TreeIter iter;
-
-			if (FindProperty(prop.Name, out path, out iter))
-			{
-				d_store.EmitRowChanged(path, iter);
-			}
-		}
-		
 		private void DoPropertyRemoved(Wrappers.Wrapper obj, Cpg.Property prop)
 		{
-			TreeIter iter;
-
-			if (FindProperty(prop.Name, out iter))
-			{
-				d_store.Remove(ref iter);
-			}
-			
-			prop.RemoveNotification(HandlePropertyChanged);
-			prop.RemoveNotification(HandlePropertyChanged);
-			prop.RemoveNotification(HandlePropertyChanged);
+			d_store.Remove(prop);
 		}
 		
 		private void Clear()
@@ -1137,7 +967,7 @@ namespace Cpg.Studio.Widgets
 		{
 			TreeIter iter;
 			
-			if (FindProperty(property.Name, out iter))
+			if (d_store.Find(property, out iter))
 			{
 				d_treeview.Selection.SelectIter(iter);
 			}
