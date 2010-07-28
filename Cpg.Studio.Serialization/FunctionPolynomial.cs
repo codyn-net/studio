@@ -36,6 +36,24 @@ namespace Cpg.Studio.Serialization
 				Period = null;
 			}
 		}
+		
+		public override void Merge(Wrappers.Wrapper wrapped)
+		{
+			base.Merge(wrapped);
+			
+			Wrappers.FunctionPolynomial poly = (Wrappers.FunctionPolynomial)wrapped;
+			
+			if (Period != null)
+			{
+				poly.Period = new Wrappers.FunctionPolynomial.PeriodType();
+				poly.Period.Begin = Period.Begin;
+				poly.Period.End = Period.End;
+			}
+			else
+			{
+				poly.Period = null;
+			}
+		}
 	}
 }
 
