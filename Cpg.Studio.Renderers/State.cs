@@ -25,7 +25,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 
 		protected override double[] LineColor()
 		{
-			return new double[] {26 / 255.0, 80 / 255.0, 130 / 255.0};
+			return new double[] {0.4, 0.4, 0.4};
 		}
 	}
 }
