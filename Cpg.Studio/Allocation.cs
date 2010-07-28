@@ -109,7 +109,7 @@ namespace Cpg.Studio
 		public void Scale(double scale)
 		{
 			d_x *= scale;
-			d_x *= scale;
+			d_y *= scale;
 			d_width *= scale;
 			d_height *= scale;
 		}
