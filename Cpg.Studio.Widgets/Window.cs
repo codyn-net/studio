@@ -1328,8 +1328,10 @@ namespace Cpg.Studio.Widgets
 		
 		private void OnAddLinkActivated(object sender, EventArgs args)
 		{
+			int[] center = d_grid.Center;
+
 			HandleError(delegate () {
-				Select(d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection));
+				Select(d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection, center[0], center[1]));
 			}, "An error occurred while adding a link");
 		}
 		

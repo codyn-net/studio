@@ -48,9 +48,13 @@ namespace Cpg.Studio
 					yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(sel[i], last);
 				}
 			}
+			else
+			{
+				yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(null, null);
+			}
 		}
 		
-		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection, int cx, int cy)
 		{
 			// Add links between each first selected N-1 objects and selected object N
 			List<Undo.IAction> actions = new List<Undo.IAction>();
@@ -59,6 +63,12 @@ namespace Cpg.Studio
 			foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper> pair in GetLinkPairs(selection))
 			{
 				Wrappers.Link link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link("link", pair.Key, pair.Value));
+				
+				if (link.Empty)
+				{
+					link.Allocation.X = cx;
+					link.Allocation.Y = cy;
+				}
 				
 				ret.Add(link);
 				actions.Add(new Undo.AddObject(parent, link));

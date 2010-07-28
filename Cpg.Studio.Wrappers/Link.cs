@@ -376,5 +376,15 @@ namespace Cpg.Studio.Wrappers
 
 			return new Allocation(minx, miny, Math.Max(maxx - minx, ssize * 2), Math.Max(maxy - miny, ssize * 2));
 		}
+		
+		protected override void DrawSelection(Cairo.Context graphics)
+		{
+			// Handled by renderer
+		}
+		
+		protected override void DrawFocus(Cairo.Context graphics)
+		{
+			// Handled by renderer
+		}
 	}
 }
