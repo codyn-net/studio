@@ -868,15 +868,15 @@ namespace Cpg.Studio.Widgets
 			return found;
 		}
 		
-		private Node[] FindAll(Node parent, MethodInfo primaryInfo, object obj, bool onlyOne)
+		private T[] FindAll(Node parent, MethodInfo primaryInfo, object obj, bool onlyOne)
 		{
-			List<Node> ret = new List<Node>();
+			List<T> ret = new List<T>();
 
 			foreach (Node child in parent)
 			{
 				if (ComparePrimary(child, primaryInfo, obj))
 				{
-					ret.Add(child);
+					ret.Add((T)child);
 					
 					if (onlyOne)
 					{
@@ -895,18 +895,18 @@ namespace Cpg.Studio.Widgets
 			return ret.ToArray();
 		}
 		
-		public Node[] FindAll(object obj)
+		public T[] FindAll(object obj)
 		{
 			if (!d_primaryKeys.ContainsKey(obj.GetType()))
 			{
-				return new Node[] {};
+				return new T[] {};
 			}
 			
 			MethodInfo info = d_primaryKeys[obj.GetType()];
 			return FindAll(this, info, obj, false);
 		}
 		
-		public Node Find(object obj)
+		public T Find(object obj)
 		{
 			if (obj == null || !d_primaryKeys.ContainsKey(obj.GetType()))
 			{
@@ -918,7 +918,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (ret.Length > 0)
 			{
-				return ret[0];
+				return (T)ret[0];
 			}
 			else
 			{
@@ -1057,6 +1057,21 @@ namespace Cpg.Studio.Widgets
 					Sort();
 				}
 			}
+		}
+		
+		public new T FindPath(string path)
+		{
+			return (T)base.FindPath(path);
+		}
+		
+		public new T FindPath(TreePath path)
+		{
+			return (T)base.FindPath(path);
+		}
+
+		public new T GetFromIter(TreeIter iter)
+		{
+			return (T)base.GetFromIter<T>(iter);
 		}
 	}
 }
