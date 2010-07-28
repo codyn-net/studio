@@ -1744,7 +1744,7 @@ namespace Cpg.Studio.Widgets
 		
 			Message(Gtk.Stock.DialogError, 
 			        "Error while compiling " + title,
-			        error.String() + ": " + error.Message + "\nExpression: \"" + expression + "\"");
+			        error.String() + ": " + error.Message + "\n\nExpression: \"" + expression + "\"");
 		}
 		
 		private void OnCompileError(object sender, Cpg.CompileErrorArgs args)
