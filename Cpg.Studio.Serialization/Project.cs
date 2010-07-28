@@ -216,7 +216,7 @@ namespace Cpg.Studio.Serialization
 			{
 				Wrappers.Wrapper origObj = orig.FindObject(o.Id);
 				
-				if (origObj == null || origObj is Wrappers.Link)
+				if (origObj == null)
 				{
 					// Ignore
 					continue;
@@ -359,11 +359,6 @@ namespace Cpg.Studio.Serialization
 		{
 			foreach (Wrappers.Wrapper child in orig.Children)
 			{
-				if (child is Wrappers.Link)
-				{
-					continue;
-				}
-
 				Type t = TypeMap(child.GetType());
 				
 				if (t == null)
