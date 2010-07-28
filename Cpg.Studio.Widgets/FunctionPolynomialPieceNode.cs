@@ -38,6 +38,12 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		[SortColumn(0)]
+		public int SortNode(FunctionPolynomialPieceNode other)
+		{
+			return d_piece.Begin.CompareTo(other.Piece.Begin);
+		}
+		
 		private void OnPieceChanged(object source, GLib.NotifyArgs args)
 		{
 			EmitChanged();

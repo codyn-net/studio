@@ -4,6 +4,14 @@ namespace Cpg.Studio.Wrappers
 {
 	public class FunctionPolynomial : Function
 	{
+		public class PeriodType
+		{
+			public double Begin;
+			public double End;
+		}
+		
+		private PeriodType d_period;
+
 		protected FunctionPolynomial(Cpg.FunctionPolynomial function) : base(function)
 		{
 		}
@@ -39,6 +47,18 @@ namespace Cpg.Studio.Wrappers
 			return (FunctionPolynomial)Wrap(obj);
 		}
 		
+		public PeriodType Period
+		{
+			get
+			{
+				return d_period;
+			}
+			set
+			{
+				d_period = value;
+			}
+		}
+		
 		public Cpg.FunctionPolynomialPiece[] Pieces
 		{
 			get
@@ -55,6 +75,11 @@ namespace Cpg.Studio.Wrappers
 		public bool Remove(Cpg.FunctionPolynomialPiece piece)
 		{
 			return WrappedObject.Remove(piece);
+		}
+		
+		public void ClearPieces()
+		{
+			WrappedObject.ClearPieces();
 		}
 	}
 }

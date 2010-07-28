@@ -18,6 +18,8 @@ namespace Cpg.Studio.Widgets
 			d_network = network;
 
 			d_store = new NodeStore<NodeType>();
+			d_store.SortColumn = 0;
+
 			d_treeview = new TreeView(new TreeModelAdapter(d_store));
 			
 			d_treeview.ShowExpanders = false;

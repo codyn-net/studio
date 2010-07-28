@@ -7,7 +7,7 @@ namespace Cpg.Studio.Undo
 		private double[] d_coefficients;
 		private double[] d_previousCoefficients;
 
-		public ModifyFunctionPolynomialPieceCoefficients(Cpg.FunctionPolynomialPiece piece, double[] coefficients) : base(piece)
+		public ModifyFunctionPolynomialPieceCoefficients(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece, double[] coefficients) : base(function, piece)
 		{
 			d_coefficients = coefficients;
 			d_previousCoefficients = piece.Coefficients;

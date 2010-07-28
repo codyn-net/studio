@@ -30,7 +30,8 @@ namespace Cpg.Studio.Serialization
 		
 		[XmlElement(typeof(State)),
 		 XmlElement(typeof(Link)),
-		 XmlElement(typeof(Group))]
+		 XmlElement(typeof(Group)),
+		 XmlElement(typeof(FunctionPolynomial))]
 		public List<Object> Children
 		{
 			get
@@ -41,6 +42,28 @@ namespace Cpg.Studio.Serialization
 			{
 				d_children = value;
 			}
+		}
+		
+		public override void Transfer(Wrappers.Wrapper wrapped)
+		{
+			base.Transfer(wrapped);
+			
+			Wrappers.Group grp = (Wrappers.Group)wrapped;
+			
+			X = grp.X;
+			Y = grp.Y;
+			Zoom = grp.Zoom;
+		}
+		
+		public override void Merge(Wrappers.Wrapper wrapped)
+		{
+			base.Merge(wrapped);
+			
+			Wrappers.Group grp = (Wrappers.Group)wrapped;
+
+			grp.X = X;
+			grp.Y = Y;
+			grp.Zoom = Zoom;
 		}
 	}
 }

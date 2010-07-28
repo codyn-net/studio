@@ -90,6 +90,8 @@ namespace Cpg.Studio.Widgets
 		private void InitPiecesUi()
 		{
 			d_store = new NodeStore<FunctionPolynomialPieceNode>();
+			d_store.SortColumn = 0;
+
 			d_treeview = new TreeView(new TreeModelAdapter(d_store));
 			d_treeview.Show();
 
@@ -303,7 +305,7 @@ namespace Cpg.Studio.Widgets
 			string[] parts = args.NewText.Split(new char[] {','});
 			double[] coefs = Array.ConvertAll<string, double>(parts, item => Double.Parse(item));
 
-			Actions.Do(new Undo.ModifyFunctionPolynomialPieceCoefficients(node.Piece, coefs));
+			Actions.Do(new Undo.ModifyFunctionPolynomialPieceCoefficients(d_selected.Function, node.Piece, coefs));
 		}
 		
 		private void DoBeginEdited(object source, EditedArgs args)
@@ -314,7 +316,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (node.Piece.Begin != val)
 			{
-				Actions.Do(new Undo.ModifyFunctionPolynomialPieceBegin(node.Piece, Double.Parse(args.NewText)));
+				Actions.Do(new Undo.ModifyFunctionPolynomialPieceBegin(d_selected.Function, node.Piece, Double.Parse(args.NewText)));
 			}
 		}
 		
@@ -326,7 +328,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (node.Piece.End != val)
 			{
-				Actions.Do(new Undo.ModifyFunctionPolynomialPieceEnd(node.Piece, val));
+				Actions.Do(new Undo.ModifyFunctionPolynomialPieceEnd(d_selected.Function, node.Piece, val));
 			}
 		}
 		
@@ -394,41 +396,71 @@ namespace Cpg.Studio.Widgets
 			d_selectPiece = false;
 		}
 		
+		public void Select(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece)
+		{
+			Select(function);
+			
+			if (d_selected != null)
+			{
+				TreeIter iter;
+
+				if (d_store.Find(piece, out iter))
+				{
+					d_treeview.Selection.UnselectAll();
+					d_treeview.Selection.SelectIter(iter);
+				}
+			}
+		}
+		
 		private void DoInterpolate(object sender, EventArgs args)
 		{
-			/*PolynomialNode function = (PolynomialNode)d_treeview.NodeSelection.SelectedNodes[0];
-			Dialogs.Interpolate dlg = new Dialogs.Interpolate(Toplevel as Gtk.Window, function.Function);
-			
+			if (d_selected == null)
+			{
+				return;
+			}
+
+			Dialogs.Interpolate dlg = new Dialogs.Interpolate(Toplevel as Gtk.Window, d_selected.Function);
 			dlg.Show();
+			
+			FunctionPolynomialNode func = d_selected;
 
 			dlg.Response += delegate(object o, ResponseArgs a1) {
 				if (a1.ResponseId == ResponseType.Apply)
 				{
-					//ApplyInterpolation(function, dlg.Interpolation);
+					ApplyInterpolation(func, dlg.Interpolation, dlg.Period);
 				}
 				
 				dlg.Destroy();
-			};*/
+			};
 		}
 
-		/*private void ApplyInterpolation(PolynomialNode node, Interpolators.Interpolation interpolation)
+		private void ApplyInterpolation(FunctionPolynomialNode node, Interpolators.Interpolation interpolation, double[] period)
 		{
 			if (interpolation == null)
 			{
 				return;
 			}
 			
-			node.Function.Clear();
+			node.Function.ClearPieces();
+			
+			if (period != null)
+			{
+				node.Function.Period = new Wrappers.FunctionPolynomial.PeriodType();
+				node.Function.Period.Begin = period[0];
+				node.Function.Period.End = period[1];
+			}
+			else
+			{
+				node.Function.Period = null;
+			}
 
 			foreach (Interpolators.Interpolation.Piece piece in interpolation.Pieces)
 			{
-				node.Function.Add(new Cpg.FunctionPolynomialPiece(piece.Begin, piece.End, piece.Coefficients));
+				if (period == null || (piece.Begin >= period[0] && piece.End <= period[1]))
+				{
+					node.Function.Add(new Cpg.FunctionPolynomialPiece(piece.Begin, piece.End, piece.Coefficients));
+				}
 			}
-			
-			if (d_treeview.NodeSelection.NodeIsSelected(node) && d_treeview.NodeSelection.SelectedNodes.Length == 1)
-			{
-				FillPieces();
-			}
-		}*/
+		}
 	}
 }

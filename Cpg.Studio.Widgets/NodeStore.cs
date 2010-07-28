@@ -64,6 +64,25 @@ namespace Cpg.Studio.Widgets
 		}
 	}
 	
+	[AttributeUsage(AttributeTargets.Method, AllowMultiple=true)]
+	public class SortColumnAttribute : Attribute
+	{
+		private int d_column;
+		
+		public SortColumnAttribute(int column)
+		{
+			d_column = column;
+		}
+		
+		public int Column
+		{
+			get
+			{
+				return d_column;
+			}
+		}
+	}
+	
 	public class Node : GLib.Object, IDisposable, IEnumerable<Node>
 	{
 		public delegate void NodeAddedHandler(Node parent, Node child);
@@ -358,6 +377,40 @@ namespace Cpg.Studio.Widgets
 				Remove(child);
 			}
 		}
+		
+		public Node[] Children
+		{
+			get
+			{
+				return d_children.ToArray();
+			}
+			set
+			{
+				d_children = new List<Node>(value);
+			}
+		}
+		
+		public void Move(Node a, int position)
+		{
+			int orig = d_children.IndexOf(a);
+			
+			if (orig == position)
+			{
+				return;
+			}
+			
+			if (orig >= 0)
+			{
+				d_children.RemoveAt(orig);
+				
+				if (orig < position)
+				{
+					--position;
+				}
+				
+				d_children.Insert(position, a);
+			}
+		}
 	}
 
 	public class NodeStore<T> : Node, TreeModelImplementor where T : Node
@@ -382,7 +435,11 @@ namespace Cpg.Studio.Widgets
 		private List<CustomRenderer> d_customRenderers;
 
 		private Dictionary<Type, MethodInfo> d_primaryKeys;
+		private Dictionary<int, MethodInfo> d_sortColumns;
+		private Dictionary<int, bool> d_sortable;
+
 		private TreeModelAdapter d_adapter;
+		private int d_sortColumn;
 
 		public NodeStore() : base()
 		{
@@ -390,6 +447,10 @@ namespace Cpg.Studio.Widgets
 			d_customRenderers = new List<CustomRenderer>();
 
 			d_primaryKeys = new Dictionary<Type, MethodInfo>();
+			d_sortColumns = new Dictionary<int, MethodInfo>();
+			d_sortColumn = -1;
+			d_sortable = new Dictionary<int, bool>();
+
 			d_adapter = new TreeModelAdapter(this);
 			
 			Scan();
@@ -439,6 +500,11 @@ namespace Cpg.Studio.Widgets
 
 		private void HandleNodeChanged(Node node)
 		{
+			if (IsSorted)
+			{
+				Sort(node.Parent);
+			}
+
 			d_adapter.EmitRowChanged(node.Path, node.Iter);
 		}
 		
@@ -491,12 +557,49 @@ namespace Cpg.Studio.Widgets
 			d_adapter.EmitRowDeleted(path);
 		}
 		
+		private bool IsSorted
+		{
+			get
+			{
+				return d_sortable.ContainsKey(d_sortColumn);
+			}
+		}
+		
 		private void AddNodeToModel(Node node, TreePath path)
 		{
+			// First reorder the child if necessary
+			if (path == null && IsSorted)
+			{
+				Comparison<Node> sorter = Sorter;
+
+				for (int i = 0; i < node.Parent.Count; ++i)
+				{
+					Node child = node.Parent[i];
+
+					if (node != child && sorter(node, child) < 0)
+					{
+						node.Parent.Move(node, i);
+						break;
+					}
+				}
+			}
+
+			if (path == null)
+			{
+				path = node.Path;
+			}
+
 			d_adapter.EmitRowInserted(path.Copy(), node.Iter);
 			
 			TreePath children = path.Copy();
 			children.Down();
+			
+			if (IsSorted)
+			{
+				List<Node> sorted = new List<Node>(node.Children);
+				sorted.Sort(Sorter);
+				node.Children = sorted.ToArray();
+			}
 			
 			// Then also its children
 			foreach (Node child in node)
@@ -510,7 +613,7 @@ namespace Cpg.Studio.Widgets
 		{
 			Connect(child);
 
-			AddNodeToModel(child, child.Path);
+			AddNodeToModel(child, null);
 		}
 		
 		private void Scan()
@@ -524,8 +627,11 @@ namespace Cpg.Studio.Widgets
 				if (attrs.Length > 0)
 				{
 					NodeColumnAttribute attr = (NodeColumnAttribute)attrs[0];
+					MethodInfo getter = info.GetGetMethod();
 
-					d_valueGetters.Insert(attr.Index, info.GetGetMethod());
+					d_valueGetters.Insert(attr.Index, getter);
+					
+					d_sortable[attr.Index] = Array.IndexOf(getter.ReturnType.GetInterfaces(), typeof(IComparable)) != -1;
 					
 					gtypes.Insert(attr.Index, (GLib.GType)info.PropertyType);
 				}
@@ -534,7 +640,8 @@ namespace Cpg.Studio.Widgets
 				
 				if (attrs.Length > 0)
 				{
-					d_primaryKeys[info.PropertyType] = info.GetGetMethod();
+					MethodInfo getter = info.GetGetMethod();
+					d_primaryKeys[info.PropertyType] = getter;
 				}
 			}
 			
@@ -545,8 +652,17 @@ namespace Cpg.Studio.Widgets
 				foreach (object attr in attrs)
 				{
 					CustomRendererAttribute at = (CustomRendererAttribute)attr;
-					
 					d_customRenderers.Add(new CustomRenderer(at.Column, at.Renderer, info));
+				}
+				
+				attrs = info.GetCustomAttributes(typeof(SortColumnAttribute), false);
+				
+				foreach (object attr in attrs)
+				{
+					SortColumnAttribute at = (SortColumnAttribute)attr;
+					
+					d_sortColumns[at.Column] = info;
+					d_sortable[at.Column] = true;
 				}
 			}
 			
@@ -828,6 +944,11 @@ namespace Cpg.Studio.Widgets
 		
 		public bool Remove(object obj)
 		{
+			if (obj is Node)
+			{
+				return base.Remove((Node)obj);
+			}
+
 			Node node = Find(obj);
 			
 			if (node != null && node.Parent != null)
@@ -838,6 +959,103 @@ namespace Cpg.Studio.Widgets
 			else
 			{
 				return false;
+			}
+		}
+		
+		private void Sort()
+		{
+			if (!IsSorted)
+			{
+				return;
+			}
+
+			Sort(this);
+		}
+		
+		private Comparison<Node> Sorter
+		{
+			get
+			{
+				if (!IsSorted)
+				{
+					return null;
+				}
+
+				if (d_sortColumns.ContainsKey(d_sortColumn))
+				{
+					MethodInfo info = d_sortColumns[d_sortColumn];
+					return delegate (Node first, Node second) { return (int)info.Invoke(first, new object[] {second}); };
+				}
+				else
+				{
+					MethodInfo info = d_valueGetters[d_sortColumn];
+				
+					return delegate (Node first, Node second) {
+						IComparable o1 = (IComparable)info.Invoke(first, new object[] {});
+						IComparable o2 = (IComparable)info.Invoke(second, new object[] {});
+					
+						return o1.CompareTo(o2);
+					};
+				}
+			}
+		}
+		
+		private void Sort(Node node)
+		{
+			if (!IsSorted)
+			{
+				return;
+			}
+			
+			Sort(node, Sorter);
+		}
+		
+		private void Sort(Node node, Comparison<Node> sorter)
+		{
+			// Sort all the children, deep first
+			Node[] orig = node.Children;
+			
+			foreach (Node child in orig)
+			{
+				Sort(child, sorter);
+			}
+			
+			List<Node> sorted = new List<Node>(orig);
+			sorted.Sort(sorter);
+			
+			int[] order = new int[sorted.Count];
+			bool reordered = false;
+			
+			for (int i = 0; i < sorted.Count; ++i)
+			{
+				order[i] = sorted.IndexOf(orig[i]);
+				
+				if (order[i] != i)
+				{
+					reordered = true;
+				}
+			}
+			
+			if (reordered)
+			{
+				node.Children = sorted.ToArray();
+				d_adapter.EmitRowsReordered(node.Path, node.Iter, order);
+			}
+		}
+		
+		public int SortColumn
+		{
+			get
+			{
+				return d_sortColumn;
+			}
+			set
+			{
+				if (d_sortColumn != value)
+				{
+					d_sortColumn = value;
+					Sort();
+				}
 			}
 		}
 	}

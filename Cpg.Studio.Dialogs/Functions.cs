@@ -10,6 +10,7 @@ namespace Cpg.Studio.Dialogs
 		private Actions d_actions;
 		private FunctionsView d_functionsView;
 		private PolynomialsView d_polynomialsView;
+		private Widgets.Notebook d_notebook;
 
 		public Functions(Actions actions, Widgets.Window parent, Wrappers.Network network)
 		{
@@ -56,6 +57,7 @@ namespace Cpg.Studio.Dialogs
 			align.Add(d_polynomialsView);
 			
 			notebook.AppendPage(align, new Label("Polynomials"));
+			d_notebook = notebook;
 
 			VBox.Add(notebook);
 		}
@@ -64,12 +66,33 @@ namespace Cpg.Studio.Dialogs
 		{
 			if (!(function.WrappedObject is Cpg.FunctionPolynomial))
 			{
+				d_notebook.Page = 0;
 				d_functionsView.Select(function);	
 			}
 			else
 			{
-				//d_polynomialsView.Select(function);
+				d_notebook.Page = 1;
+				d_polynomialsView.Select((Wrappers.FunctionPolynomial)function);
 			}
+		}
+		
+		public void Select(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece)
+		{
+			d_notebook.Page = 1;
+			d_polynomialsView.Select(function, piece);
+		}
+		
+		protected override bool OnKeyPressEvent(Gdk.EventKey evnt)
+		{
+			Gdk.ModifierType state = evnt.State & Gtk.Accelerator.DefaultModMask;
+			
+			if (state == Gdk.ModifierType.Mod1Mask && (evnt.KeyValue >= '1' && evnt.KeyValue <= '2'))
+			{
+				d_notebook.Page = (int)(evnt.KeyValue - '1');
+				return true;
+			}
+			
+			return base.OnKeyPressEvent(evnt);
 		}
 	}
 }

@@ -16,6 +16,18 @@ namespace Cpg.Studio.Interpolators
 				return null;
 			}
 			
+			Array.Sort(t, p);
+			Array.Sort(t);
+			
+			// Check t
+			for (int i = 1; i < t.Length; ++i)
+			{
+				if (Math.Abs(t[i - 1] - t[i]) < 0.00000000001)
+				{
+					return null;
+				}
+			}
+			
 			int size = t.Length;
 
 			double[] dt = new double[size];
@@ -113,7 +125,7 @@ namespace Cpg.Studio.Interpolators
 				                                      3 * (p2 - p1) - h * (2 * s1 + s2),
 				                                      h * s1,
 				                                      p1};
-				
+
 				pieces.Add(new Interpolation.Piece(t[i], t[i + 1], coefficients));
 			}
 			

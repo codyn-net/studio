@@ -82,7 +82,7 @@ namespace Cpg.Studio.Interpolators
 				
 				double norm;
 				
-				if (piece.End == 0)
+				if ((piece.End - piece.Begin) == 0)
 				{
 					norm = 0;
 				}

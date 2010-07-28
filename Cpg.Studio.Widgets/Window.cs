@@ -39,10 +39,14 @@ namespace Cpg.Studio.Widgets
 		
 		private Undo.Manager d_undoManager;
 		private Actions d_actions;
+		private WindowGroup d_windowGroup;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
 			d_project = new Serialization.Project();
+
+			d_windowGroup = new WindowGroup();
+			d_windowGroup.AddWindow(this);
 			
 			d_project.Network.WrappedObject.CompileError += OnCompileError;
 
@@ -62,7 +66,7 @@ namespace Cpg.Studio.Widgets
 			};
 			
 			d_actions = new Actions(d_undoManager);
-
+			
 			Build();
 			ShowAll();
 			
@@ -1315,74 +1319,101 @@ namespace Cpg.Studio.Widgets
 			d_functionsDialog.Select(function);
 		}
 		
+		private void SelectFunction(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece)
+		{
+			ShowFunctions();
+
+			d_functionsDialog.Select(function, piece);
+		}
+		
+		private void SelectFromPropertyAction(Undo.Property action)
+		{
+			if (action.Wrapped == Network)
+			{
+				ObjectActivated(Network);
+			}
+			else if (action.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
+			{
+				d_grid.CenterView(action.Wrapped);
+			}
+		}
+		
+		private void SelectFromObjectAction(Undo.Object action)
+		{
+			if (action.Wrapped is Wrappers.Function)
+			{
+				SelectFunction((Wrappers.Function)action.Wrapped);
+			}
+			else if (action.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
+			{
+				if (action is Undo.MoveObject)
+				{
+					d_grid.ActiveGroup = action.Wrapped.Parent;
+					d_grid.UnselectAll();
+					d_grid.Select(action.Wrapped);
+				}
+				else
+				{
+					d_grid.CenterView(action.Wrapped);
+				}
+			}
+		}
+		
+		private void SelectFromAddGroupAction(Undo.AddGroup action)
+		{
+			if (action.Group.TopParent == d_grid.ActiveGroup.TopParent)
+			{
+				d_grid.CenterView(action.Group);
+			}
+		}
+		
+		private void SelectFromUngroupAction(Undo.Ungroup action)
+		{
+			if (action.Parent.TopParent == d_grid.ActiveGroup.TopParent || action.Parent == d_grid.ActiveGroup.TopParent)
+			{
+				d_grid.ActiveGroup = action.Parent;
+				d_grid.CenterView();
+			}
+		}
+		
+		private void SelectFromLinkAction(Undo.LinkAction action)
+		{
+			if (action.Link.TopParent == d_grid.ActiveGroup.TopParent)
+			{
+				d_grid.CenterView(action.Link);
+			}
+		}
+		
+		private void SelectFromFunctionPolynomialPieceAction(Undo.FunctionPolynomialPiece action)
+		{
+			SelectFunction(action.WrappedObject, action.Piece);
+		}
+		
 		private void SelectFromAction(Undo.IAction action)
 		{
 			if (action is Undo.Property)
 			{
-				Undo.Property property = (Undo.Property)action;
-				
-				if (property.Wrapped == Network)
-				{
-					ObjectActivated(Network);
-				}
-				else if (property.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
-				{
-					d_grid.CenterView(property.Wrapped);
-				}
+				SelectFromPropertyAction((Undo.Property)action);
+			}
+			else if (action is Undo.FunctionPolynomialPiece)
+			{
+				SelectFromFunctionPolynomialPieceAction((Undo.FunctionPolynomialPiece)action);
 			}
 			else if (action is Undo.Object)
 			{
-				Undo.Object obj = (Undo.Object)action;
-				
-				if (obj.Wrapped is Wrappers.Function)
-				{
-					SelectFunction((Wrappers.Function)obj.Wrapped);
-				}
-				else if (obj.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
-				{
-					if (obj is Undo.MoveObject)
-					{
-						d_grid.ActiveGroup = obj.Wrapped.Parent;
-						d_grid.UnselectAll();
-						d_grid.Select(obj.Wrapped);
-					}
-					else
-					{
-						d_grid.CenterView(obj.Wrapped);
-					}
-				}
+				SelectFromObjectAction((Undo.Object)action);
 			}
 			else if (action is Undo.AddGroup)
 			{
-				Undo.AddGroup obj = (Undo.AddGroup)action;
-				
-				if (obj.Group.TopParent == d_grid.ActiveGroup.TopParent)
-				{
-					d_grid.CenterView(obj.Group);
-				}
+				SelectFromAddGroupAction((Undo.AddGroup)action);
 			}
 			else if (action is Undo.Ungroup)
 			{
-				Undo.Ungroup obj = (Undo.Ungroup)action;
-				
-				if (obj.Parent.TopParent == d_grid.ActiveGroup.TopParent || obj.Parent == d_grid.ActiveGroup.TopParent)
-				{
-					d_grid.ActiveGroup = obj.Parent;
-					d_grid.CenterView();
-				}
+				SelectFromUngroupAction((Undo.Ungroup)action);
 			}
 			else if (action is Undo.LinkAction)
 			{
-				Undo.LinkAction obj = (Undo.LinkAction)action;
-				
-				if (obj.Link.TopParent == d_grid.ActiveGroup.TopParent)
-				{
-					d_grid.CenterView(obj.Link);
-				}
-			}
-			else if (action is Undo.ModifyFunctionArguments)
-			{
-				SelectFunction(((Undo.ModifyFunctionArguments)action).WrappedObject);
+				SelectFromLinkAction((Undo.LinkAction)action);
 			}
 		}
 		
@@ -1712,6 +1743,7 @@ namespace Cpg.Studio.Widgets
 			if (d_functionsDialog == null)
 			{
 				d_functionsDialog = new Dialogs.Functions(d_actions, this, Network);
+				d_windowGroup.AddWindow(d_functionsDialog);
 
 				d_functionsDialog.Response += delegate(object o, ResponseArgs a1) {
 					d_functionsDialog.Destroy();

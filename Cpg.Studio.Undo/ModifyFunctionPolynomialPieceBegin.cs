@@ -7,7 +7,7 @@ namespace Cpg.Studio.Undo
 		private double d_begin;
 		private double d_previousBegin;
 
-		public ModifyFunctionPolynomialPieceBegin(Cpg.FunctionPolynomialPiece piece, double begin) : base(piece)
+		public ModifyFunctionPolynomialPieceBegin(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece, double begin) : base(function, piece)
 		{
 			d_begin = begin;
 			d_previousBegin = piece.Begin;

@@ -7,19 +7,91 @@ namespace Cpg.Studio.Dialogs
 {
 	public class Interpolate : Dialog
 	{
+		private class Node : Widgets.Node
+		{
+			public double d_x;
+			public double d_y;
+
+			public Node(double x, double y)
+			{
+				d_x = x;
+				d_y = y;
+			}
+			
+			[Widgets.SortColumn(0)]
+			public int SortNode(Node other)
+			{
+				return d_x.CompareTo(other.d_x);
+			}
+
+			[Widgets.NodeColumn(0)]
+			public string XText
+			{
+				get
+				{
+					return d_x.ToString();
+				}
+				set
+				{
+					X = Double.Parse(value);
+				}
+			}
+			
+			[Widgets.NodeColumn(1)]
+			public string YText
+			{
+				get
+				{
+					return d_y.ToString();
+				}
+				set
+				{
+					Y = Double.Parse(value);
+				}
+			}
+			
+			public double X
+			{
+				get
+				{
+					return d_x;
+				}
+				set
+				{
+					d_x = value;
+					EmitChanged();
+				}
+			}
+			
+			public double Y
+			{
+				get
+				{
+					return d_y;
+				}
+				set
+				{
+					d_y = value;
+					EmitChanged();
+				}
+			}
+		}
+
 		private ComboBox d_comboBox;
 		private Dictionary<string, Interpolators.IInterpolator> d_interpolators;
-		private ListStore d_store;
+		private TreeModelAdapter d_adapter;
+		private Widgets.NodeStore<Node> d_store;
 		private TreeView d_treeview;
 		private Button d_removeButton;
 		private CheckButton d_periodic;
 		private Interpolators.Interpolation d_interpolation;
 		private DrawingArea d_preview;
+		private Entry d_period;
 
-		public Interpolate(Gtk.Window parent, Cpg.FunctionPolynomial polynomial)
+		public Interpolate(Gtk.Window parent, Wrappers.FunctionPolynomial polynomial)
 		{
 			HasSeparator = false;
-			BorderWidth = 10;
+			BorderWidth = 0;
 			TransientFor = parent;
 			DestroyWithParent = true;
 			
@@ -31,25 +103,22 @@ namespace Cpg.Studio.Dialogs
 			
 			ActionArea.ShowAll();
 			
-			InitUi();
+			InitUi(polynomial);
 			Fill(polynomial);
 			
-			d_store.RowChanged += delegate(object o, RowChangedArgs args) {
+			d_adapter.RowChanged += delegate(object o, RowChangedArgs args) {
 				Update();
 			};
 			
-			d_store.RowDeleted += delegate(object o, RowDeletedArgs args) {
+			d_adapter.RowDeleted += delegate(object o, RowDeletedArgs args) {
 				Update();
 			};
 			
-			d_store.RowInserted += delegate(object o, RowInsertedArgs args) {
+			d_adapter.RowInserted += delegate(object o, RowInsertedArgs args) {
 				Update();
 			};
 			
-			Update();
-			
-			d_store.SetSortFunc(0, DataPointSort);
-			d_store.SetSortColumnId(0, SortType.Ascending);
+			Update();			
 		}
 		
 		private int DataPointSort(TreeModel model, TreeIter a1, TreeIter a2)
@@ -60,10 +129,19 @@ namespace Cpg.Studio.Dialogs
 			return p1.CompareTo(p2);
 		}
 		
-		private void InitUi()
+		private void InitUi(Wrappers.FunctionPolynomial polynomial)
 		{
-			VBox.Spacing = 6;
+			Alignment align = new Alignment(0.5f, 0.5f, 1, 1);
+			align.Show();
+			align.SetPadding(6, 6, 6, 6);
+			
+			VBox.PackStart(align, true, true, 0);
 
+			VBox vbox = new VBox(false, 6);
+			vbox.Show();
+
+			align.Add(vbox);
+			
 			HBox hbox = new HBox(false, 3);
 			hbox.PackStart(new Label("Interpolator:"), false, false, 0);
 			
@@ -88,47 +166,43 @@ namespace Cpg.Studio.Dialogs
 			hbox.PackStart(d_comboBox, true, true, 0);
 			hbox.ShowAll();
 			
-			VBox.PackStart(hbox, false, false, 0);
+			vbox.PackStart(hbox, false, false, 0);
 			
-			d_store = new ListStore(typeof(double), typeof(double));
-			d_treeview = new TreeView(d_store);
+			d_store = new Widgets.NodeStore<Node>();
+			d_adapter = new TreeModelAdapter(d_store);
+			d_treeview = new TreeView(d_adapter);
+			
+			d_treeview.ShowExpanders = false;
 			
 			d_treeview.Show();
 			
 			// x column
 			CellRendererText renderer = new CellRendererText();
 			renderer.Editable = true;
+
 			renderer.Edited += delegate(object o, EditedArgs args) {
-				DoEdited(0, args.NewText);
+				Node node = (Node)d_store.FindPath(args.Path);
+				node.XText = args.NewText;
 			};
 
-			TreeViewColumn column = new TreeViewColumn("X", renderer);
+			TreeViewColumn column = new TreeViewColumn("X", renderer, "text", 0);
 			column.Resizable = true;
-			column.MinWidth = 75;
+			column.MinWidth = 50;
 			
-			column.SetCellDataFunc(renderer, delegate (TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter) {
-				double val = (double)d_store.GetValue(piter, 0);
-				(cell as CellRendererText).Text = String.Format("{0}", val);
-			});
-
 			d_treeview.AppendColumn(column);
 			
 			// y column
 			renderer = new CellRendererText();
 			renderer.Editable = true;
 			renderer.Edited += delegate(object o, EditedArgs args) {
-				DoEdited(1, args.NewText);
+				Node node = (Node)d_store.FindPath(args.Path);
+				node.YText = args.NewText;
 			};
 
-			column = new TreeViewColumn("Y", renderer);
+			column = new TreeViewColumn("Y", renderer, "text", 1);
 			column.Resizable = true;
-			column.MinWidth = 75;
+			column.MinWidth = 50;
 			
-			column.SetCellDataFunc(renderer, delegate (TreeViewColumn col, CellRenderer cell, TreeModel model, TreeIter piter) {
-				double val = (double)d_store.GetValue(piter, 1);
-				(cell as CellRendererText).Text = String.Format("{0}", val);
-			});
-
 			d_treeview.AppendColumn(column);
 			
 			ScrolledWindow vw = new ScrolledWindow();
@@ -151,9 +225,9 @@ namespace Cpg.Studio.Dialogs
 			d_preview.ExposeEvent += HandleExposeEvent;
 			
 			hpaned.Add2(d_preview);
-			hpaned.Position = 150;
+			hpaned.Position = 120;
 
-			VBox.PackStart(hpaned, true, true, 0);
+			vbox.PackStart(hpaned, true, true, 0);
 			
 			hbox = new HBox(false, 3);
 			d_removeButton = new Button();
@@ -171,23 +245,43 @@ namespace Cpg.Studio.Dialogs
 
 			hbox.PackStart(but, false, false, 0);
 			
-			d_periodic = new CheckButton("Periodic");
+			d_period = new Entry();
+			d_period.WidthChars = 3;
+			d_period.Show();
+			d_period.Text = polynomial.Period == null ? "0:1" : String.Format("{0}:{1}", polynomial.Period.Begin, polynomial.Period.End);
+			d_period.Sensitive = polynomial.Period != null;
+			
+			hbox.PackEnd(d_period, false, false, 0);
+			
+			d_periodic = new CheckButton("Periodic:");
 			d_periodic.Show();
+			d_periodic.Active = polynomial.Period != null;
 
 			hbox.PackEnd(d_periodic, false, false, 0);
 			
 			hbox.Show();
 			
-			VBox.PackStart(hbox, false, false, 0);
+			vbox.PackStart(hbox, false, false, 0);
 			
 			d_treeview.KeyPressEvent += DoTreeViewKeyPressEvent;
 			d_treeview.Selection.Changed += DoSelectionChanged;
 			
 			d_periodic.Toggled += DoPeriodicToggled;
+			
+			d_period.FocusOutEvent += delegate {
+				Update();
+			};
+			
+			d_period.Activated += delegate {
+				Update();
+				d_treeview.GrabFocus();
+			};
 		}
 
 		private void DoPeriodicToggled(object sender, EventArgs e)
 		{
+			d_period.Sensitive = d_periodic.Active;
+
 			Update();
 		}
 		
@@ -224,39 +318,31 @@ namespace Cpg.Studio.Dialogs
 			return ret;
 		}
 		
-		private void Fill(Cpg.FunctionPolynomial polynomial)
+		private void Fill(Wrappers.FunctionPolynomial polynomial)
 		{
 			// Generate data points from polynomial pieces
 			FunctionPolynomialPiece[] pieces = polynomial.Pieces;
-			bool periodic = false;
+			Wrappers.FunctionPolynomial.PeriodType period = polynomial.Period;
 
 			for (int i = 0; i < pieces.Length; ++i)
 			{
 				FunctionPolynomialPiece piece = pieces[i];
 				
-				if (piece.Begin < 0 || piece.End > 1)
-				{
-					// These are for making the polynomial periodic
-					periodic = true;
-					
-					if (piece.Begin > 0 && piece.Begin < 1)
-					{
-						AddDataPoint(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]);
-					}
-				}
-				else
+				if (period == null || (piece.Begin >= period.Begin && piece.End <= period.End))
 				{
 					AddDataPoint(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]);
 				}
 			}
 			
-			if (!periodic && pieces.Length != 0)
+			if (pieces.Length != 0)
 			{
 				FunctionPolynomialPiece last = pieces[pieces.Length - 1];
-				AddDataPoint(last.End, SumCoefficients(last.Coefficients));
+				
+				if (period == null || (last.Begin >= period.Begin && last.End <= period.End))
+				{
+					AddDataPoint(last.End, SumCoefficients(last.Coefficients));
+				}
 			}
-			
-			d_periodic.Active = periodic;
 		}
 
 		private void DoTreeViewKeyPressEvent(object o, KeyPressEventArgs args)
@@ -277,76 +363,115 @@ namespace Cpg.Studio.Dialogs
 		private void DoRemove(object sender, EventArgs args)
 		{
 			TreePath[] paths = d_treeview.Selection.GetSelectedRows();
-			TreeRowReference[] refs = new TreeRowReference[paths.Length];
+			Node[] nodes = new Node[paths.Length];
 			
 			for (int i = 0; i < paths.Length; ++i)
 			{
-				refs[i] = new TreeRowReference(d_store, paths[i]);
+				nodes[i] = (Node)d_store.FindPath(paths[i]);
 			}
 			
-			foreach (TreeRowReference path in refs)
+			foreach (Node node in nodes)
 			{
-				TreeIter piter;
-				
-				d_store.GetIter(out piter, path.Path);
-				d_store.Remove(ref piter);
+				d_store.Remove(node);
 			}
 		}
 		
 		private void AddDataPoint(double x, double y)
 		{
-			TreeIter piter = d_store.AppendValues(x, y);
+			TreeIter piter = d_store.Add(new Node(x, y));
+
 			d_treeview.Selection.SelectIter(piter);
 		}
 		
 		private void DoAdd(object sender, EventArgs args)
 		{
 			// Add new data point
-			AddDataPoint(0, 0);
-		}
-
-		private void DoEdited(int idx, string newText)
-		{
-			TreePath[] paths = d_treeview.Selection.GetSelectedRows();
-			
-			if (paths.Length != 1)
+			if (d_store.Empty)
 			{
-				return;
+				AddDataPoint(0, 0);
 			}
-			
-			TreeIter piter;
-			d_store.GetIter(out piter, paths[0]);
-			
-			d_store.SetValue(piter, idx, Double.Parse(newText));
+			else
+			{
+				Node node = (Node)d_store[d_store.Count - 1];
+				
+				if (d_store.Count == 1)
+				{
+					AddDataPoint(node.X + 1, node.Y);
+				}
+				else
+				{
+					Node prev = (Node)d_store[d_store.Count - 2];
+					AddDataPoint(node.X + (node.X - prev.X), node.Y + (node.Y - prev.Y));
+				}
+			}
+		}
+		
+		public double[] Period
+		{
+			get
+			{
+				if (!d_period.Sensitive)
+				{
+					return null;
+				}
+
+				try
+				{
+					string[] parts = d_period.Text.Split(new char[] {':'});
+
+					if (parts.Length == 2)
+					{
+						return new double[] {double.Parse(parts[0]), double.Parse(parts[1])};
+					}
+					else
+					{
+						return new double[] {0, double.Parse(parts[0])};
+					}
+				}
+				catch
+				{
+					return new double[] {0, 1};
+				}
+			}
 		}
 		
 		private void Update()
 		{
+			if (d_store.Empty)
+			{
+				d_interpolation = null;
+				Redraw();
+				return;
+			}
+
 			List<double> x = new List<double>();
 			List<double> y = new List<double>();
-			
-			d_store.Foreach(delegate (TreeModel model, TreePath path, TreeIter piter) {
-				x.Add((double)model.GetValue(piter, 0));
-				y.Add((double)model.GetValue(piter, 1));
-				return false;
-			});
+					
+			foreach (Node node in d_store)
+			{
+				x.Add(node.X);
+				y.Add(node.Y);
+			}
 			
 			if (d_periodic.Active)
 			{
+				double[] period = Period;
+				double range = period[1] - period[0];
+
 				// Add virtual points to make it periodic
 				double[] ptx = new double[] {x[0], x[1], x[x.Count - 1], x[x.Count - 2]};
 				double[] pty = new double[] {y[0], y[1], y[y.Count - 1], y[y.Count - 2]};
 
 				// Add points before
-				x.Insert(0, -1 + ptx[2]);
-				x.Insert(0, -1 + ptx[3]);
+				x.Insert(0, ptx[2] - range);
+				x.Insert(0, ptx[3] - range);
 				
 				y.Insert(0, pty[2]);
 				y.Insert(0, pty[3]);
 				
 				// Add points after
-				x.Add(1 + ptx[0]);
-				x.Add(1 + ptx[1]);
+				x.Add(ptx[0] + range);
+				x.Add(ptx[1] + range);
 				
 				y.Add(pty[0]);
 				y.Add(pty[1]);
@@ -360,6 +485,17 @@ namespace Cpg.Studio.Dialogs
 		private void Redraw()
 		{
 			d_preview.QueueDraw();
+		}
+		
+		private void DrawPiecePoint(Cairo.Context ctx, double x, double y)
+		{
+			ctx.Arc(x, y, 3, 0, System.Math.PI * 2);
+					
+			ctx.SetSourceRGB(1, 1, 1);
+			ctx.FillPreserve();
+
+			ctx.SetSourceRGB(0, 0, 0);
+			ctx.Stroke();
 		}
 		
 		private void DrawPolynomial(Cairo.Context ctx)
@@ -378,12 +514,20 @@ namespace Cpg.Studio.Dialogs
 			double minpt = 0;
 			double maxpt = 0;
 			
+			double[] period = Period;
+			
+			if (period == null)
+			{
+				period = new double[] {d_interpolation.Pieces[0].Begin, d_interpolation.Pieces[d_interpolation.Pieces.Count - 1].End};
+			}
+			
 			for (int i = 2; i < d_preview.Allocation.Width - 2; ++i)
 			{
 				int idx = i - 2;
+				double factor = idx / (double)xx.Length;
 
 				xx[idx] = i;
-				pts[idx] = interp.Evaluate(idx / (double)xx.Length);
+				pts[idx] = interp.Evaluate(period[0] + (period[1] - period[0]) * factor);
 				
 				if (idx == 0 || pts[idx] < minpt)
 				{
@@ -425,12 +569,15 @@ namespace Cpg.Studio.Dialogs
 				++interpIdx;
 			}
 			
-			double scaleX = d_preview.Allocation.Width - 4;
+			double scaleX = xx.Length;
 			ctx.LineWidth = 2;
 			
 			for (int i = 0; i < xx.Length; ++i)
 			{
-				if (interpIdx < interp.Pieces.Count && xx[i] / scaleX > interp.Pieces[interpIdx].End)
+				double factor = xx[i] / scaleX;
+				double time = period[0] + (period[1] - period[0]) * factor;
+
+				if (interpIdx < interp.Pieces.Count && time > interp.Pieces[interpIdx].End)
 				{
 					++colorIdx;
 					++interpIdx;
@@ -457,18 +604,31 @@ namespace Cpg.Studio.Dialogs
 			
 			ctx.Stroke();
 			
+			ctx.LineWidth = 1;
+			
 			foreach (Interpolators.Interpolation.Piece piece in interp.Pieces)
 			{
-				if (piece.Begin >= 0 && piece.Begin <= 1)
+				if (piece.Begin >= period[0] && piece.Begin <= period[1])
 				{
-					ctx.Arc(piece.Begin * scaleX + 2, piece.Coefficients[piece.Coefficients.Length - 1] * scale, 3, 0, System.Math.PI * 2);
+					double x = (piece.Begin - period[0]) / (period[1] - period[0]) * scaleX + 2;
+					double y = piece.Coefficients[piece.Coefficients.Length - 1] * scale;
 					
-					ctx.SetSourceRGB(1, 1, 1);
-					ctx.FillPreserve();
-
-					ctx.SetSourceRGB(0, 0, 0);
-					ctx.Stroke();
+					DrawPiecePoint(ctx, x, y);
 				}
+				else if (piece.Begin > period[1])
+				{
+					break;
+				}
+			}
+			
+			if (interp.Pieces.Count != 0)
+			{
+				Interpolators.Interpolation.Piece piece = interp.Pieces[interp.Pieces.Count - 1];
+
+				double x = (piece.End - period[0]) / (period[1] - period[0]) * scaleX + 2;
+				double y = SumCoefficients(piece.Coefficients) * scale;
+				
+				DrawPiecePoint(ctx, x, y);
 			}
 		}
 

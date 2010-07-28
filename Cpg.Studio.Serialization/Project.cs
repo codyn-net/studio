@@ -95,8 +95,10 @@ namespace Cpg.Studio.Serialization
 		private bool d_saveProjectExternally;
 		private string d_externalProjectFile;
 		private Wrappers.Network d_network;
+
 		private Network d_metaNetwork;
 		private Templates d_metaTemplates;
+		private Functions d_metaFunctions;
 		
 		public Project()
 		{
@@ -174,6 +176,7 @@ namespace Cpg.Studio.Serialization
 		{
 			d_metaNetwork = new Network();
 			d_metaTemplates = new Templates();
+			d_metaFunctions = new Functions();
 
 			d_settings = new SettingsType();
 
@@ -187,7 +190,8 @@ namespace Cpg.Studio.Serialization
 				{typeof(Wrappers.Group), typeof(Group)},
 				{typeof(Wrappers.Link), typeof(Link)},
 				{typeof(Wrappers.State), typeof(State)},
-				{typeof(Wrappers.Network), typeof(Network)}
+				{typeof(Wrappers.Network), typeof(Network)},
+				{typeof(Wrappers.FunctionPolynomial), typeof(FunctionPolynomial)}
 			};
 			
 			for (int i = 0; i <= types.GetUpperBound(0); ++i)
@@ -201,17 +205,8 @@ namespace Cpg.Studio.Serialization
 			return null;
 		}
 		
-		private void Merge(Wrappers.Wrapper orig, Object meta)
-		{
-			orig.Allocation = meta.Allocation.Copy();
-		}
-		
 		private void Merge(Wrappers.Group orig, Group meta, Dictionary<Wrappers.Group, List<Wrappers.Wrapper>> missing)
 		{
-			orig.X = meta.X;
-			orig.Y = meta.Y;
-			orig.Zoom = meta.Zoom;
-			
 			List<Wrappers.Wrapper> origChildren = new List<Wrappers.Wrapper>(orig.Children);
 			
 			foreach (Object o in meta.Children)
@@ -233,7 +228,7 @@ namespace Cpg.Studio.Serialization
 				
 				origChildren.Remove(origObj);
 				
-				Merge(origObj, o);
+				o.Merge(origObj);
 				
 				if (origObj is Wrappers.Group)
 				{
@@ -241,17 +236,31 @@ namespace Cpg.Studio.Serialization
 				}
 			}
 			
-			missing[orig] = origChildren;
+			if (missing != null)
+			{
+				missing[orig] = origChildren;
+			}
+		}
+		
+		private void Merge(Wrappers.Group orig, Group meta)
+		{
+			Merge(orig, meta, null);
 		}
 		
 		private void Merge()
 		{
 			Dictionary<Wrappers.Group, List<Wrappers.Wrapper>> missing = new Dictionary<Wrappers.Group, List<Wrappers.Wrapper>>();
 			
+			d_metaNetwork.Merge(d_network);
 			Merge(d_network, d_metaNetwork, missing);
 			
 			Dictionary<Wrappers.Group, List<Wrappers.Wrapper>> missingTemplates = new Dictionary<Wrappers.Group, List<Wrappers.Wrapper>>();
+			
+			d_metaTemplates.Merge(d_network.TemplateGroup);
 			Merge(d_network.TemplateGroup, d_metaTemplates, missingTemplates);
+			
+			d_metaFunctions.Merge(d_network.FunctionGroup);
+			Merge(d_network.FunctionGroup, d_metaFunctions);
 			
 			// Now do some layouting on the missing guys?
 		}
@@ -320,6 +329,14 @@ namespace Cpg.Studio.Serialization
 			{
 				d_metaTemplates = Deserialize<Templates>(temp);
 			}
+			
+			// Extract the function metadata
+			XmlNode func = node.SelectSingleNode("functions");
+			
+			if (func != null)
+			{
+				d_metaFunctions = Deserialize<Functions>(func);
+			}
 		}
 
 		private T Deserialize<T>(XmlNode node)
@@ -337,10 +354,6 @@ namespace Cpg.Studio.Serialization
 		
 		private void CreateMeta(Wrappers.Group orig, Group meta)
 		{
-			meta.X = orig.X;
-			meta.Y = orig.Y;
-			meta.Zoom = orig.Zoom;
-
 			foreach (Wrappers.Wrapper child in orig.Children)
 			{
 				if (child is Wrappers.Link)
@@ -352,13 +365,11 @@ namespace Cpg.Studio.Serialization
 				
 				if (t == null)
 				{
-					throw new Exception(String.Format("I do not know how to serialize {0}!!!", child));
+					continue;
 				}
 				
 				Object obj = (Object)t.GetConstructor(new Type[] {}).Invoke(new object[] {});
-				
-				obj.Id = child.Id;
-				obj.Allocation = child.Allocation.Copy();
+				obj.Transfer(child);
 				
 				meta.Children.Add(obj);
 				
@@ -372,10 +383,16 @@ namespace Cpg.Studio.Serialization
 		private void CreateMeta()
 		{
 			d_metaNetwork = new Network();
+			d_metaNetwork.Transfer(d_network);
 			CreateMeta(d_network, d_metaNetwork);
 			
 			d_metaTemplates = new Templates();
+			d_metaTemplates.Transfer(d_network.TemplateGroup);
 			CreateMeta(d_network.TemplateGroup, d_metaTemplates);
+			
+			d_metaFunctions = new Functions();
+			d_metaFunctions.Transfer(d_network.FunctionGroup);
+			CreateMeta(d_network.FunctionGroup, d_metaFunctions);
 		}
 		
 		private XmlWriterSettings WriterSettings()
@@ -441,6 +458,7 @@ namespace Cpg.Studio.Serialization
 			XmlNode networkNode = Serialize(d_metaNetwork);
 			XmlNode templatesNode = Serialize(d_metaTemplates);
 			XmlNode settingsNode = Serialize(d_settings);
+			XmlNode functionsNode = Serialize(d_metaFunctions);
 			
 			if (SaveProjectExternally)
 			{
@@ -462,6 +480,7 @@ namespace Cpg.Studio.Serialization
 				projectNode.AppendChild(ext.ImportNode(settingsNode, true));
 				projectNode.AppendChild(ext.ImportNode(networkNode, true));
 				projectNode.AppendChild(ext.ImportNode(templatesNode, true));
+				projectNode.AppendChild(ext.ImportNode(functionsNode, true));
 				
 				root.AppendChild(projectNode);
 				
@@ -484,6 +503,7 @@ namespace Cpg.Studio.Serialization
 				projectNode.AppendChild(doc.ImportNode(settingsNode, true));
 				projectNode.AppendChild(doc.ImportNode(networkNode, true));
 				projectNode.AppendChild(doc.ImportNode(templatesNode, true));
+				projectNode.AppendChild(doc.ImportNode(functionsNode, true));
 
 				root.AppendChild(projectNode);
 				Save(doc, filename);
