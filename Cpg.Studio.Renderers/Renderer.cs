@@ -25,6 +25,11 @@ namespace Cpg.Studio.Wrappers.Renderers
 		{
 		}
 		
+		public Renderer Copy(Wrappers.Wrapper other)
+		{
+			return (Renderer)GetType().GetConstructor(new Type[] {typeof(Wrappers.Wrapper)}).Invoke(new object[] {other});
+		}
+		
 		public DrawStyle Style
 		{
 			get

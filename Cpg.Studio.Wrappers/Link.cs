@@ -346,7 +346,14 @@ namespace Cpg.Studio.Wrappers
 		{
 			get
 			{
-				return null;
+				if (Empty)
+				{
+					return base.Label;
+				}
+				else
+				{
+					return null;
+				}
 			}
 		}
 

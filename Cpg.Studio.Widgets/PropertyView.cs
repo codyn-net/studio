@@ -541,7 +541,12 @@ namespace Cpg.Studio.Widgets
 			vw.ShadowType = ShadowType.EtchedIn;
 			
 			d_store = new NodeStore<PropertyNode>();
-			d_treeview = new TreeView(new TreeModelAdapter(d_store));	
+			d_treeview = new TreeView(new TreeModelAdapter(d_store));
+			
+			d_treeview.RulesHint = true;
+			d_treeview.Selection.Mode = SelectionMode.Multiple;
+			
+			d_store.NodeChanged += HandleNodeChanged;
 			
 			d_treeview.ShowExpanders = false;
 			
@@ -638,6 +643,11 @@ namespace Cpg.Studio.Widgets
 			d_propertyControls.AddButton.Clicked += DoAddProperty;
 			d_propertyControls.RemoveButton.Clicked += DoRemoveProperty;
 			
+			UpdateSensitivity();
+		}
+
+		private void HandleNodeChanged(NodeStore<PropertyNode> store, Node child)
+		{
 			UpdateSensitivity();
 		}
 		
@@ -771,10 +781,57 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		enum Sensitivity
+		{
+			None,
+			Revert,
+			Remove
+		}
+		
 		private void UpdateSensitivity()
 		{
-			TreeIter iter;
-			d_propertyControls.RemoveButton.Sensitive = d_treeview.Selection.GetSelected(out iter);
+			Sensitivity sens = Sensitivity.None;
+			
+			foreach (TreePath path in d_treeview.Selection.GetSelectedRows())
+			{
+				PropertyNode node = d_store.FindPath(path);
+				
+				if (d_object.GetPropertyTemplate(node.Property, true) != null)
+				{
+					if (sens != Sensitivity.None)
+					{
+						sens = Sensitivity.None;
+						break;
+					}
+				}
+				else if (d_object.GetPropertyTemplate(node.Property, false) != null)
+				{
+					if (sens == Sensitivity.Remove)
+					{
+						sens = Sensitivity.None;
+						break;
+					}
+					else
+					{
+						sens = Sensitivity.Revert;
+					}
+				}
+				else
+				{
+					sens = Sensitivity.Remove;
+				}
+			}
+			
+			d_propertyControls.RemoveButton.Sensitive = (sens != Sensitivity.None);
+
+			if (sens == Sensitivity.Revert)
+			{
+				 d_propertyControls.RemoveButton.Image = new Image(Gtk.Stock.RevertToSaved, IconSize.Button);
+			}
+			else
+			{
+				d_propertyControls.RemoveButton.Image = new Image(Gtk.Stock.Remove, IconSize.Button);
+			}
 		}
 		
 		private void DoSelectionChanged(object source, EventArgs args)
@@ -869,7 +926,20 @@ namespace Cpg.Studio.Widgets
 			foreach (TreePath path in d_treeview.Selection.GetSelectedRows())
 			{
 				PropertyNode node = d_store.FindPath(path);
-				actions.Add(new Undo.RemoveProperty(d_object, node.Property));
+				
+				Wrappers.Wrapper temp = d_object.GetPropertyTemplate(node.Property, false);
+				
+				if (temp != null)
+				{
+					Cpg.Property tempProp = temp.Property(node.Property.Name);
+
+					actions.Add(new Undo.ModifyProperty(d_object, node.Property, tempProp.Expression.AsString));
+					actions.Add(new Undo.ModifyProperty(d_object, node.Property, tempProp.Flags));
+				}
+				else
+				{
+					actions.Add(new Undo.RemoveProperty(d_object, node.Property));
+				}
 			}
 
 			try

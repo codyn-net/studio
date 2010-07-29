@@ -308,7 +308,7 @@ namespace Cpg.Studio.Wrappers
 			Wrapper wrapped = Wrap(args.Copy);
 			
 			wrapped.Allocation = Allocation.Copy();
-			wrapped.Renderer = Renderer;
+			wrapped.Renderer = Renderer.Copy(wrapped);
 		}
 		
 		public virtual Cpg.Object WrappedObject
@@ -364,6 +364,11 @@ namespace Cpg.Studio.Wrappers
 		{
 			return Wrappers.Wrapper.Wrap(WrappedObject.Copy());
 		}
+		
+		public Wrappers.Wrapper CopyAsTemplate()
+		{
+			return Wrappers.Wrapper.Wrap(WrappedObject.CopyAsTemplate());
+		}
 
 		public override string Id
 		{
@@ -384,6 +389,16 @@ namespace Cpg.Studio.Wrappers
 			{
 				link.DoRequestRedraw();
 			}
+		}
+		
+		public bool VerifyRemoveProperty(string prop)
+		{
+			return WrappedObject.VerifyRemoveProperty(prop);
+		}
+		
+		public Wrappers.Wrapper GetPropertyTemplate(Cpg.Property prop, bool matchFull)
+		{
+			return Wrappers.Wrapper.Wrap(WrappedObject.GetPropertyTemplate(prop, matchFull));
 		}
 		
 		public virtual void Removed()

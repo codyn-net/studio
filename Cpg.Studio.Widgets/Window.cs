@@ -40,6 +40,8 @@ namespace Cpg.Studio.Widgets
 		private Undo.Manager d_undoManager;
 		private Actions d_actions;
 		private WindowGroup d_windowGroup;
+		private TemplatesMenu d_stateTemplatesMenu;
+		private TemplatesMenu d_linkTemplatesMenu;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -99,7 +101,8 @@ namespace Cpg.Studio.Widgets
 			stateMenu.Append(defaultStateItem);
 			stateMenu.Append(new Gtk.SeparatorMenuItem());
 
-			new TemplatesMenu(stateMenu, Network.TemplateGroup, false, FilterStates);
+			d_stateTemplatesMenu = new TemplatesMenu(stateMenu, Network.TemplateGroup, false, FilterStates);
+			d_stateTemplatesMenu.Activated += HandleStateTemplatesMenuActivated;
 
 			stateItem.ShowAll();
 			menu.Append(stateItem);
@@ -114,10 +117,49 @@ namespace Cpg.Studio.Widgets
 			linkMenu.Append(defaultLinkItem);
 			linkMenu.Append(new Gtk.SeparatorMenuItem());
 
-			new TemplatesMenu(linkMenu, Network.TemplateGroup, false, FilterLinks);
+			d_linkTemplatesMenu = new TemplatesMenu(linkMenu, Network.TemplateGroup, false, FilterLinks);
+			d_linkTemplatesMenu.Activated += HandleLinkTemplatesMenuActivated;
 
 			linkItem.ShowAll();
 			menu.Append(linkItem);
+		}
+
+		private void HandleStateTemplatesMenuActivated(object source, Wrappers.Wrapper template)
+		{
+			Wrappers.Wrapper[] sel = d_grid.Selection;
+				
+			if (sel.Length == 0 || Array.TrueForAll<Wrappers.Wrapper>(sel, item => item is Wrappers.Link))
+			{
+				int[] center = d_grid.Center;
+				HandleError(delegate () {
+					d_actions.AddObject(d_grid.ActiveGroup, template.CopyAsTemplate(), center[0], center[1]);
+				}, "An error occurred while adding an object from a template");
+			}
+			else
+			{
+				HandleError(delegate () {
+					d_actions.ApplyTemplate(template, sel);
+				}, "An error occurred while applying the template");
+			}
+		}
+		
+		private void HandleLinkTemplatesMenuActivated(object source, Wrappers.Wrapper template)
+		{
+			Wrappers.Wrapper[] sel = d_grid.Selection;
+				
+			if (sel.Length == 0 || !Array.TrueForAll<Wrappers.Wrapper>(sel, item => item is Wrappers.Link))
+			{
+				HandleError(delegate () {
+					int[] center = d_grid.Center;
+					d_actions.AddLink(d_grid.ActiveGroup, (Wrappers.Link)template, d_grid.Selection, center[0], center[1]);
+				}, "An error occurred while adding a link from a template");
+			}
+			else
+			{
+				HandleError(delegate () {
+					d_actions.ApplyTemplate(template, sel);
+				}, "An error occurred while applying the template");
+			}
 		}
 		
 		private bool FilterStates(Wrappers.Wrapper wrapper)
@@ -142,8 +184,9 @@ namespace Cpg.Studio.Widgets
 			button.Clicked += OnAddStateActivated;
 			button.Show();
 			
-			TemplatesMenu temp = new TemplatesMenu(Network.TemplateGroup, false);
+			TemplatesMenu temp = new TemplatesMenu(Network.TemplateGroup, false, FilterStates);
 			button.Menu = temp.Menu;
+			temp.Activated += HandleStateTemplatesMenuActivated;
 			temp.Menu.ShowAll();
 
 			tb.Add(button);
@@ -153,6 +196,7 @@ namespace Cpg.Studio.Widgets
 			button.Show();
 			
 			temp = new TemplatesMenu(Network.TemplateGroup, false, FilterLinks);
+			temp.Activated += HandleLinkTemplatesMenuActivated;
 			button.Menu = temp.Menu;
 			temp.Menu.ShowAll();
 
@@ -195,7 +239,7 @@ namespace Cpg.Studio.Widgets
 				
 				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
 				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "<Control>h", "Center view", OnCenterViewActivated),
-				new ActionEntry("InsertMenuAction", null, "_Insert", null, null, null),
+				new ActionEntry("InsertMenuAction", null, "_Apply", null, null, null),
 				new ActionEntry("ZoomDefaultAction", Gtk.Stock.Zoom100, null, "<Control>1", null, OnZoomDefaultActivated),
 				new ActionEntry("ZoomInAction", Gtk.Stock.ZoomIn, null, "<Control>plus", null, OnZoomInActivated),
 				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, OnZoomOutActivated),
@@ -1067,8 +1111,6 @@ namespace Cpg.Studio.Widgets
 			s.Allocation = WindowAllocation(this);
 			s.ActiveGroup = d_grid.ActiveGroup.FullId;
 			
-			Console.WriteLine("Hmm: {0}", d_grid.ActiveGroup.TopParent);
-			
 			if (d_grid.ActiveGroup.TopParent == Network.TemplateGroup)
 			{
 				s.ActiveRoot = "templates";
@@ -1537,7 +1579,7 @@ namespace Cpg.Studio.Widgets
 					
 					d_propertyView.Error += delegate (object source, Exception exception)
 					{
-						Message(Gtk.Stock.DialogInfo, "Error while editing property", exception);
+						Message(Gtk.Stock.DialogError, "Error while editing property", exception);
 					};
 					
 					d_vpaned.Pack2(d_propertyView, false, false);

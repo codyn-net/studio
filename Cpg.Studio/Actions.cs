@@ -12,7 +12,7 @@ namespace Cpg.Studio
 			d_undoManager = undoManager;
 		}
 		
-		public Wrappers.State[] AddState(Wrappers.Group parent, int x, int y)
+		public Wrappers.State[] AddState(Wrappers.Group parent, double x, double y)
 		{
 			Wrappers.State state = new Wrappers.State();
 			state.Allocation = new Allocation(x, y, 1, 1);
@@ -24,6 +24,14 @@ namespace Cpg.Studio
 		
 		public void AddObject(Wrappers.Group parent, Wrappers.Wrapper wrapper)
 		{
+			AddObject(parent, wrapper, wrapper.Allocation.X, wrapper.Allocation.Y);
+		}
+		
+		public void AddObject(Wrappers.Group parent, Wrappers.Wrapper wrapper, double x, double y)
+		{
+			wrapper.Allocation.X = x;
+			wrapper.Allocation.Y = y;
+
 			Do(new Undo.AddObject(parent, wrapper));
 		}
 		
@@ -54,7 +62,12 @@ namespace Cpg.Studio
 			}
 		}
 		
-		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection, int cx, int cy)
+		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection, double cx, double cy)
+		{
+			return AddLink(parent, null, selection, cx, cy);
+		}
+		
+		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Link temp, Wrappers.Wrapper[] selection, double cx, double cy)
 		{
 			// Add links between each first selected N-1 objects and selected object N
 			List<Undo.IAction> actions = new List<Undo.IAction>();
@@ -62,7 +75,17 @@ namespace Cpg.Studio
 			
 			foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper> pair in GetLinkPairs(selection))
 			{
-				Wrappers.Link link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link("link", pair.Key, pair.Value));
+				Wrappers.Link link;
+				
+				 if (temp == null)
+				 {
+				 	link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link("link", pair.Key, pair.Value));
+				 }
+				 else
+				 {
+				 	link = (Wrappers.Link)temp.CopyAsTemplate();
+				 	link.Attach(pair.Key, pair.Value);
+				 }
 				
 				if (link.Empty)
 				{
@@ -511,6 +534,36 @@ namespace Cpg.Studio
 			}
 			
 			Do(new Undo.Group(actions));
+		}
+		
+		public void ApplyTemplate(Wrappers.Wrapper template, Wrappers.Wrapper[] selection)
+		{
+			if (selection.Length == 0)
+			{
+				return;
+			}
+
+			// Filter to what kind of things we can apply the template
+			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
+
+			Type tempType = template.GetType();
+			bool isGroup = template is Wrappers.Group;
+			
+			sel.RemoveAll(delegate (Wrappers.Wrapper item) {
+				if (isGroup && item is Wrappers.State)
+				{
+					return false;
+				}
+				
+				Type itemType = item.GetType();
+				
+				return itemType != tempType && !itemType.IsInstanceOfType(tempType);
+			});
+			
+			if (sel.Count == 0)
+			{
+				throw new Exception(String.Format("The template type `{0}' cannot be applied to any of the selected objects", tempType.Name));
+			}
 		}
 		
 		public void Do(Undo.IAction action)

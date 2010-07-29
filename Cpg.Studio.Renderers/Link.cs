@@ -8,6 +8,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 		private static double[] s_normalColor;
 		private static double[] s_selectedColor;
 		private static double[] s_hoverColor;
+		private static double[] s_iconColor;
 		private static double s_arrowSize;
 
 		static Link()
@@ -15,6 +16,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			s_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			s_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
 			s_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
+			s_iconColor = new double[] {0.5, 0.5, 0.5, 1.0};
 			
 			s_arrowSize = 0.15;
 		}
@@ -45,7 +47,15 @@ namespace Cpg.Studio.Wrappers.Renderers
 		
 		private double[] StateColor()
 		{
-			if (WrappedObject.Selected)
+			if (Style == Renderer.DrawStyle.Icon)
+			{
+				return s_iconColor;
+			}
+			else if (WrappedObject == null)
+			{
+				return s_normalColor;
+			}
+			else if (WrappedObject.Selected)
 			{
 				return s_selectedColor;
 			}
@@ -154,7 +164,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 		{
 			get
 			{
-				return WrappedObject.From == null || WrappedObject.To == null;
+				return WrappedObject == null || WrappedObject.Empty;
 			}
 		}
 		
@@ -171,16 +181,20 @@ namespace Cpg.Studio.Wrappers.Renderers
 				graphics.SetSourceRGB(color[0], color[1], color[2]);
 			}
 			
-			if (WrappedObject.KeyFocus)
+			if (WrappedObject != null && WrappedObject.KeyFocus)
 			{
 				graphics.LineWidth *= 4;
 				graphics.SetDash(new double[] {graphics.LineWidth, graphics.LineWidth}, 0);
+			}
+			else if (Style == Renderer.DrawStyle.Icon)
+			{
+				graphics.LineWidth *= 3;
 			}
 			else if (Standalone)
 			{
 				graphics.LineWidth *= 4;
 			}
-			else if (WrappedObject.MouseFocus)
+			else if (WrappedObject != null && WrappedObject.MouseFocus)
 			{
 				graphics.LineWidth *= 2;
 			}
@@ -202,8 +216,6 @@ namespace Cpg.Studio.Wrappers.Renderers
 		
 		private void DrawObjects(Cairo.Context graphics)
 		{
-			graphics.Save();			
-
 			FromState(graphics, true);
 
 			Point[] points = ControlPoints();
@@ -249,14 +261,13 @@ namespace Cpg.Studio.Wrappers.Renderers
 			}
 			
 			DrawArrow(graphics, xy.X, xy.Y, pos);
-			graphics.Restore();
 		}
 		
 		private void DrawStandalone(Cairo.Context graphics)
 		{
 			FromState(graphics, false);
 
-			Allocation alloc = WrappedObject.Allocation.Copy();
+			Allocation alloc = WrappedObject != null ? WrappedObject.Allocation.Copy() : new Allocation(0, 0, 1, 1);
 			
 			alloc.X = 0;
 			alloc.Y = 0;
@@ -270,6 +281,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			double angle = Math.PI * 1.8;
 
+			graphics.NewPath();
 			graphics.Arc(cx, cy, radius, 0, angle);
 			graphics.Stroke();
 			
@@ -282,7 +294,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 
 			if (Style == Renderer.DrawStyle.Icon)
 			{
-				DrawIcon(graphics);
+				DrawStandalone(graphics);
 			}
 			else if (Standalone)
 			{

@@ -87,7 +87,7 @@ namespace Cpg.Studio.Widgets
 	{
 		public delegate void NodeAddedHandler(Node parent, Node child);
 		public delegate void NodeRemovedHandler(Node parent, Node child, int wasAtIndex);
-		public delegate void NodeChangedHandler(Node node);
+		public delegate void ChangedHandler(Node node);
 
 		private Node d_parent;
 		private List<Node> d_children;
@@ -95,7 +95,7 @@ namespace Cpg.Studio.Widgets
 
 		public event NodeAddedHandler NodeAdded = delegate {};
 		public event NodeRemovedHandler NodeRemoved = delegate {};
-		public event NodeChangedHandler Changed = delegate {};
+		public event ChangedHandler Changed = delegate {};
 		
 		public Node(Node parent)
 		{
@@ -440,6 +440,9 @@ namespace Cpg.Studio.Widgets
 
 		private TreeModelAdapter d_adapter;
 		private int d_sortColumn;
+		
+		public delegate void NodeChangedHandler(NodeStore<T> store, Node child);
+		public event NodeChangedHandler NodeChanged = delegate {};
 
 		public NodeStore() : base()
 		{
@@ -505,6 +508,7 @@ namespace Cpg.Studio.Widgets
 				Sort(node.Parent);
 			}
 
+			NodeChanged(this, node);
 			d_adapter.EmitRowChanged(node.Path, node.Iter);
 		}
 		

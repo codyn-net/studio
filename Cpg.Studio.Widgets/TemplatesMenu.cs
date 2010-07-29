@@ -21,12 +21,15 @@ namespace Cpg.Studio
 			}
 		}
 		
+		public delegate void ActivatedHandler(object source, Wrappers.Wrapper template);
 		public delegate bool WrapperFilter(Wrappers.Wrapper wrapped);
 		
 		private WrapperFilter d_filter;
 		private bool d_recursive;
 		private Dictionary<Wrappers.Wrapper, MenuInfo> d_map;
 		private Gtk.Menu d_menu;
+		
+		public event ActivatedHandler Activated = delegate {};
 
 		public TemplatesMenu(Wrappers.Group grp, bool recursive) : this(new Gtk.Menu(), grp, recursive, null)
 		{
@@ -81,11 +84,15 @@ namespace Cpg.Studio
 
 			Gtk.MenuItem item = new Gtk.MenuItem(template.Id);
 			item.Show();
+			
+			item.Activated += delegate {
+				Activated(this, template);
+			};
 
 			menu.Append(item);
-				
+			
 			d_map[template] = new MenuInfo(item, menu);
-				
+
 			if (d_recursive && template is Wrappers.Group)
 			{
 				Gtk.Menu sub = new Gtk.Menu();
@@ -144,6 +151,11 @@ namespace Cpg.Studio
 		
 		private void HandleChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
 		{
+			if (!d_map.ContainsKey(child))
+			{
+				return;
+			}
+
 			Gtk.Menu sub = d_map[child].Menu;
 			sub.Remove(d_map[child].Item);
 			
