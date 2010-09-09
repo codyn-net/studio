@@ -50,11 +50,11 @@ PKG_CHECK_MODULES([GTK_SHARP_20], [gtk-sharp-2.0])
 PKG_CHECK_MODULES([GLIB_SHARP_20], [glib-sharp-2.0])
 
 dnl package checks, per config
-PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp])
+PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp-1.0])
 
 dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
-UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp"
+UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp-1.0"
 INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES >= 1.1\"`"
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
