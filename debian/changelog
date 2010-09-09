@@ -1,3 +1,9 @@
+cpgstudio (1.2-2) UNRELEASED; urgency=low
+
+  * Update cpg-network-sharp dependency
+
+ -- Jesse van den Kieboom <jvanden@grijpc10.epfl.ch>  Wed, 08 Sep 2010 17:47:32 +0200
+
 cpgstudio (1.2-1) UNRELEASED; urgency=low
 
   * New upstream release

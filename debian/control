@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 7),
 			   cdbs,
 			   pkg-config,
 			   mono-devel | mono-gmcs,
-			   cpg-network-sharp1 (>= 1.1),
+			   cpg-network1-sharp (>= 1.2),
 			   gtk-sharp2,
 			   libmono-cairo2.0-cil
 Standards-Version: 3.8.0
@@ -16,6 +16,6 @@ Homepage: http://birg.epfl.ch
 Package: cpgstudio
 Section: editors
 Architecture: any
-Depends: cpg-network-sharp1 (>= 1.1), gtk-sharp2, libmono-cairo2.0-cil
+Depends: cpg-network1-sharp (>= 1.2), gtk-sharp2, libmono-cairo2.0-cil
 Description: cpg network designer studio
  A designer studio for cpg network
