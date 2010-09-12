@@ -44,50 +44,97 @@ RESGEN=resgen2
 all: $(ASSEMBLY) $(PROGRAMFILES) $(BINARIES)
 
 FILES = \
+	Cpg.Studio/Actions.cs \
 	Cpg.Studio/Allocation.cs \
 	Cpg.Studio/Application.cs \
 	Cpg.Studio/AssemblyInfo.cs \
+	Cpg.Studio.Clipboard/Internal.cs \
+	Cpg.Studio.Dialogs/Functions.cs \
+	Cpg.Studio.Dialogs/Interpolate.cs \
+	Cpg.Studio.Dialogs/Property.cs \
 	Cpg.Studio/Directories.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
-	Cpg.Studio/FunctionsDialog.cs \
-	Cpg.Studio/FunctionsView.cs \
-	Cpg.Studio/Graph.cs \
-	Cpg.Studio/Grid.cs \
-	Cpg.Studio/GroupProperties.cs \
-	Cpg.Studio/InterpolateDialog.cs \
-	Cpg.Studio/MessageArea.cs \
-	Cpg.Studio/Monitor.cs \
-	Cpg.Studio/ObjectView.cs \
-	Cpg.Studio/PolynomialsView.cs \
-	Cpg.Studio/PropertyDialog.cs \
-	Cpg.Studio/PropertyView.cs \
-	Cpg.Studio/Range.cs \
-	Cpg.Studio/RenderCache.cs \
-	Cpg.Studio/Settings.cs \
-	Cpg.Studio/Simulation.cs \
-	Cpg.Studio/Stock.cs \
-	Cpg.Studio/Table.cs \
-	Cpg.Studio/Utils.cs \
-	Cpg.Studio/Window.cs \
 	Cpg.Studio.Interpolators/IInterpolator.cs \
 	Cpg.Studio.Interpolators/Interpolation.cs \
 	Cpg.Studio.Interpolators/PChip.cs \
+	Cpg.Studio/Point.cs \
+	Cpg.Studio/Range.cs \
+	Cpg.Studio/RenderCache.cs \
 	Cpg.Studio.Renderers/Box.cs \
 	Cpg.Studio.Renderers/Default.cs \
 	Cpg.Studio.Renderers/Group.cs \
+	Cpg.Studio.Renderers/Link.cs \
 	Cpg.Studio.Renderers/Oscillator.cs \
 	Cpg.Studio.Renderers/Renderer.cs \
 	Cpg.Studio.Renderers/State.cs \
+	Cpg.Studio.Serialization/FunctionPolynomial.cs \
+	Cpg.Studio.Serialization/Functions.cs \
 	Cpg.Studio.Serialization/Group.cs \
 	Cpg.Studio.Serialization/Link.cs \
-	Cpg.Studio/Loader.cs \
-	Cpg.Studio.Serialization/Main.cs \
 	Cpg.Studio.Serialization/Network.cs \
 	Cpg.Studio.Serialization/Object.cs \
 	Cpg.Studio.Serialization/Project.cs \
-	Cpg.Studio.Serialization/Property.cs \
-	Cpg.Studio/Saver.cs \
 	Cpg.Studio.Serialization/State.cs \
+	Cpg.Studio.Serialization/Templates.cs \
+	Cpg.Studio/Settings.cs \
+	Cpg.Studio/Simulation.cs \
+	Cpg.Studio/Stock.cs \
+	Cpg.Studio.Undo/AddFunctionPolynomialPiece.cs \
+	Cpg.Studio.Undo/AddGroup.cs \
+	Cpg.Studio.Undo/AddLinkAction.cs \
+	Cpg.Studio.Undo/AddObject.cs \
+	Cpg.Studio.Undo/AddProperty.cs \
+	Cpg.Studio.Undo/AttachLink.cs \
+	Cpg.Studio.Undo/Function.cs \
+	Cpg.Studio.Undo/FunctionPolynomialPiece.cs \
+	Cpg.Studio.Undo/Group.cs \
+	Cpg.Studio.Undo/IAction.cs \
+	Cpg.Studio.Undo/LinkAction.cs \
+	Cpg.Studio.Undo/Manager.cs \
+	Cpg.Studio.Undo/ModifyExpression.cs \
+	Cpg.Studio.Undo/ModifyFunctionArguments.cs \
+	Cpg.Studio.Undo/ModifyFunctionPolynomialPieceBegin.cs \
+	Cpg.Studio.Undo/ModifyFunctionPolynomialPieceCoefficients.cs \
+	Cpg.Studio.Undo/ModifyFunctionPolynomialPieceEnd.cs \
+	Cpg.Studio.Undo/ModifyIntegrator.cs \
+	Cpg.Studio.Undo/ModifyLinkActionEquation.cs \
+	Cpg.Studio.Undo/ModifyLinkActionTarget.cs \
+	Cpg.Studio.Undo/ModifyObjectId.cs \
+	Cpg.Studio.Undo/ModifyProperty.cs \
+	Cpg.Studio.Undo/ModifyProxy.cs \
+	Cpg.Studio.Undo/MoveObject.cs \
+	Cpg.Studio.Undo/Object.cs \
+	Cpg.Studio.Undo/Property.cs \
+	Cpg.Studio.Undo/RemoveFunctionPolynomialPiece.cs \
+	Cpg.Studio.Undo/RemoveLinkAction.cs \
+	Cpg.Studio.Undo/RemoveObject.cs \
+	Cpg.Studio.Undo/RemoveProperty.cs \
+	Cpg.Studio.Undo/Ungroup.cs \
+	Cpg.Studio/Utils.cs \
+	Cpg.Studio.Widgets/AddRemovePopup.cs \
+	Cpg.Studio.Widgets/FunctionNode.cs \
+	Cpg.Studio.Widgets/FunctionPolynomialNode.cs \
+	Cpg.Studio.Widgets/FunctionPolynomialPieceNode.cs \
+	Cpg.Studio.Widgets/FunctionsHelper.cs \
+	Cpg.Studio.Widgets/FunctionsView.cs \
+	Cpg.Studio.Widgets/GenericFunctionNode.cs \
+	Cpg.Studio.Widgets/Graph.cs \
+	Cpg.Studio.Widgets/Grid.cs \
+	Cpg.Studio.Widgets/MessageArea.cs \
+	Cpg.Studio.Widgets/Monitor.cs \
+	Cpg.Studio.Widgets/NodeStore.cs \
+	Cpg.Studio.Widgets/Notebook.cs \
+	Cpg.Studio.Widgets/ObjectView.cs \
+	Cpg.Studio.Widgets/Pathbar.cs \
+	Cpg.Studio.Widgets/PolynomialsView.cs \
+	Cpg.Studio.Widgets/PropertyView.cs \
+	Cpg.Studio.Widgets/ScrolledWindow.cs \
+	Cpg.Studio.Widgets/Table.cs \
+	Cpg.Studio.Widgets/TemplatesMenu.cs \
+	Cpg.Studio.Widgets/TreeView.cs \
+	Cpg.Studio.Widgets/Window.cs \
+	Cpg.Studio.Wrappers/Function.cs \
+	Cpg.Studio.Wrappers/FunctionPolynomial.cs \
 	Cpg.Studio.Wrappers/Graphical.cs \
 	Cpg.Studio.Wrappers/Group.cs \
 	Cpg.Studio.Wrappers/Link.cs \

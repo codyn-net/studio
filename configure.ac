@@ -54,14 +54,14 @@ PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp-2.0])
 
 dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
-UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp"
+UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp-2.0"
 INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES >= 1.1\"`"
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
 AC_CONFIG_FILES([
 cpgstudio
 Makefile
-Directories.cs
+Cpg.Studio/Directories.cs
 ])
 
 AC_OUTPUT
