@@ -683,6 +683,11 @@ namespace Cpg.Studio.Widgets
 		
 		private void DrawRuler(Cairo.Context ctx)
 		{
+			if (d_ruler == null)
+			{
+				return;
+			}
+
 			ctx.SetSourceRGB(0.5, 0.6, 1);
 			ctx.LineWidth = 1;
 			ctx.MoveTo(d_ruler.X + 0.5, 0);
@@ -690,7 +695,9 @@ namespace Cpg.Studio.Widgets
 			ctx.Stroke();
 			
 			if (d_data.Count == 0)
+			{
 				return;
+			}
 			
 			Container container = d_data[d_ruleWhich];
 
