@@ -250,7 +250,7 @@ namespace Cpg.Studio.Widgets
 				Point pos = ChildPosition(child);
 				
 				all.RemoveAll(delegate (Point pt) {
-					return pt == pos;
+					return pt.Equals(pos);
 				});
 			}
 			

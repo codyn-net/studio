@@ -4,6 +4,7 @@ namespace Cpg.Studio
 {
 	public class Point
 	{
+		private static double Epsilon = 0.00000001;
 		public double X;
 		public double Y;
 		
@@ -22,19 +23,21 @@ namespace Cpg.Studio
 			return String.Format("[Point: x = {0}, y = {1}]", X, Y);
 		}
 		
-		public static bool operator==(Point a, Point b)
-		{
-			return a.X == b.X && a.Y == b.Y;
-		}
-		
-		public static bool operator!=(Point a, Point b)
-		{
-			return !(a == b);
-		}
-		
 		public override bool Equals(object obj)
 		{
-			return base.Equals(obj);
+			if (obj == null)
+			{
+				return false;
+			}
+			
+			Point other = obj as Point;
+			
+			if (other == null)
+			{
+				return false;
+			}
+			
+			return Math.Abs(X - other.X) < Epsilon && Math.Abs(Y - other.Y) < Epsilon;
 		}
 		
 		public override int GetHashCode()

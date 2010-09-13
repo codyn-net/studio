@@ -231,7 +231,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			// Draw the arrow, first move to the center, then rotate, then draw the arrow
 			xy = EvaluateBezier(points[0], points[1], points[2], points[3], 0.5);
 			
-			if (points[0] == points[3])
+			if (points[0].Equals(points[3]))
 			{
 				pos = 1.5 * Math.PI;
 			}
