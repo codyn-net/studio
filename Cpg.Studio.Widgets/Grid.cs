@@ -1167,8 +1167,12 @@ namespace Cpg.Studio.Widgets
 			{
 				d_hiddenLink.Invisible = false;
 				d_anchorDragHit.LinkFocus = false;
-
-				d_actions.Do(new Undo.AttachLink(d_hiddenLink as Wrappers.Link, d_anchorDragHit, d_anchorDragHit));
+				
+				int dx = (int)d_hiddenLink.Allocation.X;
+				int dy = (int)d_hiddenLink.Allocation.Y;
+				
+				d_actions.Do(new Undo.Group(new Undo.MoveObject(d_hiddenLink, -dx, -dy),
+				                            new Undo.AttachLink(d_hiddenLink as Wrappers.Link, d_anchorDragHit, d_anchorDragHit)));
 
 				d_anchorDragHit = null;
 				d_hiddenLink = null;
