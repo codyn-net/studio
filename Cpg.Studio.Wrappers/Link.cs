@@ -155,6 +155,11 @@ namespace Cpg.Studio.Wrappers
 				RecalculateLinkOffsets(d_from, d_to);
 				
 				d_from.LinkFocus = LinkFocus;
+				
+				if (d_to != null)
+				{
+					Allocation.Assign(0, 0, 1, 1);
+				}
 			}
 		}
 		
@@ -179,6 +184,11 @@ namespace Cpg.Studio.Wrappers
 				RecalculateLinkOffsets(d_from, d_to);
 				
 				d_to.LinkFocus = LinkFocus;
+				
+				if (d_from != null)
+				{
+					Allocation.Assign(0, 0, 1, 1);
+				}
 			}
 		}
 		

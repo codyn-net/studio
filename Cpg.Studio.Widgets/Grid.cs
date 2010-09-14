@@ -50,6 +50,8 @@ namespace Cpg.Studio.Widgets
 		private Point d_dragAnchorState;
 		private Wrappers.Wrapper d_anchorDragHit;
 		
+		private Wrappers.Wrapper d_hiddenLink;
+		
 		public Grid(Wrappers.Network network, Actions actions) : base()
 		{
 			AddEvents((int)(Gdk.EventMask.Button1MotionMask |
@@ -921,7 +923,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void DrawDraggingAnchor(Cairo.Context graphics)
 		{
-			if (d_anchor == null)
+			if (d_anchor == null && d_anchorDragHit == null)
 			{
 				return;
 			}
@@ -931,7 +933,12 @@ namespace Cpg.Studio.Widgets
 			Allocation fromAlloc;
 			Allocation toAlloc;
 			
-			if (d_anchor.IsFrom)
+			if (d_anchor == null)
+			{
+				toAlloc = d_anchorDragHit.Allocation;
+				fromAlloc = d_anchorDragHit.Allocation;
+			}
+			else if (d_anchor.IsFrom)
 			{
 				toAlloc = d_anchor.Link.To.Allocation;
 				fromAlloc = new Allocation(d_dragAnchorState.X, d_dragAnchorState.Y, 1, 1);
@@ -950,7 +957,10 @@ namespace Cpg.Studio.Widgets
 			
 			graphics.Restore();
 			
-			DrawAnchor(graphics, new Point(d_dragAnchorState.X + 0.5, d_dragAnchorState.Y + 0.5));
+			if (d_dragAnchorState != null)
+			{
+				DrawAnchor(graphics, new Point(d_dragAnchorState.X + 0.5, d_dragAnchorState.Y + 0.5));
+			}
 		}
 		
 		private void DrawObjects(Cairo.Context graphics)
@@ -977,7 +987,7 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 			
-			if (d_isDraggingAnchor)
+			if (d_isDraggingAnchor || d_isDragging)
 			{
 				DrawDraggingAnchor(graphics);
 			}
@@ -1136,16 +1146,15 @@ namespace Cpg.Studio.Widgets
 		{
 			base.OnButtonReleaseEvent(evnt);
 			
+			d_isDragging = false;
+			
 			if (d_isDraggingAnchor)
 			{
 				d_isDraggingAnchor = false;
 				
 				if (d_anchorDragHit != null)
 				{
-					if (d_anchorDragHit != d_anchor.Other)
-					{
-						d_anchorDragHit.LinkFocus = false;
-					}
+					d_anchorDragHit.LinkFocus = false;
 					
 					// Do the actual reconnecting!
 					ReattachFromAnchor();
@@ -1154,8 +1163,17 @@ namespace Cpg.Studio.Widgets
 
 				LinkAnchorTest(evnt.X, evnt.Y);
 			}
+			else if (d_anchorDragHit != null)
+			{
+				d_hiddenLink.Invisible = false;
+				d_anchorDragHit.LinkFocus = false;
+
+				d_actions.Do(new Undo.AttachLink(d_hiddenLink as Wrappers.Link, d_anchorDragHit, d_anchorDragHit));
+
+				d_anchorDragHit = null;
+				d_hiddenLink = null;
+			}
 			
-			d_isDragging = false;
 			d_mouseRect = new Allocation(0, 0, 0, 0);
 			d_beforeDragSelection = null;
 			
@@ -1309,6 +1327,48 @@ namespace Cpg.Studio.Widgets
 				       false);
 
 				ModifiedView(this, new EventArgs());
+				
+				if (d_anchorDragHit != null)
+				{
+					d_anchorDragHit.LinkFocus = false;
+					d_anchorDragHit = null;
+					
+					d_hiddenLink.Invisible = false;
+					
+					QueueDraw();
+				}
+				
+				if (selection.Count == 1 && selection[0] is Wrappers.Link)
+				{
+					List<Wrappers.Wrapper> hits = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
+					hits.RemoveAll(item => item is Wrappers.Link);
+					
+					if (hits.Count > 0)
+					{
+						d_anchorDragHit = hits[0];
+						d_anchorDragHit.LinkFocus = true;
+						
+						d_hiddenLink = selection[0];
+						d_hiddenLink.Invisible = true;
+						
+						QueueDraw();
+					}
+				}
+			}
+			else if (d_anchorDragHit != null)
+			{
+				List<Wrappers.Wrapper> hits = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
+				hits.RemoveAll(item => item is Wrappers.Link);
+				
+				if (hits.Count == 0)
+				{
+					d_anchorDragHit.LinkFocus = false;
+					d_anchorDragHit = null;
+					
+					d_hiddenLink.Invisible = false;
+					
+					QueueDraw();
+				}
 			}
 			
 			return true;

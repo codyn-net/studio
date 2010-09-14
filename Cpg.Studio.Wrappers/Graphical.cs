@@ -14,7 +14,8 @@ namespace Cpg.Studio.Wrappers
 			Selected = 1 << 0,
 			KeyFocus = 1 << 1,
 			MouseFocus = 1 << 2,
-			LinkFocus = 1 << 3
+			LinkFocus = 1 << 3,
+			Invisible = 1 << 4
 		}
 			
 		public event EventHandler RequestRedraw = delegate {};
@@ -79,6 +80,12 @@ namespace Cpg.Studio.Wrappers
 		{
 			get { return FromState(State.LinkFocus); }
 			set { ToState(State.LinkFocus, value); }
+		}
+		
+		public bool Invisible
+		{
+			get { return FromState(State.Invisible); }
+			set { ToState(State.Invisible, value); }
 		}
 		
 		public Allocation Allocation
@@ -256,6 +263,11 @@ namespace Cpg.Studio.Wrappers
 
 		public virtual void Draw(Cairo.Context graphics)
 		{
+			if (Invisible)
+			{
+				return;
+			}
+
 			if (Renderer != null)
 			{
 				Renderer.Draw(graphics);
