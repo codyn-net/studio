@@ -44,6 +44,25 @@ namespace Cpg.Studio
 		{
 			return base.GetHashCode();
 		}
+		
+		public double this[int idx]
+		{
+			get
+			{
+				return idx == 0 ? X : Y;
+			}
+			set
+			{
+				if (idx == 0)
+				{
+					X = value;
+				}
+				else
+				{
+					Y = value;
+				}
+			}
+		}
 	}
 }
 
