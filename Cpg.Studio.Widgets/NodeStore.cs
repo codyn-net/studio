@@ -1073,7 +1073,7 @@ namespace Cpg.Studio.Widgets
 			return (T)base.FindPath(path);
 		}
 
-		public new T GetFromIter(TreeIter iter)
+		public T GetFromIter(TreeIter iter)
 		{
 			return (T)base.GetFromIter<T>(iter);
 		}
