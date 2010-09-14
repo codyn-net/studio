@@ -7,6 +7,7 @@ namespace Cpg.Studio.Wrappers
 	public class Wrapper : Graphical, IDisposable
 	{
 		public delegate void PropertyHandler(Wrapper source, Cpg.Property property);
+		public delegate void TemplateHandler(Wrapper source, Wrapper template);
 
 		protected Cpg.Object d_object;
 		protected List<Wrappers.Link> d_links;
@@ -14,6 +15,8 @@ namespace Cpg.Studio.Wrappers
 		public event PropertyHandler PropertyAdded = delegate {};
 		public event PropertyHandler PropertyRemoved = delegate {}; 
 		public event PropertyHandler PropertyChanged = delegate {};
+		public event TemplateHandler TemplateApplied = delegate {};
+		public event TemplateHandler TemplateUnapplied = delegate {};
 		
 		public static string WrapperDataKey = "CpgStudioWrapperDataKey";
 		
@@ -291,6 +294,9 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.PropertyRemoved -= HandlePropertyRemoved;
 			WrappedObject.PropertyChanged -= HandlePropertyChanged;
 			WrappedObject.Copied -= HandleCopied;
+			
+			WrappedObject.TemplateApplied -= HandleTemplateApplied;
+			WrappedObject.TemplateUnapplied -= HandleTemplateUnapplied;
 		}
 		
 		protected virtual void ConnectWrapped()
@@ -301,6 +307,18 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.PropertyRemoved += HandlePropertyRemoved;
 			WrappedObject.PropertyChanged += HandlePropertyChanged;
 			WrappedObject.Copied += HandleCopied;
+			WrappedObject.TemplateApplied += HandleTemplateApplied;
+			WrappedObject.TemplateUnapplied += HandleTemplateUnapplied;
+		}
+
+		private void HandleTemplateUnapplied(object o, TemplateUnappliedArgs args)
+		{
+			TemplateUnapplied(this, args.Templ);
+		}
+
+		private void HandleTemplateApplied(object o, TemplateAppliedArgs args)
+		{
+			TemplateApplied(this, args.Templ);
 		}
 
 		private void HandleCopied(object o, CopiedArgs args)
@@ -441,6 +459,16 @@ namespace Cpg.Studio.Wrappers
 					return Parent.TopParent;
 				}
 			}
+		}
+		
+		public void ApplyTemplate(Wrappers.Wrapper template)
+		{
+			WrappedObject.ApplyTemplate(template.WrappedObject);
+		}
+		
+		public void UnapplyTemplate(Wrappers.Wrapper template)
+		{
+			WrappedObject.UnapplyTemplate(template.WrappedObject);
 		}
 	}
 }

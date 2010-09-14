@@ -52,7 +52,7 @@
     <menu name="InsertMenu" action="InsertMenuAction">
     </menu>
   </menubar>
-  <popup>
+  <popup name="GridPopup">
     <menu name="InsertMenu" action="InsertMenuAction">
     </menu>
     <separator/>
@@ -85,5 +85,9 @@
     <toolitem name="Group" action="GroupAction"/>
     <toolitem name="Ungroup" action="UngroupAction"/>
   </toolbar>
+  <popup name="TemplatePopup">
+  	<menuitem name="EditTemplate" action="EditTemplateAction"/>
+  	<menuitem name="RemoveTemplate" action="RemoveTemplateAction"/>
+  </popup>
 </ui>
 

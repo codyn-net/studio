@@ -42,6 +42,9 @@ namespace Cpg.Studio.Widgets
 		private WindowGroup d_windowGroup;
 		private TemplatesMenu d_stateTemplatesMenu;
 		private TemplatesMenu d_linkTemplatesMenu;
+		
+		private Wrappers.Wrapper d_templatePopupObject;
+		private Wrappers.Wrapper d_templatePopupTemplate;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -247,7 +250,10 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("MonitorMenuAction", null, "Monitor", null, null, null),
 				new ActionEntry("ControlMenuAction", null, "Control", null, null, null),
 				new ActionEntry("PropertiesAction", null, "Properties", null, null, OnPropertiesActivated),
-				new ActionEntry("EditGroupAction", null, "Edit group", null, null, OnEditGroupActivated)
+				new ActionEntry("EditGroupAction", null, "Edit group", null, null, OnEditGroupActivated),
+				
+				new ActionEntry("EditTemplateAction", null, "Edit template", null, null, OnEditTemplateActivated),
+				new ActionEntry("RemoveTemplateAction", null, "Unapply template", null, null, OnRemoveTemplateActivated),
 			});
 			
 			d_normalGroup.Add(new ToggleActionEntry[] {
@@ -277,7 +283,7 @@ namespace Cpg.Studio.Widgets
 			VBox vbox = new VBox(false, 0);
 			
 			CreateInsertMenu("/menubar/InsertMenu");
-			CreateInsertMenu("/popup/InsertMenu");
+			CreateInsertMenu("/GridPopup/InsertMenu");
 			CreateTemplatesTool();
 
 			vbox.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
@@ -652,6 +658,8 @@ namespace Cpg.Studio.Widgets
 			Dialogs.Property dlg = new Dialogs.Property(this, obj);
 			PositionWindow(dlg);
 			
+			dlg.View.TemplateActivated += HandlePropertyTemplateActivated;
+			
 			dlg.View.Error += delegate (object s, Exception exception)
 			{
 				Message(Gtk.Stock.DialogInfo, "Error while editing property", exception);
@@ -719,7 +727,7 @@ namespace Cpg.Studio.Widgets
 				d_uimanager.AddUi(d_popupMergeId, "/popup/MonitorMenu/MonitorPlaceholder", name, name + "Action", UIManagerItemType.Menuitem, false);
 			}
 			
-			Widget menu = d_uimanager.GetWidget("/popup");
+			Widget menu = d_uimanager.GetWidget("/GridPopup");
 			menu.ShowAll();
 			(menu as Menu).Popup(null, null, null, (uint)button, (uint)time);
 		}
@@ -1582,6 +1590,8 @@ namespace Cpg.Studio.Widgets
 						Message(Gtk.Stock.DialogError, "Error while editing property", exception);
 					};
 					
+					d_propertyView.TemplateActivated += HandlePropertyTemplateActivated;
+					
 					d_vpaned.Pack2(d_propertyView, false, false);
 				}
 				
@@ -1590,10 +1600,30 @@ namespace Cpg.Studio.Widgets
 			else
 			{
 				if (d_propertyView != null)
+				{
 					d_propertyView.Destroy();
+				}
 				
 				d_propertyView = null;
 			}
+		}
+		
+		private void HandlePropertyTemplateActivated(object source, Wrappers.Wrapper template)
+		{
+			PropertyView view = source as PropertyView;
+			
+			if (view.Object == null)
+			{
+				return;
+			}
+			
+			d_templatePopupObject = view.Object;
+			d_templatePopupTemplate = template;
+			
+			Widget menu = d_uimanager.GetWidget("/TemplatePopup");
+			menu.ShowAll();
+
+			(menu as Menu).Popup(null, null, null, 0, 0);
 		}
 					
 		private void OnZoomInActivated(object sender, EventArgs args)
@@ -1821,6 +1851,19 @@ namespace Cpg.Studio.Widgets
 		private void OnEditFunctionsActivated(object sender, EventArgs args)
 		{
 			ShowFunctions();
+		}
+		
+		private void OnEditTemplateActivated(object sender, EventArgs args)
+		{
+			d_grid.UnselectAll();
+			d_grid.Select(d_templatePopupTemplate);
+		}
+		
+		private void OnRemoveTemplateActivated(object sender, EventArgs args)
+		{
+			HandleError(delegate () {
+				d_actions.UnapplyTemplate(d_templatePopupObject, d_templatePopupTemplate);
+			}, "An error occurred while unapplying the template");
 		}
 	}
 }

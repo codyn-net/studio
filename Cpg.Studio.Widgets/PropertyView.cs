@@ -121,8 +121,10 @@ namespace Cpg.Studio.Widgets
 		}
 
 		public delegate void ErrorHandler(object source, Exception exception);
+		public delegate void TemplateHandler(object source, Wrappers.Wrapper template);
 		
 		public event ErrorHandler Error = delegate {};
+		public event TemplateHandler TemplateActivated = delegate {};
 		
 		private Wrappers.Wrapper d_object;
 		private NodeStore<PropertyNode> d_store;
@@ -141,6 +143,7 @@ namespace Cpg.Studio.Widgets
 		private HBox d_extraControl;
 		private HPaned d_paned;
 		private Entry d_entry;
+		private HBox d_templateParent;
 		
 		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base(false, 3)
 		{
@@ -150,6 +153,14 @@ namespace Cpg.Studio.Widgets
 			d_actions = actions;
 
 			Initialize(obj);
+		}
+		
+		public Wrappers.Wrapper Object
+		{
+			get
+			{
+				return d_object;
+			}
 		}
 		
 		public PropertyView(Actions actions) : this(actions, null)
@@ -370,6 +381,9 @@ namespace Cpg.Studio.Widgets
 			
 			d_object.WrappedObject.RemoveNotification("id", HandleIdChanged);
 			
+			d_object.TemplateApplied -= HandleTemplateChanged;
+			d_object.TemplateUnapplied -= HandleTemplateChanged;
+			
 			if (d_object is Wrappers.Group)
 			{
 				Wrappers.Group grp = (Wrappers.Group)d_object;
@@ -396,6 +410,9 @@ namespace Cpg.Studio.Widgets
 			
 			d_object.WrappedObject.AddNotification("id", HandleIdChanged);
 			
+			d_object.TemplateApplied += HandleTemplateChanged;
+			d_object.TemplateUnapplied += HandleTemplateChanged;
+			
 			if (d_object is Wrappers.Group)
 			{
 				Wrappers.Group grp = (Wrappers.Group)d_object;
@@ -409,6 +426,11 @@ namespace Cpg.Studio.Widgets
 				link.ActionAdded += HandleLinkActionAdded;
 				link.ActionRemoved += HandleLinkActionRemoved;
 			}
+		}
+
+		private void HandleTemplateChanged(Wrappers.Wrapper source, Wrappers.Wrapper template)
+		{
+			RebuildTemplateWidgets();
 		}
 
 		private void HandleLinkActionRemoved(object source, Cpg.LinkAction action)
@@ -435,6 +457,58 @@ namespace Cpg.Studio.Widgets
 				TreePath path = d_actionStore.GetPath(iter);					
 				d_actionView.SetCursor(path, d_actionView.GetColumn(0), true);
 			}			
+		}
+		
+		private void RebuildTemplateWidgets()
+		{
+			Wrappers.Wrapper[] templates = d_object.AppliedTemplates;
+			Widget[] children = d_templateParent.Children;
+			
+			for (int i = 0; i < children.Length; ++i)
+			{
+				d_templateParent.Remove(children[i]);
+			}
+
+			for (int i = 0; i < templates.Length; ++i)
+			{
+				Wrappers.Wrapper template = templates[i];
+
+				if (i != 0)
+				{
+					Label comma = new Label(", ");
+					comma.Show();
+					d_templateParent.PackStart(comma, false, false, 0);
+				}
+				
+				Label temp = new Label(String.Format("<span underline=\"single\">{0}</span>", System.Security.SecurityElement.Escape(template.ToString())));
+				temp.UseMarkup = true;
+				
+				EventBox box = new EventBox();
+				box.Show();
+				box.Add(temp);
+
+				temp.StyleSet += HandleTemplateLabelStyleSet;
+
+				box.Realized += delegate(object sender, EventArgs e) {
+					box.GdkWindow.Cursor = new Gdk.Cursor(Gdk.CursorType.Hand1);
+				};
+				
+				temp.Show();
+				d_templateParent.PackStart(box, false, false, 0);
+				
+				box.ButtonPressEvent += delegate(object o, ButtonPressEventArgs args) {
+					TemplateActivated(this, template);
+				};
+			}
+			
+			if (templates.Length == 0)
+			{
+				Label lbl = new Label("<i>none</i>");
+				lbl.UseMarkup = true;
+				lbl.Show();
+				
+				d_templateParent.PackStart(lbl, false, false, 0);
+			}
 		}
 		
 		private void AddIdUI()
@@ -472,19 +546,38 @@ namespace Cpg.Studio.Widgets
 			
 			hbox.PackStart(d_entry, false, false, 0);
 			
-			Wrappers.Wrapper[] templates = d_object.AppliedTemplates;
+			HBox templateBox = new HBox(false, 0);
 			
-			if (templates.Length != 0)
-			{
-				string text = String.Join(", ", Array.ConvertAll<Wrappers.Wrapper, string>(templates, item => item.ToString()));
+			lbl = new Label("« (");
+			lbl.Show();
 
-				lbl = new Label("« (" + text + ")");
-				lbl.Show();
-
-				hbox.PackStart(lbl, false, false, 0);
-			}
+			templateBox.PackStart(lbl, false, false, 0);
 			
+			d_templateParent = new HBox(false, 0);
+			
+			RebuildTemplateWidgets();
+			templateBox.PackStart(d_templateParent, false, false, 0);
+			
+			lbl = new Label(")");
+			lbl.Show();
+			templateBox.PackStart(lbl, false, false, 0);
+			
+			hbox.PackStart(templateBox, false, false, 0);
 			d_extraControl.PackStart(hbox, false, false, 0);
+		}
+
+		private void HandleTemplateLabelStyleSet(object o, StyleSetArgs args)
+		{
+			Label lbl = o as Label;
+
+			Gdk.Color linkColor = (Gdk.Color)lbl.StyleGetProperty("link-color");
+			
+			lbl.StyleSet -= HandleTemplateLabelStyleSet;
+			lbl.ModifyFg(StateType.Normal, linkColor);
+			lbl.ModifyFg(StateType.Prelight, linkColor);
+			lbl.ModifyFg(StateType.Active, linkColor);
+			lbl.ModifyFg(StateType.Insensitive, linkColor);
+			lbl.StyleSet += HandleTemplateLabelStyleSet;
 		}
 
 		private void ModifyId()
