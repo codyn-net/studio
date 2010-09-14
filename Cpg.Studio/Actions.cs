@@ -564,6 +564,20 @@ namespace Cpg.Studio
 			{
 				throw new Exception(String.Format("The template type `{0}' cannot be applied to any of the selected objects", tempType.Name));
 			}
+			
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			foreach (Wrappers.Wrapper wrapper in sel)
+			{
+				actions.Add(new Undo.ApplyTemplate(wrapper, template));
+			}
+			
+			Do(new Undo.Group(actions));
+		}
+		
+		public void UnapplyTemplate(Wrappers.Wrapper obj, Wrappers.Wrapper template)
+		{
+			Do(new Undo.UnapplyTemplate(obj, template));
 		}
 		
 		public void Do(Undo.IAction action)
