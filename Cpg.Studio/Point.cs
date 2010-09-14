@@ -18,6 +18,10 @@ namespace Cpg.Studio
 		{
 		}
 		
+		public Point(Point other) : this(other.X, other.Y)
+		{
+		}
+		
 		public override string ToString()
 		{
 			return String.Format("[Point: x = {0}, y = {1}]", X, Y);
