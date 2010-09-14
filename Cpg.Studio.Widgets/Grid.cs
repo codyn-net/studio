@@ -11,6 +11,7 @@ namespace Cpg.Studio.Widgets
 		public static int DefaultZoom = 50;
 		public static int MaxZoom = 160;
 		public static int MinZoom = 10;
+		private static int AnchorRadius = 6;
 
 		public delegate void ObjectEventHandler(object source, Wrappers.Wrapper obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
@@ -44,6 +45,7 @@ namespace Cpg.Studio.Widgets
 		private double[] d_gridLine;
 		
 		private RenderCache d_gridCache;
+		private Point d_anchor;
 		
 		public Grid(Wrappers.Network network, Actions actions) : base()
 		{
@@ -494,9 +496,50 @@ namespace Cpg.Studio.Widgets
 			QueueDraw();
 		}
 		
+		private bool LinkAnchorTest(Wrappers.Link link, List<Point> anchors, double x, double y, out Point anchor)
+		{
+			anchor = null;
+
+			if (anchors == null)
+			{
+				return false;
+			}
+			
+			double radius = (double)AnchorRadius / ZoomLevel;
+			
+			foreach (Point pt in anchors)
+			{
+				double dx = (pt.X - x);
+				double dy = (pt.Y - y);
+				
+				if (System.Math.Sqrt(dx * dx + dy * dy) < radius)
+				{
+					anchor = pt;
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		
+		private void QueueDrawAnchor(Point anchor)
+		{
+			int px = (int)(anchor.X * ZoomLevel - ActiveGroup.X);
+			int py = (int)(anchor.Y * ZoomLevel - ActiveGroup.Y);
+
+			QueueDrawArea(px - AnchorRadius * 2, py - AnchorRadius * 2, AnchorRadius * 4, AnchorRadius * 4);
+		}
+		
 		private void DoMouseInOut(double x, double y)
 		{
 			List<Wrappers.Wrapper> objects = HitTest(new Allocation(x, y, 1, 1));
+			
+			if (d_anchor != null)
+			{
+				QueueDrawAnchor(d_anchor);
+			}
+
+			d_anchor = null;
 			
 			d_hover.RemoveAll(delegate (Wrappers.Wrapper obj) {
 				if (objects.Count == 0 || obj != objects[0])
@@ -514,6 +557,31 @@ namespace Cpg.Studio.Widgets
 			{
 				objects[0].MouseFocus = true;
 				d_hover.Add(objects[0]);
+			}
+			
+			x = Scaled(x + ActiveGroup.X);
+			y = Scaled(y + ActiveGroup.Y);
+			
+			foreach (Wrappers.Wrapper obj in objects)
+			{
+				Wrappers.Link link = obj as Wrappers.Link;
+				
+				if (link == null)
+				{
+					continue;
+				}
+				
+				if (LinkAnchorTest(link, link.FromAnchors, x, y, out d_anchor))
+				{
+					QueueDrawAnchor(d_anchor);
+					break;
+				}
+				
+				if (LinkAnchorTest(link, link.ToAnchors, x, y, out d_anchor))
+				{
+					QueueDrawAnchor(d_anchor);
+					break;
+				}
 			}
 		}
 		
@@ -788,6 +856,24 @@ namespace Cpg.Studio.Widgets
 			graphics.Restore();
 		}
 		
+		private void DrawAnchor(Cairo.Context graphics, Point pt)
+		{
+			graphics.Save();
+			double radius = graphics.LineWidth * 5;
+			
+			graphics.LineWidth *= 3;
+			
+			graphics.MoveTo(pt.X + radius, pt.Y);
+			graphics.Arc(pt.X, pt.Y, radius, 0, System.Math.PI * 2);
+			graphics.SetSourceRGB(0.3, 0.3, 0.3);
+			graphics.StrokePreserve();
+
+			graphics.SetSourceRGBA(0.6, 0.9, 0.6, 0.8);
+			graphics.Fill();
+			
+			graphics.Restore();
+		}
+		
 		private void DrawObjects(Cairo.Context graphics)
 		{
 			graphics.Save();
@@ -800,7 +886,9 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (Wrappers.Wrapper obj in ActiveGroup.Children)
 			{
-				if (!(obj is Wrappers.Link))
+				Wrappers.Link link = obj as Wrappers.Link;
+
+				if (link == null)
 				{
 					objects.Add(obj);
 				}
@@ -813,6 +901,11 @@ namespace Cpg.Studio.Widgets
 			foreach (Wrappers.Wrapper obj in objects)
 			{
 				DrawObject(graphics, obj);
+			}
+			
+			if (d_anchor != null)
+			{
+				DrawAnchor(graphics, d_anchor);
 			}
 
 			graphics.Restore();
@@ -925,12 +1018,11 @@ namespace Cpg.Studio.Widgets
 			if (evnt.Type == Gdk.EventType.ButtonRelease)
 			{
 				List<Wrappers.Wrapper> objects = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
-				Wrappers.Wrapper first = objects.Count > 0 ? objects[0] : null;
-				
-				if (first != null)
+
+				if (objects.Count > 0)
 				{
 					Point pos = ScaledPosition(evnt.X, evnt.Y);
-					first.Clicked(pos);
+					objects[0].Clicked(pos);
 				}
 			}
 			
