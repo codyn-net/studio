@@ -46,6 +46,7 @@ all: $(ASSEMBLY) $(PROGRAMFILES) $(BINARIES)
 FILES = \
 	Cpg.Studio/Actions.cs \
 	Cpg.Studio/Allocation.cs \
+	Cpg.Studio/Anchor.cs \
 	Cpg.Studio/Application.cs \
 	Cpg.Studio/AssemblyInfo.cs \
 	Cpg.Studio.Clipboard/Internal.cs \
@@ -84,6 +85,7 @@ FILES = \
 	Cpg.Studio.Undo/AddLinkAction.cs \
 	Cpg.Studio.Undo/AddObject.cs \
 	Cpg.Studio.Undo/AddProperty.cs \
+	Cpg.Studio.Undo/ApplyTemplate.cs \
 	Cpg.Studio.Undo/AttachLink.cs \
 	Cpg.Studio.Undo/Function.cs \
 	Cpg.Studio.Undo/FunctionPolynomialPiece.cs \
@@ -109,6 +111,8 @@ FILES = \
 	Cpg.Studio.Undo/RemoveLinkAction.cs \
 	Cpg.Studio.Undo/RemoveObject.cs \
 	Cpg.Studio.Undo/RemoveProperty.cs \
+	Cpg.Studio.Undo/Template.cs \
+	Cpg.Studio.Undo/UnapplyTemplate.cs \
 	Cpg.Studio.Undo/Ungroup.cs \
 	Cpg.Studio/Utils.cs \
 	Cpg.Studio.Widgets/AddRemovePopup.cs \
@@ -162,7 +166,8 @@ REFERENCES =  \
 	System.Drawing \
 	Mono.Cairo \
 	System.Xml \
-	$(CPGNETWORK_SHARP_LIBS)
+	$(CPGNETWORK_SHARP_LIBS) \
+	$(BIOROB_MATH_SHARP_LIBS)
 
 DLL_REFERENCES =
 

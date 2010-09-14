@@ -52,10 +52,12 @@ PKG_CHECK_MODULES([GLIB_SHARP_20], [glib-sharp-2.0])
 dnl package checks, per config
 PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp-2.0])
 
+PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
+
 dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
-UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp-2.0"
-INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES >= 1.1\"`"
+UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp-2.0 biorob-math-sharp-1.0"
+INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES\"`"
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
 AC_CONFIG_FILES([
