@@ -45,7 +45,7 @@ namespace Cpg.Studio.Widgets
 		private double[] d_gridLine;
 		
 		private RenderCache d_gridCache;
-		private Point d_anchor;
+		private Anchor d_anchor;
 		
 		public Grid(Wrappers.Network network, Actions actions) : base()
 		{
@@ -496,10 +496,8 @@ namespace Cpg.Studio.Widgets
 			QueueDraw();
 		}
 		
-		private bool LinkAnchorTest(Wrappers.Link link, List<Point> anchors, double x, double y, out Point anchor)
+		private bool LinkAnchorTest(Wrappers.Link link, Wrappers.Wrapper obj, List<Point> anchors, double x, double y)
 		{
-			anchor = null;
-
 			if (anchors == null)
 			{
 				return false;
@@ -514,7 +512,10 @@ namespace Cpg.Studio.Widgets
 				
 				if (System.Math.Sqrt(dx * dx + dy * dy) < radius)
 				{
-					anchor = pt;
+					d_anchor = new Anchor(link, obj, pt);
+					link.LinkFocus = true;
+
+					QueueDrawAnchor(d_anchor);
 					return true;
 				}
 			}
@@ -522,24 +523,67 @@ namespace Cpg.Studio.Widgets
 			return false;
 		}
 		
-		private void QueueDrawAnchor(Point anchor)
+		private void QueueDrawAnchor(Anchor anchor)
 		{
-			int px = (int)(anchor.X * ZoomLevel - ActiveGroup.X);
-			int py = (int)(anchor.Y * ZoomLevel - ActiveGroup.Y);
+			int px = (int)(anchor.Location.X * ZoomLevel - ActiveGroup.X);
+			int py = (int)(anchor.Location.Y * ZoomLevel - ActiveGroup.Y);
 
 			QueueDrawArea(px - AnchorRadius * 2, py - AnchorRadius * 2, AnchorRadius * 4, AnchorRadius * 4);
 		}
 		
+		private bool LinkAnchorTest(double x, double y)
+		{
+			x = Scaled(x + ActiveGroup.X);
+			y = Scaled(y + ActiveGroup.Y);
+
+			foreach (Wrappers.Wrapper obj in ActiveGroup.Children)
+			{
+				Wrappers.Link link = obj as Wrappers.Link;
+				
+				if (link == null)
+				{
+					continue;
+				}
+				
+				if (LinkAnchorTest(link, link.From, link.FromAnchors, x, y))
+				{
+					return true;
+				}
+				
+				if (LinkAnchorTest(link, link.To, link.ToAnchors, x, y))
+				{
+					return true;
+				}
+			}
+			
+			return false;
+		}
+		
 		private void DoMouseInOut(double x, double y)
 		{
-			List<Wrappers.Wrapper> objects = HitTest(new Allocation(x, y, 1, 1));
-			
 			if (d_anchor != null)
 			{
+				d_anchor.Link.LinkFocus = false;
+
 				QueueDrawAnchor(d_anchor);
 			}
 
 			d_anchor = null;
+			
+			// Link anchor testing always has priority
+			if (LinkAnchorTest(x, y))
+			{
+				foreach (Wrappers.Wrapper obj in d_hover)
+				{
+					obj.MouseFocus = false;
+				}
+
+				d_hover.Clear();
+				
+				return;
+			}
+			
+			List<Wrappers.Wrapper> objects = HitTest(new Allocation(x, y, 1, 1));
 			
 			d_hover.RemoveAll(delegate (Wrappers.Wrapper obj) {
 				if (objects.Count == 0 || obj != objects[0])
@@ -557,31 +601,6 @@ namespace Cpg.Studio.Widgets
 			{
 				objects[0].MouseFocus = true;
 				d_hover.Add(objects[0]);
-			}
-			
-			x = Scaled(x + ActiveGroup.X);
-			y = Scaled(y + ActiveGroup.Y);
-			
-			foreach (Wrappers.Wrapper obj in objects)
-			{
-				Wrappers.Link link = obj as Wrappers.Link;
-				
-				if (link == null)
-				{
-					continue;
-				}
-				
-				if (LinkAnchorTest(link, link.FromAnchors, x, y, out d_anchor))
-				{
-					QueueDrawAnchor(d_anchor);
-					break;
-				}
-				
-				if (LinkAnchorTest(link, link.ToAnchors, x, y, out d_anchor))
-				{
-					QueueDrawAnchor(d_anchor);
-					break;
-				}
 			}
 		}
 		
@@ -856,19 +875,19 @@ namespace Cpg.Studio.Widgets
 			graphics.Restore();
 		}
 		
-		private void DrawAnchor(Cairo.Context graphics, Point pt)
+		private void DrawAnchor(Cairo.Context graphics, Anchor anchor)
 		{
 			graphics.Save();
 			double radius = graphics.LineWidth * 5;
 			
 			graphics.LineWidth *= 3;
 			
-			graphics.MoveTo(pt.X + radius, pt.Y);
-			graphics.Arc(pt.X, pt.Y, radius, 0, System.Math.PI * 2);
+			graphics.MoveTo(anchor.Location.X + radius, anchor.Location.Y);
+			graphics.Arc(anchor.Location.X, anchor.Location.Y, radius, 0, System.Math.PI * 2);
 			graphics.SetSourceRGB(0.3, 0.3, 0.3);
 			graphics.StrokePreserve();
 
-			graphics.SetSourceRGBA(0.6, 0.9, 0.6, 0.8);
+			graphics.SetSourceRGB(0.8, 0.8, 0.3);
 			graphics.Fill();
 			
 			graphics.Restore();

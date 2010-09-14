@@ -7,11 +7,13 @@ namespace Cpg.Studio.Wrappers.Renderers
 		protected Cairo.LinearGradient d_outer;
 		protected Cairo.LinearGradient d_inner;
 		protected double[] d_hoverColor;
+		protected double[] d_linkColor;
 		
 		public Box(Wrappers.Wrapper obj) : base(obj)
 		{
 			d_object = obj;
 			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
+			d_linkColor = new double[] {0.8, 0.8, 0.3, 1.0};
 			
 			MakePatterns();
 		}
@@ -46,7 +48,13 @@ namespace Cpg.Studio.Wrappers.Renderers
 
 			graphics.Rectangle(-marg, -marg, allocation.Width + marg, allocation.Height + marg);
 			
-			if (d_object != null && d_object.MouseFocus)
+			if (d_object != null && d_object.LinkFocus)
+			{
+				graphics.LineWidth = uw * 4;
+				graphics.SetSourceRGBA(d_linkColor[0], d_linkColor[1], d_linkColor[2], d_linkColor[3]);
+				graphics.StrokePreserve();
+			}
+			else if (d_object != null && d_object.MouseFocus)
 			{
 				graphics.LineWidth = uw * 2;
 				graphics.SetSourceRGBA(d_hoverColor[0], d_hoverColor[1], d_hoverColor[2], d_hoverColor[3]);

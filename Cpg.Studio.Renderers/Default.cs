@@ -82,9 +82,18 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			graphics.FillPreserve();
 			
-			double[] darker = Darken(color);
+			double[] lineColor;
 			
-			graphics.SetSourceRGBA(darker[0], darker[1], darker[2], darker[3]);
+			if (WrappedObject != null && WrappedObject.LinkFocus)
+			{
+				lineColor = new double[] {0.8, 0.8, 0.3, 1.0};
+			}
+			else
+			{
+				lineColor = Darken(color);
+			}
+			
+			graphics.SetSourceRGBA(lineColor[0], lineColor[1], lineColor[2], lineColor[3]);
 			graphics.Stroke();
 		}
 		

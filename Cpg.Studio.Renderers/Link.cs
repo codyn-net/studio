@@ -9,6 +9,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 		private static double[] s_selectedColor;
 		private static double[] s_hoverColor;
 		private static double[] s_iconColor;
+		private static double[] s_linkColor;
 		private static double s_arrowSize;
 		
 		private Point[] d_controlPoints;
@@ -21,6 +22,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			s_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
 			s_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
 			s_iconColor = new double[] {0.5, 0.5, 0.5, 1.0};
+			s_linkColor = new double[] {0.8, 0.8, 0.3, 1.0};
 			
 			s_arrowSize = 0.15;
 		}
@@ -58,6 +60,10 @@ namespace Cpg.Studio.Wrappers.Renderers
 			else if (WrappedObject == null)
 			{
 				return s_normalColor;
+			}
+			else if (WrappedObject.LinkFocus)
+			{
+				return s_linkColor;
 			}
 			else if (WrappedObject.Selected)
 			{
@@ -221,7 +227,11 @@ namespace Cpg.Studio.Wrappers.Renderers
 				graphics.SetSourceRGB(color[0], color[1], color[2]);
 			}
 			
-			if (WrappedObject != null && WrappedObject.KeyFocus)
+			if (WrappedObject != null && WrappedObject.LinkFocus)
+			{
+				graphics.LineWidth *= 2;
+			}
+			else if (WrappedObject != null && WrappedObject.KeyFocus)
 			{
 				graphics.LineWidth *= 4;
 				graphics.SetDash(new double[] {graphics.LineWidth, graphics.LineWidth}, 0);

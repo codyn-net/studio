@@ -13,7 +13,8 @@ namespace Cpg.Studio.Wrappers
 			None = 0,
 			Selected = 1 << 0,
 			KeyFocus = 1 << 1,
-			MouseFocus = 1 << 2
+			MouseFocus = 1 << 2,
+			LinkFocus = 1 << 3
 		}
 			
 		public event EventHandler RequestRedraw = delegate {};
@@ -30,12 +31,12 @@ namespace Cpg.Studio.Wrappers
 			d_state = State.None;
 		}
 
-		private bool FromState(State field)
+		protected virtual bool FromState(State field)
 		{
 			return (d_state & field) != State.None;
 		}
 		
-		private bool ToState(State field, bool val)
+		protected virtual bool ToState(State field, bool val)
 		{
 			State old = d_state;
 			
@@ -74,9 +75,18 @@ namespace Cpg.Studio.Wrappers
 			set { ToState(State.MouseFocus, value); }
 		}
 		
+		public bool LinkFocus
+		{
+			get { return FromState(State.LinkFocus); }
+			set { ToState(State.LinkFocus, value); }
+		}
+		
 		public Allocation Allocation
 		{
-			get { return d_allocation; }
+			get
+			{
+				return d_allocation;
+			}
 			set
 			{
 				if (d_allocation != null)

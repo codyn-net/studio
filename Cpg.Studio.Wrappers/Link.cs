@@ -51,6 +51,25 @@ namespace Cpg.Studio.Wrappers
 			
 			CalculateAnchors();
 		}
+		
+		protected override bool ToState(Graphical.State field, bool val)
+		{
+			bool ret = base.ToState(field, val);
+			
+			if (field == Graphical.State.LinkFocus)
+			{
+				if (d_from != null)
+				{
+					d_from.LinkFocus = val;
+				}
+				if (d_to != null)
+				{
+					d_to.LinkFocus = val;
+				}
+			}
+			
+			return ret;
+		}
 
 		public new Renderers.Link Renderer
 		{
@@ -134,6 +153,8 @@ namespace Cpg.Studio.Wrappers
 				d_from.Moved += OnFromMoved;
 				
 				RecalculateLinkOffsets(d_from, d_to);
+				
+				d_from.LinkFocus = LinkFocus;
 			}
 		}
 		
@@ -156,6 +177,8 @@ namespace Cpg.Studio.Wrappers
 				d_to.Link(this);
 				
 				RecalculateLinkOffsets(d_from, d_to);
+				
+				d_to.LinkFocus = LinkFocus;
 			}
 		}
 		
