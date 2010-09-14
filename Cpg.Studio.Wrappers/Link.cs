@@ -14,6 +14,8 @@ namespace Cpg.Studio.Wrappers
 		private Wrappers.Wrapper d_to;
 		
 		private int d_offset;
+		private List<Point> d_fromAnchors;
+		private List<Point> d_toAnchors;
 		
 		protected Link(Cpg.Link obj) : this(obj, null, null)
 		{
@@ -46,8 +48,10 @@ namespace Cpg.Studio.Wrappers
 			
 			obj.ActionAdded += HandleActionAdded;
 			obj.ActionRemoved += HandleActionRemoved;
+			
+			CalculateAnchors();
 		}
-		
+
 		public new Renderers.Link Renderer
 		{
 			get
@@ -137,6 +141,7 @@ namespace Cpg.Studio.Wrappers
 		{
 			if (d_to != null)
 			{
+				d_to.Moved -= OnToMoved;
 				d_to.Unlink(this);
 			}
 			
@@ -147,6 +152,7 @@ namespace Cpg.Studio.Wrappers
 			
 			if (d_to != null)
 			{
+				d_to.Moved += OnToMoved;
 				d_to.Link(this);
 				
 				RecalculateLinkOffsets(d_from, d_to);
@@ -156,16 +162,24 @@ namespace Cpg.Studio.Wrappers
 		private void OnToChanged(object source, GLib.NotifyArgs args)
 		{
 			UpdateTo();
+			CalculateAnchors();
 		}
 		
 		private void OnFromChanged(object source, GLib.NotifyArgs args)
 		{
 			UpdateFrom();
+			CalculateAnchors();
+		}
+		
+		private void OnToMoved(object source, EventArgs args)
+		{
+			CalculateAnchors();
 		}
 		
 		private void OnFromMoved(object source, EventArgs args)
 		{
 			DoRequestRedraw();
+			CalculateAnchors();
 		}
 
 		public static implicit operator Cpg.Link(Link obj)
@@ -190,8 +204,17 @@ namespace Cpg.Studio.Wrappers
 		
 		public int Offset
 		{
-			get { return d_offset; }
-			set { d_offset = value; }
+			get
+			{
+				return d_offset;
+			}
+			set
+			{
+				d_offset = value;
+
+				Renderer.ResetCache();
+				CalculateAnchors();
+			}
 		}
 		
 		public bool SameObjects(Wrappers.Link other)
@@ -309,6 +332,97 @@ namespace Cpg.Studio.Wrappers
 			}
 			
 			return false;
+		}
+		
+		private double EvaluatePolynomial(Point[] polys, double t, int idx)
+		{
+			return polys[0][idx] * t * t * t +
+			       polys[1][idx] * t * t +
+			       polys[2][idx] * t +
+			       polys[3][idx];
+		}
+		
+		private void CalculateAnchor(Point[] polys, int idx, double x, double y1, double y2, List<Point> points)
+		{
+			// Find roots at f(t) = x => f(t) - x = 0
+			Biorob.Math.Solvers.Cubic fx = new Biorob.Math.Solvers.Cubic(
+				polys[0][idx],
+				polys[1][idx],
+				polys[2][idx],
+				polys[3][idx] - x
+			);
+			
+			foreach (double t in fx.Roots)
+			{
+				// Check if t is within 0 -> 1
+				if (t < 0 || t > 1)
+				{
+					continue;
+				}
+				
+				// Check if the intersection at !idx is within y1 -> y2
+				double val = EvaluatePolynomial(polys, t, idx == 0 ? 1 : 0);
+				
+				if (val >= y1 && val <= y2)
+				{
+					Point point = new Point();
+
+					point[idx] = x;
+					point[idx == 0 ? 1 : 0] = val;
+					
+					points.Add(point);
+				}
+			}
+		}
+		
+		private List<Point> CalculateAnchors(Point[] polys, Wrappers.Wrapper obj)
+		{
+			List<Point> ret = new List<Point>();
+			Allocation alloc = obj.Allocation;
+			
+			CalculateAnchor(polys, 0, alloc.X, alloc.Y, alloc.Y + alloc.Height, ret);
+			CalculateAnchor(polys, 0, alloc.X + alloc.Height, alloc.Y, alloc.Y + alloc.Height, ret);
+			CalculateAnchor(polys, 1, alloc.Y, alloc.X, alloc.X + alloc.Width, ret);
+			CalculateAnchor(polys, 1, alloc.Y + alloc.Height, alloc.X, alloc.X + alloc.Width, ret);
+			
+			return ret;
+		}
+		
+		public List<Point> FromAnchors
+		{
+			get
+			{
+				return d_fromAnchors;
+			}
+		}
+		
+		public List<Point> ToAnchors
+		{
+			get
+			{
+				return d_toAnchors;
+			}
+		}
+		
+		private void CalculateAnchors()
+		{
+			Point[] polys = Renderer.PolynomialControlPoints();
+			
+			d_fromAnchors = new List<Point>();
+			d_toAnchors = new List<Point>();
+			
+			if (polys == null)
+			{
+				return;
+			}
+			
+			// Calculate intersection points for from and to at each of the four sides of the alloc rect
+			d_fromAnchors.AddRange(CalculateAnchors(polys, d_from));
+			
+			if (d_from != d_to)
+			{
+				d_toAnchors.AddRange(CalculateAnchors(polys, d_to));
+			}
 		}
 		
 		public bool HitTest(Allocation rect, int gridSize)
