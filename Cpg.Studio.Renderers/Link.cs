@@ -10,6 +10,10 @@ namespace Cpg.Studio.Wrappers.Renderers
 		private static double[] s_hoverColor;
 		private static double[] s_iconColor;
 		private static double s_arrowSize;
+		
+		private Point[] d_controlPoints;
+		private Allocation d_prevFrom;
+		private Allocation d_prevTo;
 
 		static Link()
 		{
@@ -101,15 +105,49 @@ namespace Cpg.Studio.Wrappers.Renderers
 			);
 		}
 		
+		public void ResetCache()
+		{
+			d_prevFrom = null;
+			d_prevTo = null;
+		}
+		
+		public Point[] PolynomialControlPoints()
+		{
+			Point[] ret = ControlPoints();
+			
+			if (ret == null)
+			{
+				return null;
+			}
+			
+			return new Point[] {
+				new Point(-ret[0].X + 3 * ret[1].X - 3 * ret[2].X + ret[3].X,
+				          -ret[0].Y + 3 * ret[1].Y - 3 * ret[2].Y + ret[3].Y),
+				new Point(3 * ret[0].X - 6 * ret[1].X + 3 * ret[2].X,
+				          3 * ret[0].Y - 6 * ret[1].Y + 3 * ret[2].Y),
+				new Point(-3 * ret[0].X + 3 * ret[1].X,
+				          -3 * ret[0].Y + 3 * ret[1].Y),
+				new Point(ret[0].X, ret[0].Y)
+			};
+		}
+		
 		public Point[] ControlPoints()
 		{
 			if (WrappedObject.From == null || WrappedObject.To == null)
 			{
 				return null;
 			}
-
+			
 			Allocation a1 = WrappedObject.From.Allocation;
-			Allocation a2 = WrappedObject.From.Allocation;
+			Allocation a2 = WrappedObject.To.Allocation;
+			
+			if (d_prevFrom != null && d_prevTo != null && a1.Equals(d_prevFrom) && a2.Equals(d_prevTo))
+			{
+				return d_controlPoints;
+			}
+			
+			d_prevFrom = a1.Copy();
+			d_prevTo = a2.Copy();
 			
 			Point fr = new Point(a1.X + a1.Width / 2, a1.Y + a1.Height / 2);
 			Point to = new Point(a2.X + a2.Width / 2, a2.Y + a2.Height / 2);
@@ -119,7 +157,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			{
 				Point pts = new Point(2, WrappedObject.Offset + 0.5f);
 
-				return new Point[] {
+				d_controlPoints = new Point[] {
 					fr,
 					new Point(to.X - pts.X, to.Y - pts.Y),
 					new Point(to.X + pts.X, to.Y - pts.Y),
@@ -128,8 +166,10 @@ namespace Cpg.Studio.Wrappers.Renderers
 			}
 			else
 			{
-				return new Point[] {fr, control, control, to};
+				d_controlPoints = new Point[] {fr, control, control, to};
 			}
+			
+			return d_controlPoints;
 		}
 		
 		public static double DistanceToLine(Point start, Point stop, Point point)
