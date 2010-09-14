@@ -9,6 +9,9 @@ namespace Cpg.Studio
 		private double d_y;
 		private double d_width;
 		private double d_height;
+		private static double Epsilon = 0.0000001;
+		
+		public event EventHandler Changed = delegate {};
 		
 		public Allocation(double x, double y, double width, double height)
 		{
@@ -27,32 +30,54 @@ namespace Cpg.Studio
 			return new Allocation(d_x, d_y, d_width, d_height);
 		}
 		
+		private void EmitChanged()
+		{
+			Changed(this, new EventArgs());
+		}
+		
 		[XmlAttribute("x")]
 		public double X
 		{
 			get { return d_x; }
-			set { d_x = value; }
+			set
+			{
+				d_x = value;
+				
+				EmitChanged();
+			}
 		}
 		
 		[XmlAttribute("y")]
 		public double Y
 		{
 			get { return d_y; }
-			set { d_y = value; }
+			set
+			{
+				d_y = value;
+				EmitChanged();
+			}
 		}
 		
 		[XmlAttribute("width")]
 		public double Width
 		{
 			get { return d_width; }
-			set { d_width = value; }
+			set
+			{
+				d_width = value;
+				EmitChanged();
+			}
 		}
 		
 		[XmlAttribute("height")]
 		public double Height
 		{
 			get { return d_height; }
-			set { d_height = value; }
+			set
+			{
+				d_height = value;
+				EmitChanged();
+			}
 		}
 		
 		public void Assign(double x, double y, double width, double height)
@@ -61,18 +86,24 @@ namespace Cpg.Studio
 			d_y = y;
 			d_width = width;
 			d_height = height;
+			
+			EmitChanged();
 		}
 		
 		public void Offset(double x, double y)
 		{
 			d_x += x;
 			d_y += y;
+			
+			EmitChanged();
 		}
 		
 		public void Move(double x, double y)
 		{
 			d_x = x;
 			d_y = y;
+			
+			EmitChanged();
 		}
 		
 		public Allocation FromRegion()
@@ -112,6 +143,8 @@ namespace Cpg.Studio
 			d_y *= scale;
 			d_width *= scale;
 			d_height *= scale;
+			
+			EmitChanged();
 		}
 		
 		public void GrowBorder(double num)
@@ -120,6 +153,8 @@ namespace Cpg.Studio
 			d_y -= num;
 			d_width += num * 2;
 			d_height += num * 2;
+			
+			EmitChanged();
 		}
 		
 		public void Round()
@@ -128,11 +163,38 @@ namespace Cpg.Studio
 			d_y = Math.Round(d_y);
 			d_width = Math.Round(d_width);
 			d_height = Math.Round(d_height);
+			
+			EmitChanged();
 		}
 		
 		public override string ToString()
 		{
 			return String.Format("[Allocation: x = {0}, y = {1}, width = {2}, height = {3}]", d_x, d_y, d_width, d_height);
+		}
+		
+		public override bool Equals(object obj)
+		{
+			if (obj == null)
+			{
+				return false;
+			}
+			
+			Allocation other = obj as Allocation;
+			
+			if (other == null)
+			{
+				return false;
+			}
+			
+			return Math.Abs(d_x - other.X) < Epsilon &&
+			       Math.Abs(d_y - other.Y) < Epsilon &&
+			       Math.Abs(d_width - other.Width) < Epsilon &&
+			       Math.Abs(d_height - other.Height) < Epsilon;
+		}
+		
+		public override int GetHashCode()
+		{
+			return base.GetHashCode();
 		}
 	}
 }

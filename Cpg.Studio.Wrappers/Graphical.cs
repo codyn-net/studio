@@ -26,7 +26,7 @@ namespace Cpg.Studio.Wrappers
 		
 		public Graphical()
 		{
-			d_allocation = new Allocation(0f, 0f, 1f, 1f);
+			Allocation = new Allocation(0f, 0f, 1f, 1f);
 			d_state = State.None;
 		}
 
@@ -77,7 +77,27 @@ namespace Cpg.Studio.Wrappers
 		public Allocation Allocation
 		{
 			get { return d_allocation; }
-			set { d_allocation = value; }
+			set
+			{
+				if (d_allocation != null)
+				{
+					d_allocation.Changed -= OnAllocationChanged;
+				}
+
+				d_allocation = value;
+				
+				if (d_allocation != null)
+				{
+					d_allocation.Changed += OnAllocationChanged;
+				}
+				
+				Moved(this, new EventArgs());
+			}
+		}
+		
+		private void OnAllocationChanged(object source, EventArgs args)
+		{
+			Moved(this, new EventArgs());
 		}
 		
 		public virtual Renderers.Renderer Renderer
@@ -269,7 +289,6 @@ namespace Cpg.Studio.Wrappers
 		{
 			Moved(this, new EventArgs());
 			d_allocation.Move(x, y);
-			Moved(this, new EventArgs());
 			
 			DoRequestRedraw();
 		}
