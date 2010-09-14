@@ -365,7 +365,7 @@ namespace Cpg.Studio.Wrappers
 			       polys[3][idx];
 		}
 		
-		private void CalculateAnchor(Point[] polys, int idx, double x, double y1, double y2, List<Point> points)
+		private void CalculateAnchor(Point[] polys, int idx, double x, double y1, double y2, bool isFrom)
 		{
 			// Find roots at f(t) = x => f(t) - x = 0
 			Biorob.Math.Solvers.Cubic fx = new Biorob.Math.Solvers.Cubic(
@@ -378,7 +378,7 @@ namespace Cpg.Studio.Wrappers
 			foreach (double t in fx.Roots)
 			{
 				// Check if t is within 0 -> 1
-				if (t < 0 || t > 1)
+				if (t < 0 || t > 1 || (isFrom != (t < 0.5)))
 				{
 					continue;
 				}
@@ -393,20 +393,38 @@ namespace Cpg.Studio.Wrappers
 					point[idx] = x;
 					point[idx == 0 ? 1 : 0] = val;
 					
-					points.Add(point);
+					if (isFrom)
+					{
+						d_fromAnchors.Add(point);
+					}
+					else
+					{
+						d_toAnchors.Add(point);
+					}
 				}
 			}
 		}
 		
-		private List<Point> CalculateAnchors(Point[] polys, Wrappers.Wrapper obj)
+		private List<Point> CalculateAnchors(Point[] polys, bool isFrom)
 		{
 			List<Point> ret = new List<Point>();
+			Wrappers.Wrapper obj;
+			
+			if (isFrom)
+			{
+				obj = d_from;
+			}
+			else
+			{
+				obj = d_to;
+			}
+
 			Allocation alloc = obj.Allocation;
 			
-			CalculateAnchor(polys, 0, alloc.X, alloc.Y, alloc.Y + alloc.Height, ret);
-			CalculateAnchor(polys, 0, alloc.X + alloc.Height, alloc.Y, alloc.Y + alloc.Height, ret);
-			CalculateAnchor(polys, 1, alloc.Y, alloc.X, alloc.X + alloc.Width, ret);
-			CalculateAnchor(polys, 1, alloc.Y + alloc.Height, alloc.X, alloc.X + alloc.Width, ret);
+			CalculateAnchor(polys, 0, alloc.X, alloc.Y, alloc.Y + alloc.Height, isFrom);
+			CalculateAnchor(polys, 0, alloc.X + alloc.Height, alloc.Y, alloc.Y + alloc.Height, isFrom);
+			CalculateAnchor(polys, 1, alloc.Y, alloc.X, alloc.X + alloc.Width, isFrom);
+			CalculateAnchor(polys, 1, alloc.Y + alloc.Height, alloc.X, alloc.X + alloc.Width, isFrom);
 			
 			return ret;
 		}
@@ -440,12 +458,8 @@ namespace Cpg.Studio.Wrappers
 			}
 			
 			// Calculate intersection points for from and to at each of the four sides of the alloc rect
-			d_fromAnchors.AddRange(CalculateAnchors(polys, d_from));
-			
-			if (d_from != d_to)
-			{
-				d_toAnchors.AddRange(CalculateAnchors(polys, d_to));
-			}
+			d_fromAnchors.AddRange(CalculateAnchors(polys, true));
+			d_toAnchors.AddRange(CalculateAnchors(polys, false));
 		}
 		
 		public bool HitTest(Allocation rect, int gridSize)

@@ -6,13 +6,21 @@ namespace Cpg.Studio
 	{
 		private Point d_location;
 		private Wrappers.Link d_link;
-		private Wrappers.Wrapper d_object;
+		private bool d_isFrom;
 		
-		public Anchor(Wrappers.Link link, Wrappers.Wrapper obj, Point location)
+		public Anchor(Wrappers.Link link, Point location, bool isFrom)
 		{
 			d_link = link;
-			d_object = obj;
 			d_location = new Point(location);
+			d_isFrom = isFrom;
+		}
+		
+		public Wrappers.Wrapper Other
+		{
+			get
+			{
+				return d_isFrom ? d_link.To : d_link.From;
+			}
 		}
 		
 		public Wrappers.Link Link
@@ -21,9 +29,13 @@ namespace Cpg.Studio
 			{
 				return d_link;
 			}
-			set
+		}
+		
+		public bool IsFrom
+		{
+			get
 			{
-				d_link = value;
+				return d_isFrom;
 			}
 		}
 		
@@ -31,11 +43,7 @@ namespace Cpg.Studio
 		{
 			get
 			{
-				return d_object;
-			}
-			set
-			{
-				d_object = value;
+				return d_isFrom ? d_link.From : d_link.To;
 			}
 		}
 		
@@ -44,10 +52,6 @@ namespace Cpg.Studio
 			get
 			{
 				return d_location;
-			}
-			set
-			{
-				d_location = value;
 			}
 		}
 	}

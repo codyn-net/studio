@@ -21,12 +21,12 @@ namespace Cpg.Studio.Undo
 		
 		public void Undo()
 		{
-			d_link.Attach(d_prevTo, d_prevFrom);
+			d_link.Attach(d_prevFrom, d_prevTo);
 		}
 		
 		public void Redo()
 		{
-			d_link.Attach(d_to, d_from);
+			d_link.Attach(d_from, d_to);
 		}
 	}
 }

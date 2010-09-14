@@ -79,7 +79,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			}
 		}
 		
-		private Point CalculateControl(Point fr, Point to)
+		private static Point CalculateControl(Point fr, Point to, int offset)
 		{
 			Point diff = new Point(to.X - fr.X, to.Y - fr.Y);
 			Point point = new Point(fr.X + diff.X / 2, fr.Y + diff.Y / 2);
@@ -87,7 +87,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			bool same = (diff.X == 0 && diff.Y == 0);
 			
 			// Offset perpendicular
-			double dist = 1 * WrappedObject.Offset;
+			double dist = 1 * offset;
 			double alpha = same ? 0 : Math.Atan(diff.X / -diff.Y);
 			
 			if (diff.Y >= 0)
@@ -137,13 +137,37 @@ namespace Cpg.Studio.Wrappers.Renderers
 			};
 		}
 		
+		public static Point[] ControlPoints(Allocation a1, Allocation a2, int offset)
+		{
+			Point fr = new Point(a1.X + a1.Width / 2, a1.Y + a1.Height / 2);
+			Point to = new Point(a2.X + a2.Width / 2, a2.Y + a2.Height / 2);
+
+			Point control = CalculateControl(fr, to, offset);
+			
+			if (fr.X == to.X && fr.Y == to.Y)
+			{
+				Point pts = new Point(2, offset + 0.5f);
+
+				return new Point[] {
+					fr,
+					new Point(to.X - pts.X, to.Y - pts.Y),
+					new Point(to.X + pts.X, to.Y - pts.Y),
+					to
+				};
+			}
+			else
+			{
+				return new Point[] {fr, control, control, to};
+			}
+		}
+		
 		public Point[] ControlPoints()
 		{
 			if (WrappedObject.From == null || WrappedObject.To == null)
 			{
 				return null;
 			}
-			
+
 			Allocation a1 = WrappedObject.From.Allocation;
 			Allocation a2 = WrappedObject.To.Allocation;
 			
@@ -154,27 +178,8 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			d_prevFrom = a1.Copy();
 			d_prevTo = a2.Copy();
-			
-			Point fr = new Point(a1.X + a1.Width / 2, a1.Y + a1.Height / 2);
-			Point to = new Point(a2.X + a2.Width / 2, a2.Y + a2.Height / 2);
-			Point control = CalculateControl(fr, to);
-			
-			if (fr.X == to.X && fr.Y == to.Y)
-			{
-				Point pts = new Point(2, WrappedObject.Offset + 0.5f);
 
-				d_controlPoints = new Point[] {
-					fr,
-					new Point(to.X - pts.X, to.Y - pts.Y),
-					new Point(to.X + pts.X, to.Y - pts.Y),
-					to
-				};
-			}
-			else
-			{
-				d_controlPoints = new Point[] {fr, control, control, to};
-			}
-			
+			d_controlPoints = ControlPoints(a1, a2, WrappedObject.Offset);
 			return d_controlPoints;
 		}
 		
@@ -250,7 +255,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			}
 		}
 		
-		private void DrawArrow(Cairo.Context graphics, double x, double y, double pos)
+		private static void DrawArrow(Cairo.Context graphics, double x, double y, double pos)
 		{
 			graphics.MoveTo(x, y);
 			graphics.Rotate(pos);
@@ -264,12 +269,8 @@ namespace Cpg.Studio.Wrappers.Renderers
 			graphics.Fill();
 		}
 		
-		private void DrawObjects(Cairo.Context graphics)
+		private static void Draw(Cairo.Context graphics, Point[] points)
 		{
-			FromState(graphics, true);
-
-			Point[] points = ControlPoints();
-			
 			graphics.MoveTo(points[0].X, points[0].Y);
 			graphics.CurveTo(points[1].X, points[1].Y, points[2].X, points[2].Y, points[3].X, points[3].Y);
 
@@ -283,7 +284,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			if (points[0].Equals(points[3]))
 			{
-				pos = 1.5 * Math.PI;
+				pos = 0.5 * Math.PI;
 			}
 			else
 			{
@@ -311,6 +312,17 @@ namespace Cpg.Studio.Wrappers.Renderers
 			}
 			
 			DrawArrow(graphics, xy.X, xy.Y, pos);
+		}
+		
+		public static void Draw(Cairo.Context graphics, Allocation a1, Allocation a2, int offset)
+		{
+			Draw(graphics, ControlPoints(a1, a2, offset));
+		}
+		
+		private void DrawObjects(Cairo.Context graphics)
+		{
+			FromState(graphics, true);
+			Draw(graphics, ControlPoints());
 		}
 		
 		private void DrawStandalone(Cairo.Context graphics)
