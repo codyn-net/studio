@@ -144,6 +144,8 @@ namespace Cpg.Studio.Widgets
 		private HPaned d_paned;
 		private Entry d_entry;
 		private HBox d_templateParent;
+		private Entry d_editingEntry;
+		private string d_editingPath;
 		
 		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base(false, 3)
 		{
@@ -663,6 +665,19 @@ namespace Cpg.Studio.Widgets
 			
 			if (d_object != null)
 			{
+				renderer.EditingStarted += delegate(object o, EditingStartedArgs args) {
+					d_editingEntry = args.Editable as Entry;
+					d_editingPath = args.Path;
+				};
+
+				renderer.EditingCanceled += delegate(object sender, EventArgs e) {
+					if (d_editingEntry != null && Utils.GetCurrentEvent() is Gdk.EventButton)
+					{
+						// Still do it actually
+						NameEdited(d_editingEntry.Text, d_editingPath);
+					}
+				};
+
 				renderer.Edited += DoNameEdited;
 			}
 			
@@ -674,6 +689,19 @@ namespace Cpg.Studio.Widgets
 			
 			if (d_object != null)
 			{
+				renderer.EditingStarted += delegate(object o, EditingStartedArgs args) {
+					d_editingEntry = args.Editable as Entry;
+					d_editingPath = args.Path;
+				};
+
+				renderer.EditingCanceled += delegate(object sender, EventArgs e) {
+					if (d_editingEntry != null && Utils.GetCurrentEvent() is Gdk.EventButton)
+					{
+						// Still do it actually
+						ValueEdited(d_editingEntry.Text, d_editingPath);
+					}
+				};
+
 				renderer.Edited += DoValueEdited;
 			}
 				
@@ -831,28 +859,33 @@ namespace Cpg.Studio.Widgets
 			d_actions.Do(new Undo.ModifyProperty(d_object, node.Property, newflags));
 		}
 		
-		private void DoValueEdited(object source, EditedArgs args)
+		private void ValueEdited(string newValue, string path)
 		{
-			PropertyNode node = d_store.FindPath(args.Path);
+			PropertyNode node = d_store.FindPath(path);
 			
-			if (args.NewText.Trim() == node.Property.Expression.AsString)
+			if (newValue.Trim() == node.Property.Expression.AsString)
 			{
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_object, node.Property, args.NewText.Trim()));
+			d_actions.Do(new Undo.ModifyProperty(d_object, node.Property, newValue.Trim()));
 		}
 		
-		private void DoNameEdited(object source, EditedArgs args)
+		private void DoValueEdited(object source, EditedArgs args)
 		{
-			if (String.IsNullOrEmpty(args.NewText))
+			ValueEdited(args.NewText, args.Path);
+		}
+		
+		private void NameEdited(string newName, string path)
+		{
+			if (String.IsNullOrEmpty(newName))
 			{
 				return;
 			}
 			
-			PropertyNode node = d_store.FindPath(args.Path);
+			PropertyNode node = d_store.FindPath(path);
 			
-			if (args.NewText.Trim() == node.Property.Name)
+			if (newName.Trim() == node.Property.Name)
 			{
 				return;
 			}
@@ -860,7 +893,7 @@ namespace Cpg.Studio.Widgets
 			List<Undo.IAction> actions = new List<Undo.IAction>();
 
 			actions.Add(new Undo.RemoveProperty(d_object, node.Property));
-			actions.Add(new Undo.AddProperty(d_object, args.NewText.Trim(), node.Property.Expression.AsString, node.Property.Flags));
+			actions.Add(new Undo.AddProperty(d_object, newName.Trim(), node.Property.Expression.AsString, node.Property.Flags));
 			
 			try
 			{
@@ -872,6 +905,11 @@ namespace Cpg.Studio.Widgets
 				Error(this, err);
 				return;
 			}
+		}
+		
+		private void DoNameEdited(object source, EditedArgs args)
+		{
+			NameEdited(args.NewText, args.Path);
 		}
 		
 		enum Sensitivity
