@@ -121,6 +121,12 @@ namespace Cpg.Studio.Widgets
 			
 			SetDefaultSize(500, 400);
 		}
+		
+		protected override void OnDestroyed()
+		{
+			Graph.ResetColors();
+			base.OnDestroyed();
+		}
 
 		private void Build()
 		{

@@ -188,6 +188,11 @@ namespace Cpg.Studio.Widgets
 			};
 		}
 		
+		public static void ResetColors()
+		{
+			s_colorIndex = 0;
+		}
+		
 		private static Cairo.Color NextColor()
 		{
 			Cairo.Color ret = s_colors[s_colorIndex];
