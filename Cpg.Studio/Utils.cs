@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.InteropServices;
 
 namespace Cpg.Studio
 {
@@ -158,6 +159,14 @@ namespace Cpg.Studio
 					yield return link;
 				}
 			}
+		}
+		
+		[DllImport("libgtk-x11-2.0")]
+		private static extern IntPtr gtk_get_current_event();
+		
+		public static Gdk.Event GetCurrentEvent()
+		{
+			return Gdk.Event.GetEvent(gtk_get_current_event());
 		}
 	}
 }
