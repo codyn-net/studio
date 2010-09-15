@@ -107,8 +107,9 @@ namespace Cpg.Studio.Widgets
 		{
 			d_simulation = simulation;
 			
-			d_simulation.OnStep += DoStep;
-			d_simulation.OnPeriodEnd += DoPeriodEnd;
+			//d_simulation.OnStep += DoStep;
+			d_simulation.OnBegin += DoPeriodBegin;
+			d_simulation.OnEnd += DoPeriodEnd;
 			
 			d_linkRulers = true;
 			d_linkAxis = true;
@@ -587,11 +588,11 @@ namespace Cpg.Studio.Widgets
 		
 		private void UpdateTimeLabel(Graph graph, Gdk.EventMotion evnt)
 		{
-			if (d_simulation.Range != null)
+			if (d_range != null)
 			{
 				double perc = evnt.X / (graph.Allocation.Width - 1);
 				
-				Range r = d_simulation.Range;
+				Range r = d_range;
 				double t = r.From + (r.To - r.From) * perc;
 				d_timeLabel.Text = t.ToString("F3");
 			}
@@ -672,7 +673,7 @@ namespace Cpg.Studio.Widgets
 				graph.Data["HandleConfigureEvent"] = true;
 			}
 			
-			d_simulation.Resimulate();			
+			d_simulation.Resimulate();
 
 			return true;
 		}
@@ -965,7 +966,9 @@ namespace Cpg.Studio.Widgets
 		private void SetMonitorData(Wrappers.Wrapper obj, Monitor.State state)
 		{
 			if (d_range == null)
+			{
 				return;
+			}
 
 			int numpix = state.Graph.Allocation.Width;
 			
@@ -1004,10 +1007,13 @@ namespace Cpg.Studio.Widgets
 			state.Graph.SetTicks(dw, d_range.From);			
 		}
 		
-		private void DoPeriodEnd(object source, Simulation.Args args)
+		private void DoPeriodBegin(object source, BeginArgs args)
 		{
-			d_range = d_simulation.Range;
-			
+			d_range = new Range(args.From, args.Step, args.To);
+		}
+		
+		private void DoPeriodEnd(object source, EventArgs args)
+		{
 			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 			{
 				SetMonitorData(state.Key, state.Value);

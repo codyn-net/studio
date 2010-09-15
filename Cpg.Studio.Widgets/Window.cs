@@ -34,6 +34,7 @@ namespace Cpg.Studio.Widgets
 		private Dialogs.Functions d_functionsDialog;
 		private ListStore d_integratorStore;
 		private ComboBox d_integratorCombo;
+		private Widget d_menubar;
 		
 		private bool d_modified;
 		
@@ -45,6 +46,9 @@ namespace Cpg.Studio.Widgets
 		
 		private Wrappers.Wrapper d_templatePopupObject;
 		private Wrappers.Wrapper d_templatePopupTemplate;
+		private DateTime d_runElapsed;
+		private Progress d_progress;
+		private bool d_checkProgress;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -60,6 +64,9 @@ namespace Cpg.Studio.Widgets
 			});
 
 			d_simulation = new Simulation(d_project.Network);
+			
+			d_simulation.OnBegin += HandleSimulationBegin;
+			d_simulation.OnEnd += HandleSimulationEnd;
 
 			d_undoManager = new Undo.Manager();
 			d_undoManager.OnChanged += delegate (object source) {
@@ -81,6 +88,58 @@ namespace Cpg.Studio.Widgets
 			UpdateTitle();
 			
 			d_propertyEditors = new Dictionary<Wrappers.Wrapper, Dialogs.Property>();
+		}
+
+		private void HandleSimulationBegin(object o, BeginArgs args)
+		{
+			d_simulation.OnStepped += HandleSimulationStepped;
+			d_runElapsed = DateTime.Now;
+			d_checkProgress = true;
+			
+			d_grid.GdkWindow.Cursor = new Gdk.Cursor(Gdk.CursorType.Watch);
+			
+			UpdateSensitivity();
+		}
+		
+		private void HandleSimulationEnd(object o, EventArgs args)
+		{
+			UpdateSensitivity();
+			
+			d_grid.GdkWindow.Cursor = null;
+			
+			if (d_progress != null)
+			{
+				d_progress.Dispose();
+				d_progress = null;
+			}
+		}
+
+		private void HandleSimulationStepped(object o, SteppedArgs args)
+		{
+			if (d_checkProgress)
+			{
+				double realTime = (DateTime.Now - d_runElapsed).TotalSeconds;
+
+				if (realTime >= 0.5)
+				{
+					double span = d_simulation.Range.To - d_simulation.Range.From;
+					double todo = span - args.Time;
+					
+					double estimated = todo / (args.Time - d_simulation.Range.From) * realTime;
+					
+					if (estimated > 1)
+					{
+						d_progress = new Progress(d_grid);
+					}
+					
+					d_checkProgress = false;
+				}
+			}
+			
+			if (d_progress != null)
+			{
+				d_progress.Update((args.Time - d_simulation.Range.From) / (d_simulation.Range.To - d_simulation.Range.From));
+			}
 		}
 
 		private void UpdateUndoState()
@@ -286,7 +345,8 @@ namespace Cpg.Studio.Widgets
 			CreateInsertMenu("/GridPopup/InsertMenu");
 			CreateTemplatesTool();
 
-			vbox.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
+			d_menubar = d_uimanager.GetWidget("/menubar");
+			vbox.PackStart(d_menubar, false, false, 0);
 			
 			d_toolbar = d_uimanager.GetWidget("/toolbar");
 			vbox.PackStart(d_toolbar, false, false, 0);
@@ -507,8 +567,6 @@ namespace Cpg.Studio.Widgets
 			d_periodEntry.Text = "0:0.01:1";
 			d_grid.GrabFocus();
 			
-			d_simulation.Range = new Range(d_periodEntry.Text);
-			
 			d_modified = false;
 			d_undoManager.Clear();
 		}
@@ -540,14 +598,14 @@ namespace Cpg.Studio.Widgets
 		{
 			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>(d_grid.Selection);
 			
-			d_selectionGroup.Sensitive = objects.Count > 0 && d_grid.HasFocus;
+			d_selectionGroup.Sensitive = !d_simulation.Running && objects.Count > 0 && d_grid.HasFocus;
 			
 			bool singleobj = objects.Count == 1;
 			bool singlegroup = singleobj && objects[0] is Wrappers.Group;
 			int anygroup = objects.FindAll(delegate (Wrappers.Wrapper obj) { return obj is Wrappers.Group; }).Count;
 			
 			Action ungroup = d_normalGroup.GetAction("UngroupAction");
-			ungroup.Sensitive = anygroup > 0;
+			ungroup.Sensitive = !d_simulation.Running && anygroup > 0;
 			
 			if (anygroup > 1)
 			{
@@ -558,17 +616,37 @@ namespace Cpg.Studio.Widgets
 				ungroup.Label = "Ungroup";
 			}
 			
-			d_normalGroup.GetAction("GroupAction").Sensitive = objects.Count > 1 && objects.Find(delegate (Wrappers.Wrapper obj) { return !(obj is Wrappers.Link); }) != null;
-			d_normalGroup.GetAction("EditGroupAction").Sensitive = singlegroup;
+			d_normalGroup.GetAction("GroupAction").Sensitive = !d_simulation.Running && objects.Count > 1 && objects.Find(delegate (Wrappers.Wrapper obj) { return !(obj is Wrappers.Link); }) != null;
+			d_normalGroup.GetAction("EditGroupAction").Sensitive = !d_simulation.Running && singlegroup;
 			
-			d_normalGroup.GetAction("PropertiesAction").Sensitive = singleobj;
-			d_normalGroup.GetAction("PasteAction").Sensitive = d_grid.HasFocus;
+			d_normalGroup.GetAction("PropertiesAction").Sensitive = !d_simulation.Running && singleobj;
+			d_normalGroup.GetAction("PasteAction").Sensitive = !d_simulation.Running && d_grid.HasFocus;
 			
 			// Disable control for now
 			d_normalGroup.GetAction("ControlMenuAction").Visible = false;
 			d_normalGroup.GetAction("ViewControlAction").Visible = false;
 			
-			d_normalGroup.GetAction("RevertAction").Sensitive = d_project.Filename != null;
+			d_normalGroup.GetAction("RevertAction").Sensitive = !d_simulation.Running && d_project.Filename != null;
+			
+			d_grid.Sensitive = !d_simulation.Running;
+			
+			if (d_propertyView != null)
+			{
+				d_propertyView.Sensitive = d_propertyView.Object != null && !d_simulation.Running;
+			}
+			
+			if (d_propertyEditors != null)
+			{			
+				foreach (KeyValuePair<Wrappers.Wrapper, Dialogs.Property> pair in d_propertyEditors)
+				{
+					pair.Value.View.Sensitive = pair.Value.View.Object != null && !d_simulation.Running;
+				}
+			}
+			
+			d_simulateButtons.Sensitive = !d_simulation.Running;
+			d_toolbar.Sensitive = !d_simulation.Running;
+			d_menubar.Sensitive = !d_simulation.Running;
+			d_pathbar.Sensitive = !d_simulation.Running;
 		}
 					
 		public Grid Grid
@@ -724,7 +802,7 @@ namespace Cpg.Studio.Widgets
 					})
 				});
 				
-				d_uimanager.AddUi(d_popupMergeId, "/popup/MonitorMenu/MonitorPlaceholder", name, name + "Action", UIManagerItemType.Menuitem, false);
+				d_uimanager.AddUi(d_popupMergeId, "/GridPopup/MonitorMenu/MonitorPlaceholder", name, name + "Action", UIManagerItemType.Menuitem, false);
 			}
 			
 			Widget menu = d_uimanager.GetWidget("/GridPopup");

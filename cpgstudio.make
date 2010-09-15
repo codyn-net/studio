@@ -131,6 +131,7 @@ FILES = \
 	Cpg.Studio.Widgets/ObjectView.cs \
 	Cpg.Studio.Widgets/Pathbar.cs \
 	Cpg.Studio.Widgets/PolynomialsView.cs \
+	Cpg.Studio.Widgets/Progress.cs \
 	Cpg.Studio.Widgets/PropertyView.cs \
 	Cpg.Studio.Widgets/ScrolledWindow.cs \
 	Cpg.Studio.Widgets/Table.cs \

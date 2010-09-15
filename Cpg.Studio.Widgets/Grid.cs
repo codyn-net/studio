@@ -1584,6 +1584,26 @@ namespace Cpg.Studio.Widgets
 			return base.OnFocusOutEvent(evnt);
 		}
 		
+		public void Draw(Cairo.Context graphics)
+		{			
+			graphics.LineWidth = 1;
+
+			DrawBackground(graphics);
+			DrawGrid(graphics);
+
+			DrawObjects(graphics);
+			DrawSelectionRect(graphics);
+			
+			graphics.SetSourceRGB(0.6, 0.6, 0.6);
+			graphics.MoveTo(0, 0.5);
+			graphics.LineTo(Allocation.Width, 0.5);
+			graphics.Stroke();
+			
+			graphics.MoveTo(0, Allocation.Height - 0.5);
+			graphics.LineTo(Allocation.Width, Allocation.Height - 0.5);
+			graphics.Stroke();
+		}
+		
 		protected override bool OnExposeEvent(Gdk.EventExpose evnt)
 		{
 			using (Cairo.Context graphics = Gdk.CairoHelper.Create(evnt.Window))
@@ -1591,24 +1611,10 @@ namespace Cpg.Studio.Widgets
 				graphics.Rectangle(evnt.Area.X, evnt.Area.Y, evnt.Area.Width, evnt.Area.Height);
 				graphics.Clip();
 				
-				graphics.LineWidth = 1;
-				DrawBackground(graphics);
-				DrawGrid(graphics);
-	
-				DrawObjects(graphics);
-				DrawSelectionRect(graphics);
-				
-				graphics.SetSourceRGB(0.6, 0.6, 0.6);
-				graphics.MoveTo(0, 0.5);
-				graphics.LineTo(Allocation.Width, 0.5);
-				graphics.Stroke();
-				
-				graphics.MoveTo(0, Allocation.Height - 0.5);
-				graphics.LineTo(Allocation.Width, Allocation.Height - 0.5);
-				graphics.Stroke();
+				Draw(graphics);
 			}
 			
-			return true;
+			return false;
 		}
 		
 		protected override void OnStyleSet(Gtk.Style previous_style)
