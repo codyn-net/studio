@@ -138,7 +138,7 @@ namespace Cpg.Studio
 				sel.RemoveAll(delegate (Wrappers.Wrapper wrapper) {
 					Wrappers.Link link = wrapper as Wrappers.Link;
 				
-					return link != null && (sel.Contains(link.To) && sel.Contains(link.From));
+					return link != null && !(sel.Contains(link.To) && sel.Contains(link.From));
 				});
 			}
 			
