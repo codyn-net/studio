@@ -29,6 +29,14 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
+		public string Path
+		{
+			get
+			{
+				return WrappedObject.Path;
+			}
+		}
+		
 		public static implicit operator Cpg.Network(Network obj)
 		{
 			return obj.WrappedObject;

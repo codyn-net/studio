@@ -281,8 +281,8 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", OnSaveActivated),
 				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", OnSaveAsActivated),
 
-				new ActionEntry("ImportAction", null, "Import", null, "Import CPG network objects", null), //new EventHandler(OnImportActivated)),
-				new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", null), //new EventHandler(OnExportActivated)),
+				new ActionEntry("ImportAction", null, "Import", "<Control>i", "Import CPG network objects", OnImportActivated),
+				new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", null),
 
 				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, "<Control>Q", "Quit", OnQuitActivated),
 
@@ -1942,6 +1942,50 @@ namespace Cpg.Studio.Widgets
 			HandleError(delegate () {
 				d_actions.UnapplyTemplate(d_templatePopupObject, d_templatePopupTemplate);
 			}, "An error occurred while unapplying the template");
+		}
+		
+		private void OnImportActivated(object sender, EventArgs args)
+		{
+			Dialogs.Import dlg = new Dialogs.Import(this);
+			
+			dlg.Response += HandleImportResponse;
+			dlg.Present();
+		}
+		
+		private void DoImportCopy(string filename, bool importAll)
+		{
+		}
+		
+		private void DoImport(string filename, bool importAll)
+		{
+			
+		}
+		
+		private void DoImport(string[] filenames, bool copyObject, bool importAll)
+		{
+			foreach (string filename in filenames)
+			{
+				if (copyObject)
+				{
+					DoImportCopy(filename, importAll);
+				}
+				else
+				{
+					DoImport(filename, importAll);
+				}
+			}
+		}
+
+		private void HandleImportResponse(object o, ResponseArgs args)
+		{
+			Dialogs.Import dlg = (Dialogs.Import)o;
+
+			if (args.ResponseId == ResponseType.Ok)
+			{
+				DoImport(dlg.Filenames, dlg.CopyObjects, dlg.ImportAll);
+			}
+			
+			dlg.Destroy();
 		}
 	}
 }
