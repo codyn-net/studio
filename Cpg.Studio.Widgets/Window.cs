@@ -1954,11 +1954,48 @@ namespace Cpg.Studio.Widgets
 		
 		private void DoImportCopy(string filename, bool importAll)
 		{
+			Network network;
+
+			try
+			{
+				network = new Network(filename);
+			}
+			catch (Exception e)
+			{
+				Message(Gtk.Stock.DialogError, "Failed to import network", e);
+				return;
+			}
 		}
 		
 		private void DoImport(string filename, bool importAll)
 		{
+			// See if it was already imported before
+			Wrappers.Import import = Network.GetImportFromPath(filename);
 			
+			string id = System.IO.Path.GetFileNameWithoutExtension(filename);
+			
+			if (import == null)
+			{
+				try
+				{
+					if (importAll)
+					{
+						new Cpg.Import(Network, d_grid.ActiveGroup, id, filename);
+					}
+					else
+					{
+						new Cpg.Import(Network, Network.TemplateGroup, id, filename);
+					}
+				}
+				catch (Exception e)
+				{
+					Message(Gtk.Stock.DialogError, "Failed to import network", e);
+				}
+			}
+			else
+			{
+				Message(Gtk.Stock.DialogInfo, "File was already imported", "The file `{0}' was already imported", System.IO.Path.GetFileName(filename));
+			}
 		}
 		
 		private void DoImport(string[] filenames, bool copyObject, bool importAll)

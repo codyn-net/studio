@@ -37,6 +37,11 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
+		public Wrappers.Import GetImportFromPath(string path)
+		{
+			return (Wrappers.Import)Wrappers.Wrapper.Wrap(WrappedObject.GetImportFromPath(path));
+		}
+		
 		public static implicit operator Cpg.Network(Network obj)
 		{
 			return obj.WrappedObject;
