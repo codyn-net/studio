@@ -90,6 +90,11 @@ namespace Cpg.Studio
 			EmitChanged();
 		}
 		
+		public void Offset(Point point)
+		{
+			Offset(point.X, point.Y);
+		}
+		
 		public void Offset(double x, double y)
 		{
 			d_x += x;
@@ -104,6 +109,11 @@ namespace Cpg.Studio
 			d_y = y;
 			
 			EmitChanged();
+		}
+		
+		public void Move(Point point)
+		{
+			Move(point.X, point.Y);
 		}
 		
 		public Allocation FromRegion()

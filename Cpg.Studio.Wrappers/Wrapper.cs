@@ -326,7 +326,11 @@ namespace Cpg.Studio.Wrappers
 			Wrapper wrapped = Wrap(args.Copy);
 			
 			wrapped.Allocation = Allocation.Copy();
-			wrapped.Renderer = Renderer.Copy(wrapped);
+			
+			if (Renderer != null)
+			{
+				wrapped.Renderer = Renderer.Copy(wrapped);
+			}
 		}
 		
 		public virtual Cpg.Object WrappedObject

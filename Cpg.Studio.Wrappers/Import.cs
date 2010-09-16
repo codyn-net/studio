@@ -12,6 +12,10 @@ namespace Cpg.Studio.Wrappers
 		{
 		}
 		
+		public Import(Wrappers.Network network, Wrappers.Group parent, string id, string filename) : this(new Cpg.Import(network, parent, id, filename))
+		{
+		}
+		
 		public new Cpg.Import WrappedObject
 		{
 			get
@@ -31,6 +35,11 @@ namespace Cpg.Studio.Wrappers
 			{
 				return WrappedObject.Path;
 			}
+		}
+		
+		public bool ImportsObject(Wrappers.Wrapper obj)
+		{
+			return WrappedObject.ImportsObject(obj);
 		}
 	}
 }

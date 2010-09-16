@@ -620,7 +620,7 @@ namespace Cpg.Studio.Widgets
 			d_normalGroup.GetAction("EditGroupAction").Sensitive = !d_simulation.Running && singlegroup;
 			
 			d_normalGroup.GetAction("PropertiesAction").Sensitive = !d_simulation.Running && singleobj;
-			d_normalGroup.GetAction("PasteAction").Sensitive = !d_simulation.Running && d_grid.HasFocus;
+			d_normalGroup.GetAction("PasteAction").Sensitive = !d_simulation.Running && d_grid.HasFocus && !Studio.Clipboard.Internal.Empty;
 			
 			// Disable control for now
 			d_normalGroup.GetAction("ControlMenuAction").Visible = false;
@@ -1766,6 +1766,8 @@ namespace Cpg.Studio.Widgets
 			HandleError(delegate () {
 				d_actions.Cut(d_grid.ActiveGroup, d_grid.Selection);
 			}, "An error occurred while cutting");
+			
+			UpdateSensitivity();
 		}
 		
 		private void OnCopyActivated(object sender, EventArgs args)
@@ -1773,6 +1775,8 @@ namespace Cpg.Studio.Widgets
 			HandleError(delegate () {
 				d_actions.Copy(d_grid.Selection);
 			}, "An error occurred while copying");
+			
+			UpdateSensitivity();
 		}
 		
 		private void OnDeleteActivated(object sender, EventArgs args)
@@ -1952,18 +1956,118 @@ namespace Cpg.Studio.Widgets
 			dlg.Present();
 		}
 		
+		private void RepositionImport(IEnumerable<Wrappers.Wrapper> current, IEnumerable<Wrappers.Wrapper> objs)
+		{
+			Point currentMean = new Point();
+			Point objsMean = new Point();
+
+			Utils.MeanPosition(current, out currentMean.X, out currentMean.Y);
+			Utils.MeanPosition(objs, out objsMean.X, out objsMean.Y);
+			
+			currentMean.Floor();
+			objsMean.Floor();
+			
+			Point offset = currentMean - objsMean;
+			
+			foreach (Wrappers.Wrapper wrapper in objs)
+			{
+				wrapper.Allocation.Offset(offset);
+			}
+		}
+		
 		private void DoImportCopy(string filename, bool importAll)
 		{
-			Network network;
+			Serialization.Project project = new Serialization.Project();
 
 			try
 			{
-				network = new Network(filename);
+				project.Load(filename);
 			}
 			catch (Exception e)
 			{
 				Message(Gtk.Stock.DialogError, "Failed to import network", e);
 				return;
+			}
+			
+			List<Cpg.Property> skippedProperties = new List<Cpg.Property>();
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			// Copy globals
+			foreach (Cpg.Property property in project.Network.Properties)
+			{
+				if (!Network.HasProperty(property.Name))
+				{
+					actions.Add(new Undo.AddProperty(Network, property));
+				}
+				else
+				{
+					skippedProperties.Add(property);
+				}
+			}
+			
+			List<Wrappers.Function> skippedFunctions = new List<Wrappers.Function>();
+			
+			// Copy functions
+			foreach (Wrappers.Function function in project.Network.Functions)
+			{
+				if (Network.GetFunction(function.Id) == null)
+				{
+					actions.Add(new Undo.AddObject(Network.FunctionGroup, function.Copy()));
+				}
+				else
+				{
+					skippedFunctions.Add(function);
+				}
+			}
+			
+			RepositionImport(Network.TemplateGroup.Children, project.Network.TemplateGroup.Children);
+			
+			// Copy templates
+			foreach (Wrappers.Wrapper obj in project.Network.TemplateGroup.Children)
+			{
+				actions.Add(new Undo.AddObject(Network.TemplateGroup, obj));
+			}
+			
+			if (importAll)
+			{
+				RepositionImport(d_grid.ActiveGroup.Children, project.Network.Children);
+
+				// Also copy objects
+				foreach (Wrappers.Wrapper obj in project.Network.Children)
+				{
+					actions.Add(new Undo.AddObject(d_grid.ActiveGroup, obj));
+				}
+			}
+			
+			HandleError(delegate () {
+				d_actions.Do(new Undo.Group(actions));
+			}, "Failed to import network");
+			
+			if (skippedFunctions.Count != 0 && skippedProperties.Count != 0)
+			{
+				Message(Gtk.Stock.DialogInfo,
+				        "Some functions and globals could not be imported",
+				        String.Format("The {0} `{1}' and {2} `{3}' already existed",
+				                      skippedFunctions.Count == 1 ? "function" : "functions",
+				                      String.Join(", ", Array.ConvertAll<Wrappers.Function, string>(skippedFunctions.ToArray(), item => item.Id)),
+				                      skippedProperties.Count == 1 ? "global" : "globals",
+				                      String.Join(", ", Array.ConvertAll<Cpg.Property, string>(skippedProperties.ToArray(), item => item.Name))));
+			}
+			else if (skippedFunctions.Count != 0)
+			{
+				Message(Gtk.Stock.DialogInfo,
+				        "Some functions could not be imported",
+				        String.Format("The {0} `{1}' already existed",
+				                      skippedFunctions.Count == 1 ? "function" : "functions",
+				                      String.Join(", ", Array.ConvertAll<Wrappers.Function, string>(skippedFunctions.ToArray(), item => item.Id))));
+			}
+			else if (skippedProperties.Count != 0)
+			{
+				Message(Gtk.Stock.DialogInfo,
+				        "Some globals could not be imported",
+				        String.Format("The {0} `{1}' already existed",
+				                      skippedProperties.Count == 1 ? "global" : "globals",
+				                      String.Join(", ", Array.ConvertAll<Cpg.Property, string>(skippedProperties.ToArray(), item => item.Name))));
 			}
 		}
 		
@@ -1980,11 +2084,15 @@ namespace Cpg.Studio.Widgets
 				{
 					if (importAll)
 					{
-						new Cpg.Import(Network, d_grid.ActiveGroup, id, filename);
+						HandleError(delegate () {
+							d_actions.Do(new Undo.Import(Network, d_grid.ActiveGroup, id, filename));
+						}, "Failed to import network");
 					}
 					else
 					{
-						new Cpg.Import(Network, Network.TemplateGroup, id, filename);
+						HandleError(delegate () {
+							d_actions.Do(new Undo.Import(Network, Network.TemplateGroup, id, filename));
+						}, "Failed to import network");
 					}
 				}
 				catch (Exception e)
@@ -1994,7 +2102,7 @@ namespace Cpg.Studio.Widgets
 			}
 			else
 			{
-				Message(Gtk.Stock.DialogInfo, "File was already imported", "The file `{0}' was already imported", System.IO.Path.GetFileName(filename));
+				Message(Gtk.Stock.DialogInfo, "File was already imported", String.Format("The file `{0}' was already imported", System.IO.Path.GetFileName(filename)));
 			}
 		}
 		

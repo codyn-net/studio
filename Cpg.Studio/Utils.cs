@@ -130,7 +130,9 @@ namespace Cpg.Studio
 			
 			foreach (Wrappers.Wrapper obj in objects)
 			{
-				if (obj is Wrappers.Link)
+				Wrappers.Link link = obj as Wrappers.Link;
+				
+				if (link != null && link.From != null && link.To != null)
 				{
 					continue;
 				}

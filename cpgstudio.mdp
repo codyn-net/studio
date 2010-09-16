@@ -151,6 +151,7 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/Import.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Import.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/ImportAlias.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/Import.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />

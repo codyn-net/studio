@@ -10,8 +10,8 @@ namespace Cpg.Studio.Dialogs
 
 		public Import(Widgets.Window parent) : base("Import CPG Network", parent, FileChooserAction.Open)
 		{
-			AddButton("Import", ResponseType.Ok);
 			AddButton(Gtk.Stock.Cancel, ResponseType.Cancel);
+			AddButton("Import", ResponseType.Ok);
 			
 			LocalOnly = true;
 			SelectMultiple = true;
