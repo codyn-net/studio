@@ -53,6 +53,7 @@ FILES = \
 	Cpg.Studio.Dialogs/Functions.cs \
 	Cpg.Studio.Dialogs/Interpolate.cs \
 	Cpg.Studio.Dialogs/Property.cs \
+	Cpg.Studio.Dialogs/Import.cs \
 	Cpg.Studio/Directories.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
 	Cpg.Studio.Interpolators/IInterpolator.cs \
@@ -91,6 +92,7 @@ FILES = \
 	Cpg.Studio.Undo/FunctionPolynomialPiece.cs \
 	Cpg.Studio.Undo/Group.cs \
 	Cpg.Studio.Undo/IAction.cs \
+	Cpg.Studio.Undo/Import.cs \
 	Cpg.Studio.Undo/LinkAction.cs \
 	Cpg.Studio.Undo/Manager.cs \
 	Cpg.Studio.Undo/ModifyExpression.cs \
@@ -145,7 +147,8 @@ FILES = \
 	Cpg.Studio.Wrappers/Link.cs \
 	Cpg.Studio.Wrappers/Network.cs \
 	Cpg.Studio.Wrappers/State.cs \
-	Cpg.Studio.Wrappers/Wrapper.cs
+	Cpg.Studio.Wrappers/Wrapper.cs \
+	Cpg.Studio.Wrappers/Import.cs
 
 DATA_FILES =
 
