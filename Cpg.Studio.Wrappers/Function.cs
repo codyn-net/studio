@@ -2,7 +2,7 @@ using System;
 
 namespace Cpg.Studio.Wrappers
 {
-	public class Function : Wrapper
+	public class Function : Object
 	{		
 		protected Function(Cpg.Function obj) : base(obj)
 		{

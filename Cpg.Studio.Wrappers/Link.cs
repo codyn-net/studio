@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Cpg.Studio.Wrappers
 {
-	public class Link : Wrapper
+	public class Link : Object
 	{		
 		public delegate void ActionEventHandler(object source, Cpg.LinkAction action);
 

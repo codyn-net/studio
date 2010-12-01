@@ -184,6 +184,13 @@ namespace Cpg.Studio.Widgets
 
 			linkItem.ShowAll();
 			menu.Append(linkItem);
+			
+			menu.Append(new Gtk.SeparatorMenuItem());
+			
+			Gtk.MenuItem inputFileItem = new Gtk.MenuItem("File Input");
+			inputFileItem.Activated += OnAddInputFileActivated;
+			
+			menu.Append(inputFileItem);
 		}
 
 		private void HandleStateTemplatesMenuActivated(object source, Wrappers.Wrapper template)
@@ -301,7 +308,7 @@ namespace Cpg.Studio.Widgets
 				
 				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
 				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "<Control>h", "Center view", OnCenterViewActivated),
-				new ActionEntry("InsertMenuAction", null, "_Apply", null, null, null),
+				new ActionEntry("InsertMenuAction", null, "_Add", null, null, null),
 				new ActionEntry("ZoomDefaultAction", Gtk.Stock.Zoom100, null, "<Control>1", null, OnZoomDefaultActivated),
 				new ActionEntry("ZoomInAction", Gtk.Stock.ZoomIn, null, "<Control>plus", null, OnZoomInActivated),
 				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, OnZoomOutActivated),
@@ -1453,7 +1460,7 @@ namespace Cpg.Studio.Widgets
 				Select(d_actions.AddState(d_grid.ActiveGroup, center[0], center[1]));
 			}, "An error occurred while adding a state");
 		}
-		
+			
 		private void OnAddLinkActivated(object sender, EventArgs args)
 		{
 			int[] center = d_grid.Center;
@@ -1462,7 +1469,16 @@ namespace Cpg.Studio.Widgets
 				Select(d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection, center[0], center[1]));
 			}, "An error occurred while adding a link");
 		}
-		
+
+		private void OnAddInputFileActivated(object sender, EventArgs args)
+		{
+			int[] center = d_grid.Center;
+			
+			HandleError(delegate() {
+				Select(d_actions.AddInputFile(d_grid.ActiveGroup, center[0], center[1]));
+			}, "An error occurred while adding a file input");
+		}
+
 		private void SelectFunction(Wrappers.Function function)
 		{
 			ShowFunctions();

@@ -192,9 +192,10 @@ namespace Cpg.Studio.Serialization
 			Type[,] types = new Type[,] {
 				{typeof(Wrappers.Group), typeof(Group)},
 				{typeof(Wrappers.Link), typeof(Link)},
-				{typeof(Wrappers.State), typeof(State)},
+				{typeof(Wrappers.Object), typeof(State)},
 				{typeof(Wrappers.Network), typeof(Network)},
-				{typeof(Wrappers.FunctionPolynomial), typeof(FunctionPolynomial)}
+				{typeof(Wrappers.FunctionPolynomial), typeof(FunctionPolynomial)},
+				{typeof(Wrappers.InputFile), typeof(InputFile)}
 			};
 			
 			for (int i = 0; i <= types.GetUpperBound(0); ++i)

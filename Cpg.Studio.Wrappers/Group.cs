@@ -5,7 +5,7 @@ using CCpg = Cpg;
 
 namespace Cpg.Studio.Wrappers
 {
-	public class Group : Wrappers.Wrapper
+	public class Group : Wrappers.Object
 	{
 		public delegate void ChildHandler(Group source, Wrapper child);
 		

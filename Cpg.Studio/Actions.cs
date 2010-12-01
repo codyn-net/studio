@@ -12,14 +12,25 @@ namespace Cpg.Studio
 			d_undoManager = undoManager;
 		}
 		
-		public Wrappers.State[] AddState(Wrappers.Group parent, double x, double y)
+		public Wrappers.Object[] AddState(Wrappers.Group parent, double x, double y)
 		{
-			Wrappers.State state = new Wrappers.State();
+			Wrappers.Object state = new Wrappers.Object();
 			state.Allocation = new Allocation(x, y, 1, 1);
 			
 			Do(new Undo.AddObject(parent, state));
 			
-			return new Wrappers.State[] {state};
+			return new Wrappers.Object[] {state};
+		}
+		
+		public Wrappers.Object[] AddInputFile(Wrappers.Group parent, double x, double y)
+		{
+			Wrappers.InputFile ret = new Wrappers.InputFile();
+			
+			ret.Allocation = new Allocation(x, y, 1, 1);
+			
+			Do(new Undo.AddObject(parent, ret));
+			
+			return new Wrappers.Object[] {ret};
 		}
 		
 		public void AddObject(Wrappers.Group parent, Wrappers.Wrapper wrapper)
@@ -550,7 +561,7 @@ namespace Cpg.Studio
 			bool isGroup = template is Wrappers.Group;
 			
 			sel.RemoveAll(delegate (Wrappers.Wrapper item) {
-				if (isGroup && item is Wrappers.State)
+				if (isGroup && item is Wrappers.Object)
 				{
 					return false;
 				}

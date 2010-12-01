@@ -146,6 +146,7 @@ namespace Cpg.Studio.Widgets
 		private HBox d_templateParent;
 		private Entry d_editingEntry;
 		private string d_editingPath;
+		private FileChooserButton d_inputFileChooser;
 		
 		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base(false, 3)
 		{
@@ -262,6 +263,79 @@ namespace Cpg.Studio.Widgets
 				{
 					d_flaglist.Add(new KeyValuePair<string, Cpg.PropertyFlags>(Property.FlagsToString(flags), flags));
 				}
+			}
+		}
+		
+		private void AddInputFileUI()
+		{
+			HBox hbox = new HBox(false, 6);
+			hbox.Show();
+			
+			Label label = new Label("File:");
+			label.Show();
+			
+			hbox.PackStart(label, false, false, 0);
+			
+			Wrappers.InputFile input = (Wrappers.InputFile)d_object;
+			d_inputFileChooser = new FileChooserButton("Open Data File", FileChooserAction.Open);
+			
+			if (input.WrappedObject.FilePath != null)
+			{
+				d_inputFileChooser.SetFilename(input.WrappedObject.FilePath);
+			}
+			
+			d_inputFileChooser.SetSizeRequest(300, -1);
+			d_inputFileChooser.Show();
+			
+			d_inputFileChooser.FileSet += DoFileSet;
+
+			hbox.PackStart(d_inputFileChooser, false, false, 0);
+			
+			Button but = new Button(Gtk.Stock.Clear);
+			but.Show();
+			
+			but.Clicked += DoFileClear;
+
+			hbox.PackStart(but, false, false, 0);
+			
+			d_extraControl.PackEnd(hbox, false, false, 0);
+			
+			try
+			{
+				input.WrappedObject.Ensure();
+			}
+			catch (GLib.GException e)
+			{
+				Error(this, e);
+			}
+		}
+		
+		private void DoFileClear(object sender, EventArgs args)
+		{
+			Wrappers.InputFile input = (Wrappers.InputFile)d_object;
+			
+			input.WrappedObject.FilePath = null;			
+			input.WrappedObject.Ensure();
+		}
+
+		private void DoFileSet(object sender, EventArgs args)
+		{
+			Wrappers.InputFile input = (Wrappers.InputFile)d_object;
+			
+			if (d_inputFileChooser.Filename == null)
+			{
+				return;
+			}
+
+			input.WrappedObject.FilePath = d_inputFileChooser.Filename;
+			
+			try
+			{
+				input.WrappedObject.Ensure();
+			}
+			catch (GLib.GException e)
+			{
+				Error(this, e);
 			}
 		}
 		
@@ -398,6 +472,12 @@ namespace Cpg.Studio.Widgets
 				link.ActionAdded -= HandleLinkActionAdded;
 				link.ActionRemoved -= HandleLinkActionRemoved;
 			}
+			else if (d_object is Wrappers.InputFile)
+			{
+				Wrappers.InputFile input = (Wrappers.InputFile)d_object;
+				
+				input.WrappedObject.RemoveNotification("file", HandleFileChanged);
+			}
 		}
 		
 		private void Connect()
@@ -427,6 +507,26 @@ namespace Cpg.Studio.Widgets
 				
 				link.ActionAdded += HandleLinkActionAdded;
 				link.ActionRemoved += HandleLinkActionRemoved;
+			}
+			else if (d_object is Wrappers.InputFile)
+			{
+				Wrappers.InputFile input = (Wrappers.InputFile)d_object;
+				
+				input.WrappedObject.AddNotification("file", HandleFileChanged);
+			}
+		}
+		
+		private void HandleFileChanged(object sender, GLib.NotifyArgs args)
+		{
+			string path = ((Wrappers.InputFile)d_object).WrappedObject.FilePath;
+			
+			if (path == null)
+			{
+				d_inputFileChooser.UnselectAll();
+			}
+			else
+			{
+				d_inputFileChooser.SetFilename(path);
 			}
 		}
 
@@ -630,6 +730,18 @@ namespace Cpg.Studio.Widgets
 			{
 				AddGroupUI();
 			}
+			
+			Wrappers.InputFile input = null;
+			
+			if (d_object != null)
+			{
+				input = d_object as Wrappers.InputFile;
+			}
+			
+			if (input != null)
+			{
+				AddInputFileUI();
+			}
 
 			ScrolledWindow vw = new ScrolledWindow();
 			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
@@ -662,6 +774,11 @@ namespace Cpg.Studio.Widgets
 			column = new TreeViewColumn("Name", renderer, "text", 0);
 			column.Resizable = true;
 			column.MinWidth = 75;
+			
+			if (input != null)
+			{
+				column.SetCellDataFunc(renderer, DisableInputProperties);
+			}
 			
 			if (d_object != null)
 			{
@@ -708,6 +825,11 @@ namespace Cpg.Studio.Widgets
 			column = new TreeViewColumn("Value", renderer, "text", 1);
 			column.Resizable = true;
 
+			if (input != null)
+			{
+				column.SetCellDataFunc(renderer, DisableInputProperties);
+			}
+
 			d_treeview.AppendColumn(column);
 			
 			// Add column for the integrated
@@ -719,8 +841,13 @@ namespace Cpg.Studio.Widgets
 			{
 				toggle.Toggled += DoIntegratedToggled;
 			}
+			
+			if (input != null)
+			{
+				column.SetCellDataFunc(toggle, DisableInputProperties);
+			}
 
-			d_treeview.AppendColumn(column);			
+			d_treeview.AppendColumn(column);
 				
 			// Add column for property flags
 			CellRendererCombo combo = new CellRendererCombo();
@@ -733,6 +860,11 @@ namespace Cpg.Studio.Widgets
 			combo.EditingStarted += DoEditingStarted;
 			combo.Edited += DoFlagsEdited;
 			combo.HasEntry = false;
+			
+			if (input != null)
+			{
+				column.SetCellDataFunc(combo, DisableInputProperties);
+			}
 			
 			d_flagsStore = new ListStore(typeof(string), typeof(Cpg.PropertyFlags));
 			combo.Model = d_flagsStore;
@@ -765,6 +897,41 @@ namespace Cpg.Studio.Widgets
 			d_propertyControls.RemoveButton.Clicked += DoRemoveProperty;
 			
 			UpdateSensitivity();
+		}
+		
+		private void DisableInputProperties(TreeViewColumn col, CellRenderer renderer, TreeModel model, TreeIter iter)
+		{
+			Wrappers.InputFile input = (Wrappers.InputFile)d_object;
+			PropertyNode node = d_store.GetFromIter(iter);
+			
+			string[] columns = input.WrappedObject.Columns;
+			bool iscol = Array.Exists(columns, item => item == node.Property.Name);
+			
+			CellRendererText text = renderer as CellRendererText;
+			
+			if (text != null)
+			{
+				text.Editable = !iscol;
+				text.ForegroundGdk = iscol ? Style.Foreground(Gtk.StateType.Insensitive) : Style.Foreground(State);
+
+				return;
+			}
+			
+			CellRendererToggle toggle = renderer as CellRendererToggle;
+			
+			if (toggle != null)
+			{
+				toggle.Activatable = !iscol;
+				return;
+			}
+			
+			CellRendererCombo combo = renderer as CellRendererCombo;
+			
+			if (combo != null)
+			{
+				combo.Editable = !iscol;
+				return;
+			}
 		}
 
 		private void HandleNodeChanged(NodeStore<PropertyNode> store, Node child)

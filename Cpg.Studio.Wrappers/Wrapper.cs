@@ -58,7 +58,7 @@ namespace Cpg.Studio.Wrappers
 					// Then find the wrapper for it
 					Type child = type;
 					
-					while (child != cpgObjectType && !s_typeMapping.ContainsKey(child))
+					while (!s_typeMapping.ContainsKey(child))
 					{
 						// Find corresponding wrapper
 						if (wrapperTypes.ContainsKey(child.Name))

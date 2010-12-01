@@ -38,6 +38,15 @@ namespace Cpg.Studio.Wrappers.Renderers
 			return new double[] {0, 0, 0};
 		}
 		
+		protected virtual void DrawInner(Cairo.Context graphics, double uw, double x, double y, double width, double height)
+		{
+			graphics.Rectangle(x, y, width, height);
+			graphics.StrokePreserve();
+			
+			graphics.Source = d_inner;
+			graphics.Fill();
+		}
+		
 		public override void Draw(Cairo.Context graphics)
 		{
 			Allocation allocation = d_object != null ? d_object.Allocation : new Allocation(0, 0, 1, 1);
@@ -72,11 +81,8 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			double dd = allocation.Width * 0.1;
 			double off = uw * 2 + (dd - (dd % marg));
-			graphics.Rectangle(off, off, allocation.Width - off * 2, allocation.Height - off * 2);
-			graphics.StrokePreserve();
 			
-			graphics.Source = d_inner;
-			graphics.Fill();
+			DrawInner(graphics, uw, off, off, allocation.Width - off * 2, allocation.Height - off * 2);
 			
 			graphics.Restore();
 			base.Draw(graphics);

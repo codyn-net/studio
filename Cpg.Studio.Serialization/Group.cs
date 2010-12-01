@@ -31,7 +31,8 @@ namespace Cpg.Studio.Serialization
 		[XmlElement(typeof(State)),
 		 XmlElement(typeof(Link)),
 		 XmlElement(typeof(Group)),
-		 XmlElement(typeof(FunctionPolynomial))]
+		 XmlElement(typeof(FunctionPolynomial)),
+		 XmlElement(typeof(InputFile))]
 		public List<Object> Children
 		{
 			get
