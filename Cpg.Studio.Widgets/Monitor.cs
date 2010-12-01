@@ -226,7 +226,15 @@ namespace Cpg.Studio.Widgets
 		
 		private bool HasHook(Cpg.Property property)
 		{
-			Wrappers.Wrapper obj = property.Object;
+			return HasHook(property.Object, property);
+		}
+		
+		private bool HasHook(Wrappers.Wrapper obj, Cpg.Property property)
+		{
+			if (obj == null)
+			{
+				return false;
+			}
 
 			if (!d_map.ContainsKey(obj))
 			{
@@ -680,7 +688,7 @@ namespace Cpg.Studio.Widgets
 
 		private void HandlePropertyRemoved(Wrappers.Wrapper source, Cpg.Property prop)
 		{
-			RemoveHook(prop);
+			RemoveHook(source, prop);
 		}
 		
 		public bool AddHook(Cpg.Property[] properties, int row, int col)
@@ -767,12 +775,20 @@ namespace Cpg.Studio.Widgets
 		
 		private void RemoveHook(Cpg.Property property)
 		{
-			if (!HasHook(property))
+			RemoveHook(property.Object, property);
+		}
+		
+		private void RemoveHook(Wrappers.Wrapper obj, Cpg.Property property)
+		{
+			if (!HasHook(obj, property))
 			{
 				return;
 			}
 			
-			Wrappers.Wrapper obj = property.Object;
+			if (obj == null)
+			{
+				return;
+			}
 			
 			d_map[obj].RemoveAll(delegate (Monitor.State state) {
 				return (property == null || property == state.Property) && RemoveHookReal(obj, state);
