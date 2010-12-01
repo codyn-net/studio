@@ -20,7 +20,6 @@
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Wrappers" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Group.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Graphical.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/State.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Link.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Wrapper.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Renderers" />
@@ -152,6 +151,11 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Import.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/ImportAlias.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/Import.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Object.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Input.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/InputFile.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/InputFile.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Input.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
@@ -166,6 +170,6 @@
     <ProjectReference type="Gac" localcopy="True" refto="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
     <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/cpg-network-sharp-2.0/CpgNetwork.dll" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install/lib/libbiorob-math1-sharp/Biorob.Math.dll" />
+    <ProjectReference type="Gac" localcopy="True" refto="Biorob.Math, Version=1.0.3947.20262, Culture=neutral" />
   </References>
 </Project>
