@@ -69,10 +69,12 @@ FILES = \
 	Cpg.Studio.Renderers/Oscillator.cs \
 	Cpg.Studio.Renderers/Renderer.cs \
 	Cpg.Studio.Renderers/State.cs \
+	Cpg.Studio.Renderers/Input.cs \
 	Cpg.Studio.Serialization/FunctionPolynomial.cs \
 	Cpg.Studio.Serialization/Functions.cs \
 	Cpg.Studio.Serialization/Group.cs \
 	Cpg.Studio.Serialization/Link.cs \
+	Cpg.Studio.Serialization/InputFile.cs \
 	Cpg.Studio.Serialization/Network.cs \
 	Cpg.Studio.Serialization/Object.cs \
 	Cpg.Studio.Serialization/Project.cs \
@@ -146,8 +148,10 @@ FILES = \
 	Cpg.Studio.Wrappers/Group.cs \
 	Cpg.Studio.Wrappers/Link.cs \
 	Cpg.Studio.Wrappers/Network.cs \
-	Cpg.Studio.Wrappers/State.cs \
+	Cpg.Studio.Wrappers/Input.cs \
+	Cpg.Studio.Wrappers/InputFile.cs \
 	Cpg.Studio.Wrappers/Wrapper.cs \
+	Cpg.Studio.Wrappers/Object.cs \
 	Cpg.Studio.Wrappers/Import.cs
 
 DATA_FILES =
