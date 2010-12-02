@@ -25,6 +25,8 @@ namespace Cpg.Studio.Wrappers
 			d_x = 0;
 			d_y = 0;
 			d_zoom = Widgets.Grid.DefaultZoom;
+			
+			Renderer = new Renderers.Group(this);
 		}
 		
 		public static implicit operator Cpg.Object(Group obj)
@@ -92,25 +94,6 @@ namespace Cpg.Studio.Wrappers
 		{
 			get { return d_zoom; }
 			set { d_zoom = value; }
-		}
-		
-		public override Renderers.Renderer Renderer
-		{
-			get 
-			{
-				Renderers.Renderer renderer = base.Renderer;
-				
-				if (renderer == null)
-				{
-					Renderer = new Renderers.Default(this);
-				}
-				
-				return base.Renderer;
-			}
-			set
-			{
-				base.Renderer = value;
-			}
 		}
 		
 		public bool Add(Wrapper wrapped)

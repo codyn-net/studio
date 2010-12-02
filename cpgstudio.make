@@ -63,7 +63,6 @@ FILES = \
 	Cpg.Studio/Range.cs \
 	Cpg.Studio/RenderCache.cs \
 	Cpg.Studio.Renderers/Box.cs \
-	Cpg.Studio.Renderers/Default.cs \
 	Cpg.Studio.Renderers/Group.cs \
 	Cpg.Studio.Renderers/Link.cs \
 	Cpg.Studio.Renderers/Oscillator.cs \

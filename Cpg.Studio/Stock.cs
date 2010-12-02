@@ -75,8 +75,8 @@ namespace Cpg.Studio
 			factory.Add(Stock.Link, MakeIcons(new Wrappers.Renderers.Link()));
 			factory.Add(Stock.Chain, new Gtk.IconSet(Gdk.Pixbuf.LoadFromResource("chain.png")));
 			factory.Add(Stock.ChainBroken, new Gtk.IconSet(Gdk.Pixbuf.LoadFromResource("chain-broken.png")));
-			factory.Add(Stock.Group, MakeIcons(new Wrappers.Renderers.Default(), "group"));
-			factory.Add(Stock.Ungroup, MakeIcons(new Wrappers.Renderers.Default(), "ungroup"));
+			factory.Add(Stock.Group, MakeIcons(new Wrappers.Renderers.Group(), "group"));
+			factory.Add(Stock.Ungroup, MakeIcons(new Wrappers.Renderers.Group(), "ungroup"));
 			
 			factory.AddDefault();
 		}

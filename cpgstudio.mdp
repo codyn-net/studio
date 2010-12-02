@@ -24,7 +24,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Wrapper.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Renderers" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Renderer.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Default.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Group.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Box.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/State.cs" />
