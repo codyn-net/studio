@@ -88,13 +88,17 @@ namespace Cpg.Studio
 			{
 				Wrappers.Link link;
 				
+				string name = String.Format("{0}_to_{1}", pair.Key.Id, pair.Value.Id);
+
 				 if (temp == null)
 				 {
-				 	link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link("link", pair.Key, pair.Value));
+				 	link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link(name, pair.Key, pair.Value));
 				 }
 				 else
 				 {
 				 	link = (Wrappers.Link)temp.CopyAsTemplate();
+				 	link.Id = name;
+
 				 	link.Attach(pair.Key, pair.Value);
 				 }
 				
