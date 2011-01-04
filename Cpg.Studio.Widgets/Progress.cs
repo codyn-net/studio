@@ -66,21 +66,21 @@ namespace Cpg.Studio.Widgets
 			
 			if ((radius > height / 2) || (radius > width / 2))
 			{
-				radius = Math.Min(height / 2, width / 2);
+				radius = System.Math.Min(height / 2, width / 2);
 			}
 			
 			gr.MoveTo(x, y + radius);
 			
-			gr.Arc(x + radius, y + radius, radius, Math.PI, -Math.PI / 2);
+			gr.Arc(x + radius, y + radius, radius, System.Math.PI, -System.Math.PI / 2);
 			gr.LineTo(x + width - radius, y);
 
-			gr.Arc(x + width - radius, y + radius, radius, -Math.PI / 2, 0);
+			gr.Arc(x + width - radius, y + radius, radius, -System.Math.PI / 2, 0);
 			gr.LineTo(x + width, y + height - radius);
 			
-			gr.Arc(x + width - radius, y + height - radius, radius, 0, Math.PI / 2);
+			gr.Arc(x + width - radius, y + height - radius, radius, 0, System.Math.PI / 2);
 			gr.LineTo(x + radius, y + height);
 			
-			gr.Arc(x + radius, y + height - radius, radius, Math.PI / 2, Math.PI);
+			gr.Arc(x + radius, y + height - radius, radius, System.Math.PI / 2, System.Math.PI);
 			gr.ClosePath();
 			
 			gr.Restore();
@@ -137,7 +137,7 @@ namespace Cpg.Studio.Widgets
 		{
 			if (d_canvas != null)
 			{
-				d_canvas.Dispose();
+				d_canvas.Destroy();
 				d_canvas = null;
 			}
 			

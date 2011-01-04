@@ -542,7 +542,7 @@ namespace Cpg.Studio.Wrappers
 			double miny = Utils.Min(yy) - ssize;
 			double maxy = Utils.Max(yy) + ssize;
 
-			return new Allocation(minx, miny, Math.Max(maxx - minx, ssize * 2), Math.Max(maxy - miny, ssize * 2));
+			return new Allocation(minx, miny, System.Math.Max(maxx - minx, ssize * 2), System.Math.Max(maxy - miny, ssize * 2));
 		}
 		
 		protected override void DrawSelection(Cairo.Context graphics)

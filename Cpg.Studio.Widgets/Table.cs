@@ -583,7 +583,7 @@ namespace Cpg.Studio.Widgets
 			uint origRows = NRows;
 			uint origCols = NColumns;
 			
-			Resize(Math.Max(origRows, rows), Math.Max(origCols, cols));
+			Resize(System.Math.Max(origRows, rows), System.Math.Max(origCols, cols));
 
 			for (uint i = origRows; i < rows; ++i)
 			{

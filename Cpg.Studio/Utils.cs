@@ -58,22 +58,22 @@ namespace Cpg.Studio
 		
 		public static double Max(IEnumerable<double> list)
 		{
-			return Select(list, new SelectHandlerDouble(Math.Max));
+			return Select(list, new SelectHandlerDouble(System.Math.Max));
 		}
 		
 		public static int Max(IEnumerable<int> list)
 		{
-			return Select(list, new SelectHandlerInt(Math.Max));
+			return Select(list, new SelectHandlerInt(System.Math.Max));
 		}
 		
 		public static double Min(IEnumerable<double> list)
 		{
-			return Select(list, new SelectHandlerDouble(Math.Min));
+			return Select(list, new SelectHandlerDouble(System.Math.Min));
 		}
 		
 		public static int Min(IEnumerable<int> list)
 		{
-			return Select(list, new SelectHandlerInt(Math.Min));
+			return Select(list, new SelectHandlerInt(System.Math.Min));
 		}
 		
 		public static string Capitalize(string s)

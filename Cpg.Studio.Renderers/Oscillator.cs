@@ -33,7 +33,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 		
 		private void DrawCircle(Cairo.Context graphics, double radius, Allocation allocation)
 		{
-			graphics.Arc(allocation.Width / 2.0, allocation.Height / 2.0, radius, 0, 2 * Math.PI);
+			graphics.Arc(allocation.Width / 2.0, allocation.Height / 2.0, radius, 0, 2 * System.Math.PI);
 		}
 		
 		public override void Draw(Cairo.Context graphics)
@@ -48,7 +48,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			graphics.Save();
 			double uw = graphics.LineWidth;			
-			double radius = Math.Min(alloc.Width / 2, alloc.Height / 2);
+			double radius = System.Math.Min(alloc.Width / 2, alloc.Height / 2);
 			
 			graphics.Source = d_outer;
 			DrawCircle(graphics, radius, alloc);
@@ -67,10 +67,10 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			graphics.Translate(alloc.Width / 2.0, alloc.Height / 2.0);
 			graphics.SetSourceRGB(29 / 255.0, 71 / 255.0, 107 / 255.0);
-			graphics.Arc(-radius, 0, radius, Math.PI, 2 * Math.PI);
+			graphics.Arc(-radius, 0, radius, System.Math.PI, 2 * System.Math.PI);
 			graphics.Stroke();
 			
-			graphics.Arc(radius, 0, radius, 0, Math.PI);
+			graphics.Arc(radius, 0, radius, 0, System.Math.PI);
 			graphics.Stroke();
 			
 			graphics.Restore();

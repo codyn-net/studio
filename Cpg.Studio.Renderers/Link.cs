@@ -88,19 +88,19 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			// Offset perpendicular
 			double dist = 1 * offset;
-			double alpha = same ? 0 : Math.Atan(diff.X / -diff.Y);
+			double alpha = same ? 0 : System.Math.Atan(diff.X / -diff.Y);
 			
 			if (diff.Y >= 0)
 			{
-				alpha += Math.PI;
+				alpha += System.Math.PI;
 			}
 		
-			return new Point(point.X + Math.Cos(alpha) * dist, point.Y + Math.Sin(alpha) * dist);
+			return new Point(point.X + System.Math.Cos(alpha) * dist, point.Y + System.Math.Sin(alpha) * dist);
 		}
 		
 		public static double EvaluateBezier(double p0, double p1, double p2, double p3, double t)
 		{
-			return Math.Pow(1 - t, 3) * p0 + 3 * t * Math.Pow(1 - t, 2) * p1 + 3 * Math.Pow(t, 2) * (1 - t) * p2 + Math.Pow(t, 3) * p3;
+			return System.Math.Pow(1 - t, 3) * p0 + 3 * t * System.Math.Pow(1 - t, 2) * p1 + 3 * System.Math.Pow(t, 2) * (1 - t) * p2 + System.Math.Pow(t, 3) * p3;
 		}
 		
 		public static Point EvaluateBezier(Point p0, Point p1, Point p2, Point p3, double t)
@@ -208,7 +208,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 				res.Y = start.Y + param * dy.Y;
 			}
 			
-			return Math.Sqrt((point.X - res.X) * (point.X - res.X) + (point.Y - res.Y) * (point.Y - res.Y));
+			return System.Math.Sqrt((point.X - res.X) * (point.X - res.X) + (point.Y - res.Y) * (point.Y - res.Y));
 		}
 		
 		private bool Standalone
@@ -259,7 +259,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 		{
 			graphics.MoveTo(x, y);
 			graphics.Rotate(pos);
-			graphics.RelMoveTo(0, (pos + 0.5 * Math.PI < Math.PI ? -1 : 1) * s_arrowSize / 2);
+			graphics.RelMoveTo(0, (pos + 0.5 * System.Math.PI < System.Math.PI ? -1 : 1) * s_arrowSize / 2);
 
 			graphics.RelLineTo(-s_arrowSize, 0);
 			graphics.RelLineTo(s_arrowSize, -s_arrowSize);
@@ -284,7 +284,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			if (points[0].Equals(points[3]))
 			{
-				pos = 0.5 * Math.PI;
+				pos = 0.5 * System.Math.PI;
 			}
 			else
 			{
@@ -292,23 +292,23 @@ namespace Cpg.Studio.Wrappers.Renderers
 				
 				if (diff.X == 0)
 				{
-					pos = (diff.Y < 0 ? 1.5 : 0.5) * Math.PI; 
+					pos = (diff.Y < 0 ? 1.5 : 0.5) * System.Math.PI; 
 				}
 				else
 				{
-					pos = Math.Atan(diff.Y / diff.X);
+					pos = System.Math.Atan(diff.Y / diff.X);
 					
 					if (diff.X < 0)
 					{
-						pos += Math.PI;
+						pos += System.Math.PI;
 					}
 					else if (diff.Y < 0)
 					{
-						pos += 2 * Math.PI;
+						pos += 2 * System.Math.PI;
 					}
 				}
 				
-				pos += 0.5 * Math.PI;
+				pos += 0.5 * System.Math.PI;
 			}
 			
 			DrawArrow(graphics, xy.X, xy.Y, pos);
@@ -336,18 +336,18 @@ namespace Cpg.Studio.Wrappers.Renderers
 
 			alloc.GrowBorder(-graphics.LineWidth);
 			
-			double radius = Math.Min(alloc.Width, alloc.Height) / 2;
+			double radius = System.Math.Min(alloc.Width, alloc.Height) / 2;
 
 			double cx = alloc.X + alloc.Width / 2;
 			double cy = alloc.Y + alloc.Height / 2;
 			
-			double angle = Math.PI * 1.8;
+			double angle = System.Math.PI * 1.8;
 
 			graphics.NewPath();
 			graphics.Arc(cx, cy, radius, 0, angle);
 			graphics.Stroke();
 			
-			DrawArrow(graphics, cx + radius * Math.Cos(angle), cy + radius * Math.Sin(angle), angle - Math.PI);
+			DrawArrow(graphics, cx + radius * System.Math.Cos(angle), cy + radius * System.Math.Sin(angle), angle - System.Math.PI);
 		}
 		
 		public override void Draw(Cairo.Context graphics)

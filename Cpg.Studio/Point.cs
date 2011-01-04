@@ -41,7 +41,7 @@ namespace Cpg.Studio
 				return false;
 			}
 			
-			return Math.Abs(X - other.X) < Epsilon && Math.Abs(Y - other.Y) < Epsilon;
+			return System.Math.Abs(X - other.X) < Epsilon && System.Math.Abs(Y - other.Y) < Epsilon;
 		}
 		
 		public override int GetHashCode()
@@ -91,14 +91,14 @@ namespace Cpg.Studio
 		
 		public void Round()
 		{
-			X = Math.Round(X);
-			Y = Math.Round(Y);
+			X = System.Math.Round(X);
+			Y = System.Math.Round(Y);
 		}
 		
 		public void Floor()
 		{
-			X = Math.Floor(X);
-			Y = Math.Floor(Y);
+			X = System.Math.Floor(X);
+			Y = System.Math.Floor(Y);
 		}
 		
 		public double this[int idx]

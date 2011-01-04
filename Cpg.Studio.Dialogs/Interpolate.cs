@@ -557,7 +557,7 @@ namespace Cpg.Studio.Dialogs
 			};
 			
 			double scale = -(d_preview.Allocation.Height - 10) / (maxpt - minpt);
-			ctx.Translate(0.5, Math.Ceiling(maxpt * -scale) + 4.5);
+			ctx.Translate(0.5, System.Math.Ceiling(maxpt * -scale) + 4.5);
 
 			ctx.SetSourceRGB(colors[0, 0], colors[0, 1], colors[0, 2]);
 			

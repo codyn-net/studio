@@ -48,7 +48,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			double cheight = height - 2 * margin;
 			
 			double lheight = uw * 6;
-			int numlines = (int)Math.Ceiling(cheight / lheight);
+			int numlines = (int)System.Math.Ceiling(cheight / lheight);
 			
 			graphics.SetSourceRGB(0, 0, 0);
 			

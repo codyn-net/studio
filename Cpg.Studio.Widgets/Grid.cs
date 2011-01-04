@@ -139,7 +139,7 @@ namespace Cpg.Studio.Widgets
 			}
 			set
 			{
-				int clipped = Math.Max(Math.Min(value, MaxZoom), MinZoom);
+				int clipped = System.Math.Max(System.Math.Min(value, MaxZoom), MinZoom);
 
 				if (d_activeGroup != null && d_activeGroup.Zoom != clipped)
 				{
@@ -155,8 +155,8 @@ namespace Cpg.Studio.Widgets
 		{
 			get
 			{
-				int cx = (int)Math.Round((ActiveGroup.X + Allocation.Width / 2.0) / (double)ZoomLevel);
-				int cy = (int)Math.Round((ActiveGroup.Y + Allocation.Height / 2.0) / (double)ZoomLevel);
+				int cx = (int)System.Math.Round((ActiveGroup.X + Allocation.Width / 2.0) / (double)ZoomLevel);
+				int cy = (int)System.Math.Round((ActiveGroup.Y + Allocation.Height / 2.0) / (double)ZoomLevel);
 				
 				return new int[] {cx, cy};
 			}
@@ -624,13 +624,13 @@ namespace Cpg.Studio.Widgets
 		
 		private Point UnitSize()
 		{
-			return new Point(Scaled(Allocation.Width, new ScaledPredicate(Math.Ceiling)),
-			                  Scaled(Allocation.Height, new ScaledPredicate(Math.Ceiling)));
+			return new Point(Scaled(Allocation.Width, new ScaledPredicate(System.Math.Ceiling)),
+			                  Scaled(Allocation.Height, new ScaledPredicate(System.Math.Ceiling)));
 		}
 		
 		private void ZoomAtPoint(int size, Point where)
 		{
-			size = Math.Max(Math.Min(size, MaxZoom), MinZoom);
+			size = System.Math.Max(System.Math.Min(size, MaxZoom), MinZoom);
 			
 			ActiveGroup.X += (int)(((where.X + ActiveGroup.X) * (double)size / ZoomLevel) - (where.X + ActiveGroup.X));
 			ActiveGroup.Y += (int)(((where.Y + ActiveGroup.Y) * (double)size / ZoomLevel) - (where.Y + ActiveGroup.Y));
@@ -675,7 +675,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void DoZoom(bool zoomIn, Point pt)
 		{
-			int nsize = ZoomLevel + (int)Math.Floor(ZoomLevel * 0.2 * (zoomIn ? 1 : -1));
+			int nsize = ZoomLevel + (int)System.Math.Floor(ZoomLevel * 0.2 * (zoomIn ? 1 : -1));
 
 			bool upperReached = false;
 			bool lowerReached = false;
@@ -1098,7 +1098,7 @@ namespace Cpg.Studio.Widgets
 				
 				if (evnt.Button == 1)
 				{
-					Point res = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
+					Point res = ScaledPosition(evnt.X, evnt.Y, System.Math.Floor);
 					UpdateDragState(res);
 				}
 			}
@@ -1198,8 +1198,8 @@ namespace Cpg.Studio.Widgets
 		
 		private void UpdateDragAnchor(double x, double y)
 		{
-			int xpos = (int)Scaled(x + ActiveGroup.X, item => Math.Floor(item));
-			int ypos = (int)Scaled(y + ActiveGroup.Y, item => Math.Floor(item));
+			int xpos = (int)Scaled(x + ActiveGroup.X, item => System.Math.Floor(item));
+			int ypos = (int)Scaled(y + ActiveGroup.Y, item => System.Math.Floor(item));
 			
 			if (d_dragAnchorState == null || xpos != d_dragAnchorState.X || ypos != d_dragAnchorState.Y)
 			{
@@ -1262,11 +1262,11 @@ namespace Cpg.Studio.Widgets
 				return true;
 			}
 			
-			Point position = ScaledPosition(evnt.X, evnt.Y, Math.Floor);
+			Point position = ScaledPosition(evnt.X, evnt.Y, System.Math.Floor);
 			Point size = UnitSize();
 			
-			int pxn = (int)Math.Floor((double)(ActiveGroup.X / ZoomLevel));
-			int pyn = (int)Math.Floor((double)(ActiveGroup.Y / ZoomLevel));
+			int pxn = (int)System.Math.Floor((double)(ActiveGroup.X / ZoomLevel));
+			int pyn = (int)System.Math.Floor((double)(ActiveGroup.Y / ZoomLevel));
 			
 			List<double> maxx = new List<double>();
 			List<double> minx = new List<double>();

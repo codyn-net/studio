@@ -22,7 +22,7 @@ namespace Cpg.Studio.Interpolators
 			// Check t
 			for (int i = 1; i < t.Length; ++i)
 			{
-				if (Math.Abs(t[i - 1] - t[i]) < 0.00000000001)
+				if (System.Math.Abs(t[i - 1] - t[i]) < 0.00000000001)
 				{
 					return null;
 				}
@@ -47,7 +47,7 @@ namespace Cpg.Studio.Interpolators
 			
 			for (int i = 0; i < size - 2; ++i)
 			{
-				samesign[i] = (Math.Sign(dpdt[i]) == Math.Sign(dpdt[i + 1])) && dpdt[i] != 0;
+				samesign[i] = (System.Math.Sign(dpdt[i]) == System.Math.Sign(dpdt[i + 1])) && dpdt[i] != 0;
 			}
 
 			// Three point derivative
@@ -87,22 +87,22 @@ namespace Cpg.Studio.Interpolators
 			
 			slopes[0] = ((2 * dt[0] + dt[1]) * dpdt[0] - dt[0] * dpdt[1]) / (dt[0] + dt[1]);
 
-			if (Math.Sign(slopes[0]) != Math.Sign(dpdt[0]))
+			if (System.Math.Sign(slopes[0]) != System.Math.Sign(dpdt[0]))
 			{
 				slopes[0] = 0;
 			}
-			else if (Math.Sign(dpdt[0]) != Math.Sign(dpdt[1]) && Math.Abs(slopes[0]) > Math.Abs(3 * dpdt[0]))
+			else if (System.Math.Sign(dpdt[0]) != System.Math.Sign(dpdt[1]) && System.Math.Abs(slopes[0]) > System.Math.Abs(3 * dpdt[0]))
 			{
 				slopes[0] = 3 * dpdt[0];
 			}
 		
 			slopes[size - 1] = ((2 * dt[size - 2] + dt[size - 3]) * dpdt[size - 2] - dt[size - 2] * dpdt[size - 3]) / (dt[size - 2] + dt[size - 3]);
 		
-			if (Math.Sign(slopes[size - 1]) != Math.Sign(dpdt[size - 2]))
+			if (System.Math.Sign(slopes[size - 1]) != System.Math.Sign(dpdt[size - 2]))
 			{
 				slopes[size - 1] = 0;
 			}
-			else if (Math.Sign(dpdt[size - 2]) != Math.Sign(dpdt[size - 3]) && Math.Abs(slopes[size - 1]) > Math.Abs(3 * dpdt[size - 2]))
+			else if (System.Math.Sign(dpdt[size - 2]) != System.Math.Sign(dpdt[size - 3]) && System.Math.Abs(slopes[size - 1]) > System.Math.Abs(3 * dpdt[size - 2]))
 			{
 				slopes[size - 1] = 3 * dpdt[size - 2];
 			}

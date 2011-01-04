@@ -169,10 +169,10 @@ namespace Cpg.Studio
 		
 		public void Round()
 		{
-			d_x = Math.Round(d_x);
-			d_y = Math.Round(d_y);
-			d_width = Math.Round(d_width);
-			d_height = Math.Round(d_height);
+			d_x = System.Math.Round(d_x);
+			d_y = System.Math.Round(d_y);
+			d_width = System.Math.Round(d_width);
+			d_height = System.Math.Round(d_height);
 			
 			EmitChanged();
 		}
@@ -196,10 +196,10 @@ namespace Cpg.Studio
 				return false;
 			}
 			
-			return Math.Abs(d_x - other.X) < Epsilon &&
-			       Math.Abs(d_y - other.Y) < Epsilon &&
-			       Math.Abs(d_width - other.Width) < Epsilon &&
-			       Math.Abs(d_height - other.Height) < Epsilon;
+			return System.Math.Abs(d_x - other.X) < Epsilon &&
+			       System.Math.Abs(d_y - other.Y) < Epsilon &&
+			       System.Math.Abs(d_width - other.Width) < Epsilon &&
+			       System.Math.Abs(d_height - other.Height) < Epsilon;
 		}
 		
 		public override int GetHashCode()

@@ -31,7 +31,7 @@ namespace Cpg.Studio.Widgets
 			
 			public void Widen(double factor)
 			{
-				double dist = Math.Abs((Max - Min) * factor);
+				double dist = System.Math.Abs((Max - Min) * factor);
 				
 				if (dist < 0.00001)
 				{
@@ -321,7 +321,7 @@ namespace Cpg.Studio.Widgets
 					d_yaxis.Min = -1;
 					d_yaxis.Max = 1;
 				}
-				else if (Math.Abs(d_yaxis.Min - d_yaxis.Max) < 0.00001)
+				else if (System.Math.Abs(d_yaxis.Min - d_yaxis.Max) < 0.00001)
 				{
 					d_yaxis.Widen(0.2);
 				}
@@ -475,7 +475,7 @@ namespace Cpg.Studio.Widgets
 		private void Prepare(Cairo.Context ctx)
 		{
 			PointF scale = Scale;
-			ctx.Translate(0.5, Math.Ceiling(d_yaxis.Max * -scale.Y) + 1.5);
+			ctx.Translate(0.5, System.Math.Ceiling(d_yaxis.Max * -scale.Y) + 1.5);
 		}
 		
 		private void SetGraphLine(Cairo.Context ctx, Container container)
@@ -550,7 +550,7 @@ namespace Cpg.Studio.Widgets
 				// draw the points we now need to draw, according to new shift
 				Prepare(ctx);
 				
-				int start = ((int)Math.Floor(Samples) - num) - 1;
+				int start = ((int)System.Math.Floor(Samples) - num) - 1;
 				DrawXAxis(ctx, scale.X * start);
 				
 				foreach (Container container in d_data)
@@ -642,7 +642,7 @@ namespace Cpg.Studio.Widgets
 				foreach (Container container in d_data)
 				{
 					SetGraphLine(ctx, container);
-					int start = Math.Max((int)Math.Floor(n) - (container.Data.Count - offset), 0);
+					int start = System.Math.Max((int)System.Math.Floor(n) - (container.Data.Count - offset), 0);
 					
 					if (container.HasData(offset))
 					{
@@ -707,19 +707,19 @@ namespace Cpg.Studio.Widgets
 			Container container = d_data[d_ruleWhich];
 
 			int offset = Offset;
-			int start = Math.Max((int)Math.Floor(Samples) - (container.Data.Count - offset), 0);
+			int start = System.Math.Max((int)System.Math.Floor(Samples) - (container.Data.Count - offset), 0);
 			
 			PointF scale = Scale;
 			
 			double dp = d_ruler.X / scale.X;
 			
-			if ((int)Math.Floor(dp) < start)
+			if ((int)System.Math.Floor(dp) < start)
 			{
 				return;
 			}
 			
-			int dpb = (int)Math.Floor(dp);
-			int dpe = (int)Math.Ceiling(dp);
+			int dpb = (int)System.Math.Floor(dp);
+			int dpe = (int)System.Math.Ceiling(dp);
 			double factor = 1;
 			
 			if (dpb != dpe)
@@ -748,7 +748,7 @@ namespace Cpg.Studio.Widgets
 			Prepare(ctx);
 			
 			ctx.LineWidth = 1.5;
-			ctx.Arc(d_ruler.X, cy * scale.Y, 5, 0, 2 * Math.PI);
+			ctx.Arc(d_ruler.X, cy * scale.Y, 5, 0, 2 * System.Math.PI);
 			
 			ctx.SetSourceRGBA(0.6, 0.6, 1, 0.5);
 			ctx.FillPreserve();
