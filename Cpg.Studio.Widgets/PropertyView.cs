@@ -1043,6 +1043,11 @@ namespace Cpg.Studio.Widgets
 		{
 			PropertyNode node = d_store.FindPath(path);
 			
+			if (node == null)
+			{
+				return;
+			}
+			
 			if (newValue.Trim() == node.Property.Expression.AsString)
 			{
 				return;
@@ -1064,6 +1069,11 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			PropertyNode node = d_store.FindPath(path);
+			
+			if (node == null)
+			{
+				return;
+			}
 			
 			if (newName.Trim() == node.Property.Name)
 			{
@@ -1103,33 +1113,36 @@ namespace Cpg.Studio.Widgets
 		{
 			Sensitivity sens = Sensitivity.None;
 			
-			foreach (TreePath path in d_treeview.Selection.GetSelectedRows())
-			{
-				PropertyNode node = d_store.FindPath(path);
-				
-				if (d_object.GetPropertyTemplate(node.Property, true) != null)
+			if (d_treeview.Selection != null)
+			{			
+				foreach (TreePath path in d_treeview.Selection.GetSelectedRows())
 				{
-					if (sens != Sensitivity.None)
+					PropertyNode node = d_store.FindPath(path);
+					
+					if (d_object.GetPropertyTemplate(node.Property, true) != null)
 					{
-						sens = Sensitivity.None;
-						break;
+						if (sens != Sensitivity.None)
+						{
+							sens = Sensitivity.None;
+							break;
+						}
 					}
-				}
-				else if (d_object.GetPropertyTemplate(node.Property, false) != null)
-				{
-					if (sens == Sensitivity.Remove)
+					else if (d_object.GetPropertyTemplate(node.Property, false) != null)
 					{
-						sens = Sensitivity.None;
-						break;
+						if (sens == Sensitivity.Remove)
+						{
+							sens = Sensitivity.None;
+							break;
+						}
+						else
+						{
+							sens = Sensitivity.Revert;
+						}
 					}
 					else
 					{
-						sens = Sensitivity.Revert;
+						sens = Sensitivity.Remove;
 					}
-				}
-				else
-				{
-					sens = Sensitivity.Remove;
 				}
 			}
 			
