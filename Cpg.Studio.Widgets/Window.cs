@@ -747,7 +747,7 @@ namespace Cpg.Studio.Widgets
 			
 			dlg.View.Error += delegate (object s, Exception exception)
 			{
-				Message(Gtk.Stock.DialogInfo, "Error while editing property", exception);
+				Message(Gtk.Stock.DialogError, "Error while editing property", exception);
 			};
 			
 			dlg.Show();
