@@ -591,7 +591,11 @@ namespace Cpg.Studio.Widgets
 				if (wrapper is Wrappers.Link)
 				{
 					Wrappers.Link link = (Wrappers.Link)wrapper;
-					s += " " + link.From.ToString() + " » " + link.To.ToString();
+					
+					if (link.From != null && link.To != null)
+					{
+						s += " " + link.From.ToString() + " » " + link.To.ToString();
+					}
 				}
 				
 				renderer.Markup = "<b>" + System.Security.SecurityElement.Escape(s) + "</b>";
