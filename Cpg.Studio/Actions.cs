@@ -88,19 +88,28 @@ namespace Cpg.Studio
 			{
 				Wrappers.Link link;
 				
-				string name = String.Format("{0}_to_{1}", pair.Key.Id, pair.Value.Id);
+				string name;
+				
+				if (pair.Key != null && pair.Value != null)
+				{
+					name = String.Format("{0}_to_{1}", pair.Key.Id, pair.Value.Id);
+				}
+				else
+				{
+					name = "link";
+				}
 
-				 if (temp == null)
-				 {
-				 	link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link(name, pair.Key, pair.Value));
-				 }
-				 else
-				 {
-				 	link = (Wrappers.Link)temp.CopyAsTemplate();
-				 	link.Id = name;
-
-				 	link.Attach(pair.Key, pair.Value);
-				 }
+				if (temp == null)
+				{
+					link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link(name, pair.Key, pair.Value));
+				}
+				else
+				{
+					link = (Wrappers.Link)temp.CopyAsTemplate();
+					link.Id = name;
+				 
+					link.Attach(pair.Key, pair.Value);
+				}
 				
 				if (link.Empty)
 				{
