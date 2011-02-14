@@ -82,7 +82,7 @@ namespace Cpg.Studio
 				return;
 			}
 
-			Gtk.MenuItem item = new Gtk.MenuItem(template.Id);
+			Gtk.MenuItem item = new Gtk.MenuItem(template.Id.Replace("_", "__"));
 			item.Show();
 			
 			item.Activated += delegate {
@@ -110,7 +110,7 @@ namespace Cpg.Studio
 			Gtk.MenuItem item = d_map[wrapped].Item;
 			
 			item.Remove(item.Child);
-			Gtk.Label lbl = new Gtk.Label(wrapped.Id);
+			Gtk.Label lbl = new Gtk.Label(wrapped.Id.Replace("_", "__"));
 			lbl.Show();
 
 			item.Add(lbl);
