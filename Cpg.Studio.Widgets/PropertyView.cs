@@ -399,6 +399,8 @@ namespace Cpg.Studio.Widgets
 			
 			d_proxyStore = store;
 			d_proxyCombo = box;
+			
+			d_proxyCombo.Sensitive = !ObjectIsNetwork;
 		}
 		
 		private void HandleProxyChanged(object sender, GLib.NotifyArgs args)
@@ -613,6 +615,14 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private bool ObjectIsNetwork
+		{
+			get
+			{
+				return d_object != null && d_object is Wrappers.Network;
+			}
+		}
+		
 		private void AddIdUI()
 		{
 			HBox hbox = new HBox(false, 6);
@@ -629,6 +639,9 @@ namespace Cpg.Studio.Widgets
 			d_entry.WidthChars = 15;
 			
 			d_entry.Text = d_object.Id;
+			
+			// This is a bit hacky
+			d_entry.Sensitive = !ObjectIsNetwork;
 			
 			d_entry.Activated += delegate {
 				ModifyId();
