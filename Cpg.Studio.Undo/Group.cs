@@ -34,18 +34,56 @@ namespace Cpg.Studio.Undo
 		{
 			List<IAction> reversed = new List<IAction>(d_actions);
 			reversed.Reverse();
+			
+			List<IAction> undid = new List<IAction>();
 
 			foreach (IAction action in reversed)
 			{
-				action.Undo();
+				try
+				{
+					action.Undo();
+					
+					undid.Add(action);
+				}
+				catch
+				{
+					/* If there was an error, reverse alraedy done actions */
+					undid.Reverse();
+
+					foreach (IAction ac in undid)
+					{
+						ac.Redo();
+					}
+
+					throw;
+				}
 			}
 		}
 		
 		public void Redo()
 		{
+			List<IAction> redid = new List<IAction>();
+
 			foreach (IAction action in d_actions)
 			{
-				action.Redo();
+				try
+				{
+					action.Redo();
+					
+					redid.Add(action);
+				}
+				catch
+				{
+					/* If there was an error, reverse alraedy done actions */
+					redid.Reverse();
+
+					foreach (IAction ac in redid)
+					{
+						ac.Undo();
+					}
+
+					throw;
+				}
 			}
 		}
 		

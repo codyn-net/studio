@@ -116,8 +116,8 @@ namespace Cpg.Studio.Undo
 		{
 			if (action.Verify())
 			{
-				Add(action);
 				action.Redo();
+				Add(action);
 			}
 		}
 		
