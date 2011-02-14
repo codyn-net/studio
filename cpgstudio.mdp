@@ -168,7 +168,7 @@
     <ProjectReference type="Gac" localcopy="True" refto="Mono.Cairo, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
     <ProjectReference type="Gac" localcopy="True" refto="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/cpg-network-sharp-2.0/CpgNetwork.dll" />
     <ProjectReference type="Gac" localcopy="True" refto="Biorob.Math, Version=1.0.3947.20262, Culture=neutral" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../.packeteer/install-cpg/lib/cpg-network-sharp-2.0/CpgNetwork.dll" />
   </References>
 </Project>
