@@ -155,6 +155,9 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/InputFile.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/InputFile.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Input.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/AddInterfaceProperty.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/InterfaceProperty.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/RemoveInterfaceProperty.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />

@@ -159,5 +159,13 @@ namespace Cpg.Studio.Wrappers
 		{
 			return WrappedObject.SetProxy(val);
 		}
+		
+		public Cpg.PropertyInterface PropertyInterface
+		{
+			get
+			{
+				return WrappedObject.PropertyInterface;
+			}
+		}
 	}
 }

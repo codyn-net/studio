@@ -772,10 +772,37 @@ namespace Cpg.Studio.Widgets
 			List<string> props = (new List<Cpg.Property>(objects[0].Properties)).ConvertAll<string>(item => item.Name);
 			int i = 1;
 			
+			/* Merge in the interface properties */
+			Wrappers.Group grp = objects[0] as Wrappers.Group;
+			
+			if (grp != null)
+			{
+				foreach (string name in grp.PropertyInterface.Names)
+				{
+					if (!props.Contains(name))
+					{
+						props.Add(name);
+					}
+				}
+			}
+			
 			while (props.Count > 0 && i < objects.Length)
 			{
 				List<string> pp = (new List<Cpg.Property>(objects[i].Properties)).ConvertAll<string>(item => item.Name);
 				
+				grp = objects[i] as Wrappers.Group;
+				
+				if (grp != null)
+				{
+					foreach (string name in grp.PropertyInterface.Names)
+					{
+						if (!pp.Contains(name))
+						{
+							pp.Add(name);
+						}
+					}
+				}
+
 				props.RemoveAll(item => !pp.Contains(item));
 				++i;
 			}

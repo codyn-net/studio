@@ -10,6 +10,34 @@ namespace Cpg.Studio.Widgets
 	[Gtk.Binding(Gdk.Key.Insert, "HandleAddBinding")]
 	public class PropertyView : VBox
 	{
+		private class InterfacePropertyNode : Node
+		{
+			private Cpg.PropertyInterface d_iface;
+			private string d_name;
+			
+			public InterfacePropertyNode(Cpg.PropertyInterface iface, string name)
+			{
+				d_iface = iface;
+				d_name = name;
+			}
+			
+			[PrimaryKey, NodeColumn(0)]
+			public string Name
+			{
+				get	{ return d_name; }
+			}
+			
+			[NodeColumn(1)]
+			public string Target
+			{
+				get
+				{
+					Cpg.Property prop = d_iface.Lookup(d_name);
+					return prop.Object.GetRelativeId(d_iface.Object) + "." + prop.Name;
+				}
+			}
+		}
+
 		private class LinkActionNode : Node
 		{
 			private LinkAction d_action;
@@ -148,10 +176,16 @@ namespace Cpg.Studio.Widgets
 		private string d_editingPath;
 		private FileChooserButton d_inputFileChooser;
 		
+		private NodeStore<InterfacePropertyNode> d_interfacePropertyStore;
+		private TreeView d_interfacePropertyView;
+		private AddRemovePopup d_interfacePropertyControls;
+		private bool d_selectInterface;
+		
 		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base(false, 3)
 		{
 			d_selectProperty = false;
 			d_selectAction = false;
+			d_selectInterface = false;
 
 			d_actions = actions;
 
@@ -339,8 +373,73 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private void AddGroupInterfaceUI()
+		{
+			if (d_object is Wrappers.Network)
+			{
+				return;
+			}
+
+			Gtk.VBox vbox = new Gtk.VBox(false, 3);
+			d_paned.Add2(vbox);
+			
+			ScrolledWindow vw = new ScrolledWindow();
+			vw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+			vw.ShadowType = ShadowType.EtchedIn;
+			
+			d_interfacePropertyStore = new NodeStore<InterfacePropertyNode>();
+			d_interfacePropertyView = new TreeView(new TreeModelAdapter(d_interfacePropertyStore));
+			
+			d_interfacePropertyView.ShowExpanders = false;
+			d_interfacePropertyView.RulesHint = true;
+			
+			vw.Add(d_interfacePropertyView);
+			
+			CellRendererText renderer = new CellRendererText();
+			renderer.Editable = true;			
+			renderer.Edited += HandleInterfacePropertyNameEdited;
+
+			Gtk.TreeViewColumn column = new Gtk.TreeViewColumn("Interface", renderer, "text", 0);
+			column.Resizable = true;
+			column.MinWidth = 80;
+			
+			d_interfacePropertyView.AppendColumn(column);
+			
+			renderer = new CellRendererText();
+			renderer.Editable = true;
+			
+			renderer.Edited += HandleInterfacePropertyTargetEdited;
+			renderer.EditingStarted += HandleInterfacePropertyTargetEditingStarted;
+			
+			column = new Gtk.TreeViewColumn("Target", renderer, "text", 1);
+			d_interfacePropertyView.AppendColumn(column);
+			
+			vbox.PackStart(vw, true, true, 0);
+
+			d_interfacePropertyControls = new AddRemovePopup(d_interfacePropertyView);
+			d_interfacePropertyControls.AddButton.Clicked += DoAddInterfaceProperty;
+			d_interfacePropertyControls.RemoveButton.Clicked += DoRemoveInterfaceProperty;
+			
+			UpdatePropertyInterfaceSensitivity();
+			
+			Wrappers.Group grp = d_object as Wrappers.Group;
+			Cpg.PropertyInterface iface = grp.PropertyInterface;
+			
+			foreach (string name in iface.Names)
+			{
+				AddGroupPropertyInterface(name);
+			}
+			
+			d_interfacePropertyView.Selection.Changed += DoInterfacePropertySelectionChanged;
+			
+			iface.Added += HandleGroupInterfacePropertyAdded;
+			iface.Removed += HandleGroupInterfacePropertyRemoved;
+		}
+		
 		private void AddGroupUI()
 		{
+			AddGroupInterfaceUI();
+
 			HBox hbox = new HBox(false, 6);
 			hbox.Show();
 			
@@ -466,6 +565,14 @@ namespace Cpg.Studio.Widgets
 			{
 				Wrappers.Group grp = (Wrappers.Group)d_object;
 				grp.WrappedObject.RemoveNotification("proxy", HandleProxyChanged);
+				
+				if (!(d_object is Wrappers.Network))
+				{
+					Cpg.PropertyInterface iface = grp.PropertyInterface;
+				
+					iface.Added -= HandleGroupInterfacePropertyAdded;
+					iface.Removed -= HandleGroupInterfacePropertyRemoved;
+				}
 			}
 			else if (d_object is Wrappers.Link)
 			{
@@ -1175,6 +1282,18 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private void UpdatePropertyInterfaceSensitivity()
+		{
+			if (d_interfacePropertyView.Selection.CountSelectedRows() == 0)
+			{
+				d_interfacePropertyControls.RemoveButton.Sensitive = false;
+			}
+			else
+			{
+				d_interfacePropertyControls.RemoveButton.Sensitive = true;
+			}
+		}
+		
 		private void DoActionSelectionChanged(object source, EventArgs args)
 		{
 			UpdateActionSensitivity();
@@ -1339,6 +1458,207 @@ namespace Cpg.Studio.Widgets
 			d_store.Remove(prop);
 		}
 		
+		private void UpdateInterfaceProperty(string name, string propid, string path)
+		{
+			InterfacePropertyNode node = d_interfacePropertyStore.FindPath(path);
+			Wrappers.Group grp = d_object as Wrappers.Group;
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			if (node == null)
+			{
+				return;
+			}
+			
+			if (name != null && name == node.Name)
+			{
+				return;
+			}
+			
+			if (name != null && grp.PropertyInterface.Lookup(name) != null)
+			{
+				/* Already exists */
+				Error(this, new Exception(String.Format("The interface `{0}' already exists on `{1}'", name, grp.FullId)));
+				return;
+			}
+			
+			if (propid != null && grp.FindProperty(propid) == null)
+			{
+				/* Not a valid target */
+				Error(this, new Exception(String.Format("The interface target `{0}' on `{1}' is invalid", propid, grp.FullId)));
+				return;
+			}
+			
+			/* Remove original */
+			actions.Add(new Undo.RemoveInterfaceProperty(grp, node.Name, node.Target));
+			
+			if (name == null)
+			{
+				name = node.Name;
+			}
+			
+			if (propid == null)
+			{
+				propid = node.Target;
+			}
+			
+			actions.Add(new Undo.AddInterfaceProperty(grp, name, propid));
+			
+			d_actions.Do(new Undo.Group(actions));
+		}
+		
+		private void HandleInterfacePropertyNameEdited(object source, EditedArgs args)
+		{
+			/* Need to remove and re-add the interface */
+			UpdateInterfaceProperty(args.NewText, null, args.Path);
+		}
+		
+		private void HandleInterfacePropertyTargetEditingStarted(object source, EditingStartedArgs args)
+		{
+			Entry entry = args.Editable as Entry;
+			
+			if (entry == null)
+			{
+				return;
+			}
+			
+			entry.PopulatePopup += delegate(object o, PopulatePopupArgs popargs) {
+				MenuItem g = new MenuItem("Targets");
+				Menu sub = new Menu();
+
+				Wrappers.Group grp = d_object as Wrappers.Group;
+				
+				foreach (Wrappers.Object child in grp.Children)
+				{
+					MenuItem c = new MenuItem(child.Id.Replace("_", "__"));
+					Menu m = new Menu();
+
+					foreach (Cpg.Property prop in child.Properties)
+					{
+						MenuItem p = new MenuItem(prop.Name.Replace("_", "__"));
+						m.Append(p);
+						
+						Wrappers.Object theChild = child;
+						Cpg.Property theProperty = prop;
+						
+						p.Activated += delegate(object sender, EventArgs e) {
+							entry.Text = theChild.Id + "." + theProperty.Name;
+						};
+					}
+					
+					c.Submenu = m;
+					sub.Append(c);
+				}
+				
+				g.Submenu = sub;
+				g.ShowAll();
+				
+				SeparatorMenuItem sep = new SeparatorMenuItem();
+				sep.Show();
+								
+				popargs.Menu.Append(sep);
+				popargs.Menu.Append(g);
+			};
+		}
+
+		private void HandleInterfacePropertyTargetEdited(object source, EditedArgs args)
+		{
+			/* Need to remove and re-add the interface */
+			UpdateInterfaceProperty(null, args.NewText, args.Path);
+		}
+		
+		private void HandleGroupInterfacePropertyAdded(object source, Cpg.AddedArgs args)
+		{
+			AddGroupPropertyInterface(args.Name);
+		}
+		
+		private void HandleGroupInterfacePropertyRemoved(object source, Cpg.RemovedArgs args)
+		{
+			d_interfacePropertyStore.Remove(args.Name);
+		}
+		
+		private void DoAddInterfaceProperty(object source, EventArgs args)
+		{
+			Wrappers.Group grp = d_object as Wrappers.Group;
+			Cpg.PropertyInterface iface = grp.WrappedObject.PropertyInterface;
+			
+			int i = 1;
+			string name;
+			
+			while (true)
+			{
+				name = String.Format("x_{0}", i++);
+				
+				if (iface.Lookup(name) == null)
+				{
+					break;
+				}
+			}
+			
+			Cpg.Property prop = null;
+			
+			/* Select first property */
+			foreach (Wrappers.Object child in grp.Children)
+			{
+				Cpg.Property[] props = child.Properties;
+				
+				if (props.Length != 0)
+				{
+					prop = props[0];
+					break;
+				}
+			}
+			
+			if (prop == null)
+			{
+				return;
+			}
+			
+			d_selectInterface = true;
+			d_actions.Do(new Undo.AddInterfaceProperty(grp, name, prop.Object.Id + "." + prop.Name));
+			d_selectInterface = false;
+		}
+		
+		private void DoRemoveInterfaceProperty(object source, EventArgs args)
+		{
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+
+			foreach (TreePath path in d_interfacePropertyView.Selection.GetSelectedRows())
+			{
+				InterfacePropertyNode node = d_interfacePropertyStore.FindPath(path);
+
+				actions.Add(new Undo.RemoveInterfaceProperty((Wrappers.Group)d_object, node.Name, node.Target));
+			}
+			
+			d_actions.Do(new Undo.Group(actions));
+		}
+		
+		private void AddGroupPropertyInterface(string name)
+		{
+			TreeIter iter;
+			Wrappers.Group grp = d_object as Wrappers.Group;
+			
+			iter = d_interfacePropertyStore.Add(new InterfacePropertyNode(grp.PropertyInterface, name));
+			
+			if (d_selectInterface)
+			{
+				d_interfacePropertyView.Selection.UnselectAll();
+				d_interfacePropertyView.Selection.SelectIter(iter);
+				
+				TreePath path = d_interfacePropertyStore.GetPath(iter);					
+				d_interfacePropertyView.SetCursor(path, d_interfacePropertyView.GetColumn(0), true);
+			}
+		}
+
+		private void RemoveGroupPropertyInterface(string name)
+		{
+			d_interfacePropertyStore.Remove(name);
+		}
+		
+		private void DoInterfacePropertySelectionChanged(object source, EventArgs args)
+		{
+			UpdatePropertyInterfaceSensitivity();
+		}
+		
 		private void Clear()
 		{
 			Disconnect();
@@ -1383,6 +1703,5 @@ namespace Cpg.Studio.Widgets
 			
 			d_paned.Position = Allocation.Width / 2;
 		}
-
 	}
 }
