@@ -84,6 +84,7 @@ FILES = \
 	Cpg.Studio/Stock.cs \
 	Cpg.Studio.Undo/AddFunctionPolynomialPiece.cs \
 	Cpg.Studio.Undo/AddGroup.cs \
+	Cpg.Studio.Undo/AddInterfaceProperty.cs \
 	Cpg.Studio.Undo/AddLinkAction.cs \
 	Cpg.Studio.Undo/AddObject.cs \
 	Cpg.Studio.Undo/AddProperty.cs \
@@ -94,6 +95,7 @@ FILES = \
 	Cpg.Studio.Undo/Group.cs \
 	Cpg.Studio.Undo/IAction.cs \
 	Cpg.Studio.Undo/Import.cs \
+	Cpg.Studio.Undo/InterfaceProperty.cs \
 	Cpg.Studio.Undo/LinkAction.cs \
 	Cpg.Studio.Undo/Manager.cs \
 	Cpg.Studio.Undo/ModifyExpression.cs \
@@ -111,6 +113,7 @@ FILES = \
 	Cpg.Studio.Undo/Object.cs \
 	Cpg.Studio.Undo/Property.cs \
 	Cpg.Studio.Undo/RemoveFunctionPolynomialPiece.cs \
+	Cpg.Studio.Undo/RemoveInterfaceProperty.cs \
 	Cpg.Studio.Undo/RemoveLinkAction.cs \
 	Cpg.Studio.Undo/RemoveObject.cs \
 	Cpg.Studio.Undo/RemoveProperty.cs \
