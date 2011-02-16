@@ -1614,7 +1614,16 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			d_selectInterface = true;
-			d_actions.Do(new Undo.AddInterfaceProperty(grp, name, prop.Object.Id + "." + prop.Name));
+			
+			try
+			{
+				d_actions.Do(new Undo.AddInterfaceProperty(grp, name, prop.Object.Id + "." + prop.Name));
+			}
+			catch (GLib.GException exception)
+			{
+				Error(this, exception);
+			}
+
 			d_selectInterface = false;
 		}
 		
@@ -1629,7 +1638,14 @@ namespace Cpg.Studio.Widgets
 				actions.Add(new Undo.RemoveInterfaceProperty((Wrappers.Group)d_object, node.Name, node.Target));
 			}
 			
-			d_actions.Do(new Undo.Group(actions));
+			try
+			{
+				d_actions.Do(new Undo.Group(actions));
+			}
+			catch (GLib.GException exception)
+			{
+				Error(this, exception);
+			}
 		}
 		
 		private void AddGroupPropertyInterface(string name)
