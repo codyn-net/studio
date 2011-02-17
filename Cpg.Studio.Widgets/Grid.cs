@@ -723,7 +723,8 @@ namespace Cpg.Studio.Widgets
 				Wrappers.Group newActive = d_activeGroup.Parent;
 				
 				double x, y;
-				Utils.MeanPosition(newActive.Children, out x, out y);
+				x = d_activeGroup.Allocation.X + d_activeGroup.Allocation.Width / 2;
+				y = d_activeGroup.Allocation.Y + d_activeGroup.Allocation.Height / 2;
 					
 				newActive.X = (int)(x * MaxZoom - pt.X);
 				newActive.Y = (int)(y * MaxZoom - pt.Y);
