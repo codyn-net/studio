@@ -722,7 +722,7 @@ namespace Cpg.Studio.Widgets
 			{
 				foreach (Cpg.Property p in properties)
 				{
-					d_objectView.SetActive(p, true);
+					d_objectView.SetActive(p.Object, p, true);
 				}
 			}
 			
@@ -802,7 +802,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (d_objectView != null)
 			{
-				d_objectView.SetActive(property, false);
+				d_objectView.SetActive(obj, property, false);
 			}
 		}
 		
