@@ -1335,7 +1335,22 @@ namespace Cpg.Studio.Widgets
 		
 		private bool PropertyExists(string name)
 		{
-			return d_store.Find(name) != null;
+			if (d_store.Find(name) != null)
+			{
+				return true;
+			}
+			
+			Wrappers.Group grp = d_object as Wrappers.Group;
+			
+			if (grp != null)
+			{
+				if (grp.PropertyInterface.Lookup(name) != null)
+				{
+					return true;
+				}
+			}
+			
+			return false;
 		}
 		
 		private void DoAddProperty(object source, EventArgs args)
