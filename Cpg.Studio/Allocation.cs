@@ -206,5 +206,35 @@ namespace Cpg.Studio
 		{
 			return base.GetHashCode();
 		}
+		
+		public Allocation Extend(Allocation other)
+		{
+			double x1 = d_x;
+			double x2 = d_x + d_width;
+			double y1 = d_y;
+			double y2 = d_y + d_height;
+			
+			if (other.X < x1)
+			{
+				x1 = other.X;
+			}
+			
+			if (other.X + other.Width > x2)
+			{
+				x2 = other.X + other.Width;
+			}
+
+			if (other.Y < y1)
+			{
+				y1 = other.Y;
+			}
+			
+			if (other.Y + other.Height > y2)
+			{
+				y2 = other.Y + other.Height;
+			}
+			
+			return new Allocation(x1, y1, x2 - x1, y2 - y1);
+		}
 	}
 }

@@ -25,6 +25,7 @@ namespace Cpg.Studio.Wrappers
 		private Renderers.Renderer d_renderer;
 		
 		private State d_state;
+		private Allocation d_lastExtents;
 		
 		public Graphical()
 		{
@@ -351,8 +352,17 @@ namespace Cpg.Studio.Wrappers
 					alloc.Width += off * 2;
 				}
 			}
-
-			return alloc;
+			
+			d_lastExtents = alloc;
+			return d_lastExtents.Copy();
+		}
+		
+		public Allocation LastExtents
+		{
+			get
+			{
+				return d_lastExtents;
+			}
 		}
 	}
 }

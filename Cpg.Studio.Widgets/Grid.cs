@@ -293,7 +293,14 @@ namespace Cpg.Studio.Widgets
 			
 			using (Cairo.Context graphics = Gdk.CairoHelper.Create(GdkWindow))
 			{
+				Allocation prev = obj.LastExtents;
 				Allocation alloc = obj.Extents(ZoomLevel, graphics);
+				
+				if (prev != null)
+				{
+					alloc = alloc.Extend(prev);
+				}
+
 				alloc.Round();
 				
 				alloc.Offset(-ActiveGroup.X, -ActiveGroup.Y);
