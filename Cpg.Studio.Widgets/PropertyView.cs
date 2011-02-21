@@ -218,6 +218,7 @@ namespace Cpg.Studio.Widgets
 			
 			d_actionView.ShowExpanders = false;
 			d_actionView.RulesHint = true;
+			d_actionView.Selection.Mode = SelectionMode.Multiple;
 			
 			vw.Add(d_actionView);
 			
