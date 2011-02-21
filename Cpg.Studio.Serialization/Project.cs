@@ -102,13 +102,27 @@ namespace Cpg.Studio.Serialization
 		private Network d_metaNetwork;
 		private Templates d_metaTemplates;
 		private Functions d_metaFunctions;
+		private string d_externalPath;
 		
 		public Project()
 		{
 			Clear();
 			
 			d_network = new Wrappers.Network();
-			d_saveProjectExternally = true;
+			d_saveProjectExternally = false;
+		}
+		
+		[XmlAttribute("path")]
+		public string ExternalPath
+		{
+			get
+			{	
+				return d_externalPath;
+			}
+			set
+			{
+				d_externalPath = value;
+			}
 		}
 
 		public string ExternalProjectFile
@@ -271,13 +285,12 @@ namespace Cpg.Studio.Serialization
 		
 		private string GenerateProjectFilename(string filename)
 		{
-			return Path.Combine(Path.GetDirectoryName(filename), "." + Path.GetFileName(filename) + "-project");
+			return "." + Path.GetFileName(filename) + "-project";
 		}
 		
 		public void Load(string filename)
 		{
 			d_filename = filename;
-			d_network.LoadFromPath(filename);
 
 			XmlDocument doc = new XmlDocument();
 			doc.Load(filename);
@@ -285,17 +298,59 @@ namespace Cpg.Studio.Serialization
 			XmlNode projectNode;
 			
 			projectNode = doc.SelectSingleNode("/cpg/project");
+			XmlAttribute at = projectNode != null ? projectNode.Attributes["path"] : null;
 			
-			if (projectNode == null)
+			if (projectNode != null)
+			{
+				/* Remove project node from doc, then load network from XML to prevent
+				   it from saving the project node as an external data */
+				projectNode.ParentNode.RemoveChild(projectNode);
+				
+				StringWriter swriter = new StringWriter();
+				XmlWriter xmlWriter = XmlTextWriter.Create(swriter, WriterSettings());
+				
+				doc.Save(xmlWriter);
+				d_network.LoadFromXml(swriter.ToString());
+				
+				d_saveProjectExternally = false;
+			}
+			else
+			{
+				d_network.LoadFromPath(filename);
+			}
+
+			if (projectNode == null || at != null)
 			{
 				// Try to load external project doc
-				string extfile = GenerateProjectFilename(filename);
+				string extfile;
+				
+				if (at == null)
+				{
+					d_externalPath = GenerateProjectFilename(filename);
+				}
+				else
+				{
+					d_externalPath = at.InnerText.Trim();
+				}
+
+				string path = d_externalPath;
+					
+				if (!Path.IsPathRooted(path))
+				{
+					extfile = Path.Combine(Path.GetDirectoryName(filename), path);
+				}
+				else
+				{
+					extfile = path;
+				}
 				
 				if (File.Exists(extfile))
 				{
 					doc.Load(extfile);
 					projectNode = doc.SelectSingleNode("/cpg/project");
 					d_externalProjectFile = extfile;
+					
+					d_saveProjectExternally = true;
 				}
 			}
 			
@@ -461,20 +516,31 @@ namespace Cpg.Studio.Serialization
 			
 			if (SaveProjectExternally)
 			{
+				if (d_externalPath == null)
+				{
+					d_externalPath = GenerateProjectFilename(filename);
+				}
+
 				// Write to separate files
 				string xml = serializer.SerializeMemory();
 				XmlDocument doc = new XmlDocument();
 				doc.LoadXml(xml);
+				
+				// Append a project xml which imports
+				XmlNode root = doc.SelectSingleNode("cpg");
+				XmlElement projectNode = doc.CreateElement("project");
+				projectNode.SetAttribute("path", d_externalPath);
+				root.AppendChild(projectNode);
 
 				Save(doc, filename);
 				
-				string extfile = GenerateProjectFilename(filename);
+				string extfile = Path.Combine(Path.GetDirectoryName(filename), d_externalPath);;
 				
 				XmlDocument ext = new XmlDocument();
-				XmlElement root = ext.CreateElement("cpg");
+				root = ext.CreateElement("cpg");
 				ext.AppendChild(root);
 				
-				XmlElement projectNode = ext.CreateElement("project");
+				projectNode = ext.CreateElement("project");
 				
 				projectNode.AppendChild(ext.ImportNode(settingsNode, true));
 				projectNode.AppendChild(ext.ImportNode(networkNode, true));
