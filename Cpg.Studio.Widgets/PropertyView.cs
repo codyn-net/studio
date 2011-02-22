@@ -219,6 +219,7 @@ namespace Cpg.Studio.Widgets
 			d_actionView.ShowExpanders = false;
 			d_actionView.RulesHint = true;
 			d_actionView.Selection.Mode = SelectionMode.Multiple;
+			d_actionView.ButtonPressEvent += OnTreeViewButtonPressEvent;
 			
 			vw.Add(d_actionView);
 			
@@ -393,6 +394,7 @@ namespace Cpg.Studio.Widgets
 			
 			d_interfacePropertyView.ShowExpanders = false;
 			d_interfacePropertyView.RulesHint = true;
+			d_interfacePropertyView.ButtonPressEvent += OnTreeViewButtonPressEvent;
 			
 			vw.Add(d_interfacePropertyView);
 			
@@ -883,6 +885,7 @@ namespace Cpg.Studio.Widgets
 			
 			d_treeview.RulesHint = true;
 			d_treeview.Selection.Mode = SelectionMode.Multiple;
+			d_treeview.ButtonPressEvent += OnTreeViewButtonPressEvent;
 			
 			d_store.NodeChanged += HandleNodeChanged;
 			
@@ -1744,6 +1747,36 @@ namespace Cpg.Studio.Widgets
 			base.OnRealized();
 			
 			d_paned.Position = Allocation.Width / 2;
+		}
+
+		[GLib.ConnectBefore]
+		private void OnTreeViewButtonPressEvent(object source, ButtonPressEventArgs args)
+		{
+			if (args.Event.Type != Gdk.EventType.TwoButtonPress && args.Event.Type != Gdk.EventType.ThreeButtonPress)
+			{
+				return;
+			}
+			
+			if (args.Event.Window != d_treeview.BinWindow)
+			{
+				return;
+			}
+			
+			TreePath path;
+			TreeViewColumn column;
+			int cell_y;
+			TreeView tv = (TreeView)source;
+			
+			if (!tv.GetPathAtPos((int)args.Event.X, (int)args.Event.Y, out path, out column))
+			{
+				return;
+			}
+			
+			tv.GrabFocus();
+			tv.Selection.SelectPath(path);
+			tv.SetCursor(path, column, true);
+
+			args.RetVal = true;
 		}
 	}
 }
