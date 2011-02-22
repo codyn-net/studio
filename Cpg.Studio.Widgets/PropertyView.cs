@@ -1532,7 +1532,14 @@ namespace Cpg.Studio.Widgets
 			
 			actions.Add(new Undo.AddInterfaceProperty(grp, name, propid));
 			
-			d_actions.Do(new Undo.Group(actions));
+			try
+			{
+				d_actions.Do(new Undo.Group(actions));
+			}
+			catch (GLib.GException exception)
+			{
+				Error(this, exception);
+			}
 		}
 		
 		private void HandleInterfacePropertyNameEdited(object source, EditedArgs args)
@@ -1592,6 +1599,13 @@ namespace Cpg.Studio.Widgets
 		private void HandleInterfacePropertyTargetEdited(object source, EditedArgs args)
 		{
 			/* Need to remove and re-add the interface */
+			InterfacePropertyNode node = d_interfacePropertyStore.FindPath(args.Path);
+			
+			if (node != null && node.Target == args.NewText)
+			{
+				return;
+			}
+
 			UpdateInterfaceProperty(null, args.NewText, args.Path);
 		}
 		
@@ -1764,7 +1778,6 @@ namespace Cpg.Studio.Widgets
 			
 			TreePath path;
 			TreeViewColumn column;
-			int cell_y;
 			TreeView tv = (TreeView)source;
 			
 			if (!tv.GetPathAtPos((int)args.Event.X, (int)args.Event.Y, out path, out column))
