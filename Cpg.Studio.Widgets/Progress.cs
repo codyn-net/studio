@@ -144,6 +144,7 @@ namespace Cpg.Studio.Widgets
 			if (d_grid != null)
 			{
 				d_grid.ExposeEvent -= HandleGridExpose;
+				d_grid.ConfigureEvent -= HandleGridConfigure;
 				d_grid = null;
 			}
 		}
