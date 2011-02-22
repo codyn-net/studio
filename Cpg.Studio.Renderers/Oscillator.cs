@@ -36,44 +36,39 @@ namespace Cpg.Studio.Wrappers.Renderers
 			graphics.Arc(allocation.Width / 2.0, allocation.Height / 2.0, radius, 0, 2 * System.Math.PI);
 		}
 		
-		public override void Draw(Cairo.Context graphics)
+		public override void Draw(Cairo.Context context)
 		{
 			Allocation alloc = d_group != null ? d_group.Allocation : new Allocation(0, 0, 1, 1);
 			
-			if (alloc.Height != d_height)
-			{
-				d_height = alloc.Height;
+			Cache.Render(context, alloc.Width, alloc.Height, delegate (Cairo.Context graphics, double width, double height) {
 				MakePatterns();
-			}
 			
-			graphics.Save();
-			double uw = graphics.LineWidth;			
-			double radius = System.Math.Min(alloc.Width / 2, alloc.Height / 2);
-			
-			graphics.Source = d_outer;
-			DrawCircle(graphics, radius, alloc);
-			graphics.Fill();
-			
-			graphics.LineWidth = uw * 2;
-			graphics.SetSourceRGB(26 / 255.0, 80 / 255.0, 130 / 255.0);
-			DrawCircle(graphics, radius * 0.85 - uw * 2, alloc);
-			graphics.StrokePreserve();
-			
-			graphics.Source = d_inner;
-			graphics.Fill();
-			
-			graphics.LineWidth = uw;
-			radius = 0.3 * radius;
-			
-			graphics.Translate(alloc.Width / 2.0, alloc.Height / 2.0);
-			graphics.SetSourceRGB(29 / 255.0, 71 / 255.0, 107 / 255.0);
-			graphics.Arc(-radius, 0, radius, System.Math.PI, 2 * System.Math.PI);
-			graphics.Stroke();
-			
-			graphics.Arc(radius, 0, radius, 0, System.Math.PI);
-			graphics.Stroke();
-			
-			graphics.Restore();
+				double uw = graphics.LineWidth;			
+				double radius = System.Math.Min(alloc.Width / 2, alloc.Height / 2);
+				
+				graphics.Source = d_outer;
+				DrawCircle(graphics, radius, alloc);
+				graphics.Fill();
+				
+				graphics.LineWidth = uw * 2;
+				graphics.SetSourceRGB(26 / 255.0, 80 / 255.0, 130 / 255.0);
+				DrawCircle(graphics, radius * 0.85 - uw * 2, alloc);
+				graphics.StrokePreserve();
+				
+				graphics.Source = d_inner;
+				graphics.Fill();
+				
+				graphics.LineWidth = uw;
+				radius = 0.3 * radius;
+				
+				graphics.Translate(alloc.Width / 2.0, alloc.Height / 2.0);
+				graphics.SetSourceRGB(29 / 255.0, 71 / 255.0, 107 / 255.0);
+				graphics.Arc(-radius, 0, radius, System.Math.PI, 2 * System.Math.PI);
+				graphics.Stroke();
+				
+				graphics.Arc(radius, 0, radius, 0, System.Math.PI);
+				graphics.Stroke();
+			});
 		}
 	}
 }

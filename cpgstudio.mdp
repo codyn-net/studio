@@ -40,7 +40,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Directories.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/DynamicIntegrator.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Range.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/RenderCache.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Settings.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Simulation.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Stock.cs" />
@@ -158,6 +157,8 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/AddInterfaceProperty.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/InterfaceProperty.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/RemoveInterfaceProperty.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/RenderCache.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Renderers" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />

@@ -98,52 +98,51 @@ namespace Cpg.Studio.Wrappers.Renderers
 			graphics.Stroke();
 		}
 		
-		public override void Draw(Cairo.Context graphics)
+		public override void Draw(Cairo.Context context)
 		{
 			Allocation alloc = d_group != null ? d_group.Allocation : new Allocation(0, 0, 1, 1);
 			
-			graphics.Save();
-			double uw = graphics.LineWidth;
-			
-			double off;
-			
-			if (Style == DrawStyle.Normal)
-			{
-				graphics.LineWidth = uw * 2;
-				off = uw * 2 + alloc.Width * 0.1f;
-			}
-			else
-			{
-				off = 0;
-			}
-			
-			double w = (alloc.Width - 2 * off) * 0.4;
-			double h = (alloc.Height - 2 * off) * 0.4;
-			
-			if (Detail == "group" || Detail == "ungroup")
-			{
-				DrawArrow(graphics, off, off, w, h, d_colors[0]);
-				DrawArrow(graphics, off, alloc.Height - off, w, -h, d_colors[1]);
-				DrawArrow(graphics, alloc.Width - off, alloc.Height - off, -w, -h, d_colors[2]);
-				DrawArrow(graphics, alloc.Width - off, off, -w, h, d_colors[3]);
-			}
-			else
-			{
-				DrawRect(graphics, off, off, w, h, d_colors[0]);
-				DrawRect(graphics, off, alloc.Height - h - off, w, h, d_colors[1]);
-				DrawRect(graphics, alloc.Width - w - off, alloc.Height - h - off, w, h, d_colors[2]);
-				DrawRect(graphics, alloc.Width - w - off, off, w, h, d_colors[3]);
-			}
-			
-			double w2 = (alloc.Width - 2 * off) * 0.5f;
-			double h2 = (alloc.Height - 2 * off) * 0.5f;
-			
-			double x = (alloc.Width - w2) / 2.0;
-			double y = (alloc.Height - h2) / 2.0;
-			
-			DrawRect(graphics, x, y, w2, h2, d_colors[4]);
-
-			graphics.Restore();
+			Cache.Render(context, alloc.Width, alloc.Height, delegate (Cairo.Context graphics, double width, double height) {
+				double uw = graphics.LineWidth;
+				
+				double off;
+				
+				if (Style == DrawStyle.Normal)
+				{
+					graphics.LineWidth = uw * 2;
+					off = uw * 2 + alloc.Width * 0.1f;
+				}
+				else
+				{
+					off = 0;
+				}
+				
+				double w = (alloc.Width - 2 * off) * 0.4;
+				double h = (alloc.Height - 2 * off) * 0.4;
+				
+				if (Detail == "group" || Detail == "ungroup")
+				{
+					DrawArrow(graphics, off, off, w, h, d_colors[0]);
+					DrawArrow(graphics, off, alloc.Height - off, w, -h, d_colors[1]);
+					DrawArrow(graphics, alloc.Width - off, alloc.Height - off, -w, -h, d_colors[2]);
+					DrawArrow(graphics, alloc.Width - off, off, -w, h, d_colors[3]);
+				}
+				else
+				{
+					DrawRect(graphics, off, off, w, h, d_colors[0]);
+					DrawRect(graphics, off, alloc.Height - h - off, w, h, d_colors[1]);
+					DrawRect(graphics, alloc.Width - w - off, alloc.Height - h - off, w, h, d_colors[2]);
+					DrawRect(graphics, alloc.Width - w - off, off, w, h, d_colors[3]);
+				}
+				
+				double w2 = (alloc.Width - 2 * off) * 0.5f;
+				double h2 = (alloc.Height - 2 * off) * 0.5f;
+				
+				double x = (alloc.Width - w2) / 2.0;
+				double y = (alloc.Height - h2) / 2.0;
+				
+				DrawRect(graphics, x, y, w2, h2, d_colors[4]);
+			});
 		}
 	}
 }

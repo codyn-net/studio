@@ -189,7 +189,7 @@ namespace Cpg.Studio.Widgets
 
 			d_actions = actions;
 
-			Initialize(obj);
+			Initialize(obj, true);
 		}
 		
 		public Wrappers.Wrapper Object
@@ -816,6 +816,16 @@ namespace Cpg.Studio.Widgets
 		
 		public void Initialize(Wrappers.Wrapper obj)
 		{
+			Initialize(obj, false);
+		}
+		
+		private void Initialize(Wrappers.Wrapper obj, bool force)
+		{
+			if (!force && obj == d_object)
+			{
+				return;
+			}
+
 			Clear();
 			
 			InitializeFlagsList();

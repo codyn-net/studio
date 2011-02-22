@@ -27,10 +27,13 @@ namespace Cpg.Studio.Wrappers
 		private State d_state;
 		private Allocation d_lastExtents;
 		
+		private Dictionary<State, RenderCache> d_cache;
+		
 		public Graphical()
 		{
 			Allocation = new Allocation(0f, 0f, 1f, 1f);
 			d_state = State.None;
+			d_cache = new Dictionary<State, RenderCache>();
 		}
 
 		protected virtual bool FromState(State field)
@@ -261,8 +264,24 @@ namespace Cpg.Studio.Wrappers
 			Pango.CairoHelper.ShowLayout(graphics, layout);
 			graphics.Restore();
 		}
+		
+		private RenderCache Cache
+		{
+			get
+			{
+				RenderCache ret;
+				
+				if (!d_cache.TryGetValue(d_state, out ret))
+				{
+					ret = new RenderCache(10);
+					d_cache[d_state] = ret;
+				}
+				
+				return ret;
+			}
+		}
 
-		public virtual void Draw(Cairo.Context graphics)
+		public virtual void Draw(Cairo.Context context)
 		{
 			if (Invisible)
 			{
@@ -271,20 +290,22 @@ namespace Cpg.Studio.Wrappers
 
 			if (Renderer != null)
 			{
-				Renderer.Draw(graphics);
+				Renderer.Draw(context);
 			}
-
-			DrawLabel(graphics);
 			
-			if (Selected)
-			{
-				DrawSelection(graphics);
-			}
-		
-			if (KeyFocus)
-			{
-				DrawFocus(graphics);
-			}
+			DrawLabel(context);
+			
+			Cache.Render(context, Allocation.Width, Allocation.Height, delegate (Cairo.Context graphics, double width, double height) {
+				if (Selected)
+				{
+					DrawSelection(graphics);
+				}
+			
+				if (KeyFocus)
+				{
+					DrawFocus(graphics);
+				}
+			});
 		}
 		
 		public virtual void DoRequestRedraw()

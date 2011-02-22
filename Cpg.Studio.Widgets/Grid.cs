@@ -86,7 +86,7 @@ namespace Cpg.Studio.Widgets
 			
 			d_isDraggingAnchor = false;
 			
-			d_gridCache = new RenderCache();
+			d_gridCache = new RenderCache(1);
 		
 			Clear();
 		}
@@ -855,7 +855,7 @@ namespace Cpg.Studio.Widgets
 			graphics.Save();
 			graphics.Translate(-ZoomLevel - ox, -ZoomLevel - oy);
 			
-			d_gridCache.Render(graphics, Allocation.Width + ZoomLevel * 2, Allocation.Height + ZoomLevel * 2, delegate (Cairo.Context ctx, int width, int height)
+			d_gridCache.Render(graphics, Allocation.Width + ZoomLevel * 2, Allocation.Height + ZoomLevel * 2, delegate (Cairo.Context ctx, double width, double height)
 			{
 				double offset = 0.5;
 				ctx.LineWidth = 1;

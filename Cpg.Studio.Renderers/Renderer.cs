@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 
 namespace Cpg.Studio.Wrappers.Renderers
 {
@@ -8,6 +9,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 		protected Wrappers.Wrapper d_object;
 		private DrawStyle d_style;
 		private string d_detail;
+		private Dictionary<string, RenderCache> d_cache;
 		
 		public enum DrawStyle
 		{
@@ -19,10 +21,28 @@ namespace Cpg.Studio.Wrappers.Renderers
 		{
 			d_object = obj;
 			d_style = DrawStyle.Normal;
+			d_cache = new Dictionary<string, RenderCache>();
 		}
 		
 		public Renderer() : this(null)
 		{
+		}
+		
+		public RenderCache Cache
+		{
+			get
+			{
+				RenderCache cache = null;
+				string detail = d_detail == null ? "" : d_detail;
+				
+				if (!d_cache.TryGetValue(detail, out cache))
+				{
+					cache = new RenderCache(10);
+					d_cache[detail] = cache;
+				}
+
+				return cache;
+			}
 		}
 		
 		public Renderer Copy(Wrappers.Wrapper other)
@@ -79,6 +99,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			Gdk.Pixbuf ret;
 			
 			Style = DrawStyle.Icon;
+			Cache.Enabled = false;
 			
 			using (Cairo.Context ct = new Cairo.Context(surface))
 			{
@@ -104,7 +125,9 @@ namespace Cpg.Studio.Wrappers.Renderers
 					string filename = System.IO.Path.GetTempFileName();
 					
 					if (System.IO.File.Exists(filename))
+					{
 						System.IO.File.Delete(filename);
+					}
 						
 					surface.WriteToPng(filename);
 					ret = new Gdk.Pixbuf(filename);
@@ -112,6 +135,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 				}
 			}
 			
+			Cache.Enabled = true;
 			Style = DrawStyle.Normal;
 			
 			return ret;
