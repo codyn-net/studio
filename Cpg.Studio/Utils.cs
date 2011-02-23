@@ -132,7 +132,7 @@ namespace Cpg.Studio
 			{
 				Wrappers.Link link = obj as Wrappers.Link;
 				
-				if (link != null && link.From != null && link.To != null)
+				if (link != null && (link.From != null || link.To != null))
 				{
 					continue;
 				}
