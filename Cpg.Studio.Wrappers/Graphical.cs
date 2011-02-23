@@ -15,7 +15,8 @@ namespace Cpg.Studio.Wrappers
 			KeyFocus = 1 << 1,
 			MouseFocus = 1 << 2,
 			LinkFocus = 1 << 3,
-			Invisible = 1 << 4
+			Invisible = 1 << 4,
+			SelectedAlt = 1 << 5
 		}
 			
 		public event EventHandler RequestRedraw = delegate {};
@@ -62,10 +63,16 @@ namespace Cpg.Studio.Wrappers
 			return d_state != old;
 		}
 		
+		public bool SelectedAlt
+		{
+			get { return FromState(State.SelectedAlt); }
+			set { ToState(State.Selected | State.SelectedAlt, value); }
+		}
+		
 		public bool Selected
 		{
 			get { return FromState(State.Selected); }
-			set { ToState(State.Selected, value); }
+			set { ToState(value ? State.Selected : (State.Selected | State.SelectedAlt), value); }
 		}
 		
 		public bool KeyFocus
@@ -176,7 +183,15 @@ namespace Cpg.Studio.Wrappers
 		{
 			double alpha = 0.2;
 			
-			graphics.SetSourceRGBA(0, 0, 1, alpha);
+			if ((d_state & State.SelectedAlt) == 0)
+			{
+				graphics.SetSourceRGBA(0, 0, 1, alpha);
+			}
+			else
+			{
+				graphics.SetSourceRGBA(1, 0, 0, alpha);
+			}
+
 			graphics.Rectangle(0, 0, Allocation.Width, Allocation.Height);
 			graphics.FillPreserve();
 			

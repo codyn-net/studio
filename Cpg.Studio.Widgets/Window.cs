@@ -419,8 +419,21 @@ namespace Cpg.Studio.Widgets
 			d_grid.SelectionChanged += DoSelectionChanged;
 			d_grid.Error += DoError;
 			d_grid.ActiveGroupChanged += DoActiveGroupChanged;
+			d_grid.Status += DoStatus;
 			
 			d_pathbar.Activated += HandlePathbarActivated;
+		}
+		
+		private void DoStatus(object source, string msg)
+		{
+			if (String.IsNullOrEmpty(msg))
+			{
+				StatusMessage("", false);
+			}
+			else
+			{
+				StatusMessage(msg, false);
+			}
 		}
 
 		private void HandlePathbarActivated(object source, Wrappers.Group grp)
@@ -1365,6 +1378,11 @@ namespace Cpg.Studio.Widgets
 		
 		public void StatusMessage(string message)
 		{
+			StatusMessage(message, true);
+		}
+		
+		public void StatusMessage(string message, bool temporary)
+		{
 			d_statusbar.Push(0, message);
 			
 			if (d_statusTimeout != 0)
@@ -1372,11 +1390,14 @@ namespace Cpg.Studio.Widgets
 				GLib.Source.Remove(d_statusTimeout);
 			}
 			
-			d_statusTimeout = GLib.Timeout.Add(3000, delegate () {
-				d_statusTimeout = 0;
-				d_statusbar.Push(0, "");
-				return false;
-			});
+			if (temporary)
+			{
+				d_statusTimeout = GLib.Timeout.Add(3000, delegate () {
+					d_statusTimeout = 0;
+					d_statusbar.Push(0, "");
+					return false;
+				});
+			}
 		}
 		
 		public void Message(string icon, string primary, string secondary, params object[] actions)

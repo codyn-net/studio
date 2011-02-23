@@ -16,6 +16,7 @@ namespace Cpg.Studio.Widgets
 		public delegate void ObjectEventHandler(object source, Wrappers.Wrapper obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
 		public delegate void ErrorHandler(object source, string error, string message);
+		public delegate void StatusHandler(object source, string status);
 		
 		public event ObjectEventHandler Activated = delegate {};
 		public event PopupEventHandler Popup = delegate {};
@@ -24,6 +25,7 @@ namespace Cpg.Studio.Widgets
 		public event ErrorHandler Error = delegate {};
 		public event EventHandler Cleared = delegate {};
 		public event ObjectEventHandler ActiveGroupChanged = delegate {};
+		public event StatusHandler Status = delegate {};
 		
 		private Allocation d_mouseRect;
 		private System.Drawing.Point d_origPosition;
@@ -49,8 +51,17 @@ namespace Cpg.Studio.Widgets
 		private bool d_isDraggingAnchor;
 		private Point d_dragAnchorState;
 		private Wrappers.Wrapper d_anchorDragHit;
-		
 		private Wrappers.Wrapper d_hiddenLink;
+		
+		private enum SelectionState
+		{
+			All,
+			StatesOnly,
+			LinksOnly,
+			Num
+		}
+		
+		private SelectionState d_selectionState;
 		
 		public Grid(Wrappers.Network network, Actions actions) : base()
 		{
@@ -257,15 +268,34 @@ namespace Cpg.Studio.Widgets
 		
 		public void Select(Wrappers.Wrapper obj)
 		{
+			Select(obj, false);
+		}
+		
+		public void Select(Wrappers.Wrapper obj, bool alt)
+		{
 			if (d_selection.Contains(obj))
 			{
+				if (alt != obj.SelectedAlt)
+				{
+					obj.Selected = !alt;
+					obj.SelectedAlt = alt;
+				}
+
 				return;
 			}
 
 			SetActiveGroup(obj.Parent);
 			
 			d_selection.Add(obj);
-			obj.Selected = true;
+			
+			if (alt)
+			{
+				obj.SelectedAlt = true;
+			}
+			else
+			{
+				obj.Selected = true;
+			}
 
 			SelectionChanged(this, new EventArgs());
 		}
@@ -460,20 +490,24 @@ namespace Cpg.Studio.Widgets
 			
 			d_mouseRect.Width = x;
 			d_mouseRect.Height = y;
-
-			List<Wrappers.Wrapper> objects = HitTest(d_mouseRect.FromRegion());
+			
 			state &= Gtk.Accelerator.DefaultModMask;
+			
+			/* Modifier cases:
+			   Ctrl: select alternative selection (target)
+			   Shift: add to selection */
+			List<Wrappers.Wrapper> objects = HitTest(d_mouseRect.FromRegion());
 
 			if ((state & Gdk.ModifierType.ShiftMask) != 0)
 			{
 				objects.AddRange(d_beforeDragSelection);
 			}
-			
-			if ((state & Gdk.ModifierType.ControlMask) != 0)
+
+			if (d_selectionState != SelectionState.All)
 			{
-				objects.RemoveAll(item => ((state & Gdk.ModifierType.Mod1Mask) == 0) == LinkFilter(item));
+				objects.RemoveAll(item => (d_selectionState == SelectionState.LinksOnly) == LinkFilter(item));
 			}
-			
+
 			List<Wrappers.Wrapper> selection = new List<Wrappers.Wrapper>(d_selection);
 			
 			foreach (Wrappers.Wrapper obj in selection)
@@ -488,7 +522,7 @@ namespace Cpg.Studio.Widgets
 			{
 				if (!Selected(obj))
 				{
-					Select(obj);
+					Select(obj, (state & Gdk.ModifierType.ControlMask) != 0);
 				}
 			}
 			
@@ -1082,13 +1116,13 @@ namespace Cpg.Studio.Widgets
 			
 			if (evnt.Button != 2)
 			{
-				if (Selected(first) && (evnt.State & (Gdk.ModifierType.ControlMask | Gdk.ModifierType.ShiftMask)) != 0)
+				if (Selected(first) && (evnt.State & Gdk.ModifierType.ShiftMask) != 0)
 				{
 					Unselect(first);
 					first = null;
 				}
 				
-				if (!(Selected(first) || (evnt.State & (Gdk.ModifierType.ControlMask | Gdk.ModifierType.ShiftMask)) != 0))
+				if (!(Selected(first) || (evnt.State & Gdk.ModifierType.ShiftMask) != 0))
 				{
 					Wrappers.Wrapper[] selection = new Wrappers.Wrapper[d_selection.Count];
 					d_selection.CopyTo(selection, 0);
@@ -1102,7 +1136,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (evnt.Button != 2 && first != null)
 			{
-				Select(first);
+				Select(first, (evnt.State & Gdk.ModifierType.ControlMask) != 0);
 				
 				if (evnt.Button == 1)
 				{
@@ -1187,6 +1221,12 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			d_mouseRect = new Allocation(0, 0, 0, 0);
+			
+			if (d_beforeDragSelection != null)
+			{
+				Status(this, null);
+			}
+
 			d_beforeDragSelection = null;
 			
 			if (evnt.Type == Gdk.EventType.ButtonRelease)
@@ -1256,6 +1296,9 @@ namespace Cpg.Studio.Widgets
 					if (d_beforeDragSelection == null)
 					{
 						d_beforeDragSelection = new List<Wrappers.Wrapper>(d_selection);
+						d_selectionState = SelectionState.All;
+						
+						UpdateSelectStatus(evnt.State);
 					}
 
 					DoDragRect((int)evnt.X, (int)evnt.Y, evnt.State);
@@ -1431,6 +1474,50 @@ namespace Cpg.Studio.Widgets
 			return ret;
 		}
 		
+		private void UpdateSelectStatus(Gdk.ModifierType state)
+		{
+			bool isshift = (state & Gdk.ModifierType.ShiftMask) != 0;
+			bool isctrl = (state & Gdk.ModifierType.ControlMask) != 0;
+			string msg;
+
+			if (isctrl)
+			{
+				if (isshift)
+				{
+					msg = "Add to target selection";
+				}
+				else
+				{
+					msg = "Create target selection";
+				}
+			}
+			else
+			{
+				if (isshift)
+				{
+					msg = "Add to source selection";
+				}
+				else
+				{
+					msg = "Create source selection";
+				}
+			}
+			
+			switch (d_selectionState)
+			{
+				case SelectionState.LinksOnly:
+					msg += ", only links";
+				break;
+				case SelectionState.StatesOnly:
+					msg += ", only states";
+				break;
+				default:
+				break;
+			}
+			
+			Status(this, msg);
+		}
+		
 		protected override bool OnKeyPressEvent(Gdk.EventKey evnt)
 		{
 			base.OnKeyPressEvent(evnt);
@@ -1518,7 +1605,16 @@ namespace Cpg.Studio.Widgets
 					else if (evnt.Key == Gdk.Key.Alt_L || evnt.Key == Gdk.Key.Alt_R)
 					{
 						state |= Gdk.ModifierType.Mod1Mask;
+						
+						d_selectionState += 1;
+						
+						if ((int)d_selectionState == (int)SelectionState.Num)
+						{
+							d_selectionState = 0;
+						}
 					}
+					
+					UpdateSelectStatus(state);
 					
 					int x;
 					int y;			
@@ -1553,6 +1649,8 @@ namespace Cpg.Studio.Widgets
 				{
 					state &= ~Gdk.ModifierType.Mod1Mask;
 				}
+				
+				UpdateSelectStatus(state);
 	
 				int x;
 				int y;			

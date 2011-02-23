@@ -7,6 +7,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 	{
 		private static double[] s_normalColor;
 		private static double[] s_selectedColor;
+		private static double[] s_selectedAltColor;
 		private static double[] s_hoverColor;
 		private static double[] s_iconColor;
 		private static double[] s_linkColor;
@@ -20,6 +21,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 		{
 			s_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			s_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
+			s_selectedAltColor = new double[] {1, 0.6, 0.6, 0.6};
 			s_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
 			s_iconColor = new double[] {0.5, 0.5, 0.5, 1.0};
 			s_linkColor = new double[] {0.8, 0.8, 0.3, 1.0};
@@ -64,6 +66,10 @@ namespace Cpg.Studio.Wrappers.Renderers
 			else if (WrappedObject.LinkFocus)
 			{
 				return s_linkColor;
+			}
+			else if (WrappedObject.SelectedAlt)
+			{
+				return s_selectedAltColor;
 			}
 			else if (WrappedObject.Selected)
 			{

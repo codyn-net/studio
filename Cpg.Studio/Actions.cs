@@ -52,24 +52,50 @@ namespace Cpg.Studio
 
 			sel.RemoveAll(item => item is Wrappers.Link);
 			
-			if (sel.Count > 0)
-			{
-				Wrappers.Wrapper last = sel[sel.Count - 1];
-				
-				if (sel.Count == 1)
-				{
-					// Self link
-					yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(last, last);
-				}
-			
-				for (int i = 0; i < sel.Count - 1; ++i)
-				{
-					yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(sel[i], last);
-				}
-			}
-			else
+			if (sel.Count == 0)
 			{
 				yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(null, null);
+			}
+			else if (sel.Count == 1)
+			{
+				// Self link
+				yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(sel[0], sel[0]);
+			}
+			else
+			{			
+				// Separate source and target selection
+				List<Wrappers.Wrapper> source = new List<Wrappers.Wrapper>();
+				List<Wrappers.Wrapper> target = new List<Wrappers.Wrapper>();
+				
+				foreach (Wrappers.Wrapper wrapper in sel)
+				{
+					if (wrapper.SelectedAlt)
+					{
+						target.Add(wrapper);
+					}
+					else
+					{
+						source.Add(wrapper);
+					}
+				}
+				
+				// If no special target selection was made, we do full coupling
+				if (target.Count == 0)
+				{
+					target = source;
+				}
+				
+				for (int i = 0; i < source.Count; ++i)
+				{
+					for (int j = 0; j < target.Count; ++j)
+					{
+						// Don't do self coupling though
+						if (source[i] != target[j])
+						{
+							yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(source[i], target[j]);
+						}
+					}
+				}
 			}
 		}
 		
@@ -80,7 +106,7 @@ namespace Cpg.Studio
 		
 		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Link temp, Wrappers.Wrapper[] selection, double cx, double cy)
 		{
-			// Add links between each first selected N-1 objects and selected object N
+			// Add links from source to target selection. If there is no target selection, use source selection also as target selection
 			List<Undo.IAction> actions = new List<Undo.IAction>();
 			List<Wrappers.Link> ret = new List<Wrappers.Link>();
 			
