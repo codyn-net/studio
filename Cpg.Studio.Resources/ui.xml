@@ -56,6 +56,10 @@
     <menu name="InsertMenu" action="InsertMenuAction">
     </menu>
     <separator/>
+      <menuitem name="Cut" action="CutAction"/>
+      <menuitem name="Copy" action="CopyAction"/>
+      <menuitem name="Paste" action="PasteAction"/>
+    <separator/>
     <menuitem name="Properties" action="PropertiesAction"/>
     <separator/>
     <menu name="MonitorMenu" action="MonitorMenuAction">

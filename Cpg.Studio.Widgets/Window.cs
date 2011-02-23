@@ -79,6 +79,8 @@ namespace Cpg.Studio.Widgets
 			
 			d_actions = new Actions(d_undoManager);
 			
+			Clipboard.Internal.Changed += OnClipboardChanged;
+			
 			Build();
 			ShowAll();
 			
@@ -88,6 +90,11 @@ namespace Cpg.Studio.Widgets
 			UpdateTitle();
 			
 			d_propertyEditors = new Dictionary<Wrappers.Wrapper, Dialogs.Property>();
+		}
+		
+		private void OnClipboardChanged()
+		{
+			UpdateSensitivity();
 		}
 
 		private void HandleSimulationBegin(object o, BeginArgs args)
@@ -403,8 +410,6 @@ namespace Cpg.Studio.Widgets
 			d_grid.Popup += DoPopup;
 
 			d_grid.SelectionChanged += DoSelectionChanged;
-			d_grid.FocusInEvent += DoFocusInEvent;
-			d_grid.FocusOutEvent += DoFocusOutEvent;
 			d_grid.Error += DoError;
 			d_grid.ActiveGroupChanged += DoActiveGroupChanged;
 			
@@ -887,16 +892,6 @@ namespace Cpg.Studio.Widgets
 			UpdateSensitivity();
 		}
 			
-		private void DoFocusOutEvent(object source, Gtk.FocusOutEventArgs evnt)
-		{
-			UpdateSensitivity();
-		}
-			
-		private void DoFocusInEvent(object source, Gtk.FocusInEventArgs evnt)
-		{
-			UpdateSensitivity();
-		}
-
 		private bool AskUnsavedModified()
 		{
 			if (!d_modified)

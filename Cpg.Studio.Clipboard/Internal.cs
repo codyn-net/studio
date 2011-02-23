@@ -6,6 +6,9 @@ namespace Cpg.Studio.Clipboard
 	public class Internal
 	{
 		private static List<Wrappers.Wrapper> s_objects;
+		public delegate void ChangedHandler();
+
+		public static event ChangedHandler Changed = delegate {};
 		
 		public static bool Empty
 		{
@@ -18,6 +21,8 @@ namespace Cpg.Studio.Clipboard
 		public static void Clear()
 		{
 			s_objects = null;
+			
+			Changed();
 		}
 		
 		public static Wrappers.Wrapper[] Objects
@@ -36,6 +41,8 @@ namespace Cpg.Studio.Clipboard
 				{
 					s_objects = new List<Wrappers.Wrapper>(value);
 				}
+				
+				Changed();
 			}
 		}
 	}
