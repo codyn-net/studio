@@ -226,6 +226,10 @@ namespace Cpg.Studio
 					
 					proxyLinks.Add(link);
 				}
+				else if (containsTo && containsFrom && !sel.Contains(link))
+				{
+					sel.Add(link);
+				}
 			}
 			
 			if (proxy != null && parent.Proxy != null && parent.Proxy != proxy)
