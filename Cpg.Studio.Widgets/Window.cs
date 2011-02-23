@@ -49,6 +49,8 @@ namespace Cpg.Studio.Widgets
 		private DateTime d_runElapsed;
 		private Progress d_progress;
 		private bool d_checkProgress;
+		
+		private uint d_idleSelectionChanged;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -878,8 +880,10 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private void DoSelectionChanged(object source, EventArgs args)
+		private bool OnIdleSelectionChanged()
 		{
+			d_idleSelectionChanged = 0;
+
 			if (d_propertyView != null)
 			{
 				Wrappers.Wrapper[] selection = d_grid.Selection;
@@ -894,6 +898,16 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 			
+			return false;
+		}
+		
+		private void DoSelectionChanged(object source, EventArgs args)
+		{
+			if (d_idleSelectionChanged == 0)
+			{
+				d_idleSelectionChanged = GLib.Idle.Add(OnIdleSelectionChanged);
+			}
+
 			UpdateSensitivity();
 		}
 			
