@@ -119,6 +119,11 @@ namespace Cpg.Studio.Widgets
 				d_progress.Dispose();
 				d_progress = null;
 			}
+			
+			if (d_monitor != null)
+			{
+				d_monitor.Present();
+			}
 		}
 
 		private void HandleSimulationStepped(object o, SteppedArgs args)
@@ -1765,7 +1770,6 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			d_monitor = new Monitor(Network, d_simulation);
-			d_monitor.TransientFor = this;
 			
 			d_monitor.Realize();
 
