@@ -13,6 +13,7 @@ namespace Cpg.Studio
 		private event SteppedHandler OnSteppedProxy;
 		
 		private bool d_running;
+		private uint d_idleRun;
 
 		public event SteppedHandler OnStepped
 		{
@@ -140,9 +141,33 @@ namespace Cpg.Studio
 		
 		public void Resimulate()
 		{
+			Resimulate(false);
+		}
+		
+		private bool OnIdleResimulate()
+		{
+			Resimulate(true);
+			return false;
+		}
+		
+		public void Resimulate(bool rightnow)
+		{
 			if (d_range != null)
 			{
-				RunPeriod(d_range.From, d_range.Step, d_range.To);
+				if (rightnow && d_idleRun != 0)
+				{
+					GLib.Source.Remove(d_idleRun);
+					d_idleRun = 0;
+				}
+				else if (!rightnow && d_idleRun == 0)
+				{
+					d_idleRun = GLib.Idle.Add(OnIdleResimulate);
+				}
+				
+				if (rightnow)
+				{
+					RunPeriod(d_range.From, d_range.Step, d_range.To);
+				}
 			}
 		}
 	}
