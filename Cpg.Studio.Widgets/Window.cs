@@ -37,7 +37,6 @@ namespace Cpg.Studio.Widgets
 		private Widget d_menubar;
 		private HPaned d_annotationPaned;
 		private Annotation d_annotation;
-		private bool d_resizeFromProject;
 		
 		private bool d_modified;
 		
