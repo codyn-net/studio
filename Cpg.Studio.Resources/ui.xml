@@ -44,6 +44,7 @@
       <menuitem name="ViewPathbar" action="ViewPathbarAction"/>
       <menuitem name="ViewSimulateButtons" action="ViewSimulateButtonsAction"/>
       <menuitem name="ViewStatusbar" action="ViewStatusbarAction"/>
+      <menuitem name="ViewAnnotations" action="ViewAnnotationsAction"/>
       <separator/>
       <menuitem name="ZoomDefault" action="ZoomDefaultAction"/>
       <menuitem name="ZoomIn" action="ZoomInAction"/>

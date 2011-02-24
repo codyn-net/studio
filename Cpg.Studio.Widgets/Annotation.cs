@@ -1,0 +1,200 @@
+using System;
+using Gtk;
+
+namespace Cpg.Studio.Widgets
+{
+	public class Annotation : Gtk.Alignment
+	{
+		private VBox d_vbox;
+		private Label d_labelInfo;
+		private Label d_labelTitle;
+		private EventBox d_eventBox;
+		private EventBox d_titleEventBox;
+
+		private TextView d_editor;
+		private ScrolledWindow d_editorWindow;
+
+		private string d_info;
+		private string d_title;
+		
+		private Cpg.Annotatable d_annotatable;
+
+		public Annotation() : base(0, 0, 1, 1)
+		{
+			d_vbox = new VBox(false, 6);
+			d_vbox.Show();
+			
+			SetPadding(0, 0, 6, 6);
+
+			d_eventBox = new EventBox();
+			d_eventBox.Show();
+			d_eventBox.AddEvents((int)Gdk.EventMask.AllEventsMask);
+
+			d_labelInfo = new Label();
+			d_labelInfo.Show();
+			d_labelInfo.SetAlignment(0, 0);
+			
+			d_titleEventBox = new EventBox();
+			d_titleEventBox.VisibleWindow = true;
+			d_titleEventBox.Show();
+			
+			HBox hbox = new HBox(false, 0);
+			hbox.Show();
+			
+			Image image = new Image(Gtk.Stock.Info, IconSize.Menu);
+			image.Show();
+			
+			d_labelTitle = new Label();
+			d_labelTitle.Show();
+			d_labelTitle.SetAlignment(0, 0);
+			d_labelTitle.SetPadding(0, 5);
+			
+			hbox.PackStart(image, false, true, 6);
+			hbox.PackStart(d_labelTitle, true, true, 0);
+			
+			d_titleEventBox.Add(hbox);
+
+			d_titleEventBox.ModifyBg(StateType.Normal, d_labelTitle.Style.Background(StateType.Insensitive));
+			
+			d_vbox.PackStart(d_titleEventBox, false, true, 0);
+			
+			d_eventBox.Add(d_labelInfo);
+			d_vbox.PackStart(d_eventBox, true, true, 0);
+			
+			d_editorWindow = new ScrolledWindow();
+			d_editorWindow.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+			d_editorWindow.ShadowType = ShadowType.EtchedIn;
+			
+			d_editor = new TextView();
+			d_editor.WrapMode = WrapMode.WordChar;
+			d_editor.Show();
+
+			d_editorWindow.Add(d_editor);
+
+			d_vbox.PackStart(d_editorWindow, true, true, 0);
+			
+			d_eventBox.ButtonPressEvent += OnEventBoxButtonPress;
+			
+			d_editor.KeyPressEvent += OnEditorKeyPressEvent;
+			d_editor.FocusOutEvent += OnEditorFocusOutEvent;
+			
+			Update(null);
+			
+			Add(d_vbox);
+		}
+
+		private void OnEditorFocusOutEvent(object o, FocusOutEventArgs args)
+		{
+			StopEdit(false);
+		}
+
+		private void OnEditorKeyPressEvent(object o, KeyPressEventArgs args)
+		{
+			if (args.Event.Key == Gdk.Key.Escape)
+			{
+				StopEdit(false);
+				args.RetVal = true;
+			}
+		}
+
+		private void OnEventBoxButtonPress(object o, ButtonPressEventArgs args)
+		{
+			if (args.Event.Type != Gdk.EventType.TwoButtonPress || args.Event.Button != 1)
+			{
+				return;
+			}
+			
+			StartEdit();
+		}
+		
+		private void StartEdit()
+		{
+			if (d_annotatable == null)
+			{
+				return;
+			}
+			
+			d_editor.Buffer.Text = d_annotatable.Annotation != null ? d_annotatable.Annotation : "";
+			
+			d_eventBox.Hide();
+			d_editorWindow.Show();
+			
+			d_editor.GrabFocus();
+		}
+		
+		private void StopEdit(bool cancelled)
+		{
+			if (d_annotatable == null || !d_editorWindow.Visible)
+			{
+				return;
+			}
+			
+			if (!cancelled)
+			{
+				string text = d_editor.Buffer.Text.Trim();
+				
+				if (text == "" && d_annotatable != null)
+				{
+					d_annotatable.Annotation = null;
+				}
+
+				Info = text != "" ? text : null;
+			}
+			
+			d_editorWindow.Hide();
+			d_eventBox.Show();
+		}
+		
+		public string Title
+		{
+			get
+			{
+				return d_title;
+			}
+			set
+			{
+				d_title = value != null ? value : "<b>Information</b>";
+				d_labelTitle.Markup = d_title;
+			}
+		}
+		
+		public string Info
+		{
+			get
+			{
+				return d_info;
+			}
+			set
+			{
+				d_info = value != null ? value : "<i>No information available...</i>";
+				d_labelInfo.Markup = d_info;
+				
+				if (d_annotatable != null && value != null)
+				{
+					d_annotatable.Annotation = d_info;
+				}
+			}
+		}
+		
+		public void Update(Cpg.Annotatable annotatable)
+		{
+			StopEdit(false);
+
+			d_annotatable = null;
+			
+			if (annotatable != null)
+			{
+				Title = annotatable.Title;
+				Info = annotatable.Annotation;
+			}
+			else
+			{
+				Title = null;
+				Info = null;
+			}
+			
+			d_annotatable = annotatable;
+		}
+	}
+}
+

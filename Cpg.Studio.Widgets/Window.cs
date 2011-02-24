@@ -35,6 +35,9 @@ namespace Cpg.Studio.Widgets
 		private ListStore d_integratorStore;
 		private ComboBox d_integratorCombo;
 		private Widget d_menubar;
+		private HPaned d_annotationPaned;
+		private Annotation d_annotation;
+		private bool d_resizeFromProject;
 		
 		private bool d_modified;
 		
@@ -343,7 +346,8 @@ namespace Cpg.Studio.Widgets
 				new ToggleActionEntry("ViewSimulateButtonsAction", null, "Simulate Buttons", null, "Show/Hide simulate buttons", OnViewSimulateButtonsActivated, true),
 				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", OnViewStatusbarActivated, true),
 				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", OnToggleMonitorActivated, false),
-				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false)		
+				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false),
+				new ToggleActionEntry("ViewAnnotationsAction", Gtk.Stock.Info, "Annotations", "<Control>l", "Show/Hide annotations panel", OnViewAnnotationsActivated, false)
 			});
 				
 			d_uimanager.InsertActionGroup(d_normalGroup, 0);
@@ -382,10 +386,16 @@ namespace Cpg.Studio.Widgets
 			d_vboxContents = new VBox(false, 3);
 			vbox.PackStart(d_vboxContents, true, true, 0);
 			
+			d_annotationPaned = new HPaned();
+			d_annotationPaned.Position = 250;
+			
 			d_grid = new Grid(Network, d_actions);
+			
+			d_annotationPaned.Pack1(d_grid, true, true);
+
 			d_vpaned = new VPaned();
 			d_vpaned.Position = 250;
-			d_vpaned.Pack1(d_grid, true, true);
+			d_vpaned.Pack1(d_annotationPaned, true, false);
 			
 			d_vboxContents.PackStart(d_vpaned, true, true, 0);
 			
@@ -408,7 +418,8 @@ namespace Cpg.Studio.Widgets
 			OnViewPathbarActivated(d_normalGroup.GetAction("ViewPathbarAction"), new EventArgs());
 			OnViewSimulateButtonsActivated(d_normalGroup.GetAction("ViewSimulateButtonsAction"), new EventArgs());
 			OnViewStatusbarActivated(d_normalGroup.GetAction("ViewStatusbarAction"), new EventArgs());
-
+			OnViewAnnotationsActivated(d_normalGroup.GetAction("ViewAnnotationsAction"), new EventArgs());
+			
 			Add(vbox);
 
 			d_pathbar.Update(d_grid.ActiveGroup);
@@ -893,14 +904,35 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private void UpdateAnnotation()
+		{
+			if (d_annotation == null)
+			{
+				return;
+			}
+			
+			Wrappers.Wrapper[] selection = d_grid.Selection;
+			
+			if (selection.Length == 1)
+			{
+				d_annotation.Update(selection[0].WrappedObject as Cpg.Annotatable);
+			}
+			else if (selection.Length == 0)
+			{
+				d_annotation.Update(d_grid.ActiveGroup.WrappedObject as Cpg.Annotatable);
+			}
+		}
+		
 		private bool OnIdleSelectionChanged()
 		{
 			d_idleSelectionChanged = 0;
+			
+			UpdateAnnotation();
 
+			Wrappers.Wrapper[] selection = d_grid.Selection;
+			
 			if (d_propertyView != null)
 			{
-				Wrappers.Wrapper[] selection = d_grid.Selection;
-				
 				if (selection.Length == 1)
 				{
 					d_propertyView.Initialize(selection[0]);
@@ -1001,6 +1033,28 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		public int AnnotationPanePosition
+		{
+			get
+			{
+				return d_annotation != null ? d_annotationPaned.Allocation.Width - d_annotationPaned.Position : -1;
+			}
+			set
+			{
+				ToggleAction action = d_normalGroup.GetAction("ViewAnnotationsAction") as ToggleAction;
+			
+				if (value == -1)
+				{
+					action.Active = false;
+				}
+				else
+				{
+					action.Active = true;
+					d_annotationPaned.Position = d_annotationPaned.Allocation.Width - value;
+				}
+			}
+		}
+		
 		public bool ShowStatusbar
 		{
 			get
@@ -1034,6 +1088,18 @@ namespace Cpg.Studio.Widgets
 			set
 			{
 				((ToggleAction)d_normalGroup.GetAction("ViewPathbarAction")).Active = value;
+			}
+		}
+		
+		public bool ShowAnnotations
+		{
+			get
+			{
+				return ((ToggleAction)d_normalGroup.GetAction("ViewAnnotationsAction")).Active;
+			}
+			set
+			{
+				((ToggleAction)d_normalGroup.GetAction("ViewAnnotationsAction")).Active = value;
 			}
 		}
 		
@@ -1076,6 +1142,14 @@ namespace Cpg.Studio.Widgets
 			UpdateTitle();
 		}
 		
+		private void RestorePanelsAfterResize(object source, EventArgs args)
+		{
+			PanePosition = d_project.Settings.PanePosition;
+			AnnotationPanePosition = d_project.Settings.AnnotationPanePosition;
+			
+			SizeAllocated -= RestorePanelsAfterResize;
+		}
+		
 		private void RestoreSettings()
 		{
 			Serialization.Project.SettingsType s = d_project.Settings;
@@ -1089,15 +1163,26 @@ namespace Cpg.Studio.Widgets
 					Move((int)alloc.X, (int)alloc.Y);
 				}
 				
-				Resize((int)alloc.Width, (int)alloc.Height);
+				int width;
+				int height;
+
+				GetSize(out width, out height);
+				
+				if (width != (int)alloc.Width || height != (int)alloc.Height)
+				{
+					SizeAllocated += RestorePanelsAfterResize;
+					Resize((int)alloc.Width, (int)alloc.Height);
+				}
 			}
 			
-			PanePosition = s.PanePosition;
-
 			ShowToolbar = s.ToolBar;
 			ShowPathbar = s.PathBar;
 			ShowSimulateButtons = s.SimulateBar;
 			ShowStatusbar = s.StatusBar;
+			ShowAnnotations = s.Annotations;
+
+			PanePosition = s.PanePosition;
+			AnnotationPanePosition = s.AnnotationPanePosition;
 			
 			d_periodEntry.Text = s.SimulatePeriod;
 			
@@ -1253,6 +1338,8 @@ namespace Cpg.Studio.Widgets
 			s.StatusBar = ShowStatusbar;
 			s.ToolBar = ShowToolbar;
 			s.PanePosition = PanePosition;
+			s.Annotations = ShowAnnotations;
+			s.AnnotationPanePosition = AnnotationPanePosition;
 			s.SimulatePeriod = d_periodEntry.Text;
 			
 			s.Allocation = WindowAllocation(this);
@@ -1726,6 +1813,33 @@ namespace Cpg.Studio.Widgets
 			get
 			{
 				return d_actions;
+			}
+		}
+		
+		private void OnViewAnnotationsActivated(object sender, EventArgs args)
+		{
+			ToggleAction action = sender as ToggleAction;
+			
+			if (action.Active)
+			{
+				if (d_annotation == null)
+				{
+					d_annotation = new Annotation();
+					
+					UpdateAnnotation();
+					d_annotationPaned.Pack2(d_annotation, false, false);
+					
+					d_annotation.Show();
+				}
+			}
+			else
+			{
+				if (d_annotation != null)
+				{
+					d_annotation.Destroy();
+				}
+				
+				d_annotation = null;
 			}
 		}
 		

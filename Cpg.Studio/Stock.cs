@@ -5,6 +5,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 
 namespace Cpg.Studio
 {
@@ -17,6 +18,8 @@ namespace Cpg.Studio
 		public static string ChainBroken = "cpg-chain-broken";
 		public static string Group = "cpg-group";
 		public static string Ungroup = "cpg-ungroup";
+		
+		private static Dictionary<string, Cairo.Surface> s_surfaceCache;
 		
 		static Gtk.IconSet MakeIcons(Wrappers.Renderers.Renderer renderer)
 		{
@@ -79,6 +82,8 @@ namespace Cpg.Studio
 			factory.Add(Stock.Ungroup, MakeIcons(new Wrappers.Renderers.Group(), "ungroup"));
 			
 			factory.AddDefault();
+			
+			s_surfaceCache = new Dictionary<string, Cairo.Surface>();
 		}
 		
 		public static Gtk.Button SmallButton(string stockid)
@@ -95,6 +100,35 @@ namespace Cpg.Studio
 			but.Relief = Gtk.ReliefStyle.None;
 			
 			return but;
+		}
+		
+		private static string SurfaceId(string stockid, int size)
+		{
+			return String.Format("{0}x{1}", stockid, size);
+		}
+		
+		public static Cairo.Surface Surface(Cairo.Context context, string stockid, int size)
+		{
+			string id = SurfaceId(stockid, size);
+			Cairo.Surface surf;
+			
+			if (!s_surfaceCache.TryGetValue(id, out surf))
+			{
+				Gtk.IconTheme theme = Gtk.IconTheme.Default;
+				Gdk.Pixbuf pix = theme.LoadIcon(Gtk.Stock.Info, size, Gtk.IconLookupFlags.UseBuiltin);
+				
+				surf = context.Target.CreateSimilar(Cairo.Content.ColorAlpha, pix.Width, pix.Height);
+			
+				using (Cairo.Context ctx = new Cairo.Context(surf))
+				{
+					Gdk.CairoHelper.SetSourcePixbuf(ctx, pix, 0, 0);
+					ctx.Paint();
+				}
+				
+				s_surfaceCache[id] = surf;
+			}
+			
+			return surf;
 		}
 		
 		public static Gtk.Button CloseButton()

@@ -21,6 +21,7 @@ namespace Cpg.Studio.Wrappers
 		public static string WrapperDataKey = "CpgStudioWrapperDataKey";
 		
 		private static Dictionary<Type, ConstructorInfo> s_typeMapping;
+		protected const int RenderAnnotationAtsize = 16;
 		
 		private static ConstructorInfo WrapperConstructor(Type wrapperType, Type cpgType)
 		{
@@ -271,6 +272,11 @@ namespace Cpg.Studio.Wrappers
 			DoRequestRedraw();
 		}
 		
+		private void NotifyAnnotationHandler(object source, GLib.NotifyArgs args)
+		{
+			DoRequestRedraw();
+		}
+		
 		private void HandlePropertyAdded(object o, Cpg.PropertyAddedArgs args)
 		{
 			PropertyAdded(this, args.Property);
@@ -289,6 +295,11 @@ namespace Cpg.Studio.Wrappers
 		protected virtual void DisconnectWrapped()
 		{
 			WrappedObject.RemoveNotification("id", NotifyIdHandler);
+			
+			if (WrappedObject is Cpg.Annotatable)
+			{
+				WrappedObject.RemoveNotification("annotation", NotifyAnnotationHandler);
+			}
 
 			WrappedObject.PropertyAdded -= HandlePropertyAdded;
 			WrappedObject.PropertyRemoved -= HandlePropertyRemoved;
@@ -302,6 +313,11 @@ namespace Cpg.Studio.Wrappers
 		protected virtual void ConnectWrapped()
 		{
 			WrappedObject.AddNotification("id", NotifyIdHandler);
+			
+			if (WrappedObject is Cpg.Annotatable)
+			{
+				WrappedObject.AddNotification("annotation", NotifyAnnotationHandler);
+			}
 				
 			WrappedObject.PropertyAdded += HandlePropertyAdded;
 			WrappedObject.PropertyRemoved += HandlePropertyRemoved;
@@ -473,6 +489,70 @@ namespace Cpg.Studio.Wrappers
 		public void UnapplyTemplate(Wrappers.Wrapper template)
 		{
 			WrappedObject.UnapplyTemplate(template.WrappedObject);
+		}
+		
+		protected virtual void SizeOnCanvas(Cairo.Context context, ref double width, ref double height)
+		{
+			width *= context.Matrix.Xx;
+			height *= context.Matrix.Yy;
+		}
+		
+		public virtual void AnnotationHotspot(Cairo.Context context, double width, double height, int size, out double x, out double y)
+		{
+			x = 2; //width - size - 2;
+			y = 2;
+		}
+		
+		public virtual bool CanDrawAnnotation(Cairo.Context context)
+		{
+			double w = Allocation.Width;
+			double h = Allocation.Height;
+			
+			SizeOnCanvas(context, ref w, ref h);
+			
+			return w > 2 * RenderAnnotationAtsize && h > 2 * RenderAnnotationAtsize;
+		}
+		
+		protected virtual void DrawAnnotation(Cairo.Context context, Cpg.Annotatable annotatable)
+		{
+			if (!CanDrawAnnotation(context))
+			{
+				return;
+			}
+
+			double w = Allocation.Width;
+			double h = Allocation.Height;
+			
+			SizeOnCanvas(context, ref w, ref h);
+			
+			int size = RenderAnnotationAtsize;
+			double x;
+			double y;
+
+			Cairo.Surface surf = Stock.Surface(context, Gtk.Stock.Info, size);
+			
+			context.Save();
+			
+			AnnotationHotspot(context, w, h, size, out x, out y);
+			
+			context.Scale(1 / context.Matrix.Xx, 1 / context.Matrix.Yy);
+
+			context.SetSourceSurface(surf, (int)x, (int)y);
+			context.Paint();
+			
+			context.Restore();
+		}
+		
+		public override void Draw(Cairo.Context context)
+		{
+			base.Draw(context);
+			
+			Cpg.Annotatable annotatable = WrappedObject as Cpg.Annotatable;
+			
+			if (annotatable != null && !String.IsNullOrEmpty(annotatable.Annotation))
+			{
+				DrawAnnotation(context, annotatable);
+			}
 		}
 	}
 }

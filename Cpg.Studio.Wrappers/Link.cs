@@ -554,5 +554,40 @@ namespace Cpg.Studio.Wrappers
 		{
 			// Handled by renderer
 		}
+		
+		public override bool CanDrawAnnotation(Cairo.Context context)
+		{
+			if (d_from == null || d_to == null)
+			{
+				return base.CanDrawAnnotation(context);
+			}
+			else if (d_from == d_to)
+			{
+				return d_from.CanDrawAnnotation(context);
+			}
+			
+			double fx = context.Matrix.Xx * d_from.Allocation.X;
+			double tx = context.Matrix.Xx * d_to.Allocation.X;
+			double fy = context.Matrix.Yy * d_from.Allocation.Y;
+			double ty = context.Matrix.Yy * d_to.Allocation.Y;
+			
+			double dist = System.Math.Sqrt(System.Math.Pow(fx - tx, 2) + System.Math.Pow(fy - ty, 2));
+			return dist > 2 * RenderAnnotationAtsize;
+		}
+		
+		public override void AnnotationHotspot(Cairo.Context context, double width, double height, int size, out double x, out double y)
+		{
+			if (d_from == null || d_to == null)
+			{
+				base.AnnotationHotspot(context, width, height, size, out x, out y);
+			}
+			else
+			{
+				Point[] polys = Renderer.PolynomialControlPoints();
+				
+				x = EvaluatePolynomial(polys, 0.4, 0) * context.Matrix.Xx - size / 2;
+				y = EvaluatePolynomial(polys, 0.4, 1) * context.Matrix.Yy - size / 2;
+			}
+		}
 	}
 }
