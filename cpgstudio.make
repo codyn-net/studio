@@ -122,6 +122,7 @@ FILES = \
 	Cpg.Studio.Undo/Ungroup.cs \
 	Cpg.Studio/Utils.cs \
 	Cpg.Studio.Widgets/AddRemovePopup.cs \
+	Cpg.Studio.Widgets/Annotation.cs \
 	Cpg.Studio.Widgets/FunctionNode.cs \
 	Cpg.Studio.Widgets/FunctionPolynomialNode.cs \
 	Cpg.Studio.Widgets/FunctionPolynomialPieceNode.cs \
