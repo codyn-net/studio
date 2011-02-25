@@ -89,7 +89,7 @@ namespace Cpg.Studio.Widgets
 
 			d_hover = new List<Wrappers.Wrapper>();
 			d_selection = new List<Wrappers.Wrapper>();
-			d_mouseRect = new Allocation(0, 0, 0, 0);
+			d_mouseRect = new Allocation(0, 0, -1, -1);
 			d_beforeDragSelection = null;
 			
 			d_buttonPress = new Point();
@@ -277,8 +277,16 @@ namespace Cpg.Studio.Widgets
 			{
 				if (alt != obj.SelectedAlt)
 				{
-					obj.Selected = !alt;
-					obj.SelectedAlt = alt;
+					if (!alt)
+					{
+						obj.SelectedAlt = false;
+						obj.Selected = true;
+					}
+					else
+					{
+						obj.Selected = false;
+						obj.SelectedAlt = true;
+					}
 				}
 
 				return;
@@ -481,15 +489,15 @@ namespace Cpg.Studio.Widgets
 		{
 			return !(wrapped is Wrappers.Link) || ((Wrappers.Link)wrapped).Empty;
 		}
-		
+
 		private void DoDragRect(int x, int y, Gdk.ModifierType state)
 		{
 			Allocation rect = d_mouseRect.FromRegion();
 			rect.GrowBorder(2);
 			QueueDrawArea((int)rect.X, (int)rect.Y, (int)rect.Width, (int)rect.Height);
 			
-			d_mouseRect.Width = x;
-			d_mouseRect.Height = y;
+			d_mouseRect.Width = System.Math.Max(System.Math.Min(x, Allocation.Width), 0);
+			d_mouseRect.Height = System.Math.Max(System.Math.Min(y, Allocation.Height), 0);
 			
 			state &= Gtk.Accelerator.DefaultModMask;
 			
@@ -520,9 +528,11 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (Wrappers.Wrapper obj in objects)
 			{
-				if (!Selected(obj))
+				bool isalt = (!(obj is Wrappers.Link) && ((state & Gdk.ModifierType.ControlMask) != 0));
+				
+				if (!Selected(obj) || obj.SelectedAlt != isalt)
 				{
-					Select(obj, (state & Gdk.ModifierType.ControlMask) != 0);
+					Select(obj, isalt);
 				}
 			}
 			
@@ -1220,7 +1230,7 @@ namespace Cpg.Studio.Widgets
 				d_hiddenLink = null;
 			}
 			
-			d_mouseRect = new Allocation(0, 0, 0, 0);
+			d_mouseRect = new Allocation(0, 0, -1, -1);
 			
 			if (d_beforeDragSelection != null)
 			{
@@ -1291,7 +1301,7 @@ namespace Cpg.Studio.Widgets
 			{
 				DoMouseInOut(evnt.X, evnt.Y);
 				
-				if (d_mouseRect.Width != 0 && d_mouseRect.Height != 0)
+				if (d_mouseRect.Width >= 0 && d_mouseRect.Height >= 0)
 				{
 					if (d_beforeDragSelection == null)
 					{
