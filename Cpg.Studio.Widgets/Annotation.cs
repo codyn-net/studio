@@ -153,7 +153,7 @@ namespace Cpg.Studio.Widgets
 			}
 			set
 			{
-				d_title = value != null ? value : "<b>Information</b>";
+				d_title = value != null ? value : "<b>No selection</b>";
 				d_labelTitle.Markup = d_title;
 			}
 		}
@@ -166,7 +166,7 @@ namespace Cpg.Studio.Widgets
 			}
 			set
 			{
-				d_info = value != null ? value : "<i>No information available...</i>";
+				d_info = value != null ? value : "<i>Double-click to add information...</i>";
 				d_labelInfo.Markup = d_info;
 				
 				if (d_annotatable != null && value != null)
