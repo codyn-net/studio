@@ -434,7 +434,20 @@ namespace Cpg.Studio.Widgets
 			d_grid.ActiveGroupChanged += DoActiveGroupChanged;
 			d_grid.Status += DoStatus;
 			
+			d_grid.FocusInEvent += DoFocusInEvent;
+			d_grid.FocusOutEvent += DoFocusOutEvent;
+			
 			d_pathbar.Activated += HandlePathbarActivated;
+		}
+
+		private void DoFocusInEvent(object o, FocusInEventArgs args)
+		{
+			UpdateSensitivity();
+		}
+		
+		private void DoFocusOutEvent(object o, FocusOutEventArgs args)
+		{
+			UpdateSensitivity();
 		}
 		
 		private void DoStatus(object source, string msg)
@@ -457,6 +470,9 @@ namespace Cpg.Studio.Widgets
 		private void DoActiveGroupChanged(object source, Wrappers.Wrapper prev)
 		{
 			d_pathbar.Update(d_grid.ActiveGroup);
+			UpdateAnnotation();
+			
+			UpdateSensitivity();
 		}
 		
 		private void UpdateCurrentIntegrator()
@@ -665,7 +681,7 @@ namespace Cpg.Studio.Widgets
 			d_normalGroup.GetAction("EditGroupAction").Sensitive = !d_simulation.Running && singlegroup;
 			
 			d_normalGroup.GetAction("PropertiesAction").Sensitive = !d_simulation.Running && singleobj;
-			d_normalGroup.GetAction("PasteAction").Sensitive = !d_simulation.Running && d_grid.HasFocus && !Studio.Clipboard.Internal.Empty;
+			d_normalGroup.GetAction("PasteAction").Sensitive = !d_simulation.Running && !Studio.Clipboard.Internal.Empty;
 			
 			// Disable control for now
 			d_normalGroup.GetAction("ControlMenuAction").Visible = false;
@@ -922,6 +938,10 @@ namespace Cpg.Studio.Widgets
 			else if (selection.Length == 0)
 			{
 				d_annotation.Update(d_grid.ActiveGroup.WrappedObject as Cpg.Annotatable);
+			}
+			else
+			{
+				d_annotation.Update(null);
 			}
 		}
 		
