@@ -63,7 +63,7 @@ AC_SUBST(INSTALLED_ASSEMBLIES)
 AC_CONFIG_FILES([
 cpgstudio
 Makefile
-Cpg.Studio/Directories.cs
+Cpg.Studio/Config.cs
 ])
 
 AC_OUTPUT

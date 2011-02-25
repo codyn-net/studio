@@ -8,7 +8,7 @@ cpgstudio
 *.tar.gz
 cpgstudio.pidb
 cpgstudio.userprefs
-Directories.cs
+Config.cs
 install-sh
 Makefile
 Makefile.in

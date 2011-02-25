@@ -40,7 +40,7 @@ namespace Cpg.Studio
 		
 		private void RegisterNativeIntegrators()
 		{
-			RegisterNativeIntegrators(Path.Combine(Path.Combine(Directories.Lib, "cpgstudio"), "integrators"));
+			RegisterNativeIntegrators(Path.Combine(Path.Combine(Config.Lib, "cpgstudio"), "integrators"));
 
 			string path = Environment.GetEnvironmentVariable("CPG_INTEGRATOR_PATH");
 			

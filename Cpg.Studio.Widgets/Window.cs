@@ -336,6 +336,9 @@ namespace Cpg.Studio.Widgets
 				
 				new ActionEntry("EditTemplateAction", null, "Edit template", null, null, OnEditTemplateActivated),
 				new ActionEntry("RemoveTemplateAction", null, "Unapply template", null, null, OnRemoveTemplateActivated),
+				
+				new ActionEntry("HelpMenuAction", null, "_Help", null, null, null),
+				new ActionEntry("AboutAction", null, "About", null, null, OnAboutActivated)
 			});
 			
 			d_normalGroup.Add(new ToggleActionEntry[] {
@@ -2321,6 +2324,14 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			dlg.Destroy();
+		}
+		
+		private void OnAboutActivated(object o, EventArgs args)
+		{
+			AboutDialog dlg = AboutDialog.Instance;
+			
+			dlg.TransientFor = this;
+			dlg.Present();
 		}
 	}
 }

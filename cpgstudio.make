@@ -54,7 +54,7 @@ FILES = \
 	Cpg.Studio.Dialogs/Interpolate.cs \
 	Cpg.Studio.Dialogs/Property.cs \
 	Cpg.Studio.Dialogs/Import.cs \
-	Cpg.Studio/Directories.cs \
+	Cpg.Studio/Config.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
 	Cpg.Studio.Interpolators/IInterpolator.cs \
 	Cpg.Studio.Interpolators/Interpolation.cs \
@@ -121,6 +121,7 @@ FILES = \
 	Cpg.Studio.Undo/UnapplyTemplate.cs \
 	Cpg.Studio.Undo/Ungroup.cs \
 	Cpg.Studio/Utils.cs \
+	Cpg.Studio.Widgets/AboutDialog.cs \
 	Cpg.Studio.Widgets/AddRemovePopup.cs \
 	Cpg.Studio.Widgets/Annotation.cs \
 	Cpg.Studio.Widgets/FunctionNode.cs \
