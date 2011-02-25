@@ -30,7 +30,7 @@ namespace Cpg.Studio.Widgets
 		public AboutDialog()
 		{
 			Version = Config.Version;
-			Authors = new string[] {"Jesse van den Kieboom"};
+			Authors = new string[] {"Jesse van den Kieboom (jesse.vandenkieboom@epfl.ch)"};
 			Website = "http://biorob.epfl.ch";
 			ProgramName = "CPG Studio";
 		}
