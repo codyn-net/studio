@@ -111,6 +111,7 @@ namespace Cpg.Studio.Serialization
 		private Templates d_metaTemplates;
 		private Functions d_metaFunctions;
 		private string d_externalPath;
+		private bool d_shared;
 		
 		public Project()
 		{
@@ -118,6 +119,7 @@ namespace Cpg.Studio.Serialization
 			
 			d_network = new Wrappers.Network();
 			d_saveProjectExternally = false;
+			d_shared = false;
 		}
 		
 		[XmlAttribute("path")]
@@ -307,6 +309,9 @@ namespace Cpg.Studio.Serialization
 			
 			projectNode = doc.SelectSingleNode("/cpg/project");
 			XmlAttribute at = projectNode != null ? projectNode.Attributes["path"] : null;
+			XmlAttribute shared = projectNode != null ? projectNode.Attributes["shared"] : null;
+			
+			d_shared = (shared != null && shared.InnerText.Trim() == "yes");
 			
 			if (projectNode != null)
 			{
@@ -524,7 +529,7 @@ namespace Cpg.Studio.Serialization
 			
 			if (SaveProjectExternally)
 			{
-				if (d_externalPath == null)
+				if (d_externalPath == null || (!d_shared && filename != d_filename))
 				{
 					d_externalPath = GenerateProjectFilename(filename);
 				}
@@ -538,6 +543,12 @@ namespace Cpg.Studio.Serialization
 				XmlNode root = doc.SelectSingleNode("cpg");
 				XmlElement projectNode = doc.CreateElement("project");
 				projectNode.SetAttribute("path", d_externalPath);
+				
+				if (d_shared)
+				{
+					projectNode.SetAttribute("shared", "yes");
+				}
+
 				root.AppendChild(projectNode);
 
 				Save(doc, filename);
