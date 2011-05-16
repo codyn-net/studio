@@ -133,14 +133,13 @@ namespace Cpg.Studio.Widgets
 			[NodeColumn(3)]
 			public string Flags
 			{
-				
 				get 
 				{
 					// Ignore integrated
 					PropertyFlags filt = d_property.Flags & ~PropertyFlags.Integrated;
 					return Property.FlagsToString(filt);
 				}
-			}			
+			}
 		}
 
 		enum Column
@@ -909,10 +908,7 @@ namespace Cpg.Studio.Widgets
 			column.Resizable = true;
 			column.MinWidth = 75;
 			
-			if (input != null)
-			{
-				column.SetCellDataFunc(renderer, DisableInputProperties);
-			}
+			column.SetCellDataFunc(renderer, VisualizeProperties);
 			
 			if (d_object != null)
 			{
@@ -1031,6 +1027,27 @@ namespace Cpg.Studio.Widgets
 			d_propertyControls.RemoveButton.Clicked += DoRemoveProperty;
 			
 			UpdateSensitivity();
+		}
+		
+		private void VisualizeProperties(TreeViewColumn col, CellRenderer renderer, TreeModel model, TreeIter iter)
+		{
+			CellRendererText text = renderer as CellRendererText;
+
+			if (d_object is Wrappers.Input)
+			{
+				DisableInputProperties(col, renderer, model, iter);
+			}
+			
+			PropertyNode node = d_store.GetFromIter(iter);
+			
+			if (node.Property.Object.GetPropertyTemplate(node.Property, true) != null)
+			{
+				text.ForegroundGdk = d_treeview.Style.Foreground(Gtk.StateType.Insensitive);
+			}
+			else
+			{
+				text.ForegroundGdk = d_treeview.Style.Foreground(d_treeview.State);
+			}
 		}
 		
 		private void DisableInputProperties(TreeViewColumn col, CellRenderer renderer, TreeModel model, TreeIter iter)
