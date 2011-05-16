@@ -864,6 +864,26 @@ namespace Cpg.Studio.Widgets
 			return props.ToArray();
 		}
 		
+		private bool CurrentIsTemplate
+		{
+			get
+			{
+				Wrappers.Group grp = d_grid.ActiveGroup;
+				
+				while (grp != null)
+				{
+					if (grp == Network.TemplateGroup)
+					{
+						return true;
+					}
+					
+					grp = grp.Parent as Wrappers.Group;
+				}
+				
+				return false;
+			}
+		}
+		
 		private void DoPopup(object source, int button, long time)
 		{
 			if (d_popupMergeId != 0)
@@ -877,20 +897,23 @@ namespace Cpg.Studio.Widgets
 			d_uimanager.InsertActionGroup(d_popupActionGroup, 0);
 			
 			// Merge monitor
-			Wrappers.Wrapper[] selection = d_grid.Selection;
-			
-			foreach (string prop in CommonProperties(selection))
+			if (d_grid.ActiveGroup.TopParent != Network.TemplateGroup)
 			{
-				string name = "Monitor" + prop;
-				string p = (string)prop.Clone();
+				Wrappers.Wrapper[] selection = d_grid.Selection;
 				
-				d_popupActionGroup.Add(new ActionEntry[] {
-					new ActionEntry(name + "Action", null, p.Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
-						OnStartMonitor(selection, p);
-					})
-				});
-				
-				d_uimanager.AddUi(d_popupMergeId, "/GridPopup/MonitorMenu/MonitorPlaceholder", name, name + "Action", UIManagerItemType.Menuitem, false);
+				foreach (string prop in CommonProperties(selection))
+				{
+					string name = "Monitor" + prop;
+					string p = (string)prop.Clone();
+					
+					d_popupActionGroup.Add(new ActionEntry[] {
+						new ActionEntry(name + "Action", null, p.Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
+							OnStartMonitor(selection, p);
+						})
+					});
+					
+					d_uimanager.AddUi(d_popupMergeId, "/GridPopup/MonitorMenu/MonitorPlaceholder", name, name + "Action", UIManagerItemType.Menuitem, false);
+				}
 			}
 			
 			Widget menu = d_uimanager.GetWidget("/GridPopup");
