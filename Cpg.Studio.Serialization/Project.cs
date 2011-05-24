@@ -112,6 +112,7 @@ namespace Cpg.Studio.Serialization
 		private Functions d_metaFunctions;
 		private string d_externalPath;
 		private bool d_shared;
+		private bool d_cansave;
 		
 		public Project()
 		{
@@ -164,6 +165,14 @@ namespace Cpg.Studio.Serialization
 			set
 			{
 				d_saveProjectExternally = value;
+			}
+		}
+		
+		public bool CanSave
+		{
+			get
+			{
+				return d_cansave;
 			}
 		}
 		
@@ -318,11 +327,27 @@ namespace Cpg.Studio.Serialization
 			d_filename = filename;
 
 			XmlDocument doc = new XmlDocument();
-			doc.Load(filename);
+			XmlNode projectNode = null;
 			
-			XmlNode projectNode;
+			try
+			{
+				doc.Load(filename);
+			}
+			catch
+			{
+				doc = null;
+			}
 			
-			projectNode = doc.SelectSingleNode("/cpg/project");
+			if (doc != null)
+			{
+				projectNode = doc.SelectSingleNode("/cpg/project");
+				d_cansave = true;
+			}
+			else
+			{
+				d_cansave = false;
+			}
+			
 			XmlAttribute at = projectNode != null ? projectNode.Attributes["path"] : null;
 			XmlAttribute shared = projectNode != null ? projectNode.Attributes["shared"] : null;
 			
@@ -609,6 +634,7 @@ namespace Cpg.Studio.Serialization
 			}
 			
 			d_filename = filename;
+			d_cansave = true;
 		}
 		
 		private XmlNode Serialize<T>(T obj)

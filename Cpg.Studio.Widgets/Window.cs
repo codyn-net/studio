@@ -1286,6 +1286,12 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private void UpdateSaveSensitivity()
+		{
+			Gtk.Action action = d_normalGroup.GetAction("SaveAction");
+			action.Sensitive = d_project.CanSave;
+		}
+		
 		public void DoLoad(string filename)
 		{
 			if (!AskUnsavedModified())
@@ -1304,6 +1310,8 @@ namespace Cpg.Studio.Widgets
 				Message(Gtk.Stock.DialogError, "Error while loading network", e);
 				return;
 			}
+			
+			UpdateSaveSensitivity();
 					
 			RestoreSettings();
 
@@ -1440,6 +1448,7 @@ namespace Cpg.Studio.Widgets
 			UpdateTitle();
 			
 			StatusMessage("Saved network to " + filename + "...");
+			UpdateSaveSensitivity();
 		}
 		
 		private FileChooserDialog DoSaveAs()
@@ -1500,6 +1509,7 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			DoSave(d_project.Filename, d_project.SaveProjectExternally);
+
 			return null;
 		}
 		
