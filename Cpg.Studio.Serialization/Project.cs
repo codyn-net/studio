@@ -284,6 +284,42 @@ namespace Cpg.Studio.Serialization
 			Merge(orig, meta, null);
 		}
 		
+		private void TransferLayout(Wrappers.Wrapper wrapper)
+		{
+			if (!wrapper.WrappedObject.SupportsLocation())
+			{
+				return;
+			}
+			
+			int x;
+			int y;
+			
+			wrapper.WrappedObject.GetLocation(out x, out y);
+			wrapper.Allocation.X = x;
+			wrapper.Allocation.Y = y;
+			
+			Wrappers.Group grp = wrapper as Wrappers.Group;
+			
+			if (grp != null)
+			{
+				foreach (Wrappers.Wrapper child in grp.Children)
+				{
+					TransferLayout(child);
+				}
+			}
+		}
+		
+		private void TransferLayout(Dictionary<Wrappers.Group, List<Wrappers.Wrapper>> missing)
+		{
+			foreach (KeyValuePair<Wrappers.Group, List<Wrappers.Wrapper>> pair in missing)
+			{
+				foreach (Wrappers.Wrapper wrapper in pair.Value)
+				{
+					TransferLayout(wrapper);
+				}
+			}
+		}
+		
 		private void Merge()
 		{
 			Dictionary<Wrappers.Group, List<Wrappers.Wrapper>> missing = new Dictionary<Wrappers.Group, List<Wrappers.Wrapper>>();
@@ -300,21 +336,8 @@ namespace Cpg.Studio.Serialization
 			Merge(d_network.FunctionGroup, d_metaFunctions);
 			
 			// Now do some layouting on the missing guys?
-			foreach (KeyValuePair<Wrappers.Group, List<Wrappers.Wrapper>> pair in missing)
-			{
-				foreach (Wrappers.Wrapper wrapper in pair.Value)
-				{
-					if (wrapper.WrappedObject.SupportsLocation())
-					{
-						int x;
-						int y;
-
-						wrapper.WrappedObject.GetLocation(out x, out y);
-						wrapper.Allocation.X = x;
-						wrapper.Allocation.Y = y;
-					}
-				}
-			}
+			TransferLayout(missing);
+			TransferLayout(missingTemplates);
 		}
 		
 		private string GenerateProjectFilename(string filename)
