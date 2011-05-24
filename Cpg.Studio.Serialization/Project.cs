@@ -291,6 +291,21 @@ namespace Cpg.Studio.Serialization
 			Merge(d_network.FunctionGroup, d_metaFunctions);
 			
 			// Now do some layouting on the missing guys?
+			foreach (KeyValuePair<Wrappers.Group, List<Wrappers.Wrapper>> pair in missing)
+			{
+				foreach (Wrappers.Wrapper wrapper in pair.Value)
+				{
+					if (wrapper.WrappedObject.SupportsLocation())
+					{
+						int x;
+						int y;
+
+						wrapper.WrappedObject.GetLocation(out x, out y);
+						wrapper.Allocation.X = x;
+						wrapper.Allocation.Y = y;
+					}
+				}
+			}
 		}
 		
 		private string GenerateProjectFilename(string filename)

@@ -187,7 +187,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 	
 	
 	[AttributeUsage(AttributeTargets.Class)]
-	public class NameAttribute : Attribute
+	public class NameAttribute : System.Attribute
 	{
 		private string d_name;
 		

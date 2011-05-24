@@ -8,7 +8,7 @@ using System.Runtime.InteropServices;
 namespace Cpg.Studio.Widgets
 {
 	[AttributeUsage(AttributeTargets.Property)]
-	public class NodeColumnAttribute : Attribute
+	public class NodeColumnAttribute : System.Attribute
 	{
 		private int d_index;
 		
@@ -27,12 +27,12 @@ namespace Cpg.Studio.Widgets
 	}
 	
 	[AttributeUsage(AttributeTargets.Property)]
-	public class PrimaryKeyAttribute : Attribute
+	public class PrimaryKeyAttribute : System.Attribute
 	{
 	}
 	
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple=true)]
-	public class CustomRendererAttribute : Attribute
+	public class CustomRendererAttribute : System.Attribute
 	{
 		private int d_column;
 		private int d_renderer;
@@ -65,7 +65,7 @@ namespace Cpg.Studio.Widgets
 	}
 	
 	[AttributeUsage(AttributeTargets.Method, AllowMultiple=true)]
-	public class SortColumnAttribute : Attribute
+	public class SortColumnAttribute : System.Attribute
 	{
 		private int d_column;
 		
