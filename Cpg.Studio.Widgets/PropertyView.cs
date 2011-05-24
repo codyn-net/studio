@@ -996,7 +996,7 @@ namespace Cpg.Studio.Widgets
 				column.SetCellDataFunc(combo, DisableInputProperties);
 			}
 			
-			d_flagsStore = new ListStore(typeof(string), typeof(Cpg.PropertyFlags));
+			d_flagsStore = new ListStore(typeof(string));
 			combo.Model = d_flagsStore;
 			combo.TextColumn = 0;
 			
@@ -1094,17 +1094,32 @@ namespace Cpg.Studio.Widgets
 		{
 			d_flagsStore.Clear();
 			Cpg.PropertyFlags flags = property.Flags;
+			Cpg.PropertyFlags building = Cpg.PropertyFlags.None;
 			
-			foreach (KeyValuePair<string, Cpg.PropertyFlags> pair in d_flaglist)
+			List<string> items = new List<string>();
+			List<KeyValuePair<string, Cpg.PropertyFlags>> copy = new List<KeyValuePair<string, Cpg.PropertyFlags>>(d_flaglist);
+			
+			copy.Reverse();
+			
+			foreach (KeyValuePair<string, Cpg.PropertyFlags> pair in copy)
 			{
 				string name = pair.Key;
-
-				if ((flags & pair.Value) != 0)
+				
+				if ((flags & pair.Value) == pair.Value &&
+				    (building & pair.Value) == 0)
 				{
+					building |= pair.Value;
 					name = "• " + name;
 				}
 				
-				d_flagsStore.AppendValues(name, flags);
+				items.Add(name);
+			}
+			
+			items.Reverse();
+			
+			foreach (string s in items)
+			{
+				d_flagsStore.AppendValues(s);
 			}
 		}
 
