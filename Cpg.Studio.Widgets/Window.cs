@@ -434,22 +434,16 @@ namespace Cpg.Studio.Widgets
 			d_grid.ActiveGroupChanged += DoActiveGroupChanged;
 			d_grid.Status += DoStatus;
 			
-			d_grid.FocusInEvent += DoFocusInEvent;
-			d_grid.FocusOutEvent += DoFocusOutEvent;
-			
 			d_pathbar.Activated += HandlePathbarActivated;
 		}
+		
+		protected override void OnSetFocus(Widget focus)
+		{
+			base.OnSetFocus(focus);
+			
+			UpdateSensitivity();
+		}
 
-		private void DoFocusInEvent(object o, FocusInEventArgs args)
-		{
-			UpdateSensitivity();
-		}
-		
-		private void DoFocusOutEvent(object o, FocusOutEventArgs args)
-		{
-			UpdateSensitivity();
-		}
-		
 		private void DoStatus(object source, string msg)
 		{
 			if (String.IsNullOrEmpty(msg))
