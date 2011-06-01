@@ -137,7 +137,7 @@ namespace Cpg.Studio.Widgets
 				{
 					// Ignore integrated
 					PropertyFlags filt = d_property.Flags & ~PropertyFlags.Integrated;
-					return Property.FlagsToString(filt);
+					return Property.FlagsToString(filt, 0);
 				}
 			}
 		}
@@ -296,7 +296,7 @@ namespace Cpg.Studio.Widgets
 				// Don't show 'None' and Integrated is handled separately
 				if ((int)flags != 0 && flags != PropertyFlags.Integrated)
 				{
-					d_flaglist.Add(new KeyValuePair<string, Cpg.PropertyFlags>(Property.FlagsToString(flags), flags));
+					d_flaglist.Add(new KeyValuePair<string, Cpg.PropertyFlags>(Property.FlagsToString(flags, 0), flags));
 				}
 			}
 		}
@@ -1172,16 +1172,19 @@ namespace Cpg.Studio.Widgets
 				name = name.Substring(2);
 			}
 
-			Cpg.PropertyFlags flags = Property.FlagsFromString(name);
-			Cpg.PropertyFlags newflags = node.Property.Flags;
+			Cpg.PropertyFlags add_flags;
+			Cpg.PropertyFlags remove_flags;
 			
+			Property.FlagsFromString(name, out add_flags, out remove_flags);
+			Cpg.PropertyFlags newflags = node.Property.Flags;
+
 			if (wason)
 			{
-				newflags &= ~flags;
+				newflags &= ~add_flags;
 			}
 			else
 			{
-				newflags |= flags;
+				newflags |= add_flags;
 			}
 			
 			if (newflags == node.Property.Flags)
