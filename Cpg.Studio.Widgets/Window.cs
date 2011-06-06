@@ -2201,7 +2201,7 @@ namespace Cpg.Studio.Widgets
 			string title;
 			string expression;
 			
-			title = error.Object.Id;
+			title = error.Object.FullId;
 			
 			if (error.Property != null)
 			{
