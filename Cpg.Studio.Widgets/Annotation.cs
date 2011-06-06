@@ -7,9 +7,7 @@ namespace Cpg.Studio.Widgets
 	{
 		private VBox d_vbox;
 		private Label d_labelInfo;
-		private Label d_labelTitle;
 		private EventBox d_eventBox;
-		private EventBox d_titleEventBox;
 
 		private TextView d_editor;
 		private ScrolledWindow d_editorWindow;
@@ -18,13 +16,15 @@ namespace Cpg.Studio.Widgets
 		private string d_title;
 		
 		private Cpg.Annotatable d_annotatable;
+		
+		public event EventHandler TitleChanged = delegate {};
 
 		public Annotation() : base(0, 0, 1, 1)
 		{
 			d_vbox = new VBox(false, 6);
 			d_vbox.Show();
 			
-			SetPadding(0, 0, 6, 6);
+			SetPadding(6, 6, 6, 6);
 
 			d_eventBox = new EventBox();
 			d_eventBox.Show();
@@ -33,30 +33,6 @@ namespace Cpg.Studio.Widgets
 			d_labelInfo = new Label();
 			d_labelInfo.Show();
 			d_labelInfo.SetAlignment(0, 0);
-			
-			d_titleEventBox = new EventBox();
-			d_titleEventBox.VisibleWindow = true;
-			d_titleEventBox.Show();
-			
-			HBox hbox = new HBox(false, 0);
-			hbox.Show();
-			
-			Image image = new Image(Gtk.Stock.Info, IconSize.Menu);
-			image.Show();
-			
-			d_labelTitle = new Label();
-			d_labelTitle.Show();
-			d_labelTitle.SetAlignment(0, 0);
-			d_labelTitle.SetPadding(0, 5);
-			
-			hbox.PackStart(image, false, true, 6);
-			hbox.PackStart(d_labelTitle, true, true, 0);
-			
-			d_titleEventBox.Add(hbox);
-
-			d_titleEventBox.ModifyBg(StateType.Normal, d_labelTitle.Style.Background(StateType.Insensitive));
-			
-			d_vbox.PackStart(d_titleEventBox, false, true, 0);
 			
 			d_eventBox.Add(d_labelInfo);
 			d_vbox.PackStart(d_eventBox, true, true, 0);
@@ -154,7 +130,8 @@ namespace Cpg.Studio.Widgets
 			set
 			{
 				d_title = value != null ? value : "<b>No selection</b>";
-				d_labelTitle.Markup = d_title;
+				
+				TitleChanged(this, new EventArgs());
 			}
 		}
 		

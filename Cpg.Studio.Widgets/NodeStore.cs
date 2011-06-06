@@ -87,27 +87,63 @@ namespace Cpg.Studio.Widgets
 	{
 		public delegate void NodeAddedHandler(Node parent, Node child);
 		public delegate void NodeRemovedHandler(Node parent, Node child, int wasAtIndex);
-		public delegate void ChangedHandler(Node node);
+		public delegate void NodeHandler(Node node);
+		public delegate bool FilterFunc(Node node);
 
 		private Node d_parent;
 		private List<Node> d_children;
 		private List<GCHandle> d_gchandles;
+		private bool d_visible;
+		private int d_childCount;
 
+		public event NodeAddedHandler NodeAddedIntern = delegate {};
 		public event NodeAddedHandler NodeAdded = delegate {};
 		public event NodeRemovedHandler NodeRemoved = delegate {};
-		public event ChangedHandler Changed = delegate {};
+		public event NodeHandler Changed = delegate {};
+		public event NodeHandler VisibilityChanged = delegate {};
 		
 		public Node(Node parent)
 		{
 			d_parent = parent;
 			d_children = new List<Node>();
 			d_gchandles = new List<GCHandle>();
+			d_visible = true;
+			d_childCount = 0;
+			
+			NodeAdded += delegate {
+				++d_childCount;
+			};
+			
+			NodeRemoved += delegate {
+				--d_childCount;
+			};
 		}
-		
+			
 		public Node() : this(null)
 		{
 		}
 		
+		public void Sort(Comparison<Node> sorter)
+		{
+			d_children.Sort(sorter);
+		}
+		
+		public bool Visible
+		{
+			get
+			{
+				return d_visible;
+			}
+			set
+			{
+				if (d_visible != value)
+				{
+					d_visible = value;
+					VisibilityChanged(this);
+				}
+			}
+		}
+
 		public override string ToString()
 		{
 			List<string> ret = new List<string>();
@@ -128,7 +164,7 @@ namespace Cpg.Studio.Widgets
 		
 		public IEnumerator<Node> GetEnumerator()
 		{
-			return d_children.GetEnumerator();
+			return Children.GetEnumerator();
 		}
 		
 		IEnumerator IEnumerable.GetEnumerator()
@@ -150,7 +186,36 @@ namespace Cpg.Studio.Widgets
 		
 		public int IndexOf(Node child)
 		{
-			return d_children.IndexOf(child);
+			int tmp;
+			int idx;
+
+			return IndexOf(child, out idx, out tmp) ? idx : -1;
+		}
+		
+		private bool IndexOf(Node child, out int idx, out int internalidx)
+		{
+			int cnt = 0;
+			
+			idx = -1;
+			internalidx = -1;
+
+			for (int i = 0; i < d_children.Count; ++i)
+			{
+				if (d_children[i] == child)
+				{
+					internalidx = i;
+					idx = cnt;
+
+					return child.Visible;
+				}
+				
+				if (d_children[i].Visible)
+				{
+					++cnt;
+				}
+			}
+			
+			return false;
 		}
 		
 		public TreeIter Iter
@@ -179,7 +244,11 @@ namespace Cpg.Studio.Widgets
 				
 				while (parent != null)
 				{
-					path.PrependIndex(parent.IndexOf(child));
+					int idx;
+					int intidx;
+
+					parent.IndexOf(child, out idx, out intidx);
+					path.PrependIndex(idx);
 					
 					child = parent;
 					parent = parent.Parent;
@@ -205,7 +274,7 @@ namespace Cpg.Studio.Widgets
 		{
 			get
 			{
-				return d_children.Count;
+				return d_childCount;
 			}
 		}
 		
@@ -213,7 +282,7 @@ namespace Cpg.Studio.Widgets
 		{
 			get
 			{
-				return d_children.Count == 0;
+				return d_childCount == 0;
 			}
 		}
 		
@@ -221,23 +290,77 @@ namespace Cpg.Studio.Widgets
 		{
 			get
 			{
-				return d_children[index];
+				foreach (Node child in Children)
+				{
+					if (index == 0)
+					{
+						return child;
+					}
+					
+					--index;
+				}
+				
+				return null;
 			}
 		}
 		
 		public bool Contains(Node child)
 		{
-			return d_children.Contains(child);
+			foreach (Node node in Children)
+			{
+				if (node == child)
+				{
+					return true;
+				}
+			}
+			
+			return false;
 		}
 		
-		public TreeIter Add(Node child)
+		public bool Add(Node child)
+		{
+			TreeIter ret;
+			
+			return Add(child, out ret);
+		}
+		
+		public bool Add(Node child, out TreeIter iter)
 		{
 			d_children.Add(child);
 			child.Parent = this;
-
-			NodeAdded(this, child);
 			
-			return child.Iter;
+			NodeAddedIntern(this, child);
+			
+			child.VisibilityChanged += HandleChildVisibilityChanged;
+			
+			if (child.Visible)
+			{
+				NodeAdded(this, child);
+				iter = child.Iter;
+				
+				return true;
+			}
+			else
+			{
+				iter = default(TreeIter);
+				return false;
+			}
+		}
+
+		private void HandleChildVisibilityChanged(Node node)
+		{
+			if (node.Visible)
+			{			
+				NodeAdded(this, node);
+			}
+			else
+			{				
+				int idx;
+				int intidx;
+				
+				IndexOf(node, out idx, out intidx);
+				NodeRemoved(this, node, idx);
+			}
 		}
 		
 		public bool Remove(Node child)
@@ -247,18 +370,25 @@ namespace Cpg.Studio.Widgets
 				return false;
 			}
 
-			int idx = d_children.IndexOf(child);
+			int idx;
+			int intidx;
+			bool ret = IndexOf(child, out idx, out intidx);
 			
-			if (idx >= 0)
+			if (intidx >= 0)
 			{
-				d_children.RemoveAt(idx);
+				d_children.RemoveAt(intidx);
 				
 				if (child.Parent == this)
 				{
 					child.Parent = null;
 				}
 
-				NodeRemoved(this, child, idx);
+				child.VisibilityChanged -= HandleChildVisibilityChanged;
+				
+				if (ret)
+				{
+					NodeRemoved(this, child, idx);
+				}
 				
 				return true;
 			}
@@ -270,12 +400,12 @@ namespace Cpg.Studio.Widgets
 		{
 			int idx = path.Indices[index];
 
-			if (idx < 0 || idx >= d_children.Count)
+			if (idx < 0 || idx >= Count)
 			{
 				return null;
 			}
 
-			Node child = d_children[idx];
+			Node child = this[idx];
 
 			if (path.Indices.Length - 1 == index)
 			{
@@ -322,9 +452,9 @@ namespace Cpg.Studio.Widgets
 		{
 			int idx = IndexOf(child);
 			
-			if (idx >= 0 && idx < d_children.Count - 1)
+			if (idx >= 0 && idx < Count - 1)
 			{
-				return d_children[idx + 1];
+				return this[idx + 1];
 			}
 			
 			return null;
@@ -334,9 +464,9 @@ namespace Cpg.Studio.Widgets
 		{
 			int idx = IndexOf(child);
 			
-			if (idx > 0 && idx <= d_children.Count)
+			if (idx > 0 && idx <= Count)
 			{
-				return d_children[idx - 1];
+				return this[idx - 1];
 			}
 			
 			return null;
@@ -367,7 +497,10 @@ namespace Cpg.Studio.Widgets
 		
 		public void EmitChanged()
 		{
-			Changed(this);
+			if (Visible)
+			{
+				Changed(this);
+			}
 		}
 		
 		public void Clear()
@@ -378,11 +511,17 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		public Node[] Children
+		public IEnumerable<Node> Children
 		{
 			get
 			{
-				return d_children.ToArray();
+				foreach (Node child in d_children)
+				{
+					if (child.Visible)
+					{
+						yield return child;
+					}
+				}
 			}
 			set
 			{
@@ -390,25 +529,87 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		public IEnumerable<Node> Descendents
+		{
+			get
+			{
+				foreach (Node node in Children)
+				{
+					yield return node;
+					
+					foreach (Node d in node.Descendents)
+					{
+						yield return d;
+					}
+				}
+			}
+		}
+		
 		public void Move(Node a, int position)
 		{
-			int orig = d_children.IndexOf(a);
+			int intidx;
+			int orig;
+
+			bool ret = IndexOf(a, out orig, out intidx);
 			
-			if (orig == position)
+			if (!ret || orig == position)
 			{
 				return;
 			}
 			
 			if (orig >= 0)
 			{
-				d_children.RemoveAt(orig);
+				d_children.RemoveAt(intidx);
 				
 				if (orig < position)
 				{
 					--position;
 				}
 				
-				d_children.Insert(position, a);
+				// Find the real position
+				for (int i = 0; i < d_children.Count; ++i)
+				{
+					if (position == 0)
+					{
+						d_children.Insert(i, a);
+						break;
+					}
+
+					if (d_children[i].Visible)
+					{
+						--position;
+					}
+				}
+
+				if (position != 0)
+				{
+					d_children.Add(a);
+				}
+			}
+		}
+		
+		public void Filter(FilterFunc func)
+		{
+			bool checkme = true;
+			List<Node> children = new List<Node>(d_children);
+			
+			foreach (Node child in children)
+			{
+				child.Filter(func);
+				
+				if (child.Visible)
+				{
+					checkme = false;
+				}
+			}
+			
+			if (checkme && d_parent != null && func != null)
+			{
+				Visible = func(this);
+			}
+			else
+			{
+				Visible = true;
 			}
 		}
 	}
@@ -440,8 +641,10 @@ namespace Cpg.Studio.Widgets
 
 		private TreeModelAdapter d_adapter;
 		private int d_sortColumn;
+		private Node.FilterFunc d_lastFilter;
 		
 		public delegate void NodeChangedHandler(NodeStore<T> store, Node child);
+
 		public event NodeChangedHandler NodeChanged = delegate {};
 
 		public NodeStore() : base()
@@ -459,6 +662,34 @@ namespace Cpg.Studio.Widgets
 			Scan();
 			
 			Connect(this);
+		}
+		
+		public new void Filter(FilterFunc func)
+		{
+			base.Filter(func);
+			d_lastFilter = func;
+		}
+
+		public void Filter(string text)
+		{
+			string norm = text.ToLowerInvariant();
+			bool isempty = norm == String.Empty;
+			
+			Filter(delegate (Node a) {
+				if (isempty)
+				{
+					return true;
+				}
+				
+				string s = (string)GetPrimary(a, typeof(string));
+				
+				if (s == null)
+				{
+					return true;
+				}
+				
+				return s.ToLowerInvariant().Contains(norm);
+			});
 		}
 		
 		public void Bind(TreeView view)
@@ -492,6 +723,7 @@ namespace Cpg.Studio.Widgets
 		private void Connect(Node node)
 		{
 			node.NodeAdded += HandleNodeAdded;
+			node.NodeAddedIntern += HandleNodeAddedIntern;
 			node.NodeRemoved += HandleNodeRemoved;
 			node.Changed += HandleNodeChanged;
 			
@@ -500,9 +732,15 @@ namespace Cpg.Studio.Widgets
 				Connect(child);
 			}
 		}
-
+		
 		private void HandleNodeChanged(Node node)
 		{
+			if (d_lastFilter != null && !d_lastFilter(node))
+			{
+				node.Visible = false;
+				return;
+			}
+
 			if (IsSorted)
 			{
 				Sort(node.Parent);
@@ -515,10 +753,11 @@ namespace Cpg.Studio.Widgets
 		private void Disconnect(Node node)
 		{
 			node.NodeAdded -= HandleNodeAdded;
+			node.NodeAddedIntern -= HandleNodeAddedIntern;
 			node.NodeRemoved -= HandleNodeRemoved;
 			node.Changed -= HandleNodeChanged;
 
-			foreach (Node child in node)
+			foreach (Node child in node.Descendents)
 			{
 				Disconnect(child);
 			}
@@ -546,6 +785,7 @@ namespace Cpg.Studio.Widgets
 			// Then empty the node
 			for (int i = 0; i < node.Count; ++i)
 			{
+				//Console.WriteLine("Row deleted recurse: {0}, {1}", children, node[i]);
 				d_adapter.EmitRowDeleted(children.Copy());
 			}
 		}
@@ -558,6 +798,8 @@ namespace Cpg.Studio.Widgets
 			Disconnect(child);
 
 			RemoveChildren(child, path);
+			
+			//Console.WriteLine("Row deleted: {0}, {1}", path, child);
 			d_adapter.EmitRowDeleted(path);
 		}
 		
@@ -592,7 +834,8 @@ namespace Cpg.Studio.Widgets
 			{
 				path = node.Path;
 			}
-
+			
+			//Console.WriteLine("Row inserted: {0}, {1}", path, node);
 			d_adapter.EmitRowInserted(path.Copy(), node.Iter);
 			
 			TreePath children = path.Copy();
@@ -600,9 +843,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (IsSorted)
 			{
-				List<Node> sorted = new List<Node>(node.Children);
-				sorted.Sort(Sorter);
-				node.Children = sorted.ToArray();
+				node.Sort(Sorter);
 			}
 			
 			// Then also its children
@@ -612,11 +853,18 @@ namespace Cpg.Studio.Widgets
 				children.Next();
 			}
 		}
+		
+		private void HandleNodeAddedIntern(Node parent, Node child)
+		{
+			if (d_lastFilter != null)
+			{
+				child.Filter(d_lastFilter);
+			}
+		}
 
 		private void HandleNodeAdded(Node parent, Node child)
 		{
 			Connect(child);
-
 			AddNodeToModel(child, null);
 		}
 		
@@ -722,11 +970,11 @@ namespace Cpg.Studio.Widgets
 				return false;
 			}
 			
-			node = node.Parent.Next(node);
+			Node next = node.Parent.Next(node);
 			
-			if (node != null)
+			if (next != null)
 			{
-				iter = node.Iter;
+				iter = next.Iter;
 				return true;
 			}
 			else
@@ -785,7 +1033,7 @@ namespace Cpg.Studio.Widgets
 		{
 			Node node = GetFromIter<Node>(child);
 			
-			if (node.Parent != null)
+			if (node.Parent != null && node.Parent != this)
 			{
 				iter = node.Parent.Iter;
 				return true;
@@ -811,11 +1059,24 @@ namespace Cpg.Studio.Widgets
 			return obj.Equals(compare);
 		}
 		
+		private object GetPrimary(Node node, Type type)
+		{
+			type = PrimaryKeyType(type);
+			
+			if (type == null)
+			{
+				return null;
+			}
+			
+			MethodInfo info = d_primaryKeys[type];
+			return info.Invoke(node, new object[] {});
+		}
+		
 		private Node FindPrimary(Node parent, object obj)
 		{
-			Type objType = obj.GetType();
+			Type objType = PrimaryKeyType(obj);
 			
-			if (!d_primaryKeys.ContainsKey(objType))
+			if (objType == null)
 			{
 				return null;
 			}
@@ -910,14 +1171,31 @@ namespace Cpg.Studio.Widgets
 			return FindAll(this, info, obj, false);
 		}
 		
+		public Type PrimaryKeyType(object obj)
+		{
+			return PrimaryKeyType(obj.GetType());
+		}
+		
+		public Type PrimaryKeyType(Type type)
+		{
+			while (type != null && !d_primaryKeys.ContainsKey(type))
+			{
+				type = type.BaseType;
+			}
+
+			return type;
+		}
+		
 		public T Find(object obj)
 		{
-			if (obj == null || !d_primaryKeys.ContainsKey(obj.GetType()))
+			Type prim = PrimaryKeyType(obj);
+
+			if (prim == null)
 			{
 				return null;
 			}
 			
-			MethodInfo info = d_primaryKeys[obj.GetType()];
+			MethodInfo info = d_primaryKeys[prim];
 			Node[] ret = FindAll(this, info, obj, true);
 			
 			if (ret.Length > 0)
@@ -1017,7 +1295,7 @@ namespace Cpg.Studio.Widgets
 		private void Sort(Node node, Comparison<Node> sorter)
 		{
 			// Sort all the children, deep first
-			Node[] orig = node.Children;
+			List<Node> orig = new List<Node>(node.Children);
 			
 			foreach (Node child in orig)
 			{
@@ -1042,7 +1320,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (reordered)
 			{
-				node.Children = sorted.ToArray();
+				node.Sort(sorter);
 				d_adapter.EmitRowsReordered(node.Path, node.Iter, order);
 			}
 		}

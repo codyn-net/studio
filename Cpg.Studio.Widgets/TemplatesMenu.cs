@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Cpg.Studio
 {
@@ -28,30 +29,71 @@ namespace Cpg.Studio
 		private bool d_recursive;
 		private Dictionary<Wrappers.Wrapper, MenuInfo> d_map;
 		private Gtk.Menu d_menu;
+		private Gtk.Widget d_widget;
+		private PropertyInfo d_menuProperty;
+		private Wrappers.Group d_group;
 		
 		public event ActivatedHandler Activated = delegate {};
 
-		public TemplatesMenu(Wrappers.Group grp, bool recursive) : this(new Gtk.Menu(), grp, recursive, null)
+		public TemplatesMenu(Gtk.Widget widget, Wrappers.Group grp, bool recursive) : this(widget, new Gtk.Menu(), grp, recursive, null)
 		{
 		}
 		
-		public TemplatesMenu(Wrappers.Group grp, bool recursive, WrapperFilter filter) : this(new Gtk.Menu(), grp, recursive, filter)
+		public TemplatesMenu(Gtk.Widget widget, Wrappers.Group grp, bool recursive, WrapperFilter filter) : this(widget, new Gtk.Menu(), grp, recursive, filter)
 		{
 		}
 		
-		public TemplatesMenu(Gtk.Menu menu, Wrappers.Group grp, bool recursive) : this(menu, grp, recursive, null)
+		public TemplatesMenu(Gtk.Widget widget, Gtk.Menu menu, Wrappers.Group grp, bool recursive) : this(widget, menu, grp, recursive, null)
 		{
 		}
 		
-		public TemplatesMenu(Gtk.Menu menu, Wrappers.Group grp, bool recursive, WrapperFilter filter)
+		public TemplatesMenu(Gtk.Widget widget, Gtk.Menu menu, Wrappers.Group grp, bool recursive, WrapperFilter filter)
 		{
 			d_menu = menu;
 			d_filter = filter;
 			d_recursive = recursive;
 			d_map = new Dictionary<Wrappers.Wrapper, MenuInfo>();
+			d_group = grp;
 			
 			d_map[grp] = new MenuInfo(null, d_menu);
+			
+			d_widget = widget;
+			
+			if (d_widget != null)
+			{
+				d_menuProperty = d_widget.GetType().GetProperty("Menu");
+			}
+			
 			Traverse(grp, d_menu);
+			
+			if (d_menuProperty != null)
+			{
+				grp.ChildRemoved += delegate {
+					if (d_menu.Children.Length == 0)
+					{
+						d_menuProperty.SetValue(d_widget, null, null);
+						grp.ChildAdded += HideShowMenu;
+					}
+				};
+				
+				if (d_menu.Children.Length > 0)
+				{
+					d_menuProperty.SetValue(d_widget, d_menu, null);
+				}
+				else
+				{
+					grp.ChildAdded += HideShowMenu;
+				}
+			}
+		}
+
+		private void HideShowMenu(Wrappers.Group source, Wrappers.Wrapper child)
+		{
+			if (d_menu.Children.Length > 0)
+			{
+				d_menuProperty.SetValue(d_widget, d_menu, null);
+				d_group.ChildAdded -= HideShowMenu;
+			}
 		}
 		
 		public Gtk.Menu Menu
@@ -81,12 +123,17 @@ namespace Cpg.Studio
 			{
 				return;
 			}
+			
+			string lbl = template.FullId.Replace("_", "__");
 
-			Gtk.MenuItem item = new Gtk.MenuItem(template.Id.Replace("_", "__"));
+			Gtk.MenuItem item = new Gtk.MenuItem(lbl);
 			item.Show();
 			
 			item.Activated += delegate {
-				Activated(this, template);
+				if (item.Submenu == null)
+				{
+					Activated(this, template);
+				}
 			};
 
 			menu.Append(item);
@@ -119,6 +166,18 @@ namespace Cpg.Studio
 		private void HandleChildAdded(Wrappers.Group source, Wrappers.Wrapper child)
 		{
 			Gtk.Menu sub;
+			
+			if (child is Wrappers.Import)
+			{
+				d_map[child] = new TemplatesMenu.MenuInfo(null, d_map[source].Menu);
+
+				foreach (Wrappers.Wrapper wrapper in (child as Wrappers.Group).Children)
+				{
+					HandleChildAdded(child as Wrappers.Group, wrapper);
+				}
+				
+				return;
+			}
 			
 			if (d_map[source].Item == null)
 			{

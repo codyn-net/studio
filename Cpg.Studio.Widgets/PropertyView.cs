@@ -174,14 +174,17 @@ namespace Cpg.Studio.Widgets
 		private Entry d_editingEntry;
 		private string d_editingPath;
 		private FileChooserButton d_inputFileChooser;
+		private Dialogs.FindTemplate d_findTemplate;
+		private Wrappers.Network d_network;
 		
 		private NodeStore<InterfacePropertyNode> d_interfacePropertyStore;
 		private TreeView d_interfacePropertyView;
 		private AddRemovePopup d_interfacePropertyControls;
 		private bool d_selectInterface;
 		
-		public PropertyView(Actions actions, Wrappers.Wrapper obj) : base(false, 3)
+		public PropertyView(Wrappers.Network network, Actions actions, Wrappers.Wrapper obj) : base(false, 3)
 		{
+			d_network = network;
 			d_selectProperty = false;
 			d_selectAction = false;
 			d_selectInterface = false;
@@ -199,7 +202,7 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		public PropertyView(Actions actions) : this(actions, null)
+		public PropertyView(Wrappers.Network network, Actions actions) : this(network, actions, null)
 		{
 		}
 		
@@ -660,7 +663,7 @@ namespace Cpg.Studio.Widgets
 		{
 			TreeIter iter;
 			
-			iter = d_actionStore.Add(new LinkActionNode(action));
+			d_actionStore.Add(new LinkActionNode(action), out iter);
 			
 			if (d_selectAction)
 			{
@@ -693,7 +696,7 @@ namespace Cpg.Studio.Widgets
 					d_templateParent.PackStart(comma, false, false, 0);
 				}
 				
-				Label temp = new Label(String.Format("<span underline=\"single\">{0}</span>", System.Security.SecurityElement.Escape(template.ToString())));
+				Label temp = new Label(String.Format("<span underline=\"single\">{0}</span>", System.Security.SecurityElement.Escape(template.FullId)));
 				temp.UseMarkup = true;
 				
 				EventBox box = new EventBox();
@@ -722,6 +725,70 @@ namespace Cpg.Studio.Widgets
 				
 				d_templateParent.PackStart(lbl, false, false, 0);
 			}
+			
+			Alignment align = new Alignment(0, 0, 1, 1);
+			align.LeftPadding = 3;
+			align.Show();
+			
+			Button but = new Button();
+			but.Relief = ReliefStyle.None;
+
+			Image img = new Image(Gtk.Stock.Add, IconSize.Menu);
+			img.Show();
+			
+			RcStyle style = new RcStyle();
+			style.Xthickness = 0;
+			style.Ythickness = 0;
+			
+			but.ModifyStyle(style);
+
+			but.Add(img);
+			but.Show();
+			
+			align.Add(but);
+			
+			but.Clicked += AddTemplateClicked;
+			
+			d_templateParent.PackStart(align, false, false, 0);
+		}
+		
+		private void AddTemplateClicked(object source, EventArgs args)
+		{
+			if (d_findTemplate == null)
+			{
+				Gtk.Window par = (Gtk.Window)Toplevel;
+
+				d_findTemplate = new Dialogs.FindTemplate(d_network.TemplateGroup, delegate (Wrappers.Wrapper node) {
+					return (node is Wrappers.Link) == (d_object is Wrappers.Link);
+				}, par);
+				
+				d_findTemplate.Destroyed += delegate (object sr, EventArgs ar)
+				{
+					d_findTemplate = null;
+				};
+				
+				d_findTemplate.Response += delegate(object o, ResponseArgs arr) {
+					if (arr.ResponseId == ResponseType.Apply)
+					{
+						foreach (Wrappers.Wrapper wrapper in d_findTemplate.Selection)
+						{
+							try
+							{
+								d_actions.ApplyTemplate(wrapper, new Wrappers.Wrapper[] {d_object});
+							}
+							catch (Exception e)
+							{
+								Error(this, e);
+								break;
+							}
+						}
+					}
+					
+					d_findTemplate.Destroy();
+				};
+			}
+			
+			d_findTemplate.Show();
 		}
 		
 		private bool ObjectIsNetwork
@@ -1365,7 +1432,8 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			TreeIter iter = d_store.Add(new PropertyNode(prop));
+			TreeIter iter;
+			d_store.Add(new PropertyNode(prop), out iter);
 			
 			if (d_selectProperty)
 			{
@@ -1731,7 +1799,7 @@ namespace Cpg.Studio.Widgets
 			TreeIter iter;
 			Wrappers.Group grp = d_object as Wrappers.Group;
 			
-			iter = d_interfacePropertyStore.Add(new InterfacePropertyNode(grp.PropertyInterface, name));
+			d_interfacePropertyStore.Add(new InterfacePropertyNode(grp.PropertyInterface, name), out iter);
 			
 			if (d_selectInterface)
 			{

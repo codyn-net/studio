@@ -118,10 +118,13 @@ namespace Cpg.Studio.Widgets
 					if (i != 0)
 					{
 						Arrow ar = new Arrow(ArrowType.Right, ShadowType.None);
+						ar.Show();
 						PackStart(ar, false, false, 0);
 					}
 					
 					ToggleButton but = new ToggleButton();
+					but.Show();
+
 					HBox hbox = new HBox(false, 0);
 					hbox.Show();
 
@@ -157,8 +160,6 @@ namespace Cpg.Studio.Widgets
 					SetActive(groups[i], last);					
 					groups[i].ChildRemoved += HandleChildRemoved;
 				}
-				
-				ShowAll();
 			}
 		}
 

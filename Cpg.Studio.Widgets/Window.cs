@@ -35,7 +35,8 @@ namespace Cpg.Studio.Widgets
 		private ListStore d_integratorStore;
 		private ComboBox d_integratorCombo;
 		private Widget d_menubar;
-		private HPaned d_annotationPaned;
+		private HPaned d_hpaned;
+		private Notebook d_sideBarNotebook;
 		private Annotation d_annotation;
 		
 		private bool d_modified;
@@ -43,14 +44,14 @@ namespace Cpg.Studio.Widgets
 		private Undo.Manager d_undoManager;
 		private Actions d_actions;
 		private WindowGroup d_windowGroup;
-		private TemplatesMenu d_stateTemplatesMenu;
-		private TemplatesMenu d_linkTemplatesMenu;
 		
 		private Wrappers.Wrapper d_templatePopupObject;
 		private Wrappers.Wrapper d_templatePopupTemplate;
 		private DateTime d_runElapsed;
 		private Progress d_progress;
 		private bool d_checkProgress;
+		private MenuToolButton d_addStateMenu;
+		private MenuToolButton d_addLinkMenu;
 		
 		private uint d_idleSelectionChanged;
 
@@ -95,7 +96,7 @@ namespace Cpg.Studio.Widgets
 			
 			d_propertyEditors = new Dictionary<Wrappers.Wrapper, Dialogs.Property>();
 		}
-		
+
 		private void OnClipboardChanged()
 		{
 			UpdateSensitivity();
@@ -164,87 +165,51 @@ namespace Cpg.Studio.Widgets
 			d_normalGroup.GetAction("RedoAction").Sensitive = d_undoManager.CanRedo;
 		}
 		
-		private void CreateInsertMenu(string path)
-		{
-			Gtk.MenuItem item = (Gtk.MenuItem)d_uimanager.GetWidget(path);
-			Gtk.Menu menu = (Gtk.Menu)item.Submenu;
-
-			Gtk.MenuItem stateItem = new Gtk.MenuItem("State");
-			Gtk.Menu stateMenu = new Gtk.Menu();
-			stateItem.Submenu = stateMenu;
-			
-			Gtk.MenuItem defaultStateItem = new Gtk.MenuItem("Default");
-			defaultStateItem.Activated += OnAddStateActivated;
-
-			stateMenu.Append(defaultStateItem);
-			stateMenu.Append(new Gtk.SeparatorMenuItem());
-
-			d_stateTemplatesMenu = new TemplatesMenu(stateMenu, Network.TemplateGroup, false, FilterStates);
-			d_stateTemplatesMenu.Activated += HandleStateTemplatesMenuActivated;
-
-			stateItem.ShowAll();
-			menu.Append(stateItem);
-			
-			Gtk.MenuItem linkItem = new Gtk.MenuItem("Link");
-			Gtk.Menu linkMenu = new Gtk.Menu();
-			linkItem.Submenu = linkMenu;
-			
-			Gtk.MenuItem defaultLinkItem = new Gtk.MenuItem("Default");
-			defaultLinkItem.Activated += OnAddLinkActivated;
-
-			linkMenu.Append(defaultLinkItem);
-			linkMenu.Append(new Gtk.SeparatorMenuItem());
-
-			d_linkTemplatesMenu = new TemplatesMenu(linkMenu, Network.TemplateGroup, false, FilterLinks);
-			d_linkTemplatesMenu.Activated += HandleLinkTemplatesMenuActivated;
-
-			linkItem.ShowAll();
-			menu.Append(linkItem);
-			
-			menu.Append(new Gtk.SeparatorMenuItem());
-			
-			Gtk.MenuItem inputFileItem = new Gtk.MenuItem("File Input");
-			inputFileItem.Activated += OnAddInputFileActivated;
-			
-			menu.Append(inputFileItem);
-		}
-
-		private void HandleStateTemplatesMenuActivated(object source, Wrappers.Wrapper template)
+		private bool ApplyTemplate(Wrappers.Wrapper template)
 		{
 			Wrappers.Wrapper[] sel = d_grid.Selection;
 				
-			if (sel.Length == 0 || Array.TrueForAll<Wrappers.Wrapper>(sel, item => item is Wrappers.Link))
+			return HandleError(delegate () {
+				d_actions.ApplyTemplate(template, sel);
+			}, "An error occurred while applying the template");
+		}
+		
+		private bool AddFromTemplate(Wrappers.Wrapper template)
+		{
+			if (template is Wrappers.Link)
 			{
-				int[] center = d_grid.Center;
-				HandleError(delegate () {
-					d_actions.AddObject(d_grid.ActiveGroup, template.CopyAsTemplate(), center[0], center[1]);
-				}, "An error occurred while adding an object from a template");
+				return AddLinkFromTemplate(template);
 			}
 			else
 			{
-				HandleError(delegate () {
-					d_actions.ApplyTemplate(template, sel);
-				}, "An error occurred while applying the template");
+				return AddStateFromTemplate(template);
 			}
+		}
+		
+		private bool AddStateFromTemplate(Wrappers.Wrapper template)
+		{
+			return HandleError(delegate () {
+				int[] center = d_grid.Center;
+				d_actions.AddObject(d_grid.ActiveGroup, template.CopyAsTemplate(), center[0], center[1]);
+			}, "An error occurred while adding an object from a template");
+		}
+		
+		private bool AddLinkFromTemplate(Wrappers.Wrapper template)
+		{
+			return HandleError(delegate () {
+				int[] center = d_grid.Center;
+				d_actions.AddLink(d_grid.ActiveGroup, (Wrappers.Link)template, d_grid.Selection, center[0], center[1]);
+			}, "An error occurred while adding a link from a template");
+		}
+		
+		private void HandleStateTemplatesMenuActivated(object source, Wrappers.Wrapper template)
+		{
+			AddFromTemplate(template);
 		}
 		
 		private void HandleLinkTemplatesMenuActivated(object source, Wrappers.Wrapper template)
 		{
-			Wrappers.Wrapper[] sel = d_grid.Selection;
-				
-			if (sel.Length == 0 || !Array.TrueForAll<Wrappers.Wrapper>(sel, item => item is Wrappers.Link))
-			{
-				HandleError(delegate () {
-					int[] center = d_grid.Center;
-					d_actions.AddLink(d_grid.ActiveGroup, (Wrappers.Link)template, d_grid.Selection, center[0], center[1]);
-				}, "An error occurred while adding a link from a template");
-			}
-			else
-			{
-				HandleError(delegate () {
-					d_actions.ApplyTemplate(template, sel);
-				}, "An error occurred while applying the template");
-			}
+			AddFromTemplate(template);
 		}
 		
 		private bool FilterStates(Wrappers.Wrapper wrapper)
@@ -256,37 +221,6 @@ namespace Cpg.Studio.Widgets
 		{
 			return wrapper is Wrappers.Link;
 		}
-		
-		private void CreateTemplatesTool()
-		{
-			Toolbar tb = (Toolbar)d_uimanager.GetWidget("/toolbar");
-			SeparatorToolItem sep = new SeparatorToolItem();
-			
-			sep.Show();
-			tb.Add(sep);
-			
-			MenuToolButton button = new MenuToolButton(Stock.State);
-			button.Clicked += OnAddStateActivated;
-			button.Show();
-			
-			TemplatesMenu temp = new TemplatesMenu(Network.TemplateGroup, false, FilterStates);
-			button.Menu = temp.Menu;
-			temp.Activated += HandleStateTemplatesMenuActivated;
-			temp.Menu.ShowAll();
-
-			tb.Add(button);
-			
-			button = new MenuToolButton(Stock.Link);
-			button.Clicked += OnAddLinkActivated;
-			button.Show();
-			
-			temp = new TemplatesMenu(Network.TemplateGroup, false, FilterLinks);
-			temp.Activated += HandleLinkTemplatesMenuActivated;
-			button.Menu = temp.Menu;
-			temp.Menu.ShowAll();
-
-			tb.Add(button);
-		}
 
 		private void Build()
 		{
@@ -297,7 +231,6 @@ namespace Cpg.Studio.Widgets
 
 			d_normalGroup.Add(new ActionEntry[] {
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
-				new ActionEntry("AddStateMenuAction", null, null, null, null, null),
 				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG network", OnFileNew),
 				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", OnOpenActivated),
 				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, null, "Revert changes", OnRevertActivated),
@@ -316,7 +249,7 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("GroupAction", Stock.Group, "Group", "<Control>G", "Group objects", OnGroupActivated),
 				new ActionEntry("UngroupAction", Stock.Ungroup, "Ungroup", "<Control><Shift>G", "Ungroup object", OnUngroupActivated),
 				new ActionEntry("EditGlobalsAction", null, "Globals", "<Control>H", "Edit the network globals", OnEditGlobalsActivated),
-				new ActionEntry("EditFunctionsAction", null, "Functions", "<Control>F", "Edit the network custom functions", OnEditFunctionsActivated),
+				new ActionEntry("EditFunctionsAction", null, "Functions", null, "Edit the network custom functions", OnEditFunctionsActivated),
 
 				new ActionEntry("SimulateMenuAction", null, "_Simulate", null, null, null),
 				new ActionEntry("StepAction", Gtk.Stock.MediaNext, "Step", "<Control>t", "Execute one simulation step", OnStepActivated),
@@ -328,6 +261,11 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("ZoomDefaultAction", Gtk.Stock.Zoom100, null, "<Control>1", null, OnZoomDefaultActivated),
 				new ActionEntry("ZoomInAction", Gtk.Stock.ZoomIn, null, "<Control>plus", null, OnZoomInActivated),
 				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, OnZoomOutActivated),
+				
+				new ActionEntry("AddMenuAction", null, "_Add", null, null, null),
+				new ActionEntry("AddStateAction", Stock.State, "State", null, "Add new state", OnAddStateActivated),
+				new ActionEntry("AddLinkAction", Stock.Link, "Link", null, "Add new link", OnAddLinkActivated),
+				new ActionEntry("AddInputFileAction", Stock.InputFile, "Input file", null, "Add new input file", OnAddInputFileActivated),
 
 				new ActionEntry("MonitorMenuAction", null, "Monitor", null, null, null),
 				new ActionEntry("ControlMenuAction", null, "Control", null, null, null),
@@ -349,7 +287,7 @@ namespace Cpg.Studio.Widgets
 				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", OnViewStatusbarActivated, true),
 				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", OnToggleMonitorActivated, false),
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false),
-				new ToggleActionEntry("ViewAnnotationsAction", Gtk.Stock.Info, "Annotations", "<Control>l", "Show/Hide annotations panel", OnViewAnnotationsActivated, false)
+				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.Info, "SideBar", "<Control>l", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
 			});
 				
 			d_uimanager.InsertActionGroup(d_normalGroup, 0);
@@ -367,10 +305,6 @@ namespace Cpg.Studio.Widgets
 			AddAccelGroup(d_uimanager.AccelGroup);
 			
 			VBox vbox = new VBox(false, 0);
-			
-			CreateInsertMenu("/menubar/InsertMenu");
-			CreateInsertMenu("/GridPopup/InsertMenu");
-			CreateTemplatesTool();
 
 			d_menubar = d_uimanager.GetWidget("/menubar");
 			vbox.PackStart(d_menubar, false, false, 0);
@@ -388,16 +322,16 @@ namespace Cpg.Studio.Widgets
 			d_vboxContents = new VBox(false, 3);
 			vbox.PackStart(d_vboxContents, true, true, 0);
 			
-			d_annotationPaned = new HPaned();
-			d_annotationPaned.Position = 250;
+			d_hpaned = new HPaned();
+			d_hpaned.Position = 250;
 			
 			d_grid = new Grid(Network, d_actions);
 			
-			d_annotationPaned.Pack1(d_grid, true, true);
+			d_hpaned.Pack1(d_grid, true, true);
 
 			d_vpaned = new VPaned();
 			d_vpaned.Position = 250;
-			d_vpaned.Pack1(d_annotationPaned, true, false);
+			d_vpaned.Pack1(d_hpaned, true, false);
 			
 			d_vboxContents.PackStart(d_vpaned, true, true, 0);
 			
@@ -420,7 +354,7 @@ namespace Cpg.Studio.Widgets
 			OnViewPathbarActivated(d_normalGroup.GetAction("ViewPathbarAction"), new EventArgs());
 			OnViewSimulateButtonsActivated(d_normalGroup.GetAction("ViewSimulateButtonsAction"), new EventArgs());
 			OnViewStatusbarActivated(d_normalGroup.GetAction("ViewStatusbarAction"), new EventArgs());
-			OnViewAnnotationsActivated(d_normalGroup.GetAction("ViewAnnotationsAction"), new EventArgs());
+			OnViewSideBarActivated(d_normalGroup.GetAction("ViewSideBarAction"), new EventArgs());
 			
 			Add(vbox);
 
@@ -435,6 +369,35 @@ namespace Cpg.Studio.Widgets
 			d_grid.Status += DoStatus;
 			
 			d_pathbar.Activated += HandlePathbarActivated;
+			
+			BuildToolBarAdd();
+		}
+		
+		private void BuildToolBarAdd()
+		{
+			Toolbar tb = d_toolbar as Toolbar;
+			
+			SeparatorToolItem sep = new SeparatorToolItem();
+			sep.Show();
+			tb.Add(sep);
+			
+			d_addStateMenu = new MenuToolButton(Stock.State);
+			d_addStateMenu.Show();
+			d_normalGroup.GetAction("AddStateAction").ConnectProxy(d_addStateMenu);
+			tb.Add(d_addStateMenu);
+			
+			TemplatesMenu menu;
+			
+			menu = new TemplatesMenu(d_addStateMenu, d_project.Network.TemplateGroup, false, a => !(a is Wrappers.Link));
+			menu.Activated += HandleStateTemplatesMenuActivated;
+			
+			d_addLinkMenu = new MenuToolButton(Stock.Link);
+			d_normalGroup.GetAction("AddLinkAction").ConnectProxy(d_addLinkMenu);
+			d_addLinkMenu.Show();
+			tb.Add(d_addLinkMenu);
+			
+			menu = new TemplatesMenu(d_addLinkMenu, d_project.Network.TemplateGroup, false, a => a is Wrappers.Link);
+			menu.Activated += HandleLinkTemplatesMenuActivated;
 		}
 		
 		protected override void OnSetFocus(Widget focus)
@@ -788,7 +751,7 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			Dialogs.Property dlg = new Dialogs.Property(this, obj);
+			Dialogs.Property dlg = new Dialogs.Property(d_project.Network, this, obj);
 			PositionWindow(dlg);
 			
 			dlg.View.TemplateActivated += HandlePropertyTemplateActivated;
@@ -1072,15 +1035,15 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		public int AnnotationPanePosition
+		public int SideBarPanePosition
 		{
 			get
 			{
-				return d_annotation != null ? d_annotationPaned.Allocation.Width - d_annotationPaned.Position : -1;
+				return d_sideBarNotebook != null ? d_hpaned.Allocation.Width - d_hpaned.Position : -1;
 			}
 			set
 			{
-				ToggleAction action = d_normalGroup.GetAction("ViewAnnotationsAction") as ToggleAction;
+				ToggleAction action = d_normalGroup.GetAction("ViewSideBarAction") as ToggleAction;
 			
 				if (value == -1)
 				{
@@ -1089,7 +1052,7 @@ namespace Cpg.Studio.Widgets
 				else
 				{
 					action.Active = true;
-					d_annotationPaned.Position = d_annotationPaned.Allocation.Width - value;
+					d_hpaned.Position = d_hpaned.Allocation.Width - value;
 				}
 			}
 		}
@@ -1127,18 +1090,6 @@ namespace Cpg.Studio.Widgets
 			set
 			{
 				((ToggleAction)d_normalGroup.GetAction("ViewPathbarAction")).Active = value;
-			}
-		}
-		
-		public bool ShowAnnotations
-		{
-			get
-			{
-				return ((ToggleAction)d_normalGroup.GetAction("ViewAnnotationsAction")).Active;
-			}
-			set
-			{
-				((ToggleAction)d_normalGroup.GetAction("ViewAnnotationsAction")).Active = value;
 			}
 		}
 		
@@ -1184,7 +1135,7 @@ namespace Cpg.Studio.Widgets
 		private void RestorePanelsAfterResize(object source, EventArgs args)
 		{
 			PanePosition = d_project.Settings.PanePosition;
-			AnnotationPanePosition = d_project.Settings.AnnotationPanePosition;
+			SideBarPanePosition = d_project.Settings.SideBarPanePosition;
 			
 			SizeAllocated -= RestorePanelsAfterResize;
 		}
@@ -1218,10 +1169,9 @@ namespace Cpg.Studio.Widgets
 			ShowPathbar = s.PathBar;
 			ShowSimulateButtons = s.SimulateBar;
 			ShowStatusbar = s.StatusBar;
-			ShowAnnotations = s.Annotations;
 
 			PanePosition = s.PanePosition;
-			AnnotationPanePosition = s.AnnotationPanePosition;
+			SideBarPanePosition = s.SideBarPanePosition;
 			
 			d_periodEntry.Text = s.SimulatePeriod;
 			
@@ -1385,8 +1335,7 @@ namespace Cpg.Studio.Widgets
 			s.StatusBar = ShowStatusbar;
 			s.ToolBar = ShowToolbar;
 			s.PanePosition = PanePosition;
-			s.Annotations = ShowAnnotations;
-			s.AnnotationPanePosition = AnnotationPanePosition;
+			s.SideBarPanePosition = SideBarPanePosition;
 			s.SimulatePeriod = d_periodEntry.Text;
 			
 			s.Allocation = WindowAllocation(this);
@@ -1599,16 +1548,19 @@ namespace Cpg.Studio.Widgets
 		
 		private delegate void ErrorThrowingHandler();
 		
-		private void HandleError(ErrorThrowingHandler handler, string primary)
+		private bool HandleError(ErrorThrowingHandler handler, string primary)
 		{
 			try
 			{
 				handler();
+				return true;
 			}
 			catch (Exception e)
 			{
 				Message(Gtk.Stock.DialogError, primary, e);
 			}
+			
+			return false;
 		}
 		
 		private void OnPasteActivated(object sender, EventArgs args)
@@ -1846,7 +1798,7 @@ namespace Cpg.Studio.Widgets
 		private void OnViewPathbarActivated(object sender, EventArgs args)
 		{
 			ToggleAction action = sender as ToggleAction;
-			
+						
 			d_pathbar.Visible = action.Active;
 		}
 		
@@ -1865,30 +1817,182 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private void OnViewAnnotationsActivated(object sender, EventArgs args)
+		private Widget PanelTab(string stockid, string label, out Label lbl)
+		{
+			Alignment align = new Alignment(0, 0, 1, 1);
+			align.SetPadding(1, 1, 3, 3);
+			align.Show();
+
+			HBox hbox = new HBox(false, 3);
+			hbox.Show();
+			
+			Image image = new Image(stockid, IconSize.Menu);
+			image.Show();
+			
+			hbox.PackStart(image, false, true, 0);
+			
+			lbl = new Label(label);
+			lbl.Show();
+			
+			hbox.PackStart(lbl, true, true, 0);
+			align.Add(hbox);
+			
+			return align;
+		}
+		
+		private void CreateSideBarPanels()
+		{
+			WrappersTree tree = new WrappersTree(d_project.Network.TemplateGroup);
+			tree.Show();
+			
+			Label ltpl;
+			d_sideBarNotebook.InsertPage(tree, PanelTab(Stock.GroupState, "Library", out ltpl), -1);
+			
+			tree.WrapperActivated += HandleTreeWrapperActivated;
+			tree.TreeView.PopulatePopup += HandleTreeTreeViewPopulatePopup;
+
+			d_annotation = new Annotation();
+			d_annotation.Show();
+			
+			Label lbl;
+			Widget tab = PanelTab(Gtk.Stock.Info, "Annotations", out lbl);
+			
+			d_annotation.TitleChanged += delegate {
+				lbl.Markup = d_annotation.Title;
+			};
+
+			UpdateAnnotation();
+
+			d_sideBarNotebook.InsertPage(d_annotation, tab, -1);			
+		}
+
+		private void HandleTreeTreeViewPopulatePopup(object source, Menu menu)
+		{
+			Widgets.TreeView<WrappersTree.WrapperNode> tv = (Widgets.TreeView<WrappersTree.WrapperNode>)source;
+			
+			TreePath[] paths = tv.Selection.GetSelectedRows();
+			
+			if (paths.Length == 0)
+			{
+				return;
+			}
+			
+			List<Wrappers.Wrapper> selection = new List<Wrappers.Wrapper>();
+			bool haslinks = false;
+			bool hasstates = false;
+			
+			foreach (TreePath path in paths)
+			{
+				Wrappers.Wrapper wrapper = tv.NodeStore.FindPath(path).Wrapper;
+
+				if (!(wrapper is Wrappers.Import))
+				{
+					selection.Add(wrapper);
+				}
+				
+				if (wrapper is Wrappers.Link)
+				{
+					haslinks = true;
+				}
+				else
+				{
+					hasstates = true;
+				}				
+			}
+			
+			MenuItem item;
+			
+			if (selection.Count != 0)
+			{
+				item = new MenuItem("Add from template");
+				item.Show();
+				menu.Append(item);
+			
+				item.Activated += delegate {
+					foreach (Wrappers.Wrapper wrapper in selection)
+					{
+						AddFromTemplate(wrapper);
+					}
+				};
+			}
+			
+			if (paths.Length == 1)
+			{
+				WrappersTree.WrapperNode node = tv.NodeStore.FindPath(paths[0]);
+				
+				item = new MenuItem("Edit template");
+				item.Show();
+
+				item.Activated += delegate {
+					d_grid.UnselectAll();
+					d_grid.Select(node.Wrapper);
+				};
+				
+				menu.Append(item);
+			}
+				
+			if ((haslinks && hasstates) || (!haslinks && !hasstates))
+			{
+				return;
+			}
+
+			Wrappers.Wrapper[] sel = d_grid.Selection;
+			
+			if (sel.Length == 0 || !Array.TrueForAll(sel, a => ((haslinks && a is Wrappers.Link) || (hasstates && !(a is Wrappers.Link)))))
+			{
+				return;
+			}
+			
+			MenuItem apply = new MenuItem("Apply to selection");
+			apply.Show();
+			menu.Append(apply);
+			
+			apply.Activated += delegate {
+				foreach (Wrappers.Wrapper templ in selection)
+				{
+					if (!ApplyTemplate(templ))
+					{
+						break;
+					}
+				}
+			};
+		}
+
+		private void HandleTreeWrapperActivated(object source, Wrappers.Wrapper wrapper)
+		{
+			if (!(wrapper is Wrappers.Import))
+			{
+				AddFromTemplate(wrapper);
+			}
+		}
+		
+		private void OnViewSideBarActivated(object sender, EventArgs args)
 		{
 			ToggleAction action = sender as ToggleAction;
 			
 			if (action.Active)
 			{
-				if (d_annotation == null)
+				if (d_sideBarNotebook == null)
 				{
-					d_annotation = new Annotation();
+					d_sideBarNotebook = new Notebook();
+					d_sideBarNotebook.Show();
+
+					d_hpaned.Pack2(d_sideBarNotebook, false, false);
 					
-					UpdateAnnotation();
-					d_annotationPaned.Pack2(d_annotation, false, false);
+					CreateSideBarPanels();
 					
-					d_annotation.Show();
+					d_grid.DrawRightBorder = true;
 				}
 			}
 			else
 			{
-				if (d_annotation != null)
+				if (d_sideBarNotebook != null)
 				{
-					d_annotation.Destroy();
+					d_sideBarNotebook.Destroy();
+					d_grid.DrawRightBorder = false;
 				}
 				
-				d_annotation = null;
+				d_sideBarNotebook = null;
 			}
 		}
 		
@@ -1901,7 +2005,7 @@ namespace Cpg.Studio.Widgets
 				if (d_propertyView == null)
 				{
 					Wrappers.Wrapper[] selection = d_grid.Selection;
-					d_propertyView = new PropertyView(d_actions, selection.Length == 1 ? selection[0] : null);
+					d_propertyView = new PropertyView(d_project.Network, d_actions, selection.Length == 1 ? selection[0] : null);
 					d_propertyView.BorderWidth = 3;
 					
 					d_propertyView.Error += delegate (object source, Exception exception)

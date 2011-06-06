@@ -44,20 +44,26 @@
       <menuitem name="ViewPathbar" action="ViewPathbarAction"/>
       <menuitem name="ViewSimulateButtons" action="ViewSimulateButtonsAction"/>
       <menuitem name="ViewStatusbar" action="ViewStatusbarAction"/>
-      <menuitem name="ViewAnnotations" action="ViewAnnotationsAction"/>
+      <menuitem name="ViewSideBar" action="ViewSideBarAction"/>
       <separator/>
       <menuitem name="ZoomDefault" action="ZoomDefaultAction"/>
       <menuitem name="ZoomIn" action="ZoomInAction"/>
       <menuitem name="ZoomOut" action="ZoomOutAction"/>
     </menu>
-    <menu name="InsertMenu" action="InsertMenuAction">
+    <menu name="AddMenu" action="AddMenuAction">
+      <menuitem name="AddState" action="AddStateAction"/>
+      <menuitem name="AddLink" action="AddLinkAction"/>
+      <menuitem name="AddInputFile" action="AddInputFileAction"/>
     </menu>
     <menu name="HelpMenu" action="HelpMenuAction">
       <menuitem name="About" action="AboutAction"/>
     </menu>
   </menubar>
   <popup name="GridPopup">
-    <menu name="InsertMenu" action="InsertMenuAction">
+    <menu name="AddMenu" action="AddMenuAction">
+      <menuitem name="AddState" action="AddStateAction"/>
+      <menuitem name="AddLink" action="AddLinkAction"/>
+      <menuitem name="AddInputFile" action="AddInputFileAction"/>
     </menu>
     <separator/>
       <menuitem name="Cut" action="CutAction"/>

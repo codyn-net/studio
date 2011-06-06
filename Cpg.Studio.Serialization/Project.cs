@@ -42,14 +42,11 @@ namespace Cpg.Studio.Serialization
 			[XmlElement("status-bar")]
 			public bool StatusBar;
 			
-			[XmlElement("annotations")]
-			public bool Annotations;
-
 			[XmlElement("pane-position")]
 			public int PanePosition;
 			
-			[XmlElement("annotation-pane-position")]
-			public int AnnotationPanePosition;
+			[XmlElement("side-bar-pane-position")]
+			public int SideBarPanePosition;
 			
 			[XmlElement("simulate-period")]
 			public string SimulatePeriod;
@@ -88,9 +85,8 @@ namespace Cpg.Studio.Serialization
 				PathBar = true;
 				SimulateBar = true;
 				StatusBar = true;
-				Annotations = false;
 				PanePosition = 250;
-				AnnotationPanePosition = 250;
+				SideBarPanePosition = 250;
 				SimulatePeriod = "0:0.01:1";
 				Allocation = new Allocation(-1, -1, 700, 600);
 				ActiveGroup = "";

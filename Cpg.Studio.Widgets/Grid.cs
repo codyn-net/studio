@@ -52,6 +52,8 @@ namespace Cpg.Studio.Widgets
 		private Point d_dragAnchorState;
 		private Wrappers.Wrapper d_anchorDragHit;
 		private Wrappers.Wrapper d_hiddenLink;
+		private bool d_drawLeftBorder;
+		private bool d_drawRightBorder;
 		
 		private enum SelectionState
 		{
@@ -100,6 +102,32 @@ namespace Cpg.Studio.Widgets
 			d_gridCache = new RenderCache(1);
 		
 			Clear();
+		}
+		
+		public bool DrawLeftBorder
+		{
+			get
+			{
+				return d_drawLeftBorder;
+			}
+			set
+			{
+				d_drawLeftBorder = value;
+				QueueDraw();
+			}
+		}
+		
+		public bool DrawRightBorder
+		{
+			get
+			{
+				return d_drawRightBorder;
+			}
+			set
+			{
+				d_drawRightBorder = value;
+				QueueDraw();
+			}
 		}
 		
 		public void Clear()
@@ -1712,12 +1740,26 @@ namespace Cpg.Studio.Widgets
 			
 			graphics.SetSourceRGB(0.6, 0.6, 0.6);
 			graphics.MoveTo(0, 0.5);
-			graphics.LineTo(Allocation.Width, 0.5);
+			graphics.RelLineTo(Allocation.Width, 0);
 			graphics.Stroke();
 			
 			graphics.MoveTo(0, Allocation.Height - 0.5);
-			graphics.LineTo(Allocation.Width, Allocation.Height - 0.5);
+			graphics.RelLineTo(Allocation.Width, 0);
 			graphics.Stroke();
+			
+			if (d_drawRightBorder)
+			{
+				graphics.MoveTo(Allocation.Width - 0.5, 0);
+				graphics.RelLineTo(0, Allocation.Height);
+				graphics.Stroke();
+			}
+			
+			if (d_drawLeftBorder)
+			{
+				graphics.MoveTo(0.5, 0);
+				graphics.RelLineTo(0, Allocation.Height);
+				graphics.Stroke();
+			}
 		}
 		
 		protected override bool OnExposeEvent(Gdk.EventExpose evnt)

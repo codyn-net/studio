@@ -161,6 +161,9 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Annotation.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/AboutDialog.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Config.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/WrappersTree.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/FindTemplate.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />

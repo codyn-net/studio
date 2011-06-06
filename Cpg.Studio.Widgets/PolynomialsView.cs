@@ -247,7 +247,9 @@ namespace Cpg.Studio.Widgets
 		
 		private void HandlePieceAdded(object source, Cpg.PieceAddedArgs args)
 		{
-			TreeIter iter = d_store.Add(new FunctionPolynomialPieceNode(args.Piece));
+			TreeIter iter;
+
+			d_store.Add(new FunctionPolynomialPieceNode(args.Piece), out iter);
 			
 			if (d_selectPiece)
 			{
@@ -293,7 +295,8 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (Cpg.FunctionPolynomialPiece piece in d_selected.Function.Pieces)
 			{
-				d_store.Add(new FunctionPolynomialPieceNode(piece));
+				TreeIter iter;
+				d_store.Add(new FunctionPolynomialPieceNode(piece), out iter);
 			}
 		}
 		

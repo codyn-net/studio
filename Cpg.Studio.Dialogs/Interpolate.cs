@@ -378,9 +378,12 @@ namespace Cpg.Studio.Dialogs
 		
 		private void AddDataPoint(double x, double y)
 		{
-			TreeIter piter = d_store.Add(new Node(x, y));
-
-			d_treeview.Selection.SelectIter(piter);
+			TreeIter piter;
+			
+			if (d_store.Add(new Node(x, y), out piter))
+			{
+				d_treeview.Selection.SelectIter(piter);
+			}
 		}
 		
 		private void DoAdd(object sender, EventArgs args)

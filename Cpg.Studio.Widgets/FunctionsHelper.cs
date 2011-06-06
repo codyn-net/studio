@@ -105,7 +105,7 @@ namespace Cpg.Studio.Widgets
 			NodeType node = new NodeType();
 			node.Function = function;
 
-			iter = d_store.Add(node);
+			d_store.Add(node, out iter);
 			
 			if (d_selectFunction)
 			{
