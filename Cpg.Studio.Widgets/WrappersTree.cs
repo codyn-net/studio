@@ -96,6 +96,14 @@ namespace Cpg.Studio.Widgets
 				{
 					d_wrapper.WrappedObject.RemoveNotification(OnLinkChanged);
 					d_wrapper.WrappedObject.RemoveNotification(OnIdChanged);
+					
+					Wrappers.Group grp = d_wrapper as Wrappers.Group;
+					
+					if (grp != null)
+					{
+						grp.ChildAdded -= OnChildAdded;
+						grp.ChildRemoved -= OnChildRemoved;
+					}
 				}
 				
 				d_wrapper = null;
@@ -458,6 +466,14 @@ namespace Cpg.Studio.Widgets
 			}
 
 			d_treeview.NodeStore.Filter(FilterFunc);
+		}
+		
+		protected override void OnDestroyed()
+		{
+			d_group.ChildAdded -= ChildAdded;
+			d_group.ChildRemoved -= ChildRemoved;
+
+			base.OnDestroyed();
 		}
 		
 		private void ChildAdded(Wrappers.Group grp, Wrappers.Wrapper wrapper)
