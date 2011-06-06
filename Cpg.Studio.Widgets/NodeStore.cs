@@ -118,7 +118,7 @@ namespace Cpg.Studio.Widgets
 				--d_childCount;
 			};
 		}
-			
+				
 		public Node() : this(null)
 		{
 		}
@@ -389,6 +389,8 @@ namespace Cpg.Studio.Widgets
 				{
 					NodeRemoved(this, child, idx);
 				}
+				
+				child.Dispose();
 				
 				return true;
 			}
@@ -1019,8 +1021,18 @@ namespace Cpg.Studio.Widgets
 			
 			if (node != null)
 			{
-				iter = node[index].Iter;
-				return true;
+				Node child = node[index];
+				
+				if (child != null)
+				{
+					iter = child.Iter;
+					return true;
+				}
+				else
+				{
+					iter = TreeIter.Zero;
+					return false;
+				}
 			}
 			else
 			{

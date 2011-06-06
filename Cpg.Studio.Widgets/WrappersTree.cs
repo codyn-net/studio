@@ -88,10 +88,17 @@ namespace Cpg.Studio.Widgets
 				d_wrapper.WrappedObject.AddNotification("id", OnIdChanged);
 			}
 			
-			~WrapperNode()
+			override public void Dispose()
 			{
-				d_wrapper.WrappedObject.RemoveNotification(OnLinkChanged);
-				d_wrapper.WrappedObject.RemoveNotification(OnIdChanged);
+				base.Dispose();
+
+				if (d_wrapper != null)
+				{
+					d_wrapper.WrappedObject.RemoveNotification(OnLinkChanged);
+					d_wrapper.WrappedObject.RemoveNotification(OnIdChanged);
+				}
+				
+				d_wrapper = null;
 			}
 			
 			private void OnLinkChanged(object source, GLib.NotifyArgs args)

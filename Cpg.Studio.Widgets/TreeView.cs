@@ -13,6 +13,12 @@ namespace Cpg.Studio.Widgets
 		{
 		}
 		
+		protected override void OnDestroyed()
+		{
+			NodeStore.Clear();
+			base.OnDestroyed();
+		}
+		
 		protected override bool OnButtonPressEvent(Gdk.EventButton evnt)
 		{
 			if (evnt.Button != 3)
