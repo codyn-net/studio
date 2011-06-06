@@ -180,6 +180,11 @@ namespace Cpg.Studio.Widgets
 				{
 					d_pathGroups[i].ChildRemoved -= HandleChildRemoved;
 					d_pathWidgets.Remove(d_pathGroups[i]);
+					
+					if (d_pathGroups[i] == d_active)
+					{
+						d_active = null;
+					}
 				}
 				
 				d_pathGroups.RemoveRange(start, d_pathGroups.Count - start);
