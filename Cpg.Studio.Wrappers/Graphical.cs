@@ -99,6 +99,22 @@ namespace Cpg.Studio.Wrappers
 			set { ToState(State.Invisible, value); }
 		}
 		
+		public State StateFlags
+		{
+			set
+			{
+				if (d_state != value)
+				{
+					d_state = value;
+					DoRequestRedraw();
+				}
+			}
+			get
+			{
+				return d_state;
+			}
+		}
+				
 		public Allocation Allocation
 		{
 			get

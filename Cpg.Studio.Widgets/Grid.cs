@@ -32,7 +32,7 @@ namespace Cpg.Studio.Widgets
 		private Point d_buttonPress;
 		private Point d_dragState;
 		private bool d_isDragging;
-		private List<Wrappers.Wrapper> d_beforeDragSelection;
+		private Dictionary<Wrappers.Wrapper, Wrappers.Wrapper.State> d_beforeDragSelection;
 		
 		private Wrappers.Wrapper d_focus;
 		
@@ -536,7 +536,13 @@ namespace Cpg.Studio.Widgets
 
 			if ((state & Gdk.ModifierType.ShiftMask) != 0)
 			{
-				objects.AddRange(d_beforeDragSelection);
+				foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper.State> pair in d_beforeDragSelection)
+				{
+					if (!objects.Contains(pair.Key))
+					{
+						pair.Key.StateFlags = pair.Value;
+					}
+				}
 			}
 
 			if (d_selectionState != SelectionState.All)
@@ -548,7 +554,7 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (Wrappers.Wrapper obj in selection)
 			{
-				if (!objects.Contains(obj))
+				if (!objects.Contains(obj) && ((state & Gdk.ModifierType.ShiftMask) == 0 || !d_beforeDragSelection.ContainsKey(obj)))
 				{
 					Unselect(obj);
 				}
@@ -1333,7 +1339,13 @@ namespace Cpg.Studio.Widgets
 				{
 					if (d_beforeDragSelection == null)
 					{
-						d_beforeDragSelection = new List<Wrappers.Wrapper>(d_selection);
+						d_beforeDragSelection = new Dictionary<Wrappers.Wrapper, Wrappers.Wrapper.State>();
+						
+						foreach (Wrappers.Wrapper wrapper in d_selection)
+						{
+							d_beforeDragSelection[wrapper] = wrapper.StateFlags;
+						}
+
 						d_selectionState = SelectionState.All;
 						
 						UpdateSelectStatus(evnt.State);
