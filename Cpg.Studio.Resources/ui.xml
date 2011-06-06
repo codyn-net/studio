@@ -3,6 +3,7 @@
     <menu name="FileMenu" action="FileMenuAction">
       <menuitem name="New" action="NewAction"/>
       <menuitem name="Open" action="OpenAction"/>
+      <menuitem name="Recent" action="RecentAction"/>
       <separator/>
       <menuitem name="Revert" action="RevertAction"/>
       <separator/>

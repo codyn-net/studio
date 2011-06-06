@@ -228,7 +228,24 @@ namespace Cpg.Studio.Widgets
 			
 			d_uimanager = new UIManager();
 			d_normalGroup = new ActionGroup("NormalActions");
+			
+			RecentAction recent;
+			
+			recent = new RecentAction("RecentAction", "Open Recent", "Open recently used network", Gtk.Stock.Open, null);
+			RecentFilter filter = new RecentFilter();
+			
+			filter.AddApplication("cpgstudio");
 
+			recent.ShowNumbers = true;
+			recent.LocalOnly = true;
+			recent.Filter = filter;
+			recent.ShowTips = true;
+			
+			recent.Limit = 10;
+			recent.SortType = RecentSortType.Mru;
+			
+			recent.ItemActivated += OnRecentItemActivated;
+			
 			d_normalGroup.Add(new ActionEntry[] {
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
 				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG network", OnFileNew),
@@ -289,6 +306,8 @@ namespace Cpg.Studio.Widgets
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false),
 				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.Info, "SideBar", "<Control>l", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
 			});
+			
+			d_normalGroup.Add(recent);
 				
 			d_uimanager.InsertActionGroup(d_normalGroup, 0);
 			
@@ -371,6 +390,13 @@ namespace Cpg.Studio.Widgets
 			d_pathbar.Activated += HandlePathbarActivated;
 			
 			BuildToolBarAdd();
+		}
+
+		private void OnRecentItemActivated(object sender, EventArgs e)
+		{
+			RecentChooser chooser = (RecentChooser)sender;
+			
+			DoLoad(chooser.CurrentUri.Substring(7));
 		}
 		
 		private void BuildToolBarAdd()

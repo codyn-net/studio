@@ -433,6 +433,48 @@ namespace Cpg.Studio.Serialization
 			
 			// Merge network and metadata
 			Merge();
+			
+			AddRecent(filename);
+		}
+		
+		private bool IsXml(string filename)
+		{
+			bool ret = false;
+			FileStream fstr = new FileStream(filename, FileMode.Open);
+			
+			while (fstr.CanRead)
+			{
+				char c = (char)fstr.ReadByte();
+				
+				if (!char.IsWhiteSpace(c))
+				{
+					ret = c == '<';
+					break;
+				}
+			}
+			
+			fstr.Close();
+			return ret;
+		}
+		
+		private void AddRecent(string filename)
+		{
+			Gtk.RecentData data = new Gtk.RecentData();
+			
+			data.AppName = "cpgstudio";
+			
+			if (IsXml(filename))
+			{
+				data.MimeType = "application/xml";
+			}
+			else
+			{
+				data.MimeType = "text/x-cpg";
+			}
+
+			data.AppExec = System.IO.Path.Combine(System.IO.Path.Combine(Config.Prefix, "bin"), "cpgstudio");
+
+			Gtk.RecentManager.Default.AddFull("file://" + filename, data);
 		}
 		
 		private void ExtractAnnotations(XmlNode node)
@@ -481,6 +523,7 @@ namespace Cpg.Studio.Serialization
 		public void Save()
 		{
 			Save(d_filename);
+			AddRecent(d_filename);
 		}
 		
 		private void CreateMeta(Wrappers.Group orig, Group meta)
