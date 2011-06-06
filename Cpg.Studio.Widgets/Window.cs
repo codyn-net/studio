@@ -2221,8 +2221,16 @@ namespace Cpg.Studio.Widgets
 			{
 				expression = "";
 			}
-		
+			
 			d_grid.Select(error.Object);
+			
+			if (d_idleSelectionChanged != 0)
+			{
+				GLib.Source.Remove(d_idleSelectionChanged);
+			}
+			
+			// Do this now, our life depends on it
+			OnIdleSelectionChanged();
 			
 			if (d_propertyView != null)
 			{
@@ -2230,12 +2238,13 @@ namespace Cpg.Studio.Widgets
 				{
 					d_propertyView.Select(error.Property);
 				}
-				else
+				else if (error.LinkAction != null)
 				{
 					d_propertyView.Select(error.LinkAction);
 				}
 			}
-			else if (error.Object is Cpg.Function)
+			
+			if (error.Object != null && error.Object is Cpg.Function)
 			{
 				ShowFunctions();
 			}
