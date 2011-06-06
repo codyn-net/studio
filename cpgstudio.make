@@ -50,6 +50,7 @@ FILES = \
 	Cpg.Studio/Application.cs \
 	Cpg.Studio/AssemblyInfo.cs \
 	Cpg.Studio.Clipboard/Internal.cs \
+	Cpg.Studio.Dialogs/FindTemplate.cs \
 	Cpg.Studio.Dialogs/Functions.cs \
 	Cpg.Studio.Dialogs/Interpolate.cs \
 	Cpg.Studio.Dialogs/Property.cs \
@@ -146,6 +147,7 @@ FILES = \
 	Cpg.Studio.Widgets/TemplatesMenu.cs \
 	Cpg.Studio.Widgets/TreeView.cs \
 	Cpg.Studio.Widgets/Window.cs \
+	Cpg.Studio.Widgets/WrappersTree.cs \
 	Cpg.Studio.Wrappers/Function.cs \
 	Cpg.Studio.Wrappers/FunctionPolynomial.cs \
 	Cpg.Studio.Wrappers/Graphical.cs \
