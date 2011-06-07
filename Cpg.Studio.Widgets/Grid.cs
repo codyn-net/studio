@@ -1578,7 +1578,14 @@ namespace Cpg.Studio.Widgets
 			}
 			else if (evnt.Key == Gdk.Key.Delete)
 			{
-				d_actions.Delete(d_activeGroup, Selection);
+				try
+				{
+					d_actions.Delete(d_activeGroup, Selection);
+				}
+				catch (Exception e)
+				{
+					Error(this, "An error occurred while deleting", e.Message);
+				}
 			}
 			else if (evnt.Key == Gdk.Key.Up || evnt.Key == Gdk.Key.KP_Up)
 			{
