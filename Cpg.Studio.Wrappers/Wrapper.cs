@@ -150,6 +150,17 @@ namespace Cpg.Studio.Wrappers
 
 			d_object = obj;
 			
+			if (obj.SupportsLocation())
+			{
+				int x;
+				int y;
+
+				obj.GetLocation(out x, out y);
+
+				Allocation.X = x;
+				Allocation.Y = y;
+			}
+			
 			ConnectWrapped();
 
 			obj.Data[WrapperDataKey] = this;
@@ -308,6 +319,23 @@ namespace Cpg.Studio.Wrappers
 			
 			WrappedObject.TemplateApplied -= HandleTemplateApplied;
 			WrappedObject.TemplateUnapplied -= HandleTemplateUnapplied;
+			
+			if (WrappedObject.SupportsLocation())
+			{
+				RemoveLocationNotification();
+			}
+		}
+		
+		private void AddLocationNotifification()
+		{
+			WrappedObject.AddNotification("x", OnLocationChanged);
+			WrappedObject.AddNotification("y", OnLocationChanged);
+		}
+		
+		private void RemoveLocationNotification()
+		{
+			WrappedObject.RemoveNotification("x", OnLocationChanged);
+			WrappedObject.RemoveNotification("y", OnLocationChanged);
 		}
 		
 		protected virtual void ConnectWrapped()
@@ -325,6 +353,30 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.Copied += HandleCopied;
 			WrappedObject.TemplateApplied += HandleTemplateApplied;
 			WrappedObject.TemplateUnapplied += HandleTemplateUnapplied;
+			
+			if (WrappedObject.SupportsLocation())
+			{
+				AddLocationNotifification();
+				
+				Moved += delegate(object sender, EventArgs e) {
+					RemoveLocationNotification();
+					WrappedObject.SetLocation((int)Allocation.X, (int)Allocation.Y);
+					AddLocationNotifification();
+				};
+			}
+		}
+		
+		private void OnLocationChanged(object source, GLib.NotifyArgs args)
+		{
+			int x;
+			int y;
+
+			WrappedObject.GetLocation(out x, out y);
+			
+			Console.WriteLine("{0}, {1}", x, y);
+			
+			Allocation.X = x;
+			Allocation.Y = y;
 		}
 
 		private void HandleTemplateUnapplied(object o, TemplateUnappliedArgs args)
@@ -396,6 +448,14 @@ namespace Cpg.Studio.Wrappers
 		public void Unlink(Wrappers.Link link)
 		{
 			d_links.Remove(link);
+		}
+		
+		public Wrappers.Wrapper[] TemplateAppliesTo
+		{
+			get
+			{
+				return Wrap(d_object.TemplateAppliesTo);
+			}
 		}
 		
 		public Wrappers.Wrapper Copy()

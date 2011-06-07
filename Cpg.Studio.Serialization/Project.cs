@@ -280,7 +280,7 @@ namespace Cpg.Studio.Serialization
 			Merge(orig, meta, null);
 		}
 		
-		private void TransferLayout(Wrappers.Wrapper wrapper)
+		/*private void TransferLayout(Wrappers.Wrapper wrapper)
 		{
 			if (!wrapper.WrappedObject.SupportsLocation())
 			{
@@ -314,7 +314,7 @@ namespace Cpg.Studio.Serialization
 					TransferLayout(wrapper);
 				}
 			}
-		}
+		}*/
 		
 		private void Merge()
 		{
@@ -332,8 +332,8 @@ namespace Cpg.Studio.Serialization
 			Merge(d_network.FunctionGroup, d_metaFunctions);
 			
 			// Now do some layouting on the missing guys?
-			TransferLayout(missing);
-			TransferLayout(missingTemplates);
+			//TransferLayout(missing);
+			//TransferLayout(missingTemplates);
 		}
 		
 		private string GenerateProjectFilename(string filename)
