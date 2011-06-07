@@ -94,8 +94,9 @@ namespace Cpg.Studio.Widgets
 
 				if (d_wrapper != null)
 				{
-					d_wrapper.WrappedObject.RemoveNotification(OnLinkChanged);
-					d_wrapper.WrappedObject.RemoveNotification(OnIdChanged);
+					d_wrapper.WrappedObject.RemoveNotification("from", OnLinkChanged);
+					d_wrapper.WrappedObject.RemoveNotification("to", OnLinkChanged);
+					d_wrapper.WrappedObject.RemoveNotification("id", OnIdChanged);
 					
 					Wrappers.Group grp = d_wrapper as Wrappers.Group;
 					
