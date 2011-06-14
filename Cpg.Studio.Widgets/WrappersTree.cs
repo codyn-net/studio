@@ -443,7 +443,25 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 		}
-
+		
+		private IEnumerable<Wrappers.Group> AllGroups(Wrappers.Group grp)
+		{
+			foreach (Wrappers.Object child in grp.Children)
+			{
+				Wrappers.Group cg = child as Wrappers.Group;
+				
+				if (cg != null)
+				{
+					foreach (Wrappers.Group g in AllGroups(cg))
+					{
+						yield return g;
+					}
+				}
+			}
+			
+			yield return grp;
+		}
+		
 		private void HandleEntryChanged(object sender, EventArgs e)
 		{
 			d_searchText = d_entry.Text.ToLowerInvariant();
@@ -451,18 +469,31 @@ namespace Cpg.Studio.Widgets
 			
 			if (d_searchText.LastIndexOfAny(new char[] {'/', '"', '.', ':', '('}) != -1)
 			{
-				d_selected = new Dictionary<Wrappers.Wrapper, bool>();
+				Cpg.Selector selector = null;
 
 				try
 				{
-					foreach (Cpg.Object obj in d_group.WrappedObject.FindObjects(d_searchText))
-					{
-						AddAll(obj, d_selected);
-					}
+					selector = Cpg.Selector.Parse(d_searchText);
 				}
-				catch (Exception ee)
+				catch
 				{
-					d_selected = null;
+				}
+				
+				if (selector != null)
+				{
+					selector.Partial = true;
+
+					d_selected = new Dictionary<Wrappers.Wrapper, bool>();
+					
+					foreach (Wrappers.Group g in AllGroups(d_group))
+					{					
+						Cpg.Selection[] selections = selector.Select(g, SelectorType.Object, null);
+					
+						foreach (Cpg.Selection sel in selections)
+						{
+							AddAll(GLib.Object.GetObject(sel.Object) as Cpg.Object, d_selected);
+						}
+					}
 				}
 			}
 
