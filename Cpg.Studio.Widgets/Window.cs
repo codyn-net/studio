@@ -52,8 +52,11 @@ namespace Cpg.Studio.Widgets
 		private bool d_checkProgress;
 		private MenuToolButton d_addStateMenu;
 		private MenuToolButton d_addLinkMenu;
+		private uint d_importLibrariesMergeId;
+		private ActionGroup d_importLibrariesGroup;
 		
 		private uint d_idleSelectionChanged;
+		private uint d_updateImportLibrariesTimeout;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -254,8 +257,9 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", OnSaveActivated),
 				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", OnSaveAsActivated),
 
-				new ActionEntry("ImportAction", null, "Import", "<Control>i", "Import CPG network objects", OnImportActivated),
-				new ActionEntry("ExportAction", null, "Export", "<Control>e", "Export CPG network objects", null),
+				new ActionEntry("ImportAction", null, "_Import", null, null, null),
+				new ActionEntry("ImportFileAction", null, "_File", "<Control>i", "Import CPG network objects", OnImportFileActivated),
+				new ActionEntry("ExportAction", null, "_Export", "<Control>e", "Export CPG network objects", null),
 
 				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, "<Control>Q", "Quit", OnQuitActivated),
 
@@ -304,7 +308,7 @@ namespace Cpg.Studio.Widgets
 				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", OnViewStatusbarActivated, true),
 				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", OnToggleMonitorActivated, false),
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false),
-				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.Info, "SideBar", "<Control>l", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
+				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.Info, "Sidebar", "<Control>l", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
 			});
 			
 			d_normalGroup.Add(recent);
@@ -390,6 +394,169 @@ namespace Cpg.Studio.Widgets
 			d_pathbar.Activated += HandlePathbarActivated;
 			
 			BuildToolBarAdd();
+			BuildImportLibraries();
+		}
+		
+		private List<string> UniqueImportPaths()
+		{
+			List<string> ret = new List<string>();
+			
+			foreach (string path in Cpg.Import.SearchPath)
+			{
+				string p = System.IO.Path.GetFullPath(path);
+
+				if (!ret.Contains(p))
+				{
+					ret.Add(p);
+				}
+			}
+			
+			return ret;
+		}
+		
+		private void BuildImportLibraries()
+		{
+			UpdateImportLibraries();
+			
+			// Add monitors for all root libs
+			foreach (string path in UniqueImportPaths())
+			{
+				if (!Directory.Exists(path))
+				{
+					continue;
+				}
+
+				FileSystemWatcher watcher = new FileSystemWatcher(path);
+				
+				watcher.IncludeSubdirectories = true;
+				watcher.EnableRaisingEvents = true;
+
+				watcher.Renamed += delegate(object sender, RenamedEventArgs e) {
+					UpdateImportLibrariesDelayed();
+				};
+				
+				watcher.Created += delegate(object sender, FileSystemEventArgs e) {
+					UpdateImportLibrariesDelayed();
+				};
+				
+				watcher.Deleted += delegate(object sender, FileSystemEventArgs e) {
+					UpdateImportLibrariesDelayed();
+				};
+				
+				watcher.Changed += delegate(object sender, FileSystemEventArgs e) {
+					UpdateImportLibrariesDelayed();
+				};
+			}
+		}
+		
+		private void UpdateImportLibrariesDelayed()
+		{
+			if (d_updateImportLibrariesTimeout != 0)
+			{
+				GLib.Source.Remove(d_updateImportLibrariesTimeout);
+			}
+
+			d_updateImportLibrariesTimeout = GLib.Timeout.Add(1000, delegate {
+				UpdateImportLibraries();
+				return false;
+			});
+		}
+		
+		private void CreateImportParents(string actionpath, Dictionary<string, string> libs)
+		{
+			if (libs.ContainsKey(actionpath))
+			{
+				return;
+			}
+			
+			int pos = actionpath.LastIndexOf('/');
+			
+			if (pos < 0)
+			{
+				return;
+			}
+			
+			string parentpath = actionpath.Substring(0, pos);
+			string name = actionpath.Substring(pos + 1).Replace("/", ".");
+			
+			CreateImportParents(parentpath, libs);
+			libs[actionpath] = "";
+			
+			d_importLibrariesGroup.Add(new Gtk.Action(name + "Action", name));
+			d_uimanager.AddUi(d_importLibrariesMergeId, parentpath, name, name + "Action", UIManagerItemType.Menu, false);
+		}
+		
+		private void ScanImports(string dirname, string actionpath, Dictionary<string, string> libs)
+		{
+			if (!Directory.Exists(dirname))
+			{
+				return;
+			}
+			
+			string[] paths = Directory.GetDirectories(dirname);
+			
+			Array.Sort(paths);
+
+			foreach (string subdir in paths)
+			{
+				ScanImports(subdir, actionpath + "/" + System.IO.Path.GetFileName(subdir), libs);
+			}
+			
+			paths = Directory.GetFiles(dirname);
+			Array.Sort(paths);
+			
+			foreach (string filename in paths)
+			{
+				string name = System.IO.Path.GetFileNameWithoutExtension(filename);
+				string myaction = actionpath + "/" + name + "__File__";
+				
+				if (libs.ContainsKey(myaction))
+				{
+					continue;
+				}
+				
+				if (!libs.ContainsKey(actionpath))
+				{
+					// Create parents
+					CreateImportParents(actionpath, libs);
+				}
+				
+				string fullname = myaction.Replace("/", ".");
+				Gtk.Action action = new Gtk.Action(fullname + "Action", name, "Import " + filename, null);
+				
+				string thename = filename;
+				
+				action.Activated += delegate {
+					DoImport(thename, false);
+				};
+
+				d_importLibrariesGroup.Add(action);
+				d_uimanager.AddUi(d_importLibrariesMergeId, actionpath, fullname, fullname + "Action", UIManagerItemType.Menuitem, false);
+				
+				libs[myaction] = filename;
+			}
+		}
+		
+		private void UpdateImportLibraries()
+		{
+			if (d_importLibrariesMergeId != 0)
+			{
+				d_uimanager.RemoveUi(d_importLibrariesMergeId);
+				d_uimanager.RemoveActionGroup(d_importLibrariesGroup);
+			}
+			
+			d_importLibrariesGroup = new ActionGroup("ImportLibrariesGroup");			
+			d_importLibrariesMergeId = d_uimanager.NewMergeId();
+			d_uimanager.InsertActionGroup(d_importLibrariesGroup, 0);
+
+			Dictionary<string, string> libs = new Dictionary<string, string>();
+			
+			libs["/ui/menubar/FileMenu/Import/ImportLibraries"] = "";
+			
+			foreach (string dirname in UniqueImportPaths())
+			{
+				ScanImports(dirname, "/ui/menubar/FileMenu/Import/ImportLibraries", libs);
+			}
 		}
 
 		private void OnRecentItemActivated(object sender, EventArgs e)
@@ -2327,7 +2494,7 @@ namespace Cpg.Studio.Widgets
 			}, "An error occurred while unapplying the template");
 		}
 		
-		private void OnImportActivated(object sender, EventArgs args)
+		private void OnImportFileActivated(object sender, EventArgs args)
 		{
 			Dialogs.Import dlg = new Dialogs.Import(this);
 			

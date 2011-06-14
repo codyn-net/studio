@@ -10,7 +10,11 @@
       <menuitem name="Save" action="SaveAction"/>
       <menuitem name="SaveAs" action="SaveAsAction"/>
       <separator/>
-      <menuitem name="Import" action="ImportAction"/>
+      <menu name="Import" action="ImportAction">
+      	<menuitem name="ImportFile" action="ImportFileAction"/>
+      	<separator/>
+      	<placeholder name="ImportLibraries"/>
+      </menu>
       <menuitem name="Export" action="ExportAction"/>
       <separator/>
       <menuitem name="Quit" action="QuitAction"/>
