@@ -418,7 +418,9 @@ namespace Cpg.Studio.Serialization
 				
 				if (File.Exists(extfile))
 				{
+					doc = new XmlDocument();
 					doc.Load(extfile);
+
 					projectNode = doc.SelectSingleNode("/cpg/project");
 					d_externalProjectFile = extfile;
 					
