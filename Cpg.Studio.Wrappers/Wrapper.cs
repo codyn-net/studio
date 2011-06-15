@@ -359,9 +359,19 @@ namespace Cpg.Studio.Wrappers
 				AddLocationNotifification();
 				
 				Moved += delegate(object sender, EventArgs e) {
-					RemoveLocationNotification();
-					WrappedObject.SetLocation((int)Allocation.X, (int)Allocation.Y);
-					AddLocationNotifification();
+
+					
+					int x;
+					int y;
+
+					WrappedObject.GetLocation(out x, out y);
+					
+					if ((int)Allocation.X != x || (int)Allocation.Y != y)
+					{
+						RemoveLocationNotification();
+						WrappedObject.SetLocation((int)Allocation.X, (int)Allocation.Y);
+						AddLocationNotifification();
+					}
 				};
 			}
 		}
@@ -372,8 +382,6 @@ namespace Cpg.Studio.Wrappers
 			int y;
 
 			WrappedObject.GetLocation(out x, out y);
-			
-			Console.WriteLine("{0}, {1}", x, y);
 			
 			Allocation.X = x;
 			Allocation.Y = y;
