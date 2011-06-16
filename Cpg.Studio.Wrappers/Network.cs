@@ -16,9 +16,9 @@ namespace Cpg.Studio.Wrappers
 		{
 		}
 		
-		public static Network NewFromXml(string xml)
+		public static Network NewFromString(string s)
 		{
-			return new Network(Cpg.Network.NewFromXml(xml));
+			return new Network(Cpg.Network.NewFromString(s));
 		}
 		
 		public new Cpg.Network WrappedObject
@@ -64,9 +64,9 @@ namespace Cpg.Studio.Wrappers
 			return WrappedObject.LoadFromPath(filename);
 		}
 		
-		public bool LoadFromXml(string xml)
+		public bool LoadFromString(string s)
 		{
-			return WrappedObject.LoadFromXml(xml);
+			return WrappedObject.LoadFromString(s);
 		}
 		
 		public void Merge(Network other)
@@ -84,9 +84,9 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.MergeFromPath(filename);
 		}
 		
-		public void MergeFromXml(string xml)
+		public void MergeFromString(string s)
 		{
-			WrappedObject.MergeFromXml(xml);
+			WrappedObject.MergeFromString(s);
 		}
 		
 		public void Run(double from, double timestep, double to)

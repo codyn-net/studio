@@ -382,7 +382,7 @@ namespace Cpg.Studio.Serialization
 				XmlWriter xmlWriter = XmlTextWriter.Create(swriter, WriterSettings());
 				
 				doc.Save(xmlWriter);
-				d_network.LoadFromXml(swriter.ToString());
+				d_network.LoadFromString(swriter.ToString());
 				
 				d_saveProjectExternally = false;
 			}
