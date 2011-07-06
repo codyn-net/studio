@@ -50,8 +50,6 @@ namespace Cpg.Studio.Widgets
 		private DateTime d_runElapsed;
 		private Progress d_progress;
 		private bool d_checkProgress;
-		private MenuToolButton d_addStateMenu;
-		private MenuToolButton d_addLinkMenu;
 		private uint d_importLibrariesMergeId;
 		private ActionGroup d_importLibrariesGroup;
 		
@@ -205,16 +203,6 @@ namespace Cpg.Studio.Widgets
 			}, "An error occurred while adding a link from a template");
 		}
 		
-		private void HandleStateTemplatesMenuActivated(object source, Wrappers.Wrapper template)
-		{
-			AddFromTemplate(template);
-		}
-		
-		private void HandleLinkTemplatesMenuActivated(object source, Wrappers.Wrapper template)
-		{
-			AddFromTemplate(template);
-		}
-		
 		private bool FilterStates(Wrappers.Wrapper wrapper)
 		{
 			return !(wrapper is Wrappers.Link);
@@ -284,6 +272,7 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, OnZoomOutActivated),
 				
 				new ActionEntry("AddMenuAction", null, "_Add", null, null, null),
+				new ActionEntry("AddGroupAction", Stock.Group, "Group", null, "Add new group", OnAddGroupActivated),
 				new ActionEntry("AddStateAction", Stock.State, "State", null, "Add new state", OnAddStateActivated),
 				new ActionEntry("AddLinkAction", Stock.Link, "Link", null, "Add new link", OnAddLinkActivated),
 				new ActionEntry("AddInputFileAction", Stock.InputFile, "Input file", null, "Add new input file", OnAddInputFileActivated),
@@ -393,7 +382,6 @@ namespace Cpg.Studio.Widgets
 			
 			d_pathbar.Activated += HandlePathbarActivated;
 			
-			BuildToolBarAdd();
 			BuildImportLibraries();
 		}
 		
@@ -564,33 +552,6 @@ namespace Cpg.Studio.Widgets
 			RecentChooser chooser = (RecentChooser)sender;
 			
 			DoLoad(chooser.CurrentUri.Substring(7));
-		}
-		
-		private void BuildToolBarAdd()
-		{
-			Toolbar tb = d_toolbar as Toolbar;
-			
-			SeparatorToolItem sep = new SeparatorToolItem();
-			sep.Show();
-			tb.Add(sep);
-			
-			d_addStateMenu = new MenuToolButton(Stock.State);
-			d_addStateMenu.Show();
-			d_normalGroup.GetAction("AddStateAction").ConnectProxy(d_addStateMenu);
-			tb.Add(d_addStateMenu);
-			
-			TemplatesMenu menu;
-			
-			menu = new TemplatesMenu(d_addStateMenu, d_project.Network.TemplateGroup, false, a => !(a is Wrappers.Link));
-			menu.Activated += HandleStateTemplatesMenuActivated;
-			
-			d_addLinkMenu = new MenuToolButton(Stock.Link);
-			d_normalGroup.GetAction("AddLinkAction").ConnectProxy(d_addLinkMenu);
-			d_addLinkMenu.Show();
-			tb.Add(d_addLinkMenu);
-			
-			menu = new TemplatesMenu(d_addLinkMenu, d_project.Network.TemplateGroup, false, a => a is Wrappers.Link);
-			menu.Activated += HandleLinkTemplatesMenuActivated;
 		}
 		
 		protected override void OnSetFocus(Widget focus)
@@ -1795,6 +1756,15 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		private void OnAddGroupActivated(object sender, EventArgs args)
+		{
+			int[] center = d_grid.Center;
+			
+			HandleError(delegate () {
+				Select(d_actions.AddGroup(d_grid.ActiveGroup, center[0], center[1]));
+			}, "An error occurred while adding a group");
+		}
+		
 		private void OnAddStateActivated(object sender, EventArgs args)
 		{
 			int[] center = d_grid.Center;
@@ -2036,12 +2006,18 @@ namespace Cpg.Studio.Widgets
 		private void CreateSideBarPanels()
 		{
 			WrappersTree tree = new WrappersTree(d_project.Network.TemplateGroup);
+			tree.RendererToggle.Visible = false;
+			
+			tree.Filter += delegate(WrappersTree.WrapperNode node, ref bool ret) {
+				ret = (node.Wrapper != null);
+			};
+
 			tree.Show();
 			
 			Label ltpl;
 			d_sideBarNotebook.InsertPage(tree, PanelTab(Stock.GroupState, "Library", out ltpl), -1);
 			
-			tree.WrapperActivated += HandleTreeWrapperActivated;
+			tree.Activated += HandleTreeWrapperActivated;
 			tree.TreeView.PopulatePopup += HandleTreeTreeViewPopulatePopup;
 
 			d_annotation = new Annotation();
@@ -2151,11 +2127,16 @@ namespace Cpg.Studio.Widgets
 			};
 		}
 
-		private void HandleTreeWrapperActivated(object source, Wrappers.Wrapper wrapper)
+		private void HandleTreeWrapperActivated(object source, WrappersTree.WrapperNode node)
 		{
-			if (!(wrapper is Wrappers.Import))
+			if (node.Wrapper == null)
 			{
-				AddFromTemplate(wrapper);
+				return;
+			}
+
+			if (!(node.Wrapper is Wrappers.Import))
+			{
+				AddFromTemplate(node.Wrapper);
 			}
 		}
 		

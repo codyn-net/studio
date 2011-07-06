@@ -11,7 +11,7 @@ namespace Cpg.Studio.Widgets
 	public class NodeColumnAttribute : System.Attribute
 	{
 		private int d_index;
-		
+
 		public NodeColumnAttribute(int index)
 		{
 			d_index = index;
@@ -268,6 +268,14 @@ namespace Cpg.Studio.Widgets
 			d_gchandles.Clear();
 
 			base.Dispose();
+		}
+		
+		protected IEnumerable<Node> AllChildren
+		{
+			get
+			{
+				return d_children;
+			}
 		}
 		
 		public int Count
@@ -737,10 +745,9 @@ namespace Cpg.Studio.Widgets
 		
 		private void HandleNodeChanged(Node node)
 		{
-			if (d_lastFilter != null && !d_lastFilter(node))
+			if (d_lastFilter != null)
 			{
-				node.Visible = false;
-				return;
+				node.Filter(d_lastFilter);
 			}
 
 			if (IsSorted)
@@ -801,7 +808,7 @@ namespace Cpg.Studio.Widgets
 
 			RemoveChildren(child, path);
 			
-			//Console.WriteLine("Row deleted: {0}, {1}", path, child);
+			//Console.WriteLine("Row deleted: {0}, {1}, {2}", path, child, Environment.StackTrace);
 			d_adapter.EmitRowDeleted(path);
 		}
 		
@@ -925,7 +932,16 @@ namespace Cpg.Studio.Widgets
 		
 		public void GetValue(TreeIter iter, int column, ref GLib.Value val)
 		{
-			val = new GLib.Value(d_valueGetters[column].Invoke(FromIter<Node>(iter), new object[] {}));
+			object ret = d_valueGetters[column].Invoke(FromIter<Node>(iter), new object[] {});
+			
+			if (ret != null)
+			{
+				val = new GLib.Value(ret);
+			}
+			else
+			{
+				val.Init((GLib.GType)d_valueGetters[column].ReturnType);
+			}
 		}
 		
 		public TreeModelFlags Flags

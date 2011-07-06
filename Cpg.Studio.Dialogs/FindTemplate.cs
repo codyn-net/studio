@@ -12,16 +12,25 @@ namespace Cpg.Studio.Dialogs
 		public FindTemplate(Wrappers.Group grp, FilterFunc func, Gtk.Window parent) : base("Find Template", parent, DialogFlags.DestroyWithParent | DialogFlags.NoSeparator)
 		{
 			d_tree = new Widgets.WrappersTree(grp);
+			d_tree.RendererToggle.Visible = false;
+
 			d_tree.Show();
 			
 			if (func != null)
 			{
-				d_tree.Filter += delegate (Wrappers.Wrapper wrapper, ref bool ret) {
-					ret &= func(wrapper);
+				d_tree.Filter += delegate (Widgets.WrappersTree.WrapperNode node, ref bool ret) {
+					if (node.Wrapper == null)
+					{
+						ret = false;
+					}
+					else
+					{
+						ret &= func(node.Wrapper);
+					}
 				};
 			}
 			
-			d_tree.WrapperActivated += delegate(object source, Wrappers.Wrapper wrapper) {
+			d_tree.Activated += delegate(object source, Widgets.WrappersTree.WrapperNode wrapper) {
 				Respond(ResponseType.Apply);
 			};
 			

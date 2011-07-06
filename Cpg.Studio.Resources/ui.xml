@@ -57,6 +57,7 @@
     </menu>
     <menu name="AddMenu" action="AddMenuAction">
       <menuitem name="AddState" action="AddStateAction"/>
+      <menuitem name="AddGroup" action="AddGroupAction"/>
       <menuitem name="AddLink" action="AddLinkAction"/>
       <menuitem name="AddInputFile" action="AddInputFileAction"/>
     </menu>
@@ -101,8 +102,10 @@
     <toolitem name="Paste" action="PasteAction"/>
     <separator/>
     <toolitem name="Delete" action="DeleteAction"/>
-    <toolitem name="Group" action="GroupAction"/>
-    <toolitem name="Ungroup" action="UngroupAction"/>
+    <separator/>
+    <toolitem name="AddState" action="AddStateAction"/>
+    <toolitem name="AddGroup" action="AddGroupAction"/>
+    <toolitem name="AddLink" action="AddLinkAction"/>
   </toolbar>
   <popup name="TemplatePopup">
   	<menuitem name="EditTemplate" action="EditTemplateAction"/>

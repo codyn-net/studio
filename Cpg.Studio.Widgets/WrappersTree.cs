@@ -11,15 +11,33 @@ namespace Cpg.Studio.Widgets
 			public enum HeaderType
 			{
 				State,
-				Link
+				Link,
+				Property,
+				Action
+			}
+			
+			public struct Column
+			{
+				public const int Name = 0;
+				public const int Icon = 1;
+				public const int Sensitive = 2;
+				public const int Checked = 3;
+				public const int Inconsistent = 4;
 			}
 
 			private Wrappers.Wrapper d_wrapper;
 			private HeaderType d_header;
 			private Gdk.Pixbuf d_icon;
 			private Widget d_widget;
-			
+			private GLib.Object d_object;
+			private bool d_checked;
+			private List<WrapperNode> d_inconsistent;
+
 			private static Dictionary<Type, Gdk.Pixbuf> s_iconmap;
+			
+			public delegate void ToggledHandler(WrapperNode node);
+			
+			public event ToggledHandler Toggled = delegate {};
 			
 			static WrapperNode()
 			{
@@ -28,64 +46,104 @@ namespace Cpg.Studio.Widgets
 			
 			public Gdk.Pixbuf WrapperIcon()
 			{
-				Gdk.Pixbuf icon;
-				Type type = d_wrapper.GetType();
+				Gdk.Pixbuf icon = null;
+				Type type = d_wrapper != null ? d_wrapper.GetType() : d_object.GetType();
 				string stockid;
 
 				if (s_iconmap.TryGetValue(type, out icon))
 				{
 					return icon;
 				}
-			
-				if (d_wrapper is Wrappers.Group)
-				{
-					stockid = Stock.GroupState;
-				}
-				else if (d_wrapper is Wrappers.Link)
-				{
-					stockid = Stock.Link;
-				}
-				else
-				{
-					stockid = Stock.State;
-				}
 				
-				icon = d_widget.RenderIcon(stockid, IconSize.Menu, null);
+				if (d_wrapper != null)
+				{			
+					if (d_wrapper is Wrappers.Group)
+					{
+						stockid = Stock.GroupState;
+					}
+					else if (d_wrapper is Wrappers.Link)
+					{
+						stockid = Stock.Link;
+					}
+					else
+					{
+						stockid = Stock.State;
+					}
+					
+					icon = d_widget.RenderIcon(stockid, IconSize.Menu, null);
+				}
 			
 				s_iconmap[type] = icon;
 			
 				return icon;
 			}
 			
-			public WrapperNode(Widget widget, Wrappers.Wrapper wrapper)
+			public WrapperNode(Widget widget, Cpg.Property property) : this(widget, null, property)
+			{
+			}
+			
+			public WrapperNode(Widget widget, Cpg.LinkAction action) : this(widget, null, action)
+			{
+			}
+			
+			public WrapperNode(Widget widget, Wrappers.Wrapper wrapper) : this(widget, wrapper, null)
+			{
+			}
+			
+			public WrapperNode(Widget widget, Wrappers.Wrapper wrapper, GLib.Object obj)
 			{
 				d_widget = widget;
 				d_wrapper = wrapper;
+				d_object = obj;
 				
 				d_icon = WrapperIcon();
+				d_inconsistent = new List<WrapperNode>();
 				
-				Wrappers.Group grp = wrapper as Wrappers.Group;
-				
-				if (grp != null)
+				if (d_wrapper != null)
 				{
-					grp.ChildAdded += OnChildAdded;
-					grp.ChildRemoved += OnChildRemoved;
+					Wrappers.Group grp = wrapper as Wrappers.Group;
 					
-					foreach (Wrappers.Wrapper wr in grp.Children)
+					if (grp != null)
 					{
-						OnChildAdded(grp, wr);
+						grp.ChildAdded += OnChildAdded;
+						grp.ChildRemoved += OnChildRemoved;
+						
+						foreach (Wrappers.Wrapper wr in grp.Children)
+						{
+							OnChildAdded(grp, wr);
+						}
+					}
+					
+					Wrappers.Link link = wrapper as Wrappers.Link;
+					
+					if (link != null)
+					{
+						d_wrapper.WrappedObject.AddNotification("from", OnLinkChanged);
+						d_wrapper.WrappedObject.AddNotification("to", OnLinkChanged);
+					}
+					
+					d_wrapper.WrappedObject.AddNotification("id", OnIdChanged);
+					
+					d_wrapper.PropertyAdded += OnPropertyAdded;
+					d_wrapper.PropertyRemoved += OnPropertyRemoved;
+					
+					foreach (Cpg.Property prop in d_wrapper.WrappedObject.Properties)
+					{
+						OnPropertyAdded(wrapper, prop);	
 					}
 				}
 				
-				Wrappers.Link link = wrapper as Wrappers.Link;
-				
-				if (link != null)
+				if (d_object != null)
 				{
-					d_wrapper.WrappedObject.AddNotification("from", OnLinkChanged);
-					d_wrapper.WrappedObject.AddNotification("to", OnLinkChanged);
+					if (d_object is Cpg.Property)
+					{
+						d_object.AddNotification("name", OnIdChanged);
+					}
+					else if (d_object is Cpg.LinkAction)
+					{
+						d_object.AddNotification("target", OnIdChanged);
+					}
 				}
-				
-				d_wrapper.WrappedObject.AddNotification("id", OnIdChanged);
 			}
 			
 			override public void Dispose()
@@ -105,6 +163,23 @@ namespace Cpg.Studio.Widgets
 						grp.ChildAdded -= OnChildAdded;
 						grp.ChildRemoved -= OnChildRemoved;
 					}
+					
+					d_wrapper.PropertyAdded -= OnPropertyAdded;
+					d_wrapper.PropertyRemoved -= OnPropertyRemoved;
+				}
+				
+				if (d_object != null)
+				{
+					if (d_object is Cpg.Property)
+					{
+						d_object.RemoveNotification("name", OnIdChanged);
+					}
+					else if (d_object is Cpg.LinkAction)
+					{
+						d_object.RemoveNotification("target", OnIdChanged);
+					}
+					
+					d_object = null;
 				}
 				
 				d_wrapper = null;
@@ -129,9 +204,29 @@ namespace Cpg.Studio.Widgets
 			
 			private void OnChildRemoved(Wrappers.Group grp, Wrappers.Wrapper child)
 			{
-				foreach (WrapperNode node in Children)
+				foreach (WrapperNode node in AllChildren)
 				{
 					if (node.Wrapper == child)
+					{
+						Remove(node);
+						
+						break;
+					}
+				}
+			}
+
+			private void OnPropertyAdded(Wrappers.Wrapper wrapper, Cpg.Property property)
+			{
+				TreeIter iter;
+				
+				Add(new WrapperNode(d_widget, property), out iter);
+			}
+			
+			private void OnPropertyRemoved(Wrappers.Wrapper wrapper, Cpg.Property property)
+			{
+				foreach (WrapperNode node in AllChildren)
+				{
+					if (node.d_object == property)
 					{
 						Remove(node);
 						
@@ -170,25 +265,58 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 			
+			private string ObjectName(bool canheader)
+			{
+				if (d_wrapper != null)
+				{
+					return d_wrapper.Id;
+				}
+				else if (d_object != null)
+				{
+					Cpg.Property prop = d_object as Cpg.Property;
+					
+					if (prop != null)
+					{
+						return prop.Name;
+					}
+					
+					Cpg.LinkAction action = d_object as Cpg.LinkAction;
+					
+					if (action != null)
+					{
+						return action.Target;
+					}
+				}
+				
+				if (canheader)
+				{
+					return HeaderName;
+				}
+				else
+				{
+					return null;
+				}
+			}
+			
 			[PrimaryKey]
 			public string FilterName
 			{
 				get
 				{
-					return d_wrapper != null ? d_wrapper.Id : null;
+					return ObjectName(false);
 				}
 			}
 			
-			[NodeColumn(0)]
+			[NodeColumn(Column.Name)]
 			public string Name
 			{
 				get
 				{
-					return d_wrapper != null ? d_wrapper.Id : HeaderName;
+					return ObjectName(true);
 				}
 			}
 			
-			[NodeColumn(1)]
+			[NodeColumn(Column.Icon)]
 			public Gdk.Pixbuf Icon
 			{
 				get
@@ -197,12 +325,100 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 			
-			[NodeColumn(2)]
+			[NodeColumn(Column.Sensitive)]
 			public bool Sensitive
 			{
 				get
 				{
-					return !(d_wrapper is Wrappers.Import);
+					return d_wrapper == null || !(d_wrapper is Wrappers.Import);
+				}
+			}
+			
+			[PrimaryKey()]
+			public Cpg.Property Property
+			{
+				get
+				{
+					return d_object != null ? d_object as Cpg.Property : null;
+				}
+			}
+			
+			[PrimaryKey()]
+			public Cpg.LinkAction Action
+			{
+				get
+				{
+					return d_object != null ? d_object as Cpg.LinkAction : null;
+				}
+			}
+			
+			private void PropagateChecked(bool val)
+			{
+				d_inconsistent.Clear();
+
+				if (d_checked != val)
+				{
+					d_checked = val;
+
+					EmitChanged();
+					Toggled(this);
+				}
+				
+				foreach (WrapperNode node in AllChildren)
+				{
+					node.PropagateChecked(val);
+				}
+			}
+			
+			private void UpdateInconsistency(WrapperNode node, bool val)
+			{
+				if (val != d_checked)
+				{
+					if (!d_inconsistent.Contains(node))
+					{
+						d_inconsistent.Add(node);
+						EmitChanged();
+					}
+				}
+				else
+				{
+					if (d_inconsistent.Contains(node))
+					{
+						d_inconsistent.Remove(node);
+						EmitChanged();
+					}
+				}
+				
+				if (Parent != null && Parent is WrapperNode)
+				{
+					((WrapperNode)Parent).UpdateInconsistency(node, val);
+				}
+			}
+			
+			[NodeColumn(Column.Checked)]
+			public bool Checked
+			{
+				get
+				{
+					return d_checked;
+				}
+				set
+				{
+					PropagateChecked(value);
+
+					if (Parent != null && Parent is WrapperNode)
+					{
+						((WrapperNode)Parent).UpdateInconsistency(this, value);
+					}
+				}
+			}
+			
+			[NodeColumn(Column.Inconsistent)]
+			public bool Inconsistent
+			{
+				get
+				{
+					return d_inconsistent.Count != 0;
 				}
 			}
 			
@@ -221,14 +437,23 @@ namespace Cpg.Studio.Widgets
 							return HeaderType.State;
 						}
 					}
-					else
+					else if (d_object != null)
 					{
-						return d_header;
+						if (d_object is Cpg.Property)
+						{	
+							return HeaderType.Property;
+						}
+						else if (d_object is Cpg.LinkAction)
+						{
+							return HeaderType.Action;
+						}
 					}
+
+					return d_header;
 				}
 			}
 			
-			[SortColumn(0)]
+			[SortColumn(Column.Name)]
 			public int Sort(WrapperNode b)
 			{
 				HeaderType ad = DerivedHeaderType;
@@ -258,13 +483,19 @@ namespace Cpg.Studio.Widgets
 		private Entry d_entry;
 		private string d_searchText;
 		private Wrappers.Group d_group;
-		private Dictionary<Wrappers.Wrapper, bool> d_selected;
+		private Dictionary<GLib.Object, bool> d_selected;
 		
-		public delegate void WrapperActivatedHandler(object source, Wrappers.Wrapper wrapper);
-		public event WrapperActivatedHandler WrapperActivated = delegate {};
+		private CellRendererToggle d_rendererToggle;
+		private CellRendererPixbuf d_rendererIcon;
+		private CellRendererText d_rendererName;
 		
-		public delegate void WrapperFilter(Wrappers.Wrapper wrapper, ref bool ret);
+		public delegate void NodeHandler(object source, WrapperNode node);
+
+		public event NodeHandler Activated = delegate {};
+		public event NodeHandler Toggled = delegate {};
 		
+		
+		public delegate void WrapperFilter(WrapperNode node, ref bool ret);
 		private WrapperFilter d_filterStorage;
 
 		public event WrapperFilter Filter
@@ -285,29 +516,37 @@ namespace Cpg.Studio.Widgets
 			d_treeview = new Widgets.TreeView<WrapperNode>();
 			d_group = parent;
 			
-			BorderWidth = 6;
-			
 			TreeViewColumn col;
-			CellRenderer renderer;
 			
 			col = new TreeViewColumn();
 			
-			renderer = new CellRendererPixbuf();
-			col.PackStart(renderer, false);
-			col.SetAttributes(renderer, "pixbuf", 1);
+			d_rendererToggle = new CellRendererToggle();
+			col.PackStart(d_rendererToggle, false);
+			col.SetAttributes(d_rendererToggle,
+			                  "active", WrapperNode.Column.Checked,
+			                  "inconsistent", WrapperNode.Column.Inconsistent);
+			
+			d_rendererToggle.Toggled += OnRendererToggleToggled;
+			
+			d_rendererIcon = new CellRendererPixbuf();
+			col.PackStart(d_rendererIcon, false);
+			col.SetAttributes(d_rendererIcon, "pixbuf", WrapperNode.Column.Icon);
 
-			renderer = new CellRendererText();
-			col.PackStart(renderer, true);
-			col.SetAttributes(renderer, "text", 0, "sensitive", 2);
+			d_rendererName = new CellRendererText();
+			col.PackStart(d_rendererName, true);
+			col.SetAttributes(d_rendererName, "text", WrapperNode.Column.Name, "sensitive", WrapperNode.Column.Sensitive);
 
 			d_treeview.AppendColumn(col);
 			
 			d_treeview.HeadersVisible = false;
 			d_treeview.NodeStore.SortColumn = 0;
 			d_treeview.ShowExpanders = false;
-			d_treeview.LevelIndentation = 12;
+			d_treeview.LevelIndentation = 6;
 			d_treeview.EnableSearch = false;
+			d_treeview.SearchColumn = -1;
 			d_treeview.Selection.Mode = SelectionMode.Multiple;
+			
+			d_treeview.StartInteractiveSearch += OnTreeViewInteractiveSearch;
 			
 			d_treeview.RowActivated += OnTreeViewRowActivated;
 			d_treeview.PopulatePopup += OnTreeViewPopulatePopup;
@@ -324,6 +563,26 @@ namespace Cpg.Studio.Widgets
 
 					return false;
 				});
+			};
+
+			d_treeview.NodeStore.NodeAdded += delegate(Node par, Node child) {
+				WrapperNode n = (WrapperNode)child;
+				n.Toggled += OnNodeToggled;
+				
+				foreach (WrapperNode c in n.Descendents)
+				{
+					c.Toggled += OnNodeToggled;
+				}
+			};
+			
+			d_treeview.NodeStore.NodeRemoved += delegate(Node par, Node child, int wasAtIndex) {
+				WrapperNode n = (WrapperNode)child;
+				n.Toggled -= OnNodeToggled;
+				
+				foreach (WrapperNode c in n.Descendents)
+				{
+					c.Toggled -= OnNodeToggled;
+				}
 			};
 			
 			Build(parent);
@@ -358,6 +617,51 @@ namespace Cpg.Studio.Widgets
 			d_treeview.ExpandAll();
 			d_treeview.NodeStore.Filter(FilterFunc);
 		}
+
+		private void OnNodeToggled(WrapperNode node)
+		{
+			Toggled(this, node);
+		}
+
+		[GLib.ConnectBeforeAttribute]
+		private void OnTreeViewInteractiveSearch(object o, StartInteractiveSearchArgs args)
+		{
+			d_entry.GrabFocus();
+		}
+
+		private void OnRendererToggleToggled(object o, ToggledArgs args)
+		{
+			WrapperNode node = d_treeview.NodeStore.FindPath(args.Path);
+			
+			if (node != null)
+			{
+				node.Checked = !node.Checked;
+			}
+		}
+		
+		public CellRendererToggle RendererToggle
+		{
+			get
+			{
+				return d_rendererToggle;
+			}
+		}
+		
+		public CellRendererPixbuf RendererIcon
+		{
+			get
+			{
+				return d_rendererIcon;
+			}
+		}
+		
+		public CellRendererText RendererName
+		{
+			get
+			{
+				return d_rendererName;
+			}
+		}
 		
 		public Widgets.TreeView<WrapperNode> TreeView
 		{
@@ -380,7 +684,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (node != null)
 			{
-				WrapperActivated(this, node.Wrapper);
+				Activated(this, node);
 			}
 		}
 
@@ -398,7 +702,19 @@ namespace Cpg.Studio.Widgets
 			
 			if (!String.IsNullOrEmpty(d_searchText) && !wp.FilterName.ToLowerInvariant().Contains(d_searchText))
 			{
-				if (d_selected == null || !d_selected.ContainsKey(wp.Wrapper))
+				if (d_selected == null)
+				{
+					return false;
+				}
+				else if (wp.Wrapper != null && !d_selected.ContainsKey(wp.Wrapper.WrappedObject))
+				{
+					return false;
+				}
+				else if (wp.Property != null && !d_selected.ContainsKey(wp.Property))
+				{
+					return false;
+				}
+				else if (wp.Action != null && !d_selected.ContainsKey(wp.Action))
 				{
 					return false;
 				}
@@ -415,7 +731,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (d_filterStorage != null)
 			{
-				d_filterStorage(wp.Wrapper, ref ret);
+				d_filterStorage(wp, ref ret);
 			}
 			
 			return ret;
@@ -429,30 +745,57 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private void AddAll(Wrappers.Wrapper wrapper, Dictionary<Wrappers.Wrapper, bool> ret)
+		private void AddAll(GLib.Object obj, Dictionary<GLib.Object, bool> ret)
 		{
-			ret[wrapper] = true;
+			ret[obj] = true;
 			
-			Wrappers.Group grp = wrapper as Wrappers.Group;
+			Cpg.Object o = obj as Cpg.Object;
+
+			Cpg.Group grp = obj as Cpg.Group;
 						
 			if (grp != null)
 			{
-				foreach (Wrappers.Wrapper child in grp.Children)
+				foreach (Cpg.Object child in grp.Children)
 				{
 					AddAll(child, ret);
+				}
+				
+				foreach (string name in grp.PropertyInterface.Names)
+				{
+					d_selected[grp.Property(name)] = true;
+				}
+			}
+			
+			if (o != null)
+			{			
+				foreach (Cpg.Property prop in o.Properties)
+				{
+					d_selected[prop] = true;
+				}
+			}
+			
+			Cpg.Link link = obj as Cpg.Link;
+			
+			if (link != null)
+			{
+				foreach (Cpg.LinkAction action in link.Actions)
+				{
+					d_selected[action] = true;
 				}
 			}
 		}
 		
-		private IEnumerable<Wrappers.Group> AllGroups(Wrappers.Group grp)
+		private IEnumerable<Wrappers.Object> AllObjects(Wrappers.Group grp)
 		{
 			foreach (Wrappers.Object child in grp.Children)
 			{
+				yield return child;
+
 				Wrappers.Group cg = child as Wrappers.Group;
 				
 				if (cg != null)
 				{
-					foreach (Wrappers.Group g in AllGroups(cg))
+					foreach (Wrappers.Group g in AllObjects(cg))
 					{
 						yield return g;
 					}
@@ -483,15 +826,15 @@ namespace Cpg.Studio.Widgets
 				{
 					selector.Partial = true;
 
-					d_selected = new Dictionary<Wrappers.Wrapper, bool>();
+					d_selected = new Dictionary<GLib.Object, bool>();
 					
-					foreach (Wrappers.Group g in AllGroups(d_group))
+					foreach (Wrappers.Object o in AllObjects(d_group))
 					{					
-						Cpg.Selection[] selections = selector.Select(g, SelectorType.Object, null);
+						Cpg.Selection[] selections = selector.Select(o, SelectorType.Any, null);
 					
 						foreach (Cpg.Selection sel in selections)
 						{
-							AddAll(GLib.Object.GetObject(sel.Object) as Cpg.Object, d_selected);
+							AddAll(GLib.Object.GetObject(sel.Object), d_selected);
 						}
 					}
 				}

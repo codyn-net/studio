@@ -137,7 +137,6 @@ FILES = \
 	Cpg.Studio.Widgets/Monitor.cs \
 	Cpg.Studio.Widgets/NodeStore.cs \
 	Cpg.Studio.Widgets/Notebook.cs \
-	Cpg.Studio.Widgets/ObjectView.cs \
 	Cpg.Studio.Widgets/Pathbar.cs \
 	Cpg.Studio.Widgets/PolynomialsView.cs \
 	Cpg.Studio.Widgets/Progress.cs \

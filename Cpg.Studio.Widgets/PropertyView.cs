@@ -696,8 +696,8 @@ namespace Cpg.Studio.Widgets
 					d_templateParent.PackStart(comma, false, false, 0);
 				}
 				
-				Label temp = new Label(String.Format("<span underline=\"single\">{0}</span>", System.Security.SecurityElement.Escape(template.FullId)));
-				temp.UseMarkup = true;
+				Label temp = new Label();
+				temp.Markup = String.Format("<span underline=\"single\">{0}</span>", System.Security.SecurityElement.Escape(template.FullId));
 				
 				EventBox box = new EventBox();
 				box.Show();

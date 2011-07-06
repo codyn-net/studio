@@ -22,6 +22,16 @@ namespace Cpg.Studio
 			return new Wrappers.Object[] {state};
 		}
 		
+		public Wrappers.Object[] AddGroup(Wrappers.Group parent, double x, double y)
+		{
+			Wrappers.Object state = new Wrappers.Group();
+			state.Allocation = new Allocation(x, y, 1, 1);
+			
+			Do(new Undo.AddObject(parent, state));
+			
+			return new Wrappers.Object[] {state};
+		}
+		
 		public Wrappers.Object[] AddInputFile(Wrappers.Group parent, double x, double y)
 		{
 			Wrappers.InputFile ret = new Wrappers.InputFile();

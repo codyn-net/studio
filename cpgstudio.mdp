@@ -83,7 +83,6 @@
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/PolynomialsView.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/ObjectView.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Grid.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />

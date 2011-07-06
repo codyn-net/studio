@@ -91,12 +91,12 @@ namespace Cpg.Studio.Widgets
 		private HPaned d_hpaned;
 		private bool d_configured;
 		
-		private ObjectView d_objectView;
-		private ScrolledWindow d_objectViewScrolledWindow;
 		private Dictionary<Wrappers.Wrapper, List<State>> d_map;
 		private Cpg.Studio.Widgets.Table d_content;
 		private Range d_range;
 		private uint d_configureSourceId;
+		
+		private WrappersTree d_tree;
 		
 		const int SampleWidth = 2;
 		
@@ -132,15 +132,20 @@ namespace Cpg.Studio.Widgets
 		private void Build()
 		{
 			VBox vboxMain = new VBox(false, 0);
-			VBox vboxContent = new VBox(false,   3);
+			VBox vboxContent = new VBox(false, 3);
 			
-			BuildMenu();
+			//BuildMenu();
 			
-			vboxMain.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
+			//vboxMain.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
 			
 			d_hpaned = new HPaned();
-			d_hpaned.BorderWidth = 6;
-			CreateObjectView();
+			d_hpaned.BorderWidth = 0;
+			
+			d_tree = new WrappersTree(d_network);
+			d_tree.Toggled += HandleTreeToggled;
+			d_tree.Show();
+
+			d_hpaned.Pack2(d_tree, false, false);
 			
 			Widgets.Table table = new Widgets.Table(1, 1, true);
 			table.Expand = Widgets.Table.ExpandType.Down;
@@ -157,7 +162,8 @@ namespace Cpg.Studio.Widgets
 			vboxMain.ShowAll();
 			
 			HBox hbox = new HBox(false, 6);
-			hbox.BorderWidth = 6;
+			hbox.BorderWidth = 0;
+
 			ToggleButton but = Stock.ChainButton();
 			
 			but.Toggled += delegate(object sender, EventArgs e) {
@@ -178,7 +184,14 @@ namespace Cpg.Studio.Widgets
 			d_showRulers.Active = true;
 			hbox.PackEnd(d_showRulers, false, false, 0);
 			
-			vboxContent.PackEnd(hbox, false, false, 3);
+			Alignment align = new Alignment(0, 0, 1, 1);
+			align.LeftPadding = 3;
+			align.RightPadding = 3;
+			
+			align.Add(hbox);
+			align.Show();
+			
+			vboxContent.PackEnd(align, false, false, 0);
 			
 			d_showRulers.Toggled += delegate(object sender, EventArgs e) {
 				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
@@ -189,33 +202,25 @@ namespace Cpg.Studio.Widgets
 			
 			hbox.ShowAll();
 		}
-		
-		private void CreateObjectView()
-		{
-			d_objectView = new ObjectView(d_network);
-			
-			ScrolledWindow sw = new ScrolledWindow();
-			sw.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
-			sw.Add(d_objectView);
-			
-			sw.ShadowType = ShadowType.EtchedIn;
-			sw.ShowAll();
-			
-			d_hpaned.Pack2(sw, false, false);
-			
-			d_objectView.Toggled += HandleToggled;
-			d_objectViewScrolledWindow = sw;
-		}
 
-		private void HandleToggled(ObjectView source, Wrappers.Wrapper obj, Cpg.Property property)
+		private void HandleTreeToggled(object source, WrappersTree.WrapperNode node)
 		{
-			if (source.GetActive(obj, property))
+			Cpg.Property prop;
+			
+			prop = node.Property;
+			
+			if (prop == null)
 			{
-				AddHook(property);
+				return;
+			}
+			
+			if (node.Checked)
+			{
+				AddHook(prop);
 			}
 			else
 			{
-				RemoveHook(property);
+				RemoveHook(prop);
 			}
 		}
 		
@@ -258,11 +263,6 @@ namespace Cpg.Studio.Widgets
 			d_map[obj] = new List<State>();
 			
 			obj.PropertyRemoved += HandlePropertyRemoved;
-			
-			if (obj.Parent != null && !HasHook(obj.Parent))
-			{
-				InstallObject(obj.Parent);
-			}
 			
 			if (obj is Wrappers.Group)
 			{
@@ -718,11 +718,11 @@ namespace Cpg.Studio.Widgets
 				return false;
 			}
 
-			if (d_objectView != null)
+			if (d_tree != null)
 			{
 				foreach (Cpg.Property p in properties)
 				{
-					d_objectView.SetActive(p.Object, p, true);
+					d_tree.TreeView.NodeStore.Find(p).Checked = true;
 				}
 			}
 			
@@ -756,8 +756,8 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			state.Property.RemoveNotification("name", HandlePropertyNameChanged);
-			
 			state.Monitor.Dispose();
+
 			return true;
 		}
 		
@@ -800,9 +800,11 @@ namespace Cpg.Studio.Widgets
 				d_map.Remove(obj);
 			}
 			
-			if (d_objectView != null)
+			d_tree.TreeView.NodeStore.Find(property).Checked = false;
+			
+			if (d_map.Count == 0)
 			{
-				d_objectView.SetActive(obj, property, false);
+				Graph.ResetColors();
 			}
 		}
 		
@@ -944,7 +946,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void DoSelectToggled(object source, EventArgs args)
 		{
-			d_objectViewScrolledWindow.Visible = (source as Gtk.ToggleAction).Active;
+			d_tree.Visible = (source as Gtk.ToggleAction).Active;
 			d_hpaned.QueueDraw();
 		}
 		
