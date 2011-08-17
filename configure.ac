@@ -62,6 +62,7 @@ INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSE
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
 AC_CONFIG_FILES([
+m4/Makefile
 cpgstudio
 Makefile
 Cpg.Studio/Config.cs
