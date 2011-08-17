@@ -50,12 +50,13 @@ FILES = \
 	Cpg.Studio/Application.cs \
 	Cpg.Studio/AssemblyInfo.cs \
 	Cpg.Studio.Clipboard/Internal.cs \
+	Cpg.Studio/Config.cs \
+	Cpg.Studio.Dialogs/Editor.cs \
 	Cpg.Studio.Dialogs/FindTemplate.cs \
 	Cpg.Studio.Dialogs/Functions.cs \
+	Cpg.Studio.Dialogs/Import.cs \
 	Cpg.Studio.Dialogs/Interpolate.cs \
 	Cpg.Studio.Dialogs/Property.cs \
-	Cpg.Studio.Dialogs/Import.cs \
-	Cpg.Studio/Config.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
 	Cpg.Studio.Interpolators/IInterpolator.cs \
 	Cpg.Studio.Interpolators/Interpolation.cs \
@@ -65,21 +66,12 @@ FILES = \
 	Cpg.Studio/RenderCache.cs \
 	Cpg.Studio.Renderers/Box.cs \
 	Cpg.Studio.Renderers/Group.cs \
+	Cpg.Studio.Renderers/Input.cs \
 	Cpg.Studio.Renderers/Link.cs \
 	Cpg.Studio.Renderers/Oscillator.cs \
 	Cpg.Studio.Renderers/Renderer.cs \
 	Cpg.Studio.Renderers/State.cs \
-	Cpg.Studio.Renderers/Input.cs \
-	Cpg.Studio.Serialization/FunctionPolynomial.cs \
-	Cpg.Studio.Serialization/Functions.cs \
-	Cpg.Studio.Serialization/Group.cs \
-	Cpg.Studio.Serialization/Link.cs \
-	Cpg.Studio.Serialization/InputFile.cs \
-	Cpg.Studio.Serialization/Network.cs \
-	Cpg.Studio.Serialization/Object.cs \
 	Cpg.Studio.Serialization/Project.cs \
-	Cpg.Studio.Serialization/State.cs \
-	Cpg.Studio.Serialization/Templates.cs \
 	Cpg.Studio/Settings.cs \
 	Cpg.Studio/Simulation.cs \
 	Cpg.Studio/Stock.cs \
@@ -151,13 +143,14 @@ FILES = \
 	Cpg.Studio.Wrappers/FunctionPolynomial.cs \
 	Cpg.Studio.Wrappers/Graphical.cs \
 	Cpg.Studio.Wrappers/Group.cs \
-	Cpg.Studio.Wrappers/Link.cs \
-	Cpg.Studio.Wrappers/Network.cs \
+	Cpg.Studio.Wrappers/ImportAlias.cs \
+	Cpg.Studio.Wrappers/Import.cs \
 	Cpg.Studio.Wrappers/Input.cs \
 	Cpg.Studio.Wrappers/InputFile.cs \
-	Cpg.Studio.Wrappers/Wrapper.cs \
+	Cpg.Studio.Wrappers/Link.cs \
+	Cpg.Studio.Wrappers/Network.cs \
 	Cpg.Studio.Wrappers/Object.cs \
-	Cpg.Studio.Wrappers/Import.cs
+	Cpg.Studio.Wrappers/Wrapper.cs
 
 DATA_FILES =
 
@@ -174,6 +167,7 @@ EXTRAS = \
 REFERENCES =  \
 	$(GTK_SHARP_20_LIBS) \
 	$(GLIB_SHARP_20_LIBS) \
+	$(GTKSOURCEVIEW_SHARP_20_LIBS) \
 	System \
 	Mono.Posix \
 	System.Drawing \

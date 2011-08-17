@@ -106,34 +106,5 @@ namespace Cpg.Studio.Wrappers
 				return (Group)Wrap(WrappedObject.TemplateGroup);
 			}
 		}
-
-		public Wrappers.Function[] Functions
-		{
-			get
-			{
-				Cpg.Object[] children = WrappedObject.FunctionGroup.Children;
-				Wrappers.Function[] ret = new Wrappers.Function[children.Length];
-
-				for (int i = 0; i < children.Length; ++i)
-				{
-					ret[i] = (Wrappers.Function)Wrappers.Wrapper.Wrap(children[i]);
-				}
-				
-				return ret;
-			}
-		}
-		
-		public Cpg.Function GetFunction(string name)
-		{
-			return (Cpg.Function)WrappedObject.FunctionGroup.GetChild(name);
-		}
-		
-		public Group FunctionGroup 
-		{
-			get
-			{
-				return (Group)Wrap(WrappedObject.FunctionGroup);
-			}
-		}
 	}
 }

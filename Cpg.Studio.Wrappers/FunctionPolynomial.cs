@@ -10,8 +10,6 @@ namespace Cpg.Studio.Wrappers
 			public double End;
 		}
 		
-		private PeriodType d_period;
-
 		protected FunctionPolynomial(Cpg.FunctionPolynomial function) : base(function)
 		{
 		}
@@ -45,18 +43,6 @@ namespace Cpg.Studio.Wrappers
 			}
 
 			return (FunctionPolynomial)Wrap(obj);
-		}
-		
-		public PeriodType Period
-		{
-			get
-			{
-				return d_period;
-			}
-			set
-			{
-				d_period = value;
-			}
 		}
 		
 		public Cpg.FunctionPolynomialPiece[] Pieces

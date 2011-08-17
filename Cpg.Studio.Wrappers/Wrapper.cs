@@ -156,7 +156,7 @@ namespace Cpg.Studio.Wrappers
 				int y;
 
 				obj.GetLocation(out x, out y);
-
+				
 				Allocation.X = x;
 				Allocation.Y = y;
 			}
@@ -359,8 +359,6 @@ namespace Cpg.Studio.Wrappers
 				AddLocationNotifification();
 				
 				Moved += delegate(object sender, EventArgs e) {
-
-					
 					int x;
 					int y;
 

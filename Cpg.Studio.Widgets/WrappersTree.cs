@@ -816,7 +816,7 @@ namespace Cpg.Studio.Widgets
 
 				try
 				{
-					selector = Cpg.Selector.Parse(d_searchText);
+					selector = Cpg.Selector.Parse(d_group, d_searchText);
 				}
 				catch
 				{

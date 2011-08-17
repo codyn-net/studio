@@ -206,7 +206,7 @@ namespace Cpg.Studio.Widgets
 			{
 				funcName = String.Format("f{0}", i++);
 
-				if (Network.GetFunction(funcName) == null)
+				if (Group.GetFunction(funcName) == null)
 				{
 					break;
 				}
@@ -446,17 +446,6 @@ namespace Cpg.Studio.Widgets
 			
 			node.Function.ClearPieces();
 			
-			if (period != null)
-			{
-				node.Function.Period = new Wrappers.FunctionPolynomial.PeriodType();
-				node.Function.Period.Begin = period[0];
-				node.Function.Period.End = period[1];
-			}
-			else
-			{
-				node.Function.Period = null;
-			}
-
 			foreach (Interpolators.Interpolation.Piece piece in interpolation.Pieces)
 			{
 				if (period == null || (piece.Begin >= period[0] && piece.End <= period[1]))

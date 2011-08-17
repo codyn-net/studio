@@ -248,14 +248,14 @@ namespace Cpg.Studio.Dialogs
 			d_period = new Entry();
 			d_period.WidthChars = 3;
 			d_period.Show();
-			d_period.Text = polynomial.Period == null ? "0:1" : String.Format("{0}:{1}", polynomial.Period.Begin, polynomial.Period.End);
-			d_period.Sensitive = polynomial.Period != null;
+			d_period.Text = "0:1";
+			d_period.Sensitive = false;
 			
 			hbox.PackEnd(d_period, false, false, 0);
 			
 			d_periodic = new CheckButton("Periodic:");
 			d_periodic.Show();
-			d_periodic.Active = polynomial.Period != null;
+			d_periodic.Active = false;
 
 			hbox.PackEnd(d_periodic, false, false, 0);
 			
@@ -322,26 +322,19 @@ namespace Cpg.Studio.Dialogs
 		{
 			// Generate data points from polynomial pieces
 			FunctionPolynomialPiece[] pieces = polynomial.Pieces;
-			Wrappers.FunctionPolynomial.PeriodType period = polynomial.Period;
 
 			for (int i = 0; i < pieces.Length; ++i)
 			{
 				FunctionPolynomialPiece piece = pieces[i];
 				
-				if (period == null || (piece.Begin >= period.Begin && piece.End <= period.End))
-				{
-					AddDataPoint(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]);
-				}
+				AddDataPoint(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]);
 			}
 			
 			if (pieces.Length != 0)
 			{
 				FunctionPolynomialPiece last = pieces[pieces.Length - 1];
 				
-				if (period == null || (last.Begin >= period.Begin && last.End <= period.End))
-				{
-					AddDataPoint(last.End, SumCoefficients(last.Coefficients));
-				}
+				AddDataPoint(last.End, SumCoefficients(last.Coefficients));
 			}
 		}
 

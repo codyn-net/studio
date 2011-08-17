@@ -109,12 +109,6 @@
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Project.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Group.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Object.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/State.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Link.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Network.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Templates.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Pathbar.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyIntegrator.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Function.cs" />
@@ -123,7 +117,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/Function.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/NodeStore.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/FunctionPolynomial.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionsHelper.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionNode.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionPolynomialNode.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/GenericFunctionNode.cs" />
@@ -134,8 +127,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionPolynomialPieceBegin.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionPolynomialPieceEnd.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionPolynomialPieceCoefficients.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/FunctionPolynomial.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/Functions.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Point.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Renderers" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ApplyTemplate.cs" />
@@ -150,7 +141,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Object.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Input.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/InputFile.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Serialization/InputFile.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Input.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/AddInterfaceProperty.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/InterfaceProperty.cs" />
@@ -163,6 +153,8 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/WrappersTree.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/FindTemplate.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/Editor.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionsHelper.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
@@ -178,5 +170,6 @@
     <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
     <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/cpg-network-sharp-2.0/CpgNetwork.dll" />
     <ProjectReference type="Gac" localcopy="True" refto="Biorob.Math, Version=1.0.3947.20262, Culture=neutral" />
+    <ProjectReference type="Gac" localcopy="True" refto="gtksourceview2-sharp, Version=2.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
   </References>
 </Project>

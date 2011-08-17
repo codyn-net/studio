@@ -2532,21 +2532,6 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 			
-			List<Wrappers.Function> skippedFunctions = new List<Wrappers.Function>();
-			
-			// Copy functions
-			foreach (Wrappers.Function function in project.Network.Functions)
-			{
-				if (Network.GetFunction(function.Id) == null)
-				{
-					actions.Add(new Undo.AddObject(Network.FunctionGroup, function.Copy()));
-				}
-				else
-				{
-					skippedFunctions.Add(function);
-				}
-			}
-			
 			RepositionImport(Network.TemplateGroup.Children, project.Network.TemplateGroup.Children);
 			
 			// Copy templates
@@ -2570,25 +2555,7 @@ namespace Cpg.Studio.Widgets
 				d_actions.Do(new Undo.Group(actions));
 			}, "Failed to import network");
 			
-			if (skippedFunctions.Count != 0 && skippedProperties.Count != 0)
-			{
-				Message(Gtk.Stock.DialogInfo,
-				        "Some functions and globals could not be imported",
-				        String.Format("The {0} `{1}' and {2} `{3}' already existed",
-				                      skippedFunctions.Count == 1 ? "function" : "functions",
-				                      String.Join(", ", Array.ConvertAll<Wrappers.Function, string>(skippedFunctions.ToArray(), item => item.Id)),
-				                      skippedProperties.Count == 1 ? "global" : "globals",
-				                      String.Join(", ", Array.ConvertAll<Cpg.Property, string>(skippedProperties.ToArray(), item => item.Name))));
-			}
-			else if (skippedFunctions.Count != 0)
-			{
-				Message(Gtk.Stock.DialogInfo,
-				        "Some functions could not be imported",
-				        String.Format("The {0} `{1}' already existed",
-				                      skippedFunctions.Count == 1 ? "function" : "functions",
-				                      String.Join(", ", Array.ConvertAll<Wrappers.Function, string>(skippedFunctions.ToArray(), item => item.Id))));
-			}
-			else if (skippedProperties.Count != 0)
+			if (skippedProperties.Count != 0)
 			{
 				Message(Gtk.Stock.DialogInfo,
 				        "Some globals could not be imported",

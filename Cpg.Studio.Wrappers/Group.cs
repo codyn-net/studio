@@ -167,5 +167,26 @@ namespace Cpg.Studio.Wrappers
 				return WrappedObject.PropertyInterface;
 			}
 		}
+		
+		public IEnumerable<Wrappers.Function> Functions
+		{
+			get
+			{
+				foreach (Wrappers.Wrapper obj in Children)
+				{
+					Wrappers.Function func = obj as Wrappers.Function;
+					
+					if (obj != null)
+					{
+						yield return func;
+					}
+				}
+			}
+		}
+		
+		public Wrappers.Function GetFunction(string name)
+		{
+			return GetChild(name) as Wrappers.Function;
+		}
 	}
 }

@@ -7,15 +7,15 @@ namespace Cpg.Studio.Widgets
 	public class FunctionsHelper<NodeType, FunctionType> : VBox where NodeType : GenericFunctionNode, new() where FunctionType : Wrappers.Function
 	{
 		private Actions d_actions;
-		private Wrappers.Network d_network;
+		private Wrappers.Group d_group;
 		private TreeView d_treeview;
 		private NodeStore<NodeType> d_store;
 		private bool d_selectFunction;
 
-		public FunctionsHelper(Actions actions, Wrappers.Network network) : base(false, 3)
+		public FunctionsHelper(Actions actions, Wrappers.Group grp) : base(false, 3)
 		{
 			d_actions = actions;
-			d_network = network;
+			d_group = grp;
 
 			d_store = new NodeStore<NodeType>();
 			d_store.SortColumn = 0;
@@ -48,11 +48,11 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		protected Wrappers.Network Network
+		protected Wrappers.Group Group
 		{
 			get
 			{
-				return d_network;
+				return d_group;
 			}
 		}
 		
@@ -66,31 +66,37 @@ namespace Cpg.Studio.Widgets
 		
 		private void InitStore()
 		{
-			foreach (Wrappers.Function function in d_network.Functions)
+			foreach (Wrappers.Function function in d_group.Functions)
 			{
 				AddFunction(function);
 			}
 			
-			d_network.FunctionGroup.ChildAdded += HandleFunctionAdded;
-			d_network.FunctionGroup.ChildRemoved += HandleFunctionRemoved;
+			d_group.ChildAdded += HandleFunctionAdded;
+			d_group.ChildRemoved += HandleFunctionRemoved;
 		}
 		
 		protected override void OnDestroyed()
 		{
-			d_network.FunctionGroup.ChildAdded -= HandleFunctionAdded;
-			d_network.FunctionGroup.ChildRemoved -= HandleFunctionRemoved;
+			d_group.ChildAdded -= HandleFunctionAdded;
+			d_group.ChildRemoved -= HandleFunctionRemoved;
 			
 			base.OnDestroyed();
 		}
 
 		private void HandleFunctionAdded(Wrappers.Group source, Wrappers.Wrapper child)
 		{
-			AddFunction((Wrappers.Function)child);
+			if (child is Wrappers.Function)
+			{
+				AddFunction((Wrappers.Function)child);
+			}
 		}
 		
 		private void HandleFunctionRemoved(Wrappers.Group source, Wrappers.Wrapper child)
 		{
-			RemoveFunction((Wrappers.Function)child);
+			if (child is Wrappers.Function)
+			{
+				RemoveFunction((Wrappers.Function)child);
+			}
 		}
 		
 		private void AddFunction(Wrappers.Function function)
@@ -156,7 +162,7 @@ namespace Cpg.Studio.Widgets
 		public void Add(Wrappers.Function function)
 		{
 			d_selectFunction = true;
-			d_actions.AddObject(d_network.FunctionGroup, function);
+			d_actions.AddObject(d_group, function);
 			d_selectFunction = false;
 		}
 		
@@ -170,7 +176,7 @@ namespace Cpg.Studio.Widgets
 				funcs.Add(FromStorage(path).Function);
 			}
 			
-			d_actions.Delete(d_network.FunctionGroup, funcs.ToArray());
+			d_actions.Delete(d_group, funcs.ToArray());
 		}
 		
 		private void HandleTreeViewKeyPress(object sender, KeyPressEventArgs args)

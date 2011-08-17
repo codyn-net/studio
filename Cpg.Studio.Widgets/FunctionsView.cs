@@ -98,7 +98,7 @@ namespace Cpg.Studio.Widgets
 			{
 				funcName = String.Format("f{0}", i++);
 
-				if (Network.GetFunction(funcName) == null)
+				if (Group.GetFunction(funcName) == null)
 				{
 					break;
 				}

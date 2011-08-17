@@ -1,8 +1,0 @@
-namespace Cpg.Studio
-{
-	class Directories
-	{
-		public static string Prefix = "@prefix@";
-		public static string Lib = "@expanded_libdir@";
-	}
-}
