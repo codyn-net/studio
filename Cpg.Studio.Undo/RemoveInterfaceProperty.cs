@@ -4,7 +4,7 @@ namespace Cpg.Studio.Undo
 {
 	public class RemoveInterfaceProperty : InterfaceProperty, IAction
 	{
-		public RemoveInterfaceProperty(Wrappers.Group grp, string name, string propid) : base(grp, name, propid)
+		public RemoveInterfaceProperty(Wrappers.Group grp, string name, string childname, string propid) : base(grp, name, childname, propid)
 		{
 		}
 		

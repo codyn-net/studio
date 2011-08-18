@@ -513,18 +513,7 @@ namespace Cpg.Studio.Wrappers
 		{
 			get
 			{
-				if (Parent != null && Parent.Parent != null)
-				{
-					return Parent.FullId + "." + Id;
-				}
-				else if (Parent == null)
-				{
-					return "";
-				}
-				else
-				{
-					return Id;
-				}
+				return WrappedObject.FullIdForDisplay;
 			}
 		}
 		

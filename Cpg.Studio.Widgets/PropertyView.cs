@@ -21,6 +21,22 @@ namespace Cpg.Studio.Widgets
 				d_name = name;
 			}
 			
+			public string ChildName
+			{
+				get
+				{
+					return d_iface.LookupChildName(d_name);
+				}
+			}
+			
+			public string PropertyName
+			{
+				get
+				{
+					return d_iface.LookupPropertyName(d_name);
+				}
+			}
+			
 			[PrimaryKey, NodeColumn(0)]
 			public string Name
 			{
@@ -32,8 +48,7 @@ namespace Cpg.Studio.Widgets
 			{
 				get
 				{
-					Cpg.Property prop = d_iface.Lookup(d_name);
-					return prop.Object.GetRelativeId(d_iface.Object) + "." + prop.Name;
+					return ChildName + "." + PropertyName;
 				}
 			}
 		}
@@ -1613,15 +1628,14 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			if (propid != null && grp.FindProperty(propid) == null)
+			if (propid != null && !propid.Contains("."))
 			{
-				/* Not a valid target */
-				Error(this, new Exception(String.Format("The interface target `{0}' on `{1}' is invalid", propid, grp.FullId)));
+				Error(this, new Exception(String.Format("The interface target `{1}' does not refer to a child property", propid)));
 				return;
 			}
 			
 			/* Remove original */
-			actions.Add(new Undo.RemoveInterfaceProperty(grp, node.Name, node.Target));
+			actions.Add(new Undo.RemoveInterfaceProperty(grp, node.Name, node.ChildName, node.PropertyName));
 			
 			if (name == null)
 			{
@@ -1633,7 +1647,9 @@ namespace Cpg.Studio.Widgets
 				propid = node.Target;
 			}
 			
-			actions.Add(new Undo.AddInterfaceProperty(grp, name, propid));
+			string[] parts = propid.Split('.');
+			
+			actions.Add(new Undo.AddInterfaceProperty(grp, name, parts[0], parts[1]));
 			
 			try
 			{
@@ -1763,7 +1779,7 @@ namespace Cpg.Studio.Widgets
 			
 			try
 			{
-				d_actions.Do(new Undo.AddInterfaceProperty(grp, name, prop.Object.Id + "." + prop.Name));
+				d_actions.Do(new Undo.AddInterfaceProperty(grp, name, prop.Object.Id, prop.Name));
 			}
 			catch (GLib.GException exception)
 			{
@@ -1781,7 +1797,7 @@ namespace Cpg.Studio.Widgets
 			{
 				InterfacePropertyNode node = d_interfacePropertyStore.FindPath(path);
 
-				actions.Add(new Undo.RemoveInterfaceProperty((Wrappers.Group)d_object, node.Name, node.Target));
+				actions.Add(new Undo.RemoveInterfaceProperty((Wrappers.Group)d_object, node.Name, node.ChildName, node.PropertyName));
 			}
 			
 			try

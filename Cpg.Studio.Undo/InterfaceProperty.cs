@@ -7,15 +7,15 @@ namespace Cpg.Studio.Undo
 		private Wrappers.Group d_group;
 		
 		private string d_name;
+		private string d_childname;
 		private string d_propid;
 		
-		public InterfaceProperty(Wrappers.Group grp, string name, string propid) : base(grp.Parent, grp)
+		public InterfaceProperty(Wrappers.Group grp, string name, string childname, string propid) : base(grp.Parent, grp)
 		{
 			d_group = grp;
 			d_name = name;
+			d_childname = childname;
 			d_propid = propid;
-			
-			Console.WriteLine(d_propid);
 		}
 		
 		public Wrappers.Group Group
@@ -28,7 +28,7 @@ namespace Cpg.Studio.Undo
 		
 		public void Add()
 		{
-			d_group.PropertyInterface.Add(d_name, d_group.FindProperty(d_propid));
+			d_group.PropertyInterface.Add(d_name, d_childname, d_propid);
 		}
 		
 		public void Remove()
