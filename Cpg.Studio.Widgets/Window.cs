@@ -20,7 +20,7 @@ namespace Cpg.Studio.Widgets
 		private ToggleButton d_simulateButton;
 		private HBox d_simulateButtons;
 		private Widget d_toolbar;
-		private PropertyView d_propertyView;
+		private Editors.Wrapper d_propertyView;
 		private MessageArea d_messageArea;
 		private uint d_statusTimeout;
 		private uint d_popupMergeId;
@@ -1091,11 +1091,11 @@ namespace Cpg.Studio.Widgets
 			{
 				if (selection.Length == 1)
 				{
-					d_propertyView.Initialize(selection[0]);
+					d_propertyView.Object = selection[0];
 				}
 				else
 				{
-					d_propertyView.Initialize(null);
+					d_propertyView.Object = null;
 				}
 			}
 			
@@ -2179,7 +2179,7 @@ namespace Cpg.Studio.Widgets
 				if (d_propertyView == null)
 				{
 					Wrappers.Wrapper[] selection = d_grid.Selection;
-					d_propertyView = new PropertyView(d_project.Network, d_actions, selection.Length == 1 ? selection[0] : null);
+					d_propertyView = new Widgets.Editors.Wrapper(selection.Length == 1 ? selection[0] : null, d_actions, d_project.Network);
 					d_propertyView.BorderWidth = 3;
 					
 					d_propertyView.Error += delegate (object source, Exception exception)
@@ -2207,7 +2207,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void HandlePropertyTemplateActivated(object source, Wrappers.Wrapper template)
 		{
-			PropertyView view = source as PropertyView;
+			Editors.Wrapper view = source as Editors.Wrapper;
 			
 			if (view.Object == null)
 			{

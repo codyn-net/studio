@@ -196,9 +196,9 @@ namespace Cpg.Studio.Wrappers
 		}
 		
 		protected virtual void DrawSelection(Cairo.Context graphics)
-		{
+		{		
 			double alpha = 0.2;
-			
+
 			if ((d_state & State.SelectedAlt) == 0)
 			{
 				graphics.SetSourceRGBA(0, 0, 1, alpha);
@@ -208,7 +208,11 @@ namespace Cpg.Studio.Wrappers
 				graphics.SetSourceRGBA(1, 0, 0, alpha);
 			}
 
-			graphics.Rectangle(0, 0, Allocation.Width, Allocation.Height);
+			if (!d_renderer.StrokeSelection(graphics, 0, 0, Allocation.Width, Allocation.Height))
+			{
+				graphics.Rectangle(0, 0, Allocation.Width, Allocation.Height);
+			}
+
 			graphics.FillPreserve();
 			
 			graphics.SetSourceRGBA(0, 0, 0, alpha);

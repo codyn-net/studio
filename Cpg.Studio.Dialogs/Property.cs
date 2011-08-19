@@ -7,7 +7,7 @@ namespace Cpg.Studio.Dialogs
 	public class Property : Dialog
 	{
 		Wrappers.Wrapper d_object;
-		PropertyView d_view;
+		Widgets.Editors.Wrapper d_view;
 		
 		public Property(Wrappers.Network network, Widgets.Window parent, Wrappers.Wrapper obj)
 		{
@@ -26,8 +26,9 @@ namespace Cpg.Studio.Dialogs
 				SetDefaultSize(400, 300);
 			}
 			
-			d_view = new PropertyView(network, parent.Actions, d_object);
+			d_view = new Widgets.Editors.Wrapper(d_object, parent.Actions, network);
 			d_view.BorderWidth = 6;
+			
 			VBox.PackStart(d_view, true, true, 0);
 			
 			d_object.PropertyChanged += delegate(Wrappers.Wrapper source, Cpg.Property name) {
@@ -40,7 +41,7 @@ namespace Cpg.Studio.Dialogs
 			UpdateTitle();
 		}
 		
-		public PropertyView View
+		public Widgets.Editors.Wrapper View
 		{
 			get
 			{

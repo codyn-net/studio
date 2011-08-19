@@ -17,6 +17,11 @@ namespace Cpg.Studio.Widgets
 			d_index = index;
 		}
 		
+		public NodeColumnAttribute(object index)
+		{
+			d_index = Convert.ToInt32(index);
+		}
+		
 		public int Index
 		{
 			get

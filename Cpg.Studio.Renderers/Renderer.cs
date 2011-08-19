@@ -74,6 +74,11 @@ namespace Cpg.Studio.Wrappers.Renderers
 			}
 		}
 		
+		public virtual bool StrokeSelection(Cairo.Context graphics, double x, double y, double width, double height)
+		{
+			return false;
+		}
+		
 		public virtual void Draw(Cairo.Context graphics)
 		{
 		}

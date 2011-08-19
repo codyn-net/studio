@@ -51,6 +51,16 @@ namespace Cpg.Studio.Wrappers
 			
 			CalculateAnchors();
 		}
+
+		public static implicit operator Cpg.Object(Link obj)
+		{
+			return obj.WrappedObject;
+		}
+		
+		public static implicit operator Cpg.Link(Link obj)
+		{
+			return obj.WrappedObject;
+		}
 		
 		protected override bool ToState(Graphical.State field, bool val)
 		{
@@ -213,11 +223,6 @@ namespace Cpg.Studio.Wrappers
 		{
 			DoRequestRedraw();
 			CalculateAnchors();
-		}
-
-		public static implicit operator Cpg.Link(Link obj)
-		{
-			return obj.WrappedObject;
 		}
 		
 		public Wrappers.Wrapper[] Objects
@@ -588,6 +593,11 @@ namespace Cpg.Studio.Wrappers
 				x = EvaluatePolynomial(polys, 0.4, 0) * context.Matrix.Xx - size / 2;
 				y = EvaluatePolynomial(polys, 0.4, 1) * context.Matrix.Yy - size / 2;
 			}
+		}
+		
+		public Wrappers.Link GetActionTemplate(Cpg.LinkAction action, bool match_full)
+		{
+			return (Wrappers.Link)Wrapper.Wrap(WrappedObject.GetActionTemplate(action, match_full));
 		}
 	}
 }

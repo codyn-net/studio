@@ -6,6 +6,7 @@ namespace Cpg.Studio.Wrappers
 	{		
 		protected Function(Cpg.Function obj) : base(obj)
 		{
+			Renderer = new Renderers.Function(this);
 		}
 		
 		public Function() : this(new Cpg.Function("f", "0"))

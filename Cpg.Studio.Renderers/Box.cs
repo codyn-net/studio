@@ -8,12 +8,14 @@ namespace Cpg.Studio.Wrappers.Renderers
 		protected Cairo.LinearGradient d_inner;
 		protected double[] d_hoverColor;
 		protected double[] d_linkColor;
+		protected double d_radius;
 		
 		public Box(Wrappers.Wrapper obj) : base(obj)
 		{
 			d_object = obj;
 			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
 			d_linkColor = new double[] {0.8, 0.8, 0.3, 1.0};
+			d_radius = 0.3;
 			
 			MakePatterns();
 		}
@@ -40,11 +42,52 @@ namespace Cpg.Studio.Wrappers.Renderers
 		
 		protected virtual void DrawInner(Cairo.Context graphics, double uw, double x, double y, double width, double height)
 		{
-			graphics.Rectangle(x, y, width, height);
+			if (d_radius > 0)
+			{
+				DrawRoundedRectangle(graphics, x, y, width, height, d_radius);
+			}
+			else
+			{
+				graphics.Rectangle(x, y, width, height);
+			}
+
 			graphics.StrokePreserve();
 			
 			graphics.Source = d_inner;
 			graphics.Fill();
+		}
+		
+		private void DrawRoundedRectangle(Cairo.Context graphics, double x, double y, double width, double height, double radius)
+		{
+			double x1 = x + width;
+			double y1 = y + height;
+
+			graphics.MoveTo(x, y + radius);
+
+			graphics.CurveTo(x, y, x, y, x + radius, y);
+			graphics.LineTo(x1 - radius, y);
+
+			graphics.CurveTo(x1, y, x1, y, x1, y + radius);
+			graphics.LineTo(x1, y1 - radius);
+			
+			graphics.CurveTo(x1, y1, x1, y1, x1 - radius, y1);
+			graphics.LineTo(x + radius, y1);
+			
+			graphics.CurveTo(x, y1, x, y1, x, y1 - radius);
+			graphics.ClosePath();
+		}
+		
+		public override bool StrokeSelection (Cairo.Context graphics, double x, double y, double width, double height)
+		{
+			if (d_radius > 0)
+			{
+				DrawRoundedRectangle(graphics, x, y, width, height, d_radius);
+				return true;
+			}
+			else
+			{	
+				return false;
+			}
 		}
 		
 		public override void Draw(Cairo.Context context)
@@ -57,8 +100,15 @@ namespace Cpg.Studio.Wrappers.Renderers
 	
 				double uw = graphics.LineWidth;
 				double marg = uw / 2;
-	
-				graphics.Rectangle(-marg, -marg, allocation.Width + marg, allocation.Height + marg);
+				
+				if (d_radius > 0)
+				{
+					DrawRoundedRectangle(graphics, -marg, -marg, allocation.Width + marg, allocation.Height + marg, d_radius);
+				}
+				else
+				{	
+					graphics.Rectangle(-marg, -marg, allocation.Width + marg, allocation.Height + marg);
+				}
 				
 				if (d_object != null && d_object.LinkFocus)
 				{

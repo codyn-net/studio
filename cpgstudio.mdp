@@ -79,7 +79,6 @@
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Table.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/PropertyView.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/PolynomialsView.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
@@ -155,6 +154,17 @@
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/Editor.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionsHelper.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Function.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets.Editors" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets.Editors/Properties.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets.Editors/Group.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets.Editors/Link.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets.Editors/Object.cs" />
+    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets.Editors/Wrapper.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />

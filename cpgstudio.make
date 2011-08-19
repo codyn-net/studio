@@ -65,6 +65,7 @@ FILES = \
 	Cpg.Studio/Range.cs \
 	Cpg.Studio/RenderCache.cs \
 	Cpg.Studio.Renderers/Box.cs \
+	Cpg.Studio.Renderers/Function.cs \
 	Cpg.Studio.Renderers/Group.cs \
 	Cpg.Studio.Renderers/Input.cs \
 	Cpg.Studio.Renderers/Link.cs \
@@ -117,6 +118,11 @@ FILES = \
 	Cpg.Studio.Widgets/AboutDialog.cs \
 	Cpg.Studio.Widgets/AddRemovePopup.cs \
 	Cpg.Studio.Widgets/Annotation.cs \
+	Cpg.Studio.Widgets.Editors/Group.cs \
+	Cpg.Studio.Widgets.Editors/Link.cs \
+	Cpg.Studio.Widgets.Editors/Object.cs \
+	Cpg.Studio.Widgets.Editors/Properties.cs \
+	Cpg.Studio.Widgets.Editors/Wrapper.cs \
 	Cpg.Studio.Widgets/FunctionNode.cs \
 	Cpg.Studio.Widgets/FunctionPolynomialNode.cs \
 	Cpg.Studio.Widgets/FunctionPolynomialPieceNode.cs \
@@ -132,7 +138,6 @@ FILES = \
 	Cpg.Studio.Widgets/Pathbar.cs \
 	Cpg.Studio.Widgets/PolynomialsView.cs \
 	Cpg.Studio.Widgets/Progress.cs \
-	Cpg.Studio.Widgets/PropertyView.cs \
 	Cpg.Studio.Widgets/ScrolledWindow.cs \
 	Cpg.Studio.Widgets/Table.cs \
 	Cpg.Studio.Widgets/TemplatesMenu.cs \
