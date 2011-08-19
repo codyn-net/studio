@@ -52,6 +52,12 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				get { return d_action.Equation.AsString; }
 			}
+			
+			[NodeColumn(2)]
+			public string Tooltip
+			{
+				get { return d_action.Annotation; }
+			}
 		}
 
 		private Wrappers.Link d_link;
@@ -83,6 +89,7 @@ namespace Cpg.Studio.Widgets.Editors
 			d_treeview.Selection.Mode = SelectionMode.Multiple;
 			d_treeview.ButtonPressEvent += OnTreeViewButtonPressEvent;
 			d_treeview.EnableSearch = false;
+			d_treeview.TooltipColumn = 2;
 			
 			Add(d_treeview);
 			
