@@ -6,6 +6,9 @@ using System.Reflection;
 
 namespace Cpg.Studio.Widgets
 {
+	[Binding(Gdk.Key.R, Gdk.ModifierType.ControlMask, "DoAutoAxis"),
+	 Binding(Gdk.Key.L, Gdk.ModifierType.ControlMask, "DoLinkAxis"),
+	 Binding(Gdk.Key.O, Gdk.ModifierType.ControlMask, "DoSelectToggled")]
 	public class Monitor : Gtk.Window
 	{
 		class Container : EventBox
@@ -87,9 +90,10 @@ namespace Cpg.Studio.Widgets
 		
 		private bool d_linkRulers;
 		private bool d_linkAxis;
-		private UIManager d_uimanager;
+		//private UIManager d_uimanager;
 		private HPaned d_hpaned;
 		private bool d_configured;
+		private ToggleButton d_linkButton;
 		
 		private Dictionary<Wrappers.Wrapper, List<State>> d_map;
 		private Cpg.Studio.Widgets.Table d_content;
@@ -164,10 +168,10 @@ namespace Cpg.Studio.Widgets
 			HBox hbox = new HBox(false, 6);
 			hbox.BorderWidth = 0;
 
-			ToggleButton but = Stock.ChainButton();
+			d_linkButton = Stock.ChainButton();
 			
-			but.Toggled += delegate(object sender, EventArgs e) {
-				d_linkAxis = (sender as ToggleButton).Active;
+			d_linkButton.Toggled += delegate(object sender, EventArgs e) {
+				LinkAxis((sender as ToggleButton).Active);
 			};
 			
 			Gtk.Label lbl = new Gtk.Label("Time: ");
@@ -177,8 +181,8 @@ namespace Cpg.Studio.Widgets
 			d_timeLabel.Xalign = 0;
 			hbox.PackStart(d_timeLabel, true, true, 0);
 			
-			but.Active = d_linkAxis;
-			hbox.PackEnd(but, false, false, 0);
+			d_linkButton.Active = d_linkAxis;
+			hbox.PackEnd(d_linkButton, false, false, 0);
 			
 			d_showRulers = new CheckButton("Show graph rulers");
 			d_showRulers.Active = true;
@@ -810,7 +814,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void BuildMenu()
 		{
-			d_uimanager = new UIManager();
+			/*d_uimanager = new UIManager();
 			ActionGroup ag = new ActionGroup("NormalActions");
 			
 			ag.Add(new ActionEntry[] {
@@ -861,7 +865,7 @@ namespace Cpg.Studio.Widgets
 			d_uimanager.AddUi(mid, "/menubar/View/ViewBottom", "AutoAxis", "AutoAxisAction", UIManagerItemType.Menuitem, false);
 			d_uimanager.AddUi(mid, "/menubar/View/ViewBottom", "LinkedAxis", "LinkedAxisAction", UIManagerItemType.Menuitem, false);
 			
-			AddAccelGroup(d_uimanager.AccelGroup);
+			AddAccelGroup(d_uimanager.AccelGroup);*/
 		}
 
 		private void DoClose(object source, EventArgs args)
@@ -871,6 +875,12 @@ namespace Cpg.Studio.Widgets
 		
 		private void LinkAxis(bool active)
 		{
+			if (active != d_linkButton.Active)
+			{
+				d_linkButton.Active = active;
+				return;
+			}
+
 			d_linkAxis = active;
 			
 			if (d_linkAxis)
@@ -916,7 +926,7 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private void DoAutoAxis(object source, EventArgs args)
+		private void DoAutoAxis()
 		{
 			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
 			{
@@ -937,16 +947,14 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private void DoLinkAxis(object source, EventArgs args)
+		private void DoLinkAxis()
 		{
-			bool active = (source as ToggleAction).Active;
-			
-			LinkAxis(active);
+			LinkAxis(!d_linkAxis);
 		}
 		
-		private void DoSelectToggled(object source, EventArgs args)
+		private void DoSelectToggled()
 		{
-			d_tree.Visible = (source as Gtk.ToggleAction).Active;
+			d_tree.Visible = !d_tree.Visible;
 			d_hpaned.QueueDraw();
 		}
 		
