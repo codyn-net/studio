@@ -21,7 +21,8 @@ namespace Cpg.Studio.Widgets.Editors
 				Integrated = 2,
 				Flags = 3,
 				Editable = 4,
-				Target = 5
+				Target = 5,
+				Tooltip = 6
 			}
 			
 			public Node(Cpg.Property property)
@@ -151,6 +152,42 @@ namespace Cpg.Studio.Widgets.Editors
 				get
 				{
 					return "";
+				}
+			}
+			
+			[NodeColumn(Columns.Tooltip)]
+			public virtual string Tooltip
+			{
+				get
+				{
+					if (d_property != null)
+					{
+						Cpg.Object templ = d_property.Object.GetPropertyTemplate(d_property, false);
+						List<string> parts = new List<string>();
+
+						string annotation = d_property.Annotation;
+						
+						if (annotation != null)
+						{
+							parts.Add(annotation);
+						}
+						
+						if (templ != null)
+						{
+							parts.Add(String.Format("<i>On: <tt>{0}</tt> </i>", templ.FullIdForDisplay));
+						}
+						
+						if (parts.Count == 0)
+						{
+							return null;
+						}
+						
+						return String.Join("\n\n", parts.ToArray());
+					}
+					else
+					{
+						return null;
+					}
 				}
 			}
 		}
@@ -342,6 +379,8 @@ namespace Cpg.Studio.Widgets.Editors
 
 			d_treeview.ButtonPressEvent += OnTreeViewButtonPressEvent;
 			
+			d_treeview.TooltipColumn = (int)Node.Columns.Tooltip;
+			
 			CellRendererText renderer;
 			TreeViewColumn column;
 			
@@ -400,7 +439,7 @@ namespace Cpg.Studio.Widgets.Editors
 			CellRendererToggle toggle;
 			
 			toggle = new Gtk.CellRendererToggle();
-			column = d_treeview.AppendColumn("'", toggle,
+			column = d_treeview.AppendColumn(" ∫", toggle,
 			                                 "active", Node.Columns.Integrated,
 			                                 "activatable", Node.Columns.Editable);
 			column.Resizable = false;
@@ -495,8 +534,8 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			if (node.Property != null)
 			{
-				fromtemp = (d_wrapper.GetPropertyTemplate(node.Property, true) != null);
-				overridden = (d_wrapper.GetPropertyTemplate(node.Property, false) != null);
+				fromtemp = (node.Property.Object.GetPropertyTemplate(node.Property, true) != null);
+				overridden = (node.Property.Object.GetPropertyTemplate(node.Property, false) != null);
 			}
 			
 			text.Weight = (int)Pango.Weight.Normal;
