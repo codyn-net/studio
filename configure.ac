@@ -1,7 +1,7 @@
 dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
-AC_INIT(cpgstudio, 1.2)
+AC_INIT(cpgstudio, 2.0)
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
 
@@ -48,20 +48,25 @@ fi
 dnl package checks, common for all configs
 PKG_CHECK_MODULES([GTK_SHARP_20], [gtk-sharp-2.0])
 PKG_CHECK_MODULES([GLIB_SHARP_20], [glib-sharp-2.0])
+PKG_CHECK_MODULES([GTKSOURCEVIEW_SHARP_20], [gtksourceview2-sharp])
 
 dnl package checks, per config
-PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp-1.0])
+PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp-2.0])
+
+PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
 
 dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
-UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp-1.0"
-INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES >= 1.1\"`"
+UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp-2.0 biorob-math-sharp-1.0"
+INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES\"`"
+
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
 AC_CONFIG_FILES([
+m4/Makefile
 cpgstudio
 Makefile
-Directories.cs
+Cpg.Studio/Config.cs
 ])
 
 AC_OUTPUT

@@ -8,7 +8,7 @@ ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:3 -optimize+ -debug "-
 ASSEMBLY = bin/Debug/cpgstudio.exe
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
 COMPILE_TARGET = exe
-PROJECT_REFERENCES = 
+PROJECT_REFERENCES =
 BUILD_DIR = bin/Debug
 
 CPGSTUDIO_EXE_MDB_SOURCE=bin/Debug/cpgstudio.exe.mdb
@@ -20,9 +20,9 @@ if ENABLE_RELEASE
 ASSEMBLY_COMPILER_COMMAND = gmcs
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize+
 ASSEMBLY = bin/Release/cpgstudio.exe
-ASSEMBLY_MDB = 
+ASSEMBLY_MDB =
 COMPILE_TARGET = exe
-PROJECT_REFERENCES = 
+PROJECT_REFERENCES =
 BUILD_DIR = bin/Release
 
 CPGSTUDIO_EXE_MDB=
@@ -33,100 +33,157 @@ AL=al2
 SATELLITE_ASSEMBLY_NAME=$(notdir $(basename $(ASSEMBLY))).resources.dll
 
 PROGRAMFILES = \
-	$(CPGSTUDIO_EXE_MDB)  
+	$(CPGSTUDIO_EXE_MDB)
 
 BINARIES = \
-	$(CPGSTUDIO)  
+	$(CPGSTUDIO)
 
 
 RESGEN=resgen2
-	
-all: $(ASSEMBLY) $(PROGRAMFILES) $(BINARIES) 
+
+all: $(ASSEMBLY) $(PROGRAMFILES) $(BINARIES)
 
 FILES = \
-	Directories.cs \
-	DynamicIntegrator.cs \
-	Window.cs \
-	Application.cs \
-	AssemblyInfo.cs \
-	Stock.cs \
-	Grid.cs \
-	components/Group.cs \
-	components/Object.cs \
-	components/State.cs \
-	components/Link.cs \
-	components/Relay.cs \
-	components/Simulated.cs \
-	components/Network.cs \
-	Utils.cs \
-	Table.cs \
-	PropertyView.cs \
-	Allocation.cs \
-	components/PropertyAttribute.cs \
-	GroupProperties.cs \
-	renderers/Renderer.cs \
-	renderers/Default.cs \
-	renderers/Oscillator.cs \
-	renderers/Group.cs \
-	renderers/Box.cs \
-	renderers/State.cs \
-	renderers/Relay.cs \
-	Saver.cs \
-	serialization/Cpg.cs \
-	serialization/Network.cs \
-	serialization/Property.cs \
-	serialization/State.cs \
-	serialization/Simulated.cs \
-	serialization/Relay.cs \
-	serialization/Link.cs \
-	serialization/Project.cs \
-	serialization/Object.cs \
-	serialization/Group.cs \
-	Settings.cs \
-	MessageArea.cs \
-	PropertyDialog.cs \
-	Loader.cs \
-	Range.cs \
-	Graph.cs \
-	Monitor.cs \
-	Simulation.cs \
-	ObjectView.cs \
-	components/Globals.cs \
-	serialization/Globals.cs \
-	RenderCache.cs \
-	FunctionsDialog.cs \
-	FunctionsView.cs \
-	PolynomialsView.cs \
-	interpolators/IInterpolator.cs \
-	interpolators/Interpolation.cs \
-	interpolators/PChip.cs \
-	InterpolateDialog.cs 
+	Cpg.Studio/Actions.cs \
+	Cpg.Studio/Allocation.cs \
+	Cpg.Studio/Anchor.cs \
+	Cpg.Studio/Application.cs \
+	Cpg.Studio/AssemblyInfo.cs \
+	Cpg.Studio.Clipboard/Internal.cs \
+	Cpg.Studio/Config.cs \
+	Cpg.Studio.Dialogs/Editor.cs \
+	Cpg.Studio.Dialogs/FindTemplate.cs \
+	Cpg.Studio.Dialogs/Functions.cs \
+	Cpg.Studio.Dialogs/Import.cs \
+	Cpg.Studio.Dialogs/Interpolate.cs \
+	Cpg.Studio.Dialogs/Property.cs \
+	Cpg.Studio/DynamicIntegrator.cs \
+	Cpg.Studio.Interpolators/IInterpolator.cs \
+	Cpg.Studio.Interpolators/Interpolation.cs \
+	Cpg.Studio.Interpolators/PChip.cs \
+	Cpg.Studio/Point.cs \
+	Cpg.Studio/Range.cs \
+	Cpg.Studio/RenderCache.cs \
+	Cpg.Studio.Renderers/Box.cs \
+	Cpg.Studio.Renderers/Function.cs \
+	Cpg.Studio.Renderers/Group.cs \
+	Cpg.Studio.Renderers/Input.cs \
+	Cpg.Studio.Renderers/Link.cs \
+	Cpg.Studio.Renderers/Oscillator.cs \
+	Cpg.Studio.Renderers/Renderer.cs \
+	Cpg.Studio.Renderers/State.cs \
+	Cpg.Studio.Serialization/Project.cs \
+	Cpg.Studio/Settings.cs \
+	Cpg.Studio/Simulation.cs \
+	Cpg.Studio/Stock.cs \
+	Cpg.Studio.Undo/AddFunctionPolynomialPiece.cs \
+	Cpg.Studio.Undo/AddGroup.cs \
+	Cpg.Studio.Undo/AddInterfaceProperty.cs \
+	Cpg.Studio.Undo/AddLinkAction.cs \
+	Cpg.Studio.Undo/AddObject.cs \
+	Cpg.Studio.Undo/AddProperty.cs \
+	Cpg.Studio.Undo/ApplyTemplate.cs \
+	Cpg.Studio.Undo/AttachLink.cs \
+	Cpg.Studio.Undo/Function.cs \
+	Cpg.Studio.Undo/FunctionPolynomialPiece.cs \
+	Cpg.Studio.Undo/Group.cs \
+	Cpg.Studio.Undo/IAction.cs \
+	Cpg.Studio.Undo/Import.cs \
+	Cpg.Studio.Undo/InterfaceProperty.cs \
+	Cpg.Studio.Undo/LinkAction.cs \
+	Cpg.Studio.Undo/Manager.cs \
+	Cpg.Studio.Undo/ModifyExpression.cs \
+	Cpg.Studio.Undo/ModifyFunctionArguments.cs \
+	Cpg.Studio.Undo/ModifyFunctionPolynomialPieceBegin.cs \
+	Cpg.Studio.Undo/ModifyFunctionPolynomialPieceCoefficients.cs \
+	Cpg.Studio.Undo/ModifyFunctionPolynomialPieceEnd.cs \
+	Cpg.Studio.Undo/ModifyIntegrator.cs \
+	Cpg.Studio.Undo/ModifyLinkActionEquation.cs \
+	Cpg.Studio.Undo/ModifyLinkActionTarget.cs \
+	Cpg.Studio.Undo/ModifyObjectId.cs \
+	Cpg.Studio.Undo/ModifyProperty.cs \
+	Cpg.Studio.Undo/ModifyProxy.cs \
+	Cpg.Studio.Undo/MoveObject.cs \
+	Cpg.Studio.Undo/Object.cs \
+	Cpg.Studio.Undo/Property.cs \
+	Cpg.Studio.Undo/RemoveFunctionPolynomialPiece.cs \
+	Cpg.Studio.Undo/RemoveInterfaceProperty.cs \
+	Cpg.Studio.Undo/RemoveLinkAction.cs \
+	Cpg.Studio.Undo/RemoveObject.cs \
+	Cpg.Studio.Undo/RemoveProperty.cs \
+	Cpg.Studio.Undo/Template.cs \
+	Cpg.Studio.Undo/UnapplyTemplate.cs \
+	Cpg.Studio.Undo/Ungroup.cs \
+	Cpg.Studio/Utils.cs \
+	Cpg.Studio.Widgets/AboutDialog.cs \
+	Cpg.Studio.Widgets/AddRemovePopup.cs \
+	Cpg.Studio.Widgets/Annotation.cs \
+	Cpg.Studio.Widgets.Editors/Group.cs \
+	Cpg.Studio.Widgets.Editors/Link.cs \
+	Cpg.Studio.Widgets.Editors/Object.cs \
+	Cpg.Studio.Widgets.Editors/Properties.cs \
+	Cpg.Studio.Widgets.Editors/Wrapper.cs \
+	Cpg.Studio.Widgets/FunctionNode.cs \
+	Cpg.Studio.Widgets/FunctionPolynomialNode.cs \
+	Cpg.Studio.Widgets/FunctionPolynomialPieceNode.cs \
+	Cpg.Studio.Widgets/FunctionsHelper.cs \
+	Cpg.Studio.Widgets/FunctionsView.cs \
+	Cpg.Studio.Widgets/GenericFunctionNode.cs \
+	Cpg.Studio.Widgets/Graph.cs \
+	Cpg.Studio.Widgets/Grid.cs \
+	Cpg.Studio.Widgets/MessageArea.cs \
+	Cpg.Studio.Widgets/Monitor.cs \
+	Cpg.Studio.Widgets/NodeStore.cs \
+	Cpg.Studio.Widgets/Notebook.cs \
+	Cpg.Studio.Widgets/Pathbar.cs \
+	Cpg.Studio.Widgets/PolynomialsView.cs \
+	Cpg.Studio.Widgets/Progress.cs \
+	Cpg.Studio.Widgets/ScrolledWindow.cs \
+	Cpg.Studio.Widgets/Table.cs \
+	Cpg.Studio.Widgets/TemplatesMenu.cs \
+	Cpg.Studio.Widgets/TreeView.cs \
+	Cpg.Studio.Widgets/Window.cs \
+	Cpg.Studio.Widgets/WrappersTree.cs \
+	Cpg.Studio.Wrappers/Function.cs \
+	Cpg.Studio.Wrappers/FunctionPolynomial.cs \
+	Cpg.Studio.Wrappers/Graphical.cs \
+	Cpg.Studio.Wrappers/Group.cs \
+	Cpg.Studio.Wrappers/ImportAlias.cs \
+	Cpg.Studio.Wrappers/Import.cs \
+	Cpg.Studio.Wrappers/Input.cs \
+	Cpg.Studio.Wrappers/InputFile.cs \
+	Cpg.Studio.Wrappers/Link.cs \
+	Cpg.Studio.Wrappers/Network.cs \
+	Cpg.Studio.Wrappers/Object.cs \
+	Cpg.Studio.Wrappers/Wrapper.cs
 
-DATA_FILES = 
+DATA_FILES =
 
 RESOURCES = \
-	ui.xml \
-	icons/chain.png \
-	icons/chain-broken.png \
-	icons/link.png \
-	monitor-ui.xml 
+	Cpg.Studio.Resources/ui.xml \
+	Cpg.Studio.Resources/chain.png \
+	Cpg.Studio.Resources/chain-broken.png \
+	Cpg.Studio.Resources/link.png \
+	Cpg.Studio.Resources/monitor-ui.xml
 
 EXTRAS = \
-	cpgstudio.in 
+	cpgstudio.in
 
 REFERENCES =  \
 	$(GTK_SHARP_20_LIBS) \
 	$(GLIB_SHARP_20_LIBS) \
+	$(GTKSOURCEVIEW_SHARP_20_LIBS) \
 	System \
 	Mono.Posix \
 	System.Drawing \
 	Mono.Cairo \
 	System.Xml \
-	$(CPGNETWORK_SHARP_LIBS)
+	$(CPGNETWORK_SHARP_LIBS) \
+	$(BIOROB_MATH_SHARP_LIBS)
 
-DLL_REFERENCES = 
+DLL_REFERENCES =
 
-CLEANFILES = $(PROGRAMFILES) $(BINARIES) 
+CLEANFILES = $(PROGRAMFILES) $(BINARIES)
 
 include $(top_srcdir)/Makefile.include
 

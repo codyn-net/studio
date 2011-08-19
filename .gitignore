@@ -1,0 +1,16 @@
+autom4te.cache
+aclocal.m4
+bin
+config.log
+config.status
+configure
+cpgstudio
+*.tar.gz
+cpgstudio.pidb
+cpgstudio.userprefs
+Config.cs
+install-sh
+Makefile
+Makefile.in
+missing
+Packages.mdse
