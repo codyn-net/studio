@@ -1493,7 +1493,15 @@ namespace Cpg.Studio.Widgets
 			s.SimulatePeriod = d_periodEntry.Text;
 			
 			s.Allocation = WindowAllocation(this);
-			s.ActiveGroup = d_grid.ActiveGroup.FullId;
+			
+			if (d_grid.ActiveGroup.Parent == null)
+			{
+				s.ActiveGroup = null;
+			}
+			else
+			{
+				s.ActiveGroup = d_grid.ActiveGroup.FullId;
+			}
 			
 			if (d_grid.ActiveGroup.TopParent == Network.TemplateGroup)
 			{
