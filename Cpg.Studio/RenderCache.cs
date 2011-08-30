@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Cpg.Studio
 {
-	public class RenderCache
+	public class RenderCache : IDisposable
 	{
 		private Dictionary<long, Cairo.Surface> d_cache;
 		public delegate void RenderFunc(Cairo.Context context, double width, double height);
@@ -31,6 +31,11 @@ namespace Cpg.Studio
 		static RenderCache()
 		{
 			s_enabled = true;
+		}
+		
+		public void Dispose()
+		{
+			Invalidate();
 		}
 		
 		public bool Enabled
@@ -71,6 +76,11 @@ namespace Cpg.Studio
 			if (cache)
 			{
 				long id = UniqueId((int)width, (int)height);
+				
+				if (d_cache.ContainsKey(id))
+				{
+					DisposeSurface(d_cache[id]);
+				}
 
 				d_cache[id] = surf;
 				d_cacheQueue.Enqueue(id);
@@ -79,19 +89,24 @@ namespace Cpg.Studio
 			return surf;
 		}
 		
+		private void DisposeSurface(Cairo.Surface surface)
+		{
+			((IDisposable)surface).Dispose();
+		}
+		
 		public void Invalidate()
 		{
 			foreach (KeyValuePair<long, Cairo.Surface> pair in d_cache)
 			{
-				pair.Value.Destroy();
+				DisposeSurface(pair.Value);
 			}
-			
+
 			d_cache.Clear();
 		}
 		
 		private void Remove(long id)
 		{
-			d_cache[id].Destroy();
+			DisposeSurface(d_cache[id]);
 			d_cache.Remove(id);
 		}
 		
@@ -114,12 +129,14 @@ namespace Cpg.Studio
 
 			long id = UniqueId((int)w, (int)h);
 			Cairo.Surface ret = null;
+			bool disposesurf = true;
 			
 			first = d_renderStack.Count == 0;
 			
 			if (first)
 			{
 				d_cache.TryGetValue(id, out ret);
+				disposesurf = false;
 			}
 			
 			if (ret == null)
@@ -130,6 +147,7 @@ namespace Cpg.Studio
 				}
 				
 				ret = Create(context, w, h, first);
+				disposesurf = !first;
 				
 				using (Cairo.Context ctx = new Cairo.Context(ret))
 				{
@@ -153,9 +171,9 @@ namespace Cpg.Studio
 			context.Paint();
 			context.Restore();
 			
-			if (!first)
+			if (disposesurf)
 			{
-				ret.Destroy();
+				DisposeSurface(ret);
 			}
 		}
 	}

@@ -371,6 +371,8 @@ namespace Cpg.Studio.Widgets
 				
 				alloc.Offset(-ActiveGroup.X, -ActiveGroup.Y);
 				QueueDrawArea((int)alloc.X, (int)alloc.Y, (int)alloc.Width, (int)alloc.Height);				
+				
+				((IDisposable)graphics.Target).Dispose();
 			};
 		}
 		
@@ -1791,6 +1793,8 @@ namespace Cpg.Studio.Widgets
 				graphics.Clip();
 				
 				Draw(graphics);
+				
+				((IDisposable)graphics.Target).Dispose();
 			}
 			
 			return false;
