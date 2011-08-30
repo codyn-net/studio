@@ -713,7 +713,7 @@ namespace Cpg.Studio.Widgets
 			{
 				graph.Canvas.Graph.KeepAspect = d_keepaspect;
 				
-				if (!d_autoaxis || d_linkaxis)
+				if (!d_autoaxis)
 				{
 					graph.Canvas.Graph.XAxisMode = Plot.AxisMode.Fixed;
 					graph.Canvas.Graph.YAxisMode = Plot.AxisMode.Fixed;
