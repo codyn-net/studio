@@ -709,6 +709,21 @@ namespace Cpg.Studio.Widgets
 		
 		private void UpdateAutoScaling()
 		{
+			foreach (Graph graph in d_graphs)
+			{
+				graph.Canvas.Graph.KeepAspect = d_keepaspect;
+				
+				if (!d_autoaxis || d_linkaxis)
+				{
+					graph.Canvas.Graph.XAxisMode = Plot.AxisMode.Fixed;
+					graph.Canvas.Graph.YAxisMode = Plot.AxisMode.Fixed;
+				}
+				else
+				{
+					graph.Canvas.Graph.XAxisMode = Plot.AxisMode.Auto;
+					graph.Canvas.Graph.YAxisMode = Plot.AxisMode.Auto;
+				}
+			}
 		}
 		
 		private void OnAutoAxisToggled(object sender, EventArgs args)
