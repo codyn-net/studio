@@ -563,6 +563,8 @@ namespace Cpg.Studio.Widgets
 				OnGraphPopulatePopup(graph, manager);
 			};
 			
+			UpdateAutoScaling();
+			
 			d_simulation.Resimulate();
 			return graph;
 		}
