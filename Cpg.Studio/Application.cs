@@ -91,10 +91,14 @@ namespace Cpg.Studio
 				renderer.Icon(48),
 				renderer.Icon(64),
 				renderer.Icon(128),
+				renderer.Icon(192),
+				renderer.Icon(256)
 			};
 
 			Studio.Application instance = new Studio.Application();
 			instance.Run(args);
+			
+			Cpg.Studio.Settings.PlotSettings.Save(Cpg.Studio.Settings.PlotSettingsPath);
 		}
 	}
 }

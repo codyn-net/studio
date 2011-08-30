@@ -494,7 +494,6 @@ namespace Cpg.Studio.Widgets
 		public event NodeHandler Activated = delegate {};
 		public event NodeHandler Toggled = delegate {};
 		
-		
 		public delegate void WrapperFilter(WrapperNode node, ref bool ret);
 		private WrapperFilter d_filterStorage;
 
@@ -608,6 +607,7 @@ namespace Cpg.Studio.Widgets
 			
 			hbox.PackStart(img, false, false, 0);
 			hbox.PackStart(d_entry, true, true, 0);
+			hbox.BorderWidth = 3;
 			
 			PackStart(hbox, false, false, 0);
 

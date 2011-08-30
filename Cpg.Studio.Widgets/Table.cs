@@ -325,7 +325,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void SetDragSource(Gtk.Widget child)
 		{
-			Gtk.Drag.SourceSet(child, Gdk.ModifierType.Button1Mask, new Gtk.TargetEntry[] {new Gtk.TargetEntry("TableItem", Gtk.TargetFlags.App, 1)}, Gdk.DragAction.Move);
+			Gtk.Drag.SourceSet(child, Gdk.ModifierType.Button1Mask | Gdk.ModifierType.ControlMask, new Gtk.TargetEntry[] {new Gtk.TargetEntry("TableItem", Gtk.TargetFlags.App, 1)}, Gdk.DragAction.Move);
 			
 			child.DragBegin += delegate (object source, Gtk.DragBeginArgs args) { DoDragBegin(child, args.Context); };
 			child.DragEnd += delegate (object source, Gtk.DragEndArgs args) { DoDragEnd(child, args.Context); };
@@ -578,7 +578,7 @@ namespace Cpg.Studio.Widgets
 			return true;
 		}
 		
-		private void EnsureSize(uint rows, uint cols)
+		public void EnsureSize(uint rows, uint cols)
 		{
 			uint origRows = NRows;
 			uint origCols = NColumns;

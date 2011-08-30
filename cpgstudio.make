@@ -56,6 +56,7 @@ FILES = \
 	Cpg.Studio.Dialogs/Functions.cs \
 	Cpg.Studio.Dialogs/Import.cs \
 	Cpg.Studio.Dialogs/Interpolate.cs \
+	Cpg.Studio.Dialogs/PlotSettings.cs \
 	Cpg.Studio.Dialogs/Property.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
 	Cpg.Studio.Interpolators/IInterpolator.cs \
@@ -129,7 +130,6 @@ FILES = \
 	Cpg.Studio.Widgets/FunctionsHelper.cs \
 	Cpg.Studio.Widgets/FunctionsView.cs \
 	Cpg.Studio.Widgets/GenericFunctionNode.cs \
-	Cpg.Studio.Widgets/Graph.cs \
 	Cpg.Studio.Widgets/Grid.cs \
 	Cpg.Studio.Widgets/MessageArea.cs \
 	Cpg.Studio.Widgets/Monitor.cs \
@@ -179,7 +179,8 @@ REFERENCES =  \
 	Mono.Cairo \
 	System.Xml \
 	$(CPGNETWORK_SHARP_LIBS) \
-	$(BIOROB_MATH_SHARP_LIBS)
+	$(BIOROB_MATH_SHARP_LIBS) \
+	$(PLOT_SHARP_LIBS)
 
 DLL_REFERENCES =
 

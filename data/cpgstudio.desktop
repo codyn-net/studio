@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=cpgstudio
+GenericName=CPG Studio
+Comment=Edit dynamical systems
+Exec=cpgstudio %U
+TryExec=cpgstudio
+Terminal=false
+Type=Application
+StartupNotify=true
+MimeType=text/x-cpg;
+Icon=cpgstudio
+Categories=GNOME;GTK;
+StartupWMClass=Cpgstudio

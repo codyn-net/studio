@@ -17,7 +17,6 @@ namespace Cpg.Studio.Widgets
 		private Grid d_grid;
 		private Entry d_periodEntry;
 		private Statusbar d_statusbar;
-		private ToggleButton d_simulateButton;
 		private HBox d_simulateButtons;
 		private Widget d_toolbar;
 		private Editors.Wrapper d_propertyView;
@@ -38,6 +37,7 @@ namespace Cpg.Studio.Widgets
 		private HPaned d_hpaned;
 		private Notebook d_sideBarNotebook;
 		private Annotation d_annotation;
+		private Dialogs.PlotSettings d_plotsettingsDialog;
 		
 		private bool d_modified;
 		
@@ -259,6 +259,7 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("UngroupAction", Stock.Ungroup, "Ungroup", "<Control><Shift>G", "Ungroup object", OnUngroupActivated),
 				new ActionEntry("EditGlobalsAction", null, "Globals", "<Control>H", "Edit the network globals", OnEditGlobalsActivated),
 				new ActionEntry("EditFunctionsAction", null, "Functions", null, "Edit the network custom functions", OnEditFunctionsActivated),
+				new ActionEntry("EditPlotSettingsAction", null, "Plot Settings", null, "Edit the global plot settings", OnEditPlotSettingsActivated),
 
 				new ActionEntry("SimulateMenuAction", null, "_Simulate", null, null, null),
 				new ActionEntry("StepAction", Gtk.Stock.MediaNext, "Step", "<Control>t", "Execute one simulation step", OnStepActivated),
@@ -297,7 +298,7 @@ namespace Cpg.Studio.Widgets
 				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", OnViewStatusbarActivated, true),
 				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", OnToggleMonitorActivated, false),
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false),
-				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.Info, "Sidebar", "<Control>l", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
+				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.Info, "Sidebar", "F9", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
 			});
 			
 			d_normalGroup.Add(recent);
@@ -689,7 +690,7 @@ namespace Cpg.Studio.Widgets
 			combo.Show();
 			hbox.PackStart(combo, false, false, 0);
 		
-			but = new Button();
+			/*but = new Button();
 			but.Image = new Image(Gtk.Stock.MediaNext, IconSize.Button);
 			but.Label = "Step";
 			but.Clicked += new EventHandler(OnSimulationStep);
@@ -710,7 +711,7 @@ namespace Cpg.Studio.Widgets
 			but.Label = "Reset";
 			but.Clicked += new EventHandler(OnSimulationReset);
 			but.TooltipText = "Reset running simulation";
-			hbox.PackEnd(but, false, false, 0);
+			hbox.PackEnd(but, false, false, 0);*/
 		}
 
 		private void Clear()
@@ -1367,19 +1368,47 @@ namespace Cpg.Studio.Widgets
 					int col = (int)(i % mons.Columns);
 					int row = (int)(i / mons.Columns);
 					
-					List<Cpg.Property> props = new List<Cpg.Property>();
-					
-					foreach (string p in mons.Graphs[i].Id)
+					foreach (Serialization.Project.Series series in mons.Graphs[i].Plots)
 					{
-						Cpg.Property prop = Network.FindProperty(p);
+						Cpg.Monitor y;
+						Cpg.Monitor x = null;
 						
-						if (prop != null)
+						Cpg.Property yprop = Network.FindProperty(series.Y);
+						Cpg.Property xprop = null;
+						
+						if (yprop == null)
 						{
-							props.Add(prop);
+							continue;
+						}
+						
+						if (!String.IsNullOrEmpty(series.X))
+						{
+							xprop = Network.FindProperty(series.X);
+							
+							if (xprop == null)
+							{
+								continue;
+							}
+						}
+						
+						y = new Cpg.Monitor(Network, yprop);
+						
+						if (xprop != null)
+						{
+							x = new Cpg.Monitor(Network, xprop);
+						}
+						
+						Monitor.Graph graph = d_monitor.Add(x, y, row, col);
+						
+						if (mons.Graphs[i].Settings != null)
+						{
+							mons.Graphs[i].Settings.Set(graph.Canvas.Graph);
+						}
+						else
+						{
+							Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
 						}
 					}
-					
-					d_monitor.AddHook(props.ToArray(), row, col);
 				}
 			}
 		}
@@ -1519,13 +1548,32 @@ namespace Cpg.Studio.Widgets
 			// Save monitor state
 			if (d_monitor != null)
 			{
-				foreach (List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>> monitor in d_monitor.Monitors)
+				foreach (Monitor.Graph graph in d_monitor.Graphs)
 				{
 					Serialization.Project.Monitor mon = new Serialization.Project.Monitor();
 					
-					foreach (KeyValuePair<Wrappers.Wrapper, Cpg.Property> prop in monitor)
+					foreach (Monitor.Series series in graph.Plots)
 					{
-						mon.Id.Add(prop.Value.FullName);
+						Serialization.Project.Series ser = new Serialization.Project.Series();
+						
+						ser.Y = series.Y.Property.FullName;
+						
+						if (series.X != null)
+						{
+							ser.X = series.X.Property.FullName;
+						}
+						
+						ser.Color = series.Renderer.Color.Hex;
+						
+						mon.Plots.Add(ser);
+					}
+					
+					Plot.Settings settings = new Plot.Settings();
+					settings.Get(graph.Canvas.Graph);
+					
+					if (settings != Cpg.Studio.Settings.PlotSettings)
+					{
+						mon.Settings = settings;
 					}
 					
 					s.Monitors.Graphs.Add(mon);
@@ -2256,6 +2304,8 @@ namespace Cpg.Studio.Widgets
 			d_monitor = new Monitor(Network, d_simulation);
 			
 			d_monitor.Realize();
+			
+			d_windowGroup.AddWindow(d_monitor);
 
 			PositionWindow(d_monitor);
 			d_monitor.Present();
@@ -2323,7 +2373,7 @@ namespace Cpg.Studio.Widgets
 			
 			foreach (Wrappers.Wrapper obj in objs)
 			{
-				d_monitor.AddHook(obj.Property(property));
+				d_monitor.Add(new Cpg.Monitor(Network, obj.Property(property)));
 			}
 		}
 
@@ -2463,6 +2513,22 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			d_functionsDialog.Present();
+		}
+		
+		private void OnEditPlotSettingsActivated(object sender, EventArgs args)
+		{
+			if (d_plotsettingsDialog == null)
+			{
+				d_plotsettingsDialog = new Dialogs.PlotSettings(this, Cpg.Studio.Settings.PlotSettings);
+				d_windowGroup.AddWindow(d_plotsettingsDialog);
+				
+				d_plotsettingsDialog.Response += delegate(object o, ResponseArgs a1) {
+					d_plotsettingsDialog.Destroy();
+					d_plotsettingsDialog = null;
+				};
+			}
+			
+			d_plotsettingsDialog.Present();
 		}
 		
 		private void OnEditFunctionsActivated(object sender, EventArgs args)

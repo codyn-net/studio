@@ -6,58 +6,159 @@ using System.Reflection;
 
 namespace Cpg.Studio.Widgets
 {
-	[Binding(Gdk.Key.R, Gdk.ModifierType.ControlMask, "DoAutoAxis"),
-	 Binding(Gdk.Key.L, Gdk.ModifierType.ControlMask, "DoLinkAxis"),
-	 Binding(Gdk.Key.O, Gdk.ModifierType.ControlMask, "DoSelectToggled")]
 	public class Monitor : Gtk.Window
 	{
-		class Container : EventBox
+		public class Series : IDisposable
 		{
-			private Graph d_graph;
-			private Frame d_frame;
-			private Button d_close;
-			private Button d_merge;
+			private Cpg.Monitor d_x;
+			private Cpg.Monitor d_y;
+
+			private Plot.Renderers.Line d_renderer;
 			
-			public Container(Graph graph)
+			public Series(Cpg.Monitor x, Cpg.Monitor y, Plot.Renderers.Line renderer)
 			{
-				HBox hbox = new HBox(false, 0);
-				Add(hbox);
+				d_x = x;
+				d_y = y;
+
+				d_renderer = renderer;
 				
-				d_graph = graph;
+				d_y.Property.AddNotification("name", OnNameChanged);
+				d_y.Property.Object.AddNotification("id", OnNameChanged);
+				
+				UpdateName();
+			}
+			
+			public void Dispose()
+			{
+				d_y.Property.RemoveNotification("name", OnNameChanged);
+				d_y.Property.Object.RemoveNotification("id", OnNameChanged);
+			}
+			
+			private void UpdateName()
+			{
+				d_renderer.Label = d_y.Property.FullNameForDisplay;
+			}
+			
+			private void OnNameChanged(object source, GLib.NotifyArgs args)
+			{
+				UpdateName();
+			}
+			
+			public Cpg.Monitor X
+			{
+				get
+				{
+					return d_x;
+				}
+			}
+			
+			public Cpg.Monitor Y
+			{
+				get
+				{
+					return d_y;
+				}
+			}
+			
+			public Plot.Renderers.Line Renderer
+			{
+				get
+				{
+					return d_renderer;
+				}
+			}
+			
+			public void Update()
+			{
+				double[] ydata = d_y.GetData();
+				double[] xdata = d_x != null ? d_x.GetData() : d_y.GetSites();
+				
+				Plot.Point<double>[] data = new Plot.Point<double>[xdata.Length];
+
+				for (int i = 0; i < xdata.Length; ++i)
+				{
+					data[i] = new Plot.Point<double>(xdata[i], ydata[i]);
+				}
+				
+				d_renderer.Data = data;
+			}
+		}
+
+		public class Graph : EventBox
+		{
+			private Plot.Widget d_canvas;
+			private Frame d_frame;
+			private List<Series> d_plots;
+			
+			public Graph(Plot.Widget canvas)
+			{
+				if (canvas != null)
+				{
+					d_canvas = canvas;
+				}
+				else
+				{
+					d_canvas = new Plot.Widget();
+				}
 				
 				d_frame = new Frame();
+				d_frame.Show();
+
 				d_frame.ShadowType = ShadowType.EtchedIn;
 				
-				d_frame.Add(d_graph);
+				d_canvas.Show();
+				d_frame.Add(d_canvas);
 				
-				hbox.PackStart(d_frame, true, true, 0);
-				d_close = Stock.CloseButton();
+				d_plots = new List<Series>();
 				
-				VBox vbox = new VBox(false, 3);
-				vbox.PackStart(d_close, false, false, 0);
-				
-				d_merge = Stock.SmallButton(Gtk.Stock.Convert);
-				vbox.PackStart(d_merge, false, false, 0);
-				
-				hbox.PackStart(vbox, false, false, 0);
+				Add(d_frame);
 			}
 			
-			public Button Close
+			public Graph() : this(null)
+			{
+			}
+			
+			public IEnumerable<Series> Plots
 			{
 				get
 				{
-					return d_close;
+					return d_plots;
 				}
 			}
 			
-			public Button Merge
+			public int PlotsCount
 			{
 				get
 				{
-					return d_merge;
+					return d_plots.Count;
 				}
 			}
 			
+			public void Update()
+			{
+				foreach (Series series in d_plots)
+				{
+					series.Update();
+				}
+			}
+			
+			public void Add(Series plot)
+			{
+				d_plots.Add(plot);				
+				d_canvas.Graph.Add(plot.Renderer);
+			}
+			
+			public void Remove(Series plot)
+			{
+				if (!d_plots.Contains(plot))
+				{
+					return;
+				}
+				
+				d_plots.Remove(plot);
+				d_canvas.Graph.Remove(plot.Renderer);
+			}
+
 			public Gdk.Pixbuf CreateDragIcon()
 			{
 				Gdk.Rectangle a = d_frame.Allocation;
@@ -65,23 +166,13 @@ namespace Cpg.Studio.Widgets
 				Gdk.Pixbuf pix = Gdk.Pixbuf.FromDrawable(d_frame.GdkWindow, d_frame.GdkWindow.Colormap, 0, 0, 0, 0, a.Width, a.Height);
 				return pix.ScaleSimple((int)(a.Width * 0.7), (int)(a.Height * 0.7), Gdk.InterpType.Hyper);
 			}
-		}
-		
-		new class State
-		{
-			public Cpg.Property Property;
-			public Graph Graph;
-			public Graph.Container Plot;
-			public Cpg.Monitor Monitor;
-			public Widget Widget;
 			
-			public State(Cpg.Property property)
+			public Plot.Widget Canvas
 			{
-				Property = property;
-				Graph = null;
-				Plot = null;
-				Monitor = null;
-				Widget = null;
+				get
+				{
+					return d_canvas;
+				}
 			}
 		}
 		
@@ -89,38 +180,31 @@ namespace Cpg.Studio.Widgets
 		private Wrappers.Network d_network;
 		
 		private bool d_linkRulers;
-		private bool d_linkAxis;
-		//private UIManager d_uimanager;
+
 		private HPaned d_hpaned;
 		private bool d_configured;
-		private ToggleButton d_linkButton;
 		
-		private Dictionary<Wrappers.Wrapper, List<State>> d_map;
 		private Cpg.Studio.Widgets.Table d_content;
-		private Range d_range;
-		private uint d_configureSourceId;
-		
 		private WrappersTree d_tree;
 		
-		const int SampleWidth = 2;
+		private List<Graph> d_graphs;
+		Gtk.UIManager d_uimanager;
 		
-		private Gtk.Label d_timeLabel;
-		private Gtk.CheckButton d_showRulers;
-		
+		private bool d_autoaxis;
+		private bool d_linkaxis;
+
 		public Monitor(Wrappers.Network network, Simulation simulation) : base("Monitor")
 		{
 			d_simulation = simulation;
-			
-			//d_simulation.OnStep += DoStep;
-			d_simulation.OnBegin += DoPeriodBegin;
+			d_graphs = new List<Graph>();
+
 			d_simulation.OnEnd += DoPeriodEnd;
 			
 			d_linkRulers = true;
-			d_linkAxis = true;
-			
-			d_map = new Dictionary<Wrappers.Wrapper, List<State>>();
 			
 			d_network = network;
+			d_autoaxis = true;
+			d_linkaxis = false;
 
 			Build();
 			
@@ -129,7 +213,8 @@ namespace Cpg.Studio.Widgets
 		
 		protected override void OnDestroyed()
 		{
-			Graph.ResetColors();
+			Plot.Graph.ResetColors();
+
 			base.OnDestroyed();
 		}
 
@@ -138,16 +223,21 @@ namespace Cpg.Studio.Widgets
 			VBox vboxMain = new VBox(false, 0);
 			VBox vboxContent = new VBox(false, 3);
 			
-			//BuildMenu();
+			BuildUI();
 			
-			//vboxMain.PackStart(d_uimanager.GetWidget("/menubar"), false, false, 0);
+			Toolbar toolbar = (Toolbar)d_uimanager.GetWidget("/toolbar");
+			toolbar.IconSize = IconSize.SmallToolbar;
+			
+			vboxMain.PackStart(toolbar, false, false, 0);
 			
 			d_hpaned = new HPaned();
 			d_hpaned.BorderWidth = 0;
 			
 			d_tree = new WrappersTree(d_network);
-			d_tree.Toggled += HandleTreeToggled;
+			d_tree.RendererToggle.Visible = false;
 			d_tree.Show();
+			
+			d_tree.Activated += HandleTreeActivated;
 
 			d_hpaned.Pack2(d_tree, false, false);
 			
@@ -164,171 +254,16 @@ namespace Cpg.Studio.Widgets
 			
 			Add(vboxMain);
 			vboxMain.ShowAll();
-			
-			HBox hbox = new HBox(false, 6);
-			hbox.BorderWidth = 0;
-
-			d_linkButton = Stock.ChainButton();
-			
-			d_linkButton.Toggled += delegate(object sender, EventArgs e) {
-				LinkAxis((sender as ToggleButton).Active);
-			};
-			
-			Gtk.Label lbl = new Gtk.Label("Time: ");
-			hbox.PackStart(lbl, false, false, 0);
-			d_timeLabel = new Gtk.Label("");
-			
-			d_timeLabel.Xalign = 0;
-			hbox.PackStart(d_timeLabel, true, true, 0);
-			
-			d_linkButton.Active = d_linkAxis;
-			hbox.PackEnd(d_linkButton, false, false, 0);
-			
-			d_showRulers = new CheckButton("Show graph rulers");
-			d_showRulers.Active = true;
-			hbox.PackEnd(d_showRulers, false, false, 0);
-			
-			Alignment align = new Alignment(0, 0, 1, 1);
-			align.LeftPadding = 3;
-			align.RightPadding = 3;
-			
-			align.Add(hbox);
-			align.Show();
-			
-			vboxContent.PackEnd(align, false, false, 0);
-			
-			d_showRulers.Toggled += delegate(object sender, EventArgs e) {
-				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
-				{
-					state.Value.Graph.ShowRuler = (sender as CheckButton).Active;
-				}
-			};
-			
-			hbox.ShowAll();
 		}
 
-		private void HandleTreeToggled(object source, WrappersTree.WrapperNode node)
+		private void HandleTreeActivated(object source, WrappersTree.WrapperNode node)
 		{
-			Cpg.Property prop;
-			
-			prop = node.Property;
-			
-			if (prop == null)
+			if (node.Property == null)
 			{
 				return;
 			}
 			
-			if (node.Checked)
-			{
-				AddHook(prop);
-			}
-			else
-			{
-				RemoveHook(prop);
-			}
-		}
-		
-		private bool HasHook(Wrappers.Wrapper obj)
-		{
-			return d_map.ContainsKey(obj);
-		}
-		
-		private bool HasHook(Cpg.Property property)
-		{
-			return HasHook(property.Object, property);
-		}
-		
-		private bool HasHook(Wrappers.Wrapper obj, Cpg.Property property)
-		{
-			if (obj == null)
-			{
-				return false;
-			}
-
-			if (!d_map.ContainsKey(obj))
-			{
-				return false;
-			}
-			
-			return d_map[obj].Exists(delegate (Monitor.State state) {
-				if (state.Property == property)
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			});
-		}
-		
-		private void InstallObject(Wrappers.Wrapper obj)
-		{
-			d_map[obj] = new List<State>();
-			
-			obj.PropertyRemoved += HandlePropertyRemoved;
-			
-			if (obj is Wrappers.Group)
-			{
-				Wrappers.Group grp = (Wrappers.Group)obj;
-				
-				grp.ChildRemoved += HandleChildRemoved;
-			}
-		}
-
-		private void HandleChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
-		{
-			if (d_map.ContainsKey(child))
-			{
-				List<Monitor.State> states = new List<Monitor.State>(d_map[child]);
-				
-				foreach (Monitor.State state in states)
-				{
-					RemoveAllHooks(state.Property);
-				}
-			}
-		}
-		
-		private string PropertyName(Wrappers.Wrapper obj, Cpg.Property property, bool longname)
-		{
-			string s = longname ? property.FullName : (obj.Id + "." + property.Name);
-			
-			if (longname && obj is Wrappers.Link)
-			{
-				Wrappers.Link link = obj as Wrappers.Link;
-				s += " (" + link.From.ToString() + " » " + link.To.ToString() + ")";
-			}
-			
-			return s;
-		}
-		
-		private void UpdateTitle(Graph.Container plot, Cpg.Property prop)
-		{
-			plot.Label = PropertyName(prop.Object, prop, true);
-		}
-		
-		private void UpdateTitle(Cpg.Property prop)
-		{
-			Wrappers.Wrapper obj = prop.Object;
-			Monitor.State s = FindHook(obj, prop);
-			
-			if (s != null)
-			{
-				UpdateTitle(s.Plot, prop);
-			}
-		}
-
-		private void UpdateTitle(Wrappers.Wrapper obj)
-		{
-			if (!HasHook(obj))
-			{
-				return;
-			}
-			
-			foreach (Monitor.State state in d_map[obj])
-			{
-				UpdateTitle(state.Plot, state.Property);
-			}
+			Add(node.Property);
 		}
 
 		public uint Columns
@@ -347,156 +282,52 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		public List<List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>>> Monitors
-		{
-			get
-			{
-				List<List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>>> ret = new List<List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>>>();
-				
-				for (int row = 0; row < d_content.NRows; ++row)
-				{
-					for (int col = 0; col < d_content.NColumns; ++col)
-					{
-						List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> states = FindForPosition(row, col);
-					
-						if (states == null)
-						{
-							continue;
-						}
-
-						List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>> item = new List<KeyValuePair<Wrappers.Wrapper, Cpg.Property>>();
-					
-						foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in states)
-						{
-							item.Add(new KeyValuePair<Wrappers.Wrapper, Cpg.Property>(state.Key, state.Value.Property));
-						}
-
-						ret.Add(item);
-					}
-				}
-				
-				return ret;
-			}
-		}
-		
 		private void DoLinkRulers(Graph graph)
 		{
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
+			foreach (Graph g in d_graphs)
 			{
-				if (state.Value.Graph != graph)
+				if (g != graph)
 				{
-					state.Value.Graph.Ruler = graph.Ruler;
+					g.Canvas.Graph.Ruler = graph.Canvas.Graph.Ruler;
 				}
 			}
 		}
 		
-		private void DoLinkRulersLeave(Graph graph)
+		private void DoLinkRulersLeave()
 		{
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
+			foreach (Graph g in d_graphs)
 			{
-				state.Value.Graph.HasRuler = false;
+				g.Canvas.Graph.Ruler = null;
 			}
 		}
 		
-		private Monitor.State FindHook(Wrappers.Wrapper obj, Cpg.Property property)
+		private void MergeWith(Graph source, Graph target)
 		{
-			if (!HasHook(obj))
+			List<Series> cp = new List<Series>(source.Plots);
+			
+			foreach (Series series in cp)
 			{
-				return null;
+				source.Remove(series);
+				target.Add(series);
 			}
 			
-			foreach (Monitor.State state in d_map[obj])
-			{
-				if (state.Property == property)
-				{
-					return state;
-				}
-			}
-			
-			return null;
-		}
-		
-		private List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> FindForPosition(int row, int col)
-		{
-			return FindForWidget(d_content.At(col, row));
-		}
-		
-		private List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> FindForWidget(Widget w)
-		{
-			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> ret = new List<KeyValuePair<Wrappers.Wrapper, Monitor.State>>();
-			
-			foreach (KeyValuePair<Wrappers.Wrapper, List<Monitor.State>> r in d_map)
-			{
-				foreach (Monitor.State state in r.Value)
-				{
-					if (state.Widget == w)
-					{
-						ret.Add(new KeyValuePair<Wrappers.Wrapper, Monitor.State>(r.Key, state));
-					}
-				}
-			}
-			
-			return ret;
-		}
-		
-		private void RemoveAllHooks(Cpg.Property property)
-		{
-			Wrappers.Wrapper obj = property.Object;
-			Monitor.State state = FindHook(obj, property);
-			
-			if (state == null)
-			{
-				return;
-			}
-			
-			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all = FindForWidget(state.Widget);
-			
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> s in all)
-			{
-				RemoveHook(s.Value.Property);
-			}
-		}
-		
-		private void MergeWith(Container cont, List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> all, Widget widget)
-		{
-			Monitor.State toitem = FindForWidget(widget)[0].Value;
-			
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> s in all)
-			{
-				Monitor.State s2 = s.Value;
-				
-				s2.Plot = toitem.Graph.Add(s2.Plot.Data.ToArray(), s2.Plot.Label, s2.Plot.Color);
-				s2.Graph = toitem.Graph;
-				s2.Widget = widget;
-				
-				UpdateTitle(s2.Plot, s2.Property);
-			}
-			
-			cont.Destroy();
-			
+			source.Destroy();
 			QueueDraw();
 		}
 		
-		private void DoMerge(Container cont, Point direction)
-		{
-			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> states = FindForWidget(cont);
+		private void MergeTo(Graph source, Point direction)
+		{			
+			Graph target = (Graph)d_content.Find(source, (int)direction.X, (int)direction.Y);
 			
-			if (states.Count == 0)
+			if (target == null)
 			{
 				return;
 			}
 			
-			Gtk.Widget to = d_content.Find(cont, (int)direction.X, (int)direction.Y);
-			
-			if (to == null)
-			{
-				return;
-			}
-			
-			MergeWith(cont, states, to);
+			MergeWith(source, target);
 		}
 		
-		private void MakeMergeMenuItem(Container cont, Menu menu, Point pos, string stockid, string label, Point dir)
+		private void MakeMergeMenuItem(Graph graph, ActionGroup gp, UIManager manager, Point pos, string stockid, string label, Point dir)
 		{
 			if (pos.X + dir.X < 0 || pos.X + dir.X >= d_content.NColumns)
 			{
@@ -508,405 +339,208 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			ImageMenuItem item = new ImageMenuItem(label);
-			item.Image = new Gtk.Image(stockid, IconSize.Menu);
+			Action action = new Action("ActionMerge" + label, label, null, stockid);
 			
-			item.Activated += delegate(object sender, EventArgs e) {
-				DoMerge(cont, dir);
+			action.Activated += delegate {
+				MergeTo(graph, dir);
 			};
 			
-			menu.Append(item);
-			item.Show();
+			gp.Add(action);
+			manager.AddUi(manager.NewMergeId(), "/ui/popup/MainPlaceholder/MergeMenu", label, "ActionMerge" + label, UIManagerItemType.Menuitem, false);
 		}
 		
-		private void MakeUnmergeMenuItems(Gtk.Menu menu, Container cont, List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> states)
+		private void MakeUnmergeMenuItems(ActionGroup gp, UIManager manager, Graph graph)
 		{
-			if (menu.Children.Length != 0)
+			gp.Add(new Gtk.Action("ActionUnmerge", "Unmerge", null, null));
+			
+			uint mid = manager.NewMergeId();
+			manager.AddUi(mid, "/ui/popup/MainPlaceholder", "Unmerge", "ActionUnmerge", UIManagerItemType.Menu, false);
+			
+			uint idx = 0;
+
+			foreach (Series series in graph.Plots)
 			{
-				Gtk.SeparatorMenuItem sep = new Gtk.SeparatorMenuItem();
-				sep.Show();
-
-				menu.Add(sep);
-			}
-			
-			Gtk.MenuItem parent = new Gtk.MenuItem("Unmerge");
-			parent.Show();
-			
-			Gtk.Menu sub = new Gtk.Menu();
-			sub.Show();
-			
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in states)
-			{
-				Monitor.State s = state.Value;
-				Wrappers.Wrapper obj = state.Key;
-				Cpg.Property property = s.Property;
-
-
-				Gtk.MenuItem item = new Gtk.MenuItem(PropertyName(obj, property, true));
-				item.Show();
+				Series s = series;
+				Gtk.Action action = new Gtk.Action("ActionUnmerge" + idx, series.Y.Property.FullNameForDisplay, null, null);
 				
-				item.Activated += delegate {
-					DoUnmerge(s);
+				action.Activated += delegate {
+					DoUnmerge(graph, s);
 				};
 				
-				sub.Append(item);
-			}
-			
-			parent.Submenu = sub;			
-			menu.Append(parent);
-		}
-		
-		private void DoUnmerge(Monitor.State state)
-		{
-			Point pt = d_content.GetPosition(state.Widget);
-
-			RemoveHook(state.Property);
-			AddHook(state.Property);
-			
-			State sn = FindHook(state.Property.Object, state.Property);
-			sn.Plot.Color = state.Plot.Color;
-			
-			d_content.SetPosition(sn.Widget, (int)pt.X, (int)pt.Y + 1);
-		}
-		
-		private void ShowMergeMenu(Container cont)
-		{
-			List<KeyValuePair<Wrappers.Wrapper, Monitor.State>> states = FindForWidget(cont);
-			
-			if (states.Count == 0)
-			{
-				return;
-			}
-
-			Menu menu = new Menu();
-			
-			Point pos = d_content.GetPosition(cont);
-			
-			MakeMergeMenuItem(cont, menu, pos, Gtk.Stock.GotoTop, "Merge Up", new Point(0, -1));
-			MakeMergeMenuItem(cont, menu, pos, Gtk.Stock.GotoBottom, "Merge Down", new Point(0, 1));
-			MakeMergeMenuItem(cont, menu, pos, Gtk.Stock.GotoLast, "Merge Right", new Point(1, 0));
-			MakeMergeMenuItem(cont, menu, pos, Gtk.Stock.GotoFirst, "Merge Left", new Point(-1, 0));
-			
-			if (states.Count > 1)
-			{
-				MakeUnmergeMenuItems(menu, cont, states);
-			}
-			
-			if (menu.Children.Length != 0)
-			{
-				menu.Popup(null, null, null, 1, 0);
+				gp.Add(action);
+				manager.AddUi(mid, "/ui/popup/MainPlaceholder/Unmerge", "Unmerge" + idx, "ActionUnmerge" + idx, UIManagerItemType.Menuitem, false);
+				
+				++idx;
 			}
 		}
 		
-		private void UpdateTimeLabel(Graph graph, Gdk.EventMotion evnt)
+		private void DoUnmerge(Graph graph, Series series)
 		{
-			if (d_range != null)
+			Point pt = d_content.GetPosition(graph);
+
+			graph.Remove(series);
+			
+			d_content.EnsureSize(d_content.NRows + 1, d_content.NColumns);
+			Graph g = Add(series, (int)d_content.NRows - 1, (int)d_content.NColumns - 1);
+			
+			d_content.SetPosition(g, (int)pt.X, (int)pt.Y + 1);
+		}
+		
+		public IEnumerable<Graph> Graphs
+		{
+			get
 			{
-				double perc = evnt.X / (graph.Allocation.Width - 1);
-				
-				Range r = d_range;
-				double t = r.From + (r.To - r.From) * perc;
-				d_timeLabel.Text = t.ToString("F3");
+				return d_graphs;
 			}
 		}
 		
-		private bool AddHookReal(Cpg.Property[] properties, int row, int col)
+		public Graph Add(Cpg.Property y)
 		{
-			Graph graph = new Graph(SampleWidth, new Graph.Range(-3, 3));
-			graph.SetSizeRequest(-1, 50);
-			graph.ShowRuler = d_showRulers.Active;
-			
-			if (d_linkAxis)
-			{
-				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> s in Each())
-				{
-					graph.YAxis = s.Value.Graph.YAxis;
-					break;
-				}
-			}
-
-			Container cont = new Container(graph);
-			
-			cont.Close.Clicked += delegate(object sender, EventArgs e) {
-				RemoveAllHooks(properties[0]);
-			};
-			
-			cont.Merge.Clicked += delegate(object sender, EventArgs e) {
-				ShowMergeMenu(cont);
-			};
-			
-			cont.ShowAll();
-			
-			d_content.Add(cont, row, col);
-			
-			graph.MotionNotifyEvent += delegate(object o, MotionNotifyEventArgs args) {
-				if (d_linkRulers && graph.ShowRuler)
-				{
-					DoLinkRulers(graph);
-				}
-				
-				UpdateTimeLabel(graph, args.Event);
-			};
-			
-			graph.LeaveNotifyEvent += delegate(object o, LeaveNotifyEventArgs args) {
-				if (d_linkRulers && graph.ShowRuler)
-				{
-					DoLinkRulersLeave(graph);
-				}
-			};
-			
-			graph.EnterNotifyEvent += delegate(object o, EnterNotifyEventArgs args)
-			{
-				if (d_linkRulers && graph.ShowRuler)
-				{
-					DoLinkRulers(graph);
-				}
-			};
-			
-			foreach (Cpg.Property prop in properties)
-			{
-				Monitor.State s = new Monitor.State(prop);
-				Wrappers.Wrapper obj = prop.Object;
-				
-				s.Graph = graph;
-				s.Widget = cont;
-				s.Monitor = new Cpg.Monitor(d_simulation.Network, prop);
-				s.Plot = graph.Add(new double[] {}, PropertyName(obj, prop, true));
-				
-				s.Property.AddNotification("name", HandlePropertyNameChanged);
-				
-				d_map[obj].Add(s);
-			}
+			return Add(new Cpg.Monitor(d_network, y));
+		}
 		
-
-			if (!graph.Data.ContainsKey("HandleConfigureEvent"))
+		public Graph Add(Cpg.Monitor y)
+		{
+			for (int r = 0; r < d_content.NRows; ++r)
 			{
-				graph.ConfigureEvent += OnGraphConfigured;				
-				graph.Data["HandleConfigureEvent"] = true;
+				for (int c = 0; c < d_content.NColumns; ++c)
+				{
+					if (d_content.At(c, r) == null)
+					{
+						return Add(null, y, r, c);
+					}
+				}
 			}
+
+			return Add(null, y, (int)d_content.NRows, (int)d_content.NColumns - 1);
+		}
+		
+		public Graph Add(Series series, int row, int col)
+		{
+			Graph graph = (Graph)d_content.At(row, col);
+			
+			if (graph != null)
+			{
+				graph.Add(series);
+				return graph;
+			}
+			
+			graph = new Graph();
+			Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
+			
+			graph.Add(series);
+			
+			graph.Show();
+			d_graphs.Add(graph);
+
+			d_content.Add(graph, row, col);
+			
+			graph.MotionNotifyEvent += OnGraphMotionNotify;
+			graph.LeaveNotifyEvent += OnGraphLeaveNotify;
+			graph.EnterNotifyEvent += OnGraphEnterNotify;
+			
+			graph.Canvas.PopulatePopup += delegate (object source, Gtk.UIManager manager) {
+				OnGraphPopulatePopup(graph, manager);
+			};
 			
 			d_simulation.Resimulate();
+			return graph;
+		}
+		
+		private void OnGraphPopulatePopup(Graph graph, Gtk.UIManager manager)
+		{
+			ActionGroup gp = new ActionGroup("HookActions");
+			Gtk.Action action = new Gtk.Action("ActionClose", "Close", "Close graph", Gtk.Stock.Close);
+			
+			action.Activated += delegate {
+				graph.Destroy();
+			};
+			
+			gp.Add(action);
+			
+			manager.InsertActionGroup(gp, 0);
+			
+			Point pos = d_content.GetPosition(graph);
+			
+			gp.Add(new Gtk.Action("ActionMergeMenu", "Merge", null, null));
+			manager.AddUi(manager.NewMergeId(),
+			              "/ui/popup/MainPlaceholder",
+			              "MergeMenu",
+			              "ActionMergeMenu",
+			              UIManagerItemType.Menu, false);
+			
+			MakeMergeMenuItem(graph, gp, manager, pos, Gtk.Stock.GotoTop, "Merge Up", new Point(0, -1));
+			MakeMergeMenuItem(graph, gp, manager, pos, Gtk.Stock.GotoBottom, "Merge Down", new Point(0, 1));
+			MakeMergeMenuItem(graph, gp, manager, pos, Gtk.Stock.GotoLast, "Merge Right", new Point(1, 0));
+			MakeMergeMenuItem(graph, gp, manager, pos, Gtk.Stock.GotoFirst, "Merge Left", new Point(-1, 0));
+			
+			if (graph.PlotsCount > 1)
+			{
+				MakeUnmergeMenuItems(gp, manager, graph);
+			}
+			
+			manager.AddUi(manager.NewMergeId(),
+	              "/ui/popup/MainPlaceholder",
+	              "Close",
+	              "ActionClose",
+	              UIManagerItemType.Auto,
+	              false);
+		}
 
-			return true;
+		public Graph Add(Cpg.Monitor x, Cpg.Monitor y, int row, int col)
+		{
+			Plot.Renderers.Line line = new Plot.Renderers.Line();
+			Series series = new Series(x, y, line);
+			
+			return Add(series, row, col);
 		}
+		
+		[GLib.ConnectBefore]
+		private void OnGraphEnterNotify(object o, EnterNotifyEventArgs args)
+		{
+			Graph graph = (Graph)o;
 
-		private void HandlePropertyRemoved(Wrappers.Wrapper source, Cpg.Property prop)
-		{
-			RemoveHook(source, prop);
+			if (d_linkRulers && graph.Canvas.Graph.ShowRuler)
+			{
+				DoLinkRulers(graph);
+			}
 		}
 		
-		public bool AddHook(Cpg.Property[] properties, int row, int col)
+		[GLib.ConnectBefore]
+		private void OnGraphLeaveNotify(object o, LeaveNotifyEventArgs args)
 		{
-			List<Cpg.Property> props = new List<Cpg.Property>(properties);
+			Graph graph = (Graph)o;
+			
+			if (d_linkRulers && graph.Canvas.Graph.ShowRuler)
+			{
+				DoLinkRulersLeave();
+			}
+		}
+		
+		[GLib.ConnectBefore]
+		private void OnGraphMotionNotify(object o, MotionNotifyEventArgs args) {
+			Graph graph = (Graph)o;
 
-			foreach (Cpg.Property p in properties)
+			if (d_linkRulers && graph.Canvas.Graph.ShowRuler)
 			{
-				if (!HasHook(p.Object))
-				{
-					InstallObject(p.Object);
-				}
-				
-				if (HasHook(p))
-				{
-					props.Remove(p);
-				}
-			}
-			
-			if (props.Count == 0)
-			{
-				return false;
-			}
-
-			if (!AddHookReal(props.ToArray(), row, col))
-			{
-				return false;
-			}
-
-			if (d_tree != null)
-			{
-				foreach (Cpg.Property p in properties)
-				{
-					d_tree.TreeView.NodeStore.Find(p).Checked = true;
-				}
-			}
-			
-			return true;
-		}
-		
-		public bool AddHook(Cpg.Property property)
-		{
-			return AddHook(new Cpg.Property[] {property}, -1, -1);
-		}
-		
-		private void HandlePropertyNameChanged(object source, GLib.NotifyArgs args)
-		{
-			Cpg.Property prop = (Cpg.Property)source;
-			
-			UpdateTitle(prop);
-		}
-		
-		private bool RemoveHookReal(Wrappers.Wrapper obj, Monitor.State state)
-		{
-			if (state.Graph != null)
-			{
-				if (state.Graph.Count > 1)
-				{
-					state.Graph.Remove(state.Plot);
-				}
-				else
-				{				
-					state.Widget.Destroy();
-				}
-			}
-			
-			state.Property.RemoveNotification("name", HandlePropertyNameChanged);
-			state.Monitor.Dispose();
-
-			return true;
-		}
-		
-		private void Disconnect(Wrappers.Wrapper obj)
-		{
-			obj.PropertyRemoved -= HandlePropertyRemoved;
-			
-			if (obj is Wrappers.Group)
-			{
-				Wrappers.Group grp = (Wrappers.Group)obj;
-				
-				grp.ChildRemoved -= HandleChildRemoved;
+				DoLinkRulers(graph);
 			}
 		}
 		
-		private void RemoveHook(Cpg.Property property)
+		private void BuildUI()
 		{
-			RemoveHook(property.Object, property);
-		}
-		
-		private void RemoveHook(Wrappers.Wrapper obj, Cpg.Property property)
-		{
-			if (!HasHook(obj, property))
-			{
-				return;
-			}
-			
-			if (obj == null)
-			{
-				return;
-			}
-			
-			d_map[obj].RemoveAll(delegate (Monitor.State state) {
-				return (property == null || property == state.Property) && RemoveHookReal(obj, state);
-			});
-			
-			if (d_map[obj].Count == 0)
-			{
-				Disconnect(obj);
-				d_map.Remove(obj);
-			}
-			
-			d_tree.TreeView.NodeStore.Find(property).Checked = false;
-			
-			if (d_map.Count == 0)
-			{
-				Graph.ResetColors();
-			}
-		}
-		
-		private void BuildMenu()
-		{
-			/*d_uimanager = new UIManager();
+			d_uimanager = new UIManager();
 			ActionGroup ag = new ActionGroup("NormalActions");
 			
-			ag.Add(new ActionEntry[] {
-				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
-				new ActionEntry("CloseAction", Gtk.Stock.Close, null, null, null, DoClose),
-				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
-			});
-			
 			ag.Add(new ToggleActionEntry[] {
-				new ToggleActionEntry("ViewSelectAction", 
-				                       null, 
-				                       "Show _object list", 
-				                       "<Control>o", 
-				                       "Show/hide property selection",
-				                       DoSelectToggled,
-				                       true)
+				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.JustifyFill, "Auto Axis", "<Control>r", "Automatically scale axis to fit data", OnAutoAxisToggled, d_autoaxis),
+				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Scale axis of all plots the same", OnLinkAxisToggled, d_linkaxis)
 			});
 			
 			d_uimanager.InsertActionGroup(ag, 0);
-			
-			ag = new ActionGroup("MonitorActions");
-			
-			ag.Add(new ActionEntry[] {
-				new ActionEntry("AutoAxisAction", 
-				                null, 
-				                "Auto scale axis", 
-				                "<Control>r", 
-				                "Automatically scale axis for data", 
-				                DoAutoAxis)
-			});
-			
-			ag.Add(new ToggleActionEntry[] {
-				new ToggleActionEntry("LinkedAxisAction",
-				                      null,
-				                      "Link axis scales",
-				                      "<Control>l",
-				                      "Link graph axis scales",
-				                      DoLinkAxis,
-				                      d_linkAxis)
-			});
-			
-			d_uimanager.InsertActionGroup(ag, 0);
-
 			d_uimanager.AddUiFromResource("monitor-ui.xml");
 
-			uint mid = d_uimanager.NewMergeId();
-
-			d_uimanager.AddUi(mid, "/menubar/View/ViewBottom", "AutoAxis", "AutoAxisAction", UIManagerItemType.Menuitem, false);
-			d_uimanager.AddUi(mid, "/menubar/View/ViewBottom", "LinkedAxis", "LinkedAxisAction", UIManagerItemType.Menuitem, false);
-			
-			AddAccelGroup(d_uimanager.AccelGroup);*/
-		}
-
-		private void DoClose(object source, EventArgs args)
-		{
-			Destroy();
-		}
-		
-		private void LinkAxis(bool active)
-		{
-			if (active != d_linkButton.Active)
-			{
-				d_linkButton.Active = active;
-				return;
-			}
-
-			d_linkAxis = active;
-			
-			if (d_linkAxis)
-			{
-				Graph.Range range = new Graph.Range(0, 0);
-				bool isset = false;
-				
-				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
-				{
-					Graph.Range yaxis = state.Value.Graph.YAxis;
-					
-					if (!isset || yaxis.Min < range.Min)
-						range.Min = yaxis.Min;
-					if (!isset ||yaxis.Max > range.Max)
-						range.Max = yaxis.Max;
-					
-					isset = true;
-				}
-				
-				range.Widen(0.2);
-				
-				foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
-				{
-					state.Value.Graph.YAxis = range;
-				}
-			}
+			AddAccelGroup(d_uimanager.AccelGroup);
 		}
 		
 		public Point Size
@@ -918,55 +552,23 @@ namespace Cpg.Studio.Widgets
 			set
 			{
 				if (value.X <= 0)
+				{
 					value.X = (int)d_content.NColumns;
+				}
+				
 				if (value.Y <= 0)
+				{
 					value.Y = (int)d_content.NRows;
+				}
 				
 				d_content.Resize((uint)value.X, (uint)value.Y);
 			}
 		}
-		
-		private void DoAutoAxis()
-		{
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
-			{
-				state.Value.Graph.AutoAxis();
-			}
-			
-			LinkAxis(d_linkAxis);
-		}
-		
-		private IEnumerable<KeyValuePair<Wrappers.Wrapper, Monitor.State>> Each()
-		{
-			foreach (KeyValuePair<Wrappers.Wrapper, List<Monitor.State>> pair in d_map)
-			{
-				foreach (Monitor.State state in pair.Value)
-				{
-					yield return new KeyValuePair<Wrappers.Wrapper, Monitor.State>(pair.Key, state);
-				}
-			}
-		}
-		
-		private void DoLinkAxis()
-		{
-			LinkAxis(!d_linkAxis);
-		}
-		
+
 		private void DoSelectToggled()
 		{
 			d_tree.Visible = !d_tree.Visible;
 			d_hpaned.QueueDraw();
-		}
-		
-		protected override bool OnKeyPressEvent(Gdk.EventKey evnt)
-		{
-			if (evnt.Key == Gdk.Key.Escape)
-			{
-				Destroy();
-				return true;
-			}
-			
-			return base.OnKeyPressEvent(evnt);
 		}
 		
 		protected override bool OnConfigureEvent(Gdk.EventConfigure evnt)
@@ -984,88 +586,30 @@ namespace Cpg.Studio.Widgets
 			return ret;
 		}
 		
-		private void DoStep(object source, double timestep)
-		{
-			// TODO
-		}
-		
-		private void SetMonitorData(Wrappers.Wrapper obj, Monitor.State state)
-		{
-			if (d_range == null)
-			{
-				return;
-			}
-
-			int numpix = state.Graph.Allocation.Width;
-			
-			// Resample data to be on thingie
-			double rstep = (d_range.To - d_range.From) / (double)numpix;
-			
-			double[] to = new double[numpix / SampleWidth];
-			
-			for (int i = 0; i < to.Length; ++i)
-			{
-				to[i] = d_range.From + (i * rstep * SampleWidth);
-			}
-			
-			double[] data = state.Monitor.GetDataResampled(to);
-			
-			for (int i = 0; i < data.Length; ++i)
-			{
-				if (double.IsInfinity(data[i]) || double.IsNaN(data[i]))
-				{
-					data[i] = 0;
-				}
-			}
-			
-			int mindw = 10;
-			double d = d_range.To - d_range.From;
-			double ds = d_range.Step;
-			double dw = numpix / (d / ds);
-			
-			while (dw < mindw)
-			{
-				ds = ds * 10;
-				dw = numpix / (d / ds);
-			}
-
-			state.Plot.SetData(data);
-			state.Graph.SetTicks(dw, d_range.From);			
-		}
-		
-		private void DoPeriodBegin(object source, BeginArgs args)
-		{
-			d_range = new Range(args.From, args.Step, args.To);
-		}
-		
 		private void DoPeriodEnd(object source, EventArgs args)
 		{
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
+			foreach (Graph graph in d_graphs)
 			{
-				SetMonitorData(state.Key, state.Value);
-			}			
+				graph.Update();
+			}		
 		}
 		
-		private void UpdateMonitorData()
+		private void UpdateAutoScaling()
 		{
-			foreach (KeyValuePair<Wrappers.Wrapper, Monitor.State> state in Each())
-			{
-				SetMonitorData(state.Key, state.Value);
-			}
 		}
 		
-		private void OnGraphConfigured(object source, Gtk.ConfigureEventArgs args)
+		private void OnAutoAxisToggled(object sender, EventArgs args)
 		{
-			if (d_configureSourceId != 0)
-			{
-				GLib.Source.Remove(d_configureSourceId);
-			}
+			d_autoaxis = ((ToggleAction)sender).Active;
 			
-			d_configureSourceId = GLib.Timeout.Add(50, delegate () {
-				UpdateMonitorData();
-				d_configureSourceId = 0;
-				return false;
-			});
+			UpdateAutoScaling();
+		}
+		
+		private void OnLinkAxisToggled(object sender, EventArgs args)
+		{
+			d_linkaxis = ((ToggleAction)sender).Active;
+			
+			UpdateAutoScaling();
 		}
 	}
 }

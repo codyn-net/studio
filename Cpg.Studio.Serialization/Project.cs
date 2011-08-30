@@ -10,21 +10,32 @@ namespace Cpg.Studio.Serialization
 {
 	public class Project
 	{
+		[XmlType("series")]
+		public class Series
+		{
+			[XmlAttribute("y")]
+			public string Y;
+
+			[XmlAttribute("x")]
+			public string X;
+			
+			[XmlAttribute("color")]
+			public string Color;
+		}
+
 		[XmlType("monitor")]
 		public class Monitor
 		{
-			[XmlElement("id")]
-			public List<string> Id;
+			[XmlElement("plots"),
+			 XmlElement(typeof(Series))]
+			public List<Series> Plots;
 			
 			public Monitor()
 			{
-				Id = new List<string>();
+				Plots = new List<Series>();
 			}
 			
-			public Monitor(params string[] id)
-			{
-				Id = new List<string>(id);
-			}
+			public Plot.Settings Settings { get; set; }
 		}
 
 		[XmlType("settings")]

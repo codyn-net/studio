@@ -4,7 +4,7 @@ AC_PREREQ([2.54])
 AC_INIT(cpgstudio, 2.0)
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE
-
+AC_CONFIG_MACRO_DIR([m4])
 dnl pkg-config
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 if test "x$PKG_CONFIG" = "xno"; then
@@ -54,15 +54,18 @@ dnl package checks, per config
 PKG_CHECK_MODULES([CPGNETWORK_SHARP], [cpg-network-sharp-2.0])
 
 PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
+PKG_CHECK_MODULES([PLOT_SHARP], [plot-sharp-1])
 
 dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
-UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp-2.0 biorob-math-sharp-1.0"
+UNSTABLE_INSTALL_ASSEMBLIES="cpg-network-sharp-2.0 biorob-math-sharp-1.0 plot-sharp-1"
 INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES\"`"
 
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
 AC_CONFIG_FILES([
+data/Makefile
+data/icons/Makefile
 m4/Makefile
 cpgstudio
 Makefile

@@ -33,6 +33,8 @@
       <separator/>
       <menuitem name="EditGlobals" action="EditGlobalsAction"/>
       <menuitem name="EditFunctions" action="EditFunctionsAction"/>
+      <separator/>
+      <menuitem name="PlotSettings" action="EditPlotSettingsAction"/>
     </menu>
     <menu name="SimulateMenu" action="SimulateMenuAction">
       <menuitem name="Simulate" action="SimulateAction"/>
@@ -81,9 +83,9 @@
     <menu name="MonitorMenu" action="MonitorMenuAction">
    	  <placeholder name="MonitorPlaceholder"/>
     </menu>
-    <menu name="ControlMenu" action="ControlMenuAction">
+    <!--<menu name="ControlMenu" action="ControlMenuAction">
       <placeholder name="ControlPlaceholder"/>
-    </menu>
+    </menu>-->
     <separator/>
     <menuitem name="Group" action="GroupAction"/>
     <menuitem name="Ungroup" action="UngroupAction"/>
