@@ -237,6 +237,7 @@ namespace Cpg.Studio.Widgets
 			d_tree.RendererToggle.Visible = false;
 			d_tree.Show();
 			
+			d_tree.PopulatePopup += HandleTreePopulatePopup;
 			d_tree.Activated += HandleTreeActivated;
 
 			d_hpaned.Pack2(d_tree, false, false);
@@ -254,6 +255,50 @@ namespace Cpg.Studio.Widgets
 			
 			Add(vboxMain);
 			vboxMain.ShowAll();
+		}
+
+		private void HandleTreePopulatePopup(object source, WrappersTree.WrapperNode[] nodes, Menu menu)
+		{
+			List<WrappersTree.WrapperNode> n = new List<WrappersTree.WrapperNode>();
+			List<Property> properties = new List<Property>();
+			
+			foreach (WrappersTree.WrapperNode node in nodes)
+			{
+				if (node.Property != null)
+				{
+					n.Add(node);
+					properties.Add(node.Property);
+				}
+			}
+
+			if (n.Count == 0)
+			{
+				return;
+			}
+			
+			MenuItem item;
+			
+			item = new MenuItem("Add");
+			item.Show();
+			item.Activated += delegate {
+				foreach (WrappersTree.WrapperNode node in n)
+				{
+					Add(node.Property);
+				}
+			};
+
+			menu.Append(item);
+			
+			if (n.Count > 1)
+			{
+				item = new MenuItem("Add Merged");
+				item.Show();
+				item.Activated += delegate {
+					Add(properties);
+				};
+				
+				menu.Append(item);
+			}
 		}
 
 		private void HandleTreeActivated(object source, WrappersTree.WrapperNode node)
@@ -381,7 +426,7 @@ namespace Cpg.Studio.Widgets
 			graph.Remove(series);
 			
 			d_content.EnsureSize(d_content.NRows + 1, d_content.NColumns);
-			Graph g = Add(series, (int)d_content.NRows - 1, (int)d_content.NColumns - 1);
+			Graph g = Add((int)d_content.NRows - 1, (int)d_content.NColumns - 1, series);
 			
 			d_content.SetPosition(g, (int)pt.X, (int)pt.Y + 1);
 		}
@@ -394,12 +439,24 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		public Graph Add(IEnumerable<Cpg.Property> y)
+		{
+			List<Cpg.Monitor> mons = new List<Cpg.Monitor>();
+
+			foreach (Cpg.Property p in y)
+			{
+				mons.Add(new Cpg.Monitor(d_network, p));
+			}
+			
+			return Add(mons);
+		}
+		
 		public Graph Add(Cpg.Property y)
 		{
 			return Add(new Cpg.Monitor(d_network, y));
 		}
 		
-		public Graph Add(Cpg.Monitor y)
+		private void NewGraphPosition(out int rr, out int rc)
 		{
 			for (int r = 0; r < d_content.NRows; ++r)
 			{
@@ -407,28 +464,89 @@ namespace Cpg.Studio.Widgets
 				{
 					if (d_content.At(c, r) == null)
 					{
-						return Add(null, y, r, c);
+						rr = r;
+						rc = c;
+						return;
 					}
 				}
 			}
+			
+			rr = (int)d_content.NRows;
+			rc = (int)d_content.NColumns - 1;
+		}
 
-			return Add(null, y, (int)d_content.NRows, (int)d_content.NColumns - 1);
+		public Graph Add(Cpg.Monitor y)
+		{
+			return Add(null, y);
 		}
 		
-		public Graph Add(Series series, int row, int col)
+		public Graph Add(Cpg.Monitor x, Cpg.Monitor y)
+		{
+			int r;
+			int c;
+			
+			NewGraphPosition(out r, out c);
+			return Add(r, c, x, y);
+		}
+		
+		public Graph Add(IEnumerable<Cpg.Monitor> ys)
+		{
+			int r;
+			int c;
+			
+			NewGraphPosition(out r, out c);
+			return Add(r, c, ys);
+		}
+		
+		public Graph Add(int row, int col, Cpg.Monitor x, Cpg.Monitor y)
+		{
+			Plot.Renderers.Line line = new Plot.Renderers.Line();
+			Series s = new Series(x, y, line);
+				
+			return Add(row, col, new Series[] {s});
+		}
+
+		public Graph Add(int row, int col, IEnumerable<Cpg.Monitor> y)
+		{
+			List<Series> series = new List<Series>();
+			
+			foreach (Cpg.Monitor m in y)
+			{
+				Plot.Renderers.Line line = new Plot.Renderers.Line();
+				Series s = new Series(null, m, line);
+				
+				series.Add(s);
+			}
+			
+			return Add(row, col, series);
+		}
+		
+		public Graph Add(int row, int col, Series series)
+		{
+			return Add(row, col, new Series[] {series});
+		}
+
+		public Graph Add(int row, int col, IEnumerable<Series> series)
 		{
 			Graph graph = (Graph)d_content.At(row, col);
 			
 			if (graph != null)
 			{
-				graph.Add(series);
+				foreach (Series s in series)
+				{
+					graph.Add(s);
+				}
+
 				return graph;
 			}
 			
 			graph = new Graph();
 			Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
 			
-			graph.Add(series);
+			foreach (Series s in series)
+			{
+				graph.Add(s);
+			}
 			
 			graph.Show();
 			d_graphs.Add(graph);
@@ -485,14 +603,6 @@ namespace Cpg.Studio.Widgets
 	              "ActionClose",
 	              UIManagerItemType.Auto,
 	              false);
-		}
-
-		public Graph Add(Cpg.Monitor x, Cpg.Monitor y, int row, int col)
-		{
-			Plot.Renderers.Line line = new Plot.Renderers.Line();
-			Series series = new Series(x, y, line);
-			
-			return Add(series, row, col);
 		}
 		
 		[GLib.ConnectBefore]

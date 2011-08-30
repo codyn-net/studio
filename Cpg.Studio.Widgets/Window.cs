@@ -1398,7 +1398,7 @@ namespace Cpg.Studio.Widgets
 							x = new Cpg.Monitor(Network, xprop);
 						}
 						
-						Monitor.Graph graph = d_monitor.Add(x, y, row, col);
+						Monitor.Graph graph = d_monitor.Add(row, col, x, y);
 						
 						if (mons.Graphs[i].Settings != null)
 						{
