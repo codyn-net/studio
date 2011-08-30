@@ -73,7 +73,8 @@ namespace Cpg.Studio.Wrappers.Renderers
 			double[] darker = Darken(color);
 			
 			graphics.SetSourceRGBA(darker[0], darker[1], darker[2], darker[3]);
-			graphics.Stroke();}
+			graphics.Stroke();
+		}
 		
 		private void DrawRect(Cairo.Context graphics, double x, double y, double width, double height, double[] color)
 		{
