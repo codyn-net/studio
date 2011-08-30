@@ -183,7 +183,7 @@ namespace Cpg.Studio
 				
 					if (sel.Contains(link.To) || sel.Contains(link.From))
 					{
-						sel.Add(link);
+						sel.Insert(0, link);
 					}
 				}
 			}
