@@ -2,5 +2,6 @@
   <toolbar>
     <toolitem name="AutoAxis" action="ActionAutoAxis"/>
     <toolitem name="LinkAxis" action="ActionLinkAxis"/>
+    <toolitem name="KeepAspect" action="ActionKeepAspect"/>
   </toolbar>
 </ui>

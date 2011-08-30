@@ -192,6 +192,7 @@ namespace Cpg.Studio.Widgets
 		
 		private bool d_autoaxis;
 		private bool d_linkaxis;
+		private bool d_keepaspect;
 
 		public Monitor(Wrappers.Network network, Simulation simulation) : base("Monitor")
 		{
@@ -205,6 +206,7 @@ namespace Cpg.Studio.Widgets
 			d_network = network;
 			d_autoaxis = true;
 			d_linkaxis = false;
+			d_keepaspect = true;
 
 			Build();
 			
@@ -644,7 +646,8 @@ namespace Cpg.Studio.Widgets
 			
 			ag.Add(new ToggleActionEntry[] {
 				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.JustifyFill, "Auto Axis", "<Control>r", "Automatically scale axis to fit data", OnAutoAxisToggled, d_autoaxis),
-				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Scale axis of all plots the same", OnLinkAxisToggled, d_linkaxis)
+				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Scale axis of all plots the same", OnLinkAxisToggled, d_linkaxis),
+				new ToggleActionEntry("ActionKeepAspect", Gtk.Stock.Zoom100, "Keep Aspect", null, "Keep aspect ratio between axis", OnKeepAspectToggled, d_keepaspect)
 			});
 			
 			d_uimanager.InsertActionGroup(ag, 0);
@@ -718,6 +721,13 @@ namespace Cpg.Studio.Widgets
 		private void OnLinkAxisToggled(object sender, EventArgs args)
 		{
 			d_linkaxis = ((ToggleAction)sender).Active;
+			
+			UpdateAutoScaling();
+		}
+		
+		private void OnKeepAspectToggled(object sender, EventArgs args)
+		{
+			d_keepaspect = ((ToggleAction)sender).Active;
 			
 			UpdateAutoScaling();
 		}
