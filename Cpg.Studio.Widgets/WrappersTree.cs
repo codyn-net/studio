@@ -490,9 +490,11 @@ namespace Cpg.Studio.Widgets
 		private CellRendererText d_rendererName;
 		
 		public delegate void NodeHandler(object source, WrapperNode node);
+		public delegate void PopulatePopupHandler(object source, WrapperNode[] nodes, Gtk.Menu menu);
 
 		public event NodeHandler Activated = delegate {};
 		public event NodeHandler Toggled = delegate {};
+		public event PopulatePopupHandler PopulatePopup = delegate {};
 		
 		public delegate void WrapperFilter(WrapperNode node, ref bool ret);
 		private WrapperFilter d_filterStorage;
@@ -673,9 +675,13 @@ namespace Cpg.Studio.Widgets
 		
 		private void OnTreeViewPopulatePopup(object o, Gtk.Menu menu)
 		{
+			List<WrapperNode> nodes = new List<WrapperNode>();
+
 			d_treeview.Selection.SelectedForeach(delegate (TreeModel model, TreePath path, TreeIter iter) {
-				Console.WriteLine(d_treeview.NodeStore.GetFromIter(iter));
+				nodes.Add(d_treeview.NodeStore.GetFromIter(iter));
 			});
+			
+			PopulatePopup(this, nodes.ToArray(), menu);
 		}
 
 		void OnTreeViewRowActivated(object o, RowActivatedArgs args)
