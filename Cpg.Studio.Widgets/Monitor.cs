@@ -205,8 +205,8 @@ namespace Cpg.Studio.Widgets
 			
 			d_network = network;
 			d_autoaxis = true;
-			d_linkaxis = false;
-			d_keepaspect = true;
+			d_linkaxis = true;
+			d_keepaspect = false;
 
 			Build();
 			
