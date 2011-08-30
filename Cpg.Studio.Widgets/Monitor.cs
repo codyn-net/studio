@@ -706,25 +706,87 @@ namespace Cpg.Studio.Widgets
 			foreach (Graph graph in d_graphs)
 			{
 				graph.Update();
-			}		
+			}
+			
+			UpdateAutoScaling();
 		}
 		
 		private void UpdateAutoScaling()
 		{
+			Plot.Range<double> xrange = new Plot.Range<double>();
+			Plot.Range<double> yrange = new Plot.Range<double>();
+			
+			bool first = true;
+
 			foreach (Graph graph in d_graphs)
 			{
-				graph.Canvas.Graph.KeepAspect = d_keepaspect;
+				Plot.Graph g = graph.Canvas.Graph;
 				
-				if (!d_autoaxis)
+				g.KeepAspect = d_keepaspect;
+				
+				if (d_autoaxis && !d_linkaxis)
 				{
-					graph.Canvas.Graph.XAxisMode = Plot.AxisMode.Fixed;
-					graph.Canvas.Graph.YAxisMode = Plot.AxisMode.Fixed;
+					g.XAxisMode = Plot.AxisMode.Auto;
+					g.YAxisMode = Plot.AxisMode.Auto;
 				}
 				else
 				{
-					graph.Canvas.Graph.XAxisMode = Plot.AxisMode.Auto;
-					graph.Canvas.Graph.YAxisMode = Plot.AxisMode.Auto;
+					g.XAxisMode = Plot.AxisMode.Fixed;
+					g.YAxisMode = Plot.AxisMode.Fixed;
 				}
+					
+				if (d_linkaxis)
+				{
+					Plot.Range<double> xr = g.DataXRange;
+					Plot.Range<double> yr = g.DataYRange;
+
+					if (first || xr.Min < xrange.Min)
+					{
+						xrange.Min = xr.Min;
+					}
+					
+					if (first || xr.Max > xrange.Max)
+					{
+						xrange.Max = xr.Max;
+					}
+					
+					if (first || yr.Min < yrange.Min)
+					{
+						yrange.Min = yr.Min;
+					}
+					
+					if (first || yr.Max > yrange.Max)
+					{
+						yrange.Max = yr.Max;
+					}
+					
+					first = false;
+				}
+			}
+
+			if (d_linkaxis)
+			{
+				foreach (Graph graph in d_graphs)
+				{
+					Plot.Graph g = graph.Canvas.Graph;
+					
+					g.XAxis.Update(xrange);
+					g.YAxis.Update(Widen(yrange, 0.1));
+				}
+			}
+		}
+		
+		private Plot.Range<double> Widen(Plot.Range<double> range, double fraction)
+		{
+			double df = range.Max - range.Min;
+			
+			if (df == 0)
+			{
+				return new Plot.Range<double>(-1, 1);
+			}
+			else
+			{
+				return new Plot.Range<double>(range.Min - df * fraction, range.Max + df * fraction);
 			}
 		}
 		
