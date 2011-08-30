@@ -24,7 +24,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			s_selectedAltColor = new double[] {1, 0.6, 0.6, 0.6};
 			s_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
 			s_iconColor = new double[] {0.5, 0.5, 0.5, 1.0};
-			s_linkColor = new double[] {0.8, 0.8, 0.3, 1.0};
+			s_linkColor = new double[] {0.9, 0.9, 0.1, 1.0};
 			
 			s_arrowSize = 0.15;
 		}

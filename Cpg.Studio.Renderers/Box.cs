@@ -14,7 +14,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 		{
 			d_object = obj;
 			d_hoverColor = new double[] {0.3, 0.6, 0.3, 0.6};
-			d_linkColor = new double[] {0.8, 0.8, 0.3, 1.0};
+			d_linkColor = new double[] {0.9, 0.9, 0.1, 1.0};
 			d_radius = 0.3;
 			
 			MakePatterns();
@@ -110,21 +110,27 @@ namespace Cpg.Studio.Wrappers.Renderers
 					graphics.Rectangle(-marg, -marg, allocation.Width + marg, allocation.Height + marg);
 				}
 				
+				graphics.Source = d_outer;
+				graphics.FillPreserve();
+				
+				graphics.ClipPreserve();
+				
 				if (d_object != null && d_object.LinkFocus)
 				{
 					graphics.LineWidth = uw * 4;
 					graphics.SetSourceRGBA(d_linkColor[0], d_linkColor[1], d_linkColor[2], d_linkColor[3]);
-					graphics.StrokePreserve();
+					graphics.Stroke();
 				}
 				else if (d_object != null && d_object.MouseFocus)
 				{
-					graphics.LineWidth = uw * 2;
+					graphics.LineWidth = uw * 4;
 					graphics.SetSourceRGBA(d_hoverColor[0], d_hoverColor[1], d_hoverColor[2], d_hoverColor[3]);
-					graphics.StrokePreserve();
+					graphics.Stroke();
 				}
-	
-				graphics.Source = d_outer;
-				graphics.Fill();
+				else
+				{
+					graphics.NewPath();
+				}
 				
 				graphics.LineWidth = uw * 2;
 				marg = uw;

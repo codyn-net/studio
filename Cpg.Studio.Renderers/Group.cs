@@ -87,7 +87,7 @@ namespace Cpg.Studio.Wrappers.Renderers
 			
 			if (WrappedObject != null && WrappedObject.LinkFocus)
 			{
-				lineColor = new double[] {0.8, 0.8, 0.3, 1.0};
+				lineColor = new double[] {0.9, 0.9, 0.1, 1.0};
 			}
 			else
 			{

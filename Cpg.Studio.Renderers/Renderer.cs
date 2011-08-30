@@ -34,8 +34,9 @@ namespace Cpg.Studio.Wrappers.Renderers
 			{
 				RenderCache cache = null;
 				string detail = d_detail == null ? "" : d_detail;
+				string state = d_object != null ? ((int)d_object.StateFlags).ToString() : "";
 				
-				if (!d_cache.TryGetValue(detail, out cache))
+				if (!d_cache.TryGetValue(detail + "_" + state, out cache))
 				{
 					cache = new RenderCache(10);
 					d_cache[detail] = cache;

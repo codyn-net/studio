@@ -11,7 +11,7 @@ namespace Cpg.Studio.Widgets
 		public static int DefaultZoom = 50;
 		public static int MaxZoom = 160;
 		public static int MinZoom = 10;
-		private static int AnchorRadius = 6;
+		private static double AnchorRadius = 0.1;
 
 		public delegate void ObjectEventHandler(object source, Wrappers.Wrapper obj);
 		public delegate void PopupEventHandler(object source, int button, long time); 
@@ -606,7 +606,7 @@ namespace Cpg.Studio.Widgets
 				return false;
 			}
 			
-			double radius = (double)AnchorRadius / ZoomLevel;
+			double radius = AnchorRadius;
 			
 			foreach (Point pt in anchors)
 			{
@@ -630,8 +630,10 @@ namespace Cpg.Studio.Widgets
 		{
 			int px = (int)(anchor.Location.X * ZoomLevel - ActiveGroup.X);
 			int py = (int)(anchor.Location.Y * ZoomLevel - ActiveGroup.Y);
+			
+			int ar = (int)(AnchorRadius * ZoomLevel * 2);
 
-			QueueDrawArea(px - AnchorRadius * 2, py - AnchorRadius * 2, AnchorRadius * 4, AnchorRadius * 4);
+			QueueDrawArea(px - ar, py - ar, ar * 2, ar * 2);
 		}
 		
 		private bool LinkAnchorTest(double x, double y)
@@ -982,16 +984,16 @@ namespace Cpg.Studio.Widgets
 		private void DrawAnchor(Cairo.Context graphics, Point location)
 		{
 			graphics.Save();
-			double radius = graphics.LineWidth * 5;
+			double radius = AnchorRadius;
 			
 			graphics.LineWidth *= 3;
 			
 			graphics.MoveTo(location.X + radius, location.Y);
 			graphics.Arc(location.X, location.Y, radius, 0, System.Math.PI * 2);
-			graphics.SetSourceRGB(0.3, 0.3, 0.3);
+			graphics.SetSourceRGB(0.6, 0.6, 0.3);
 			graphics.StrokePreserve();
 
-			graphics.SetSourceRGB(0.8, 0.8, 0.3);
+			graphics.SetSourceRGB(0.9, 0.9, 0.1);
 			graphics.Fill();
 			
 			graphics.Restore();
