@@ -2369,12 +2369,16 @@ namespace Cpg.Studio.Widgets
 		
 		private void OnStartMonitor(Wrappers.Wrapper[] objs, string property)
 		{
+			List<Property> properties = new List<Property>();
+
 			EnsureMonitor();
 			
 			foreach (Wrappers.Wrapper obj in objs)
 			{
-				d_monitor.Add(new Cpg.Monitor(Network, obj.Property(property)));
+				properties.Add(obj.Property(property));
 			}
+			
+			d_monitor.Add(properties);
 		}
 
 		private void OnSimulationRunPeriod(object sender, EventArgs args)
