@@ -791,24 +791,21 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private IEnumerable<Wrappers.Object> AllObjects(Wrappers.Group grp)
+		private void AllObjects(Wrappers.Group grp, List<Wrappers.Object> ret)
 		{
 			foreach (Wrappers.Object child in grp.Children)
 			{
-				yield return child;
+				ret.Add(child);
 
 				Wrappers.Group cg = child as Wrappers.Group;
 				
 				if (cg != null)
 				{
-					foreach (Wrappers.Group g in AllObjects(cg))
-					{
-						yield return g;
-					}
+					AllObjects(cg, ret);
 				}
 			}
 			
-			yield return grp;
+			ret.Add(grp);
 		}
 		
 		private void HandleEntryChanged(object sender, EventArgs e)
@@ -834,7 +831,10 @@ namespace Cpg.Studio.Widgets
 
 					d_selected = new Dictionary<GLib.Object, bool>();
 					
-					foreach (Wrappers.Object o in AllObjects(d_group))
+					List<Wrappers.Object> all = new List<Wrappers.Object>();
+					AllObjects(d_group, all);
+					
+					foreach (Wrappers.Object o in all)
 					{					
 						Cpg.Selection[] selections = selector.Select(o, SelectorType.Any, null);
 					
