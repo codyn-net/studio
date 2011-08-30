@@ -645,7 +645,7 @@ namespace Cpg.Studio.Widgets
 			ActionGroup ag = new ActionGroup("NormalActions");
 			
 			ag.Add(new ToggleActionEntry[] {
-				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.JustifyFill, "Auto Axis", "<Control>r", "Automatically scale axis to fit data", OnAutoAxisToggled, d_autoaxis),
+				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.ZoomFit, "Auto Axis", "<Control>r", "Automatically scale axis to fit data", OnAutoAxisToggled, d_autoaxis),
 				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Scale axis of all plots the same", OnLinkAxisToggled, d_linkaxis),
 				new ToggleActionEntry("ActionKeepAspect", Gtk.Stock.Zoom100, "Keep Aspect", null, "Keep aspect ratio between axis", OnKeepAspectToggled, d_keepaspect)
 			});
