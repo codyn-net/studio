@@ -2129,7 +2129,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (selection.Count != 0)
 			{
-				item = new MenuItem("Add from template");
+				item = new MenuItem("Create instance");
 				item.Show();
 				menu.Append(item);
 			
