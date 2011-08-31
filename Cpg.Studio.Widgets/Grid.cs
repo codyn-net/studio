@@ -1013,7 +1013,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void DrawDraggingAnchor(Cairo.Context graphics)
 		{
-			if (d_anchor == null && d_anchorDragHit == null)
+			if (d_anchor == null && d_anchorDragHit == null || d_dragAnchorState == null)
 			{
 				return;
 			}
@@ -1368,68 +1368,28 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			Point position = ScaledPosition(evnt.X, evnt.Y, System.Math.Floor);
-			Point size = UnitSize();
 			
-			int pxn = (int)System.Math.Floor((double)(ActiveGroup.X / ZoomLevel));
-			int pyn = (int)System.Math.Floor((double)(ActiveGroup.Y / ZoomLevel));
-			
-			List<double> maxx = new List<double>();
-			List<double> minx = new List<double>();
-			List<double> maxy = new List<double>();
-			List<double> miny = new List<double>();
-			
-			int[] translation = null;
-			
-			maxx.Add(size.X - 1 + pxn);
-			minx.Add(position.X);
-			maxy.Add(size.Y - 1 + pyn);
-			miny.Add(position.Y);
-			
-			/* Check boundaries */
 			List<Wrappers.Wrapper> selection = new List<Wrappers.Wrapper>(d_selection);
 			selection.RemoveAll(item => !LinkFilter(item));
 			
-			foreach (Wrappers.Wrapper obj in selection)
-			{
-				Point pt = ScaledFromDragState(obj);
-				Allocation alloc = obj.Allocation;
+			int dx = 0;
+			int dy = 0;
+			int[] translation;
+
+			if (selection.Count != 0)
+			{			
+				Point pt = ScaledFromDragState(selection[0]);
+				translation = new int[] {(int)pt.X, (int)pt.Y};
 				
-				minx.Add(-pt.X + pxn);
-				maxx.Add(size.X - pt.X + pxn - alloc.Width);
-				miny.Add(-pt.Y + pyn);
-				maxy.Add(size.Y - pt.Y + pyn - alloc.Height);
-				
-				if (translation == null)
-				{
-					translation = new int[] {(int)pt.X, (int)pt.Y};
-				}
+				dx = (int)(position.X + translation[0]);
+				dy = (int)(position.Y + translation[1]);
 			}
 			
-			if (position.X < Utils.Max(minx))
-			{
-				position.X = Utils.Max(minx);
-			}
+			bool inwindow = evnt.X >= 0 && evnt.Y >= 0 && evnt.X <= Allocation.Width && evnt.Y <= Allocation.Height;
 			
-			if (position.X > Utils.Min(maxx))
-			{
-				position.X = Utils.Min(maxx);
-			}
-		
-			if (position.Y < Utils.Max(miny))
-			{
-				position.Y = Utils.Max(miny);
-			}
-			
-			if (position.Y > Utils.Min(maxy))
-			{
-				position.Y = Utils.Min(maxy);
-			}
-			
-			int dx = (int)(position.X + translation[0]);
-			int dy = (int)(position.Y + translation[1]);
-			
-			if (dx != (int)selection[0].Allocation.X ||
-			    dy != (int)selection[0].Allocation.Y)
+			if (inwindow && selection.Count > 0 &&
+			    (dx != (int)selection[0].Allocation.X ||
+			     dy != (int)selection[0].Allocation.Y))
 			{
 				DoMove((int)(dx - selection[0].Allocation.X),
 				       (int)(dy - selection[0].Allocation.Y),
