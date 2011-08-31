@@ -162,8 +162,29 @@ namespace Cpg.Studio.Widgets
 
 		private void UpdateUndoState()
 		{
-			d_normalGroup.GetAction("UndoAction").Sensitive = d_undoManager.CanUndo;
-			d_normalGroup.GetAction("RedoAction").Sensitive = d_undoManager.CanRedo;
+			Action undo = d_normalGroup.GetAction("UndoAction");
+			Action redo = d_normalGroup.GetAction("RedoAction");
+			
+			undo.Sensitive = d_undoManager.CanUndo;
+			redo.Sensitive = d_undoManager.CanRedo;
+			
+			if (d_undoManager.CanUndo)
+			{
+				undo.Tooltip = "Undo: " + d_undoManager.PeekUndo().Description;
+			}
+			else
+			{
+				undo.Tooltip = "Undo last action";
+			}
+			
+			if (d_undoManager.CanRedo)
+			{
+				redo.Tooltip = "Redo: " + d_undoManager.PeekRedo().Description;
+			}
+			else
+			{
+				redo.Tooltip = "Redo last action";
+			}
 		}
 		
 		private bool ApplyTemplate(Wrappers.Wrapper template)
@@ -316,6 +337,8 @@ namespace Cpg.Studio.Widgets
 			d_uimanager.InsertActionGroup(d_selectionGroup, 0);
 			d_uimanager.AddUiFromResource("ui.xml");
 			
+			d_uimanager.ConnectProxy += HandleUIManagerConnectProxy;
+			
 			AddAccelGroup(d_uimanager.AccelGroup);
 			
 			VBox vbox = new VBox(false, 0);
@@ -385,6 +408,26 @@ namespace Cpg.Studio.Widgets
 			d_pathbar.Activated += HandlePathbarActivated;
 			
 			BuildImportLibraries();
+		}
+
+		private void HandleUIManagerConnectProxy(object o, ConnectProxyArgs args)
+		{
+			if (!(args.Proxy is MenuItem))
+			{
+				return;
+			}
+			
+			MenuItem item = args.Proxy as MenuItem;
+			
+			item.Selected += delegate {
+				string tooltip = args.Action.Tooltip;
+				
+				StatusMessage(tooltip != null ? tooltip : "", false);
+			};
+
+			item.Deselected += delegate {
+				StatusMessage("", false);
+			};
 		}
 		
 		private List<string> UniqueImportPaths()
