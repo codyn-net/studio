@@ -38,6 +38,14 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 		
+		public Wrappers.Wrapper WrappedObject
+		{
+			get
+			{
+				return d_object;
+			}
+		}
+		
 		private void Build()
 		{
 			Label lbl = new Label("Id:");

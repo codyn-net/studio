@@ -2263,14 +2263,14 @@ namespace Cpg.Studio.Widgets
 		
 		private void HandlePropertyTemplateActivated(object source, Wrappers.Wrapper template)
 		{
-			Editors.Wrapper view = source as Editors.Wrapper;
+			Editors.Object view = source as Editors.Object;
 			
-			if (view.Object == null)
+			if (view.WrappedObject == null)
 			{
 				return;
 			}
 			
-			d_templatePopupObject = view.Object;
+			d_templatePopupObject = view.WrappedObject;
 			d_templatePopupTemplate = template;
 			
 			Widget menu = d_uimanager.GetWidget("/TemplatePopup");
