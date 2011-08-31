@@ -1438,11 +1438,11 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			UpdateSaveSensitivity();
-					
+			UpdateSaveSensitivity();					
 			RestoreSettings();
-
 			UpdateTitle();
+			
+			UpdateSensitivity();
 			
 			StatusMessage("Loaded network from " + filename + "...");
 		}
