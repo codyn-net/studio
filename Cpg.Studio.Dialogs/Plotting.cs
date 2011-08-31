@@ -15,6 +15,9 @@ namespace Cpg.Studio.Dialogs
 
 			private Plot.Renderers.Line d_renderer;
 			
+			public event EventHandler Destroyed = delegate {};
+			private Dictionary<Wrappers.Group, Wrappers.Wrapper> d_ancestors;
+			
 			public Series(Cpg.Monitor x, Cpg.Monitor y, Plot.Renderers.Line renderer)
 			{
 				d_x = x;
@@ -25,13 +28,100 @@ namespace Cpg.Studio.Dialogs
 				d_y.Property.AddNotification("name", OnNameChanged);
 				d_y.Property.Object.AddNotification("id", OnNameChanged);
 				
+				d_y.Property.Object.PropertyRemoved += HandlePropertyRemoved;
+				
+				d_ancestors = new Dictionary<Wrappers.Group, Wrappers.Wrapper>();
+				
+				ConnectParentsRemoved(Wrappers.Wrapper.Wrap(d_y.Property.Object.Parent) as Wrappers.Group, d_y.Property.Object);
+				
+				if (d_x != null)
+				{
+					d_x.Property.Object.PropertyRemoved += HandlePropertyRemoved;
+					
+					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(d_x.Property.Object.Parent) as Wrappers.Group, d_x.Property.Object);
+				}
+				
 				UpdateName();
+			}
+			
+			private void ConnectParentsRemoved(Wrappers.Group parent, Wrappers.Wrapper obj)
+			{
+				if (parent == null || obj == null)
+				{
+					return;
+				}
+
+				d_ancestors[parent] = obj;
+				
+				parent.ChildRemoved += OnChildRemoved;
+				
+				ConnectParentsRemoved(parent.Parent as Wrappers.Group, parent);
+			}
+			
+			private bool DisconnectParentsRemoved(Wrappers.Group parent)
+			{
+				Wrappers.Wrapper wrapper;
+
+				if (parent == null)
+				{
+					return false;
+				}
+				
+				if (!d_ancestors.TryGetValue(parent, out wrapper))
+				{
+					return DisconnectParentsRemoved(parent.Parent as Wrappers.Group);
+				}
+				
+				parent.ChildRemoved -= OnChildRemoved;
+				
+				DisconnectParentsRemoved(wrapper as Wrappers.Group);
+				d_ancestors.Remove(parent);
+				
+				return true;
+			}
+			
+			private void OnChildRemoved(Wrappers.Group parent, Wrappers.Wrapper obj)
+			{
+				Wrappers.Wrapper wrapper;
+				
+				if (d_ancestors.TryGetValue(parent, out wrapper))
+				{
+					if (wrapper == obj)
+					{
+						Destroyed(this, new EventArgs());
+					}
+					else if (DisconnectParentsRemoved(obj as Wrappers.Group))
+					{
+						Destroyed(this, new EventArgs());
+					}
+				}
+			}
+			
+			private void HandlePropertyRemoved(object source, Cpg.PropertyRemovedArgs args)
+			{
+				Cpg.Property property = args.Property;
+
+				if ((d_x != null && property == d_x.Property) || property == d_y.Property)
+				{
+					Destroyed(this, new EventArgs());
+				}
 			}
 			
 			public void Dispose()
 			{
 				d_y.Property.RemoveNotification("name", OnNameChanged);
 				d_y.Property.Object.RemoveNotification("id", OnNameChanged);
+				
+				d_y.Property.Object.PropertyRemoved -= HandlePropertyRemoved;
+				
+				DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_y.Property.Object.Parent) as Wrappers.Group);
+				
+				if (d_x != null)
+				{
+					d_x.Property.Object.PropertyRemoved -= HandlePropertyRemoved;
+					
+					DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_x.Property.Object.Parent) as Wrappers.Group);
+				}				
 			}
 			
 			private void UpdateName()
@@ -146,6 +236,8 @@ namespace Cpg.Studio.Dialogs
 			{
 				d_plots.Add(plot);				
 				d_canvas.Graph.Add(plot.Renderer);
+				
+				plot.Destroyed += OnPlotDestroyed;
 			}
 			
 			public void Remove(Series plot)
@@ -157,6 +249,18 @@ namespace Cpg.Studio.Dialogs
 				
 				d_plots.Remove(plot);
 				d_canvas.Graph.Remove(plot.Renderer);
+				
+				plot.Destroyed -= OnPlotDestroyed;
+				
+				if (d_plots.Count == 0)
+				{
+					Destroy();
+				}
+			}
+			
+			private void OnPlotDestroyed(object source, EventArgs args)
+			{
+				Remove((Series)source);
 			}
 
 			public Gdk.Pixbuf CreateDragIcon()
