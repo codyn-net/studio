@@ -12,20 +12,34 @@ namespace Cpg.Studio.Widgets.Editors
 	{
 		private class Node : Widgets.Node
 		{
+			public enum Column
+			{
+				Target,
+				Equation,
+				Tooltip,
+				EquationEditable
+			}
+
 			private LinkAction d_action;
 
 			public Node(LinkAction action)
 			{
 				d_action = action;
 				
-				d_action.AddNotification("target", OnActionChanged);
-				d_action.AddNotification("equation", OnActionChanged);
+				if (d_action != null)
+				{				
+					d_action.AddNotification("target", OnActionChanged);
+					d_action.AddNotification("equation", OnActionChanged);
+				}
 			}
 			
 			public override void Dispose()
 			{
-				d_action.RemoveNotification("target", OnActionChanged);
-				d_action.RemoveNotification("equation", OnActionChanged);
+				if (d_action != null)
+				{
+					d_action.RemoveNotification("target", OnActionChanged);
+					d_action.RemoveNotification("equation", OnActionChanged);
+				}
 				
 				base.Dispose();
 			}
@@ -41,22 +55,28 @@ namespace Cpg.Studio.Widgets.Editors
 				get	{ return d_action; }
 			}
 			
-			[NodeColumn(0)]
+			[NodeColumn(Column.Target)]
 			public string Target
 			{
-				get { return d_action.Target; }
+				get { return d_action != null ? d_action.Target : "Add..."; }
 			}
 			
-			[NodeColumn(1)]
+			[NodeColumn(Column.Equation)]
 			public string Equation
 			{
-				get { return d_action.Equation.AsString; }
+				get { return d_action != null ? d_action.Equation.AsString : ""; }
 			}
 			
-			[NodeColumn(2)]
+			[NodeColumn(Column.Tooltip)]
 			public string Tooltip
 			{
-				get { return d_action.Annotation; }
+				get { return d_action != null ? d_action.Annotation : ""; }
+			}
+			
+			[NodeColumn(Column.EquationEditable)]
+			public bool EquationEditable
+			{
+				get { return d_action != null; }
 			}
 		}
 
@@ -64,6 +84,11 @@ namespace Cpg.Studio.Widgets.Editors
 		private Actions d_actions;
 		private Widgets.TreeView<Node> d_treeview;
 		private bool d_selectAction;
+		private Node d_dummy;
+		private Entry d_editingEntry;
+		private string d_editingPath;
+		private CellRenderer d_rendererTarget;
+		private CellRenderer d_rendererEquation;
 
 		public Link(Wrappers.Link link, Actions actions)
 		{
@@ -89,7 +114,8 @@ namespace Cpg.Studio.Widgets.Editors
 			d_treeview.Selection.Mode = SelectionMode.Multiple;
 			d_treeview.ButtonPressEvent += OnTreeViewButtonPressEvent;
 			d_treeview.EnableSearch = false;
-			d_treeview.TooltipColumn = 2;
+			d_treeview.TooltipColumn = (int)Node.Column.Tooltip;
+			d_treeview.KeyPressEvent += OnTreeViewKeyPressEvent;
 			
 			Add(d_treeview);
 			
@@ -97,25 +123,51 @@ namespace Cpg.Studio.Widgets.Editors
 			Gtk.TreeViewColumn column;
 			
 			// Target renderer
-			
 			renderer = new CellRendererText();
-			column = d_treeview.AppendColumn("Target", renderer, "text", 0);
+			column = d_treeview.AppendColumn("Target", renderer, "text", Node.Column.Target);
 			
 			column.SetCellDataFunc(renderer, VisualizeProperties);
+
+			d_rendererTarget = renderer;
 
 			renderer.Editable = true;
 			renderer.Edited += HandleLinkActionTargetEdited;
 			renderer.EditingStarted += HandleLinkActionTargetEditingStarted;
+			renderer.EditingCanceled += delegate {
+				if (d_editingEntry != null && Utils.GetCurrentEvent() is Gdk.EventButton)
+				{
+					// Still do it actually
+					TargetEdited(d_editingEntry.Text, d_editingPath);
+				}
+			};
 
 			column.MinWidth = 80;
 			
 			// Equation renderer
 			renderer = new CellRendererText();
 			renderer.Editable = true;
+			d_rendererEquation = renderer;
 			
+			renderer.EditingStarted += delegate(object o, EditingStartedArgs a) {
+				d_editingEntry = a.Editable as Entry;
+				d_editingPath = a.Path;
+				
+				d_editingEntry.KeyPressEvent += delegate (object source, KeyPressEventArgs args) {
+					OnEntryKeyPressed(args, d_rendererEquation, EquationEdited);
+				};
+			};
+
 			renderer.Edited += HandleLinkActionEquationEdited;
 			
-			column = d_treeview.AppendColumn("Equation", renderer, "text", 1);
+			renderer.EditingCanceled += delegate {
+				if (d_editingEntry != null && Utils.GetCurrentEvent() is Gdk.EventButton)
+				{
+					// Still do it actually
+					EquationEdited(d_editingEntry.Text, d_editingPath);
+				}
+			};
+			
+			column = d_treeview.AppendColumn("Equation", renderer, "text", Node.Column.Equation, "editable", Node.Column.EquationEditable);
 			column.Expand = true;
 			
 			column.SetCellDataFunc(renderer, VisualizeProperties);
@@ -131,6 +183,18 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				return;
 			}
+			
+			d_editingEntry = entry;
+			d_editingPath = args.Path;
+			
+			if (d_treeview.NodeStore.FindPath(args.Path).LinkAction == null)
+			{
+				entry.Text = "";
+			}
+			
+			d_editingEntry.KeyPressEvent += delegate (object source, KeyPressEventArgs a) {
+				OnEntryKeyPressed(a, d_rendererTarget, TargetEdited);
+			};
 			
 			if (d_link.To == null)
 			{
@@ -197,6 +261,9 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				AddLinkAction(action);
 			}
+			
+			d_dummy = new Node(null);
+			d_treeview.NodeStore.Add(d_dummy);
 		}
 		
 		private void HandleLinkActionRemoved(object source, Cpg.LinkAction action)
@@ -206,7 +273,9 @@ namespace Cpg.Studio.Widgets.Editors
 
 		private void HandleLinkActionAdded(object source, Cpg.LinkAction action)
 		{
+			d_treeview.NodeStore.Remove(d_dummy);
 			AddLinkAction(action);
+			d_treeview.NodeStore.Add(d_dummy);
 		}
 		
 		private void AddLinkAction(Cpg.LinkAction action)
@@ -224,29 +293,53 @@ namespace Cpg.Studio.Widgets.Editors
 				d_treeview.SetCursor(path, d_treeview.GetColumn(0), true);
 			}			
 		}
-
-		private void HandleLinkActionTargetEdited(object o, EditedArgs args)
+		
+		private void TargetEdited(string text, string path)
 		{
-			Node node = d_treeview.NodeStore.FindPath(args.Path);
+			Node node = d_treeview.NodeStore.FindPath(path);
 			
-			if (node.LinkAction.Target == args.NewText.Trim())
+			if (node.LinkAction != null && node.LinkAction.Target == text.Trim())
 			{
 				return;
 			}
+			
+			if (String.IsNullOrEmpty(text.Trim()))
+			{
+				return;
+			}
+			
+			if (node.LinkAction == null)
+			{
+				d_selectAction = true;
+				d_actions.Do(new Undo.AddLinkAction(d_link, text.Trim(), ""));
+				d_selectAction = false;
+			}
+			else
+			{
+				d_actions.Do(new Undo.ModifyLinkActionTarget(d_link, node.LinkAction.Target, text.Trim()));
+			}
+		}
 
-			d_actions.Do(new Undo.ModifyLinkActionTarget(d_link, node.LinkAction.Target, args.NewText.Trim()));
+		private void HandleLinkActionTargetEdited(object o, EditedArgs args)
+		{
+			TargetEdited(args.NewText, args.Path);
 		}
 		
 		private void HandleLinkActionEquationEdited(object o, EditedArgs args)
 		{
-			Node node = d_treeview.NodeStore.FindPath(args.Path);
+			EquationEdited(args.NewText, args.Path);
+		}
+		
+		private void EquationEdited(string text, string path)
+		{
+			Node node = d_treeview.NodeStore.FindPath(path);
 			
-			if (node.LinkAction.Equation.AsString == args.NewText.Trim())
+			if (node.LinkAction.Equation.AsString == text.Trim())
 			{
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyLinkActionEquation(d_link, node.LinkAction.Target, args.NewText.Trim()));
+			d_actions.Do(new Undo.ModifyLinkActionEquation(d_link, node.LinkAction.Target, text.Trim()));
 		}
 
 		private void DoAddAction()
@@ -385,13 +478,18 @@ namespace Cpg.Studio.Widgets.Editors
 			CellRendererText text = renderer as CellRendererText;
 			Node node = d_treeview.NodeStore.GetFromIter(iter);
 			
-			bool fromtemp = (d_link.GetActionTemplate(node.LinkAction, true) != null);
-			bool overridden = (d_link.GetActionTemplate(node.LinkAction, false) != null);
+			bool fromtemp = node.LinkAction != null ? (d_link.GetActionTemplate(node.LinkAction, true) != null) : false;
+			bool overridden = node.LinkAction != null ? (d_link.GetActionTemplate(node.LinkAction, false) != null) : false;
 			
 			text.Weight = (int)Pango.Weight.Normal;
 			text.Style = Pango.Style.Normal;
 			
-			if (d_link.To == null || d_link.To.Property(node.Target) == null)
+			if (node.LinkAction == null)
+			{
+				text.ForegroundGdk = d_treeview.Style.Foreground(StateType.Insensitive);
+				text.Style = Pango.Style.Italic;
+			}
+			else if (d_link.To == null || d_link.To.Property(node.Target) == null)
 			{
 				text.Foreground = "#ff0000";
 			}
@@ -415,6 +513,165 @@ namespace Cpg.Studio.Widgets.Editors
 				text.Style = Pango.Style.Italic;
 			}
 		}
+
+		private TreeViewColumn NextColumn(TreePath path, TreeViewColumn column, bool prev, out TreePath next)
+		{
+			TreeViewColumn[] columns = d_treeview.Columns;
+			
+			int idx = Array.IndexOf(columns, column);
+			next = null;
+			
+			if (idx < 0)
+			{
+				return null;
+			}
+			
+			next = path.Copy();
+			
+			if (!prev && idx == columns.Length - 1)
+			{
+				next.Next();
+				idx = 0;
+			}
+			else if (prev && idx == 0)
+			{
+				if (!next.Prev())
+				{
+					return null;
+				}
+				
+				idx = columns.Length - 1;
+			}
+			else if (!prev)
+			{
+				++idx;
+			}
+			else
+			{
+				--idx;
+			}
+			
+			return columns[idx];
+		}
+
+		private void OnTreeViewKeyPressEvent(object o, KeyPressEventArgs args)
+		{
+			if (args.Event.Key == Gdk.Key.Tab ||
+			    args.Event.Key == Gdk.Key.KP_Tab ||
+			    args.Event.Key == Gdk.Key.ISO_Left_Tab)
+			{
+				TreePath path;
+				TreeViewColumn column;
+				TreePath next;
+				
+				d_treeview.GetCursor(out path, out column);
+				
+				column = NextColumn(path, column, (args.Event.State & Gdk.ModifierType.ShiftMask) != 0, out next);
+				
+				if (column != null)
+				{
+					CellRenderer r = column.CellRenderers[0];
+					d_treeview.SetCursor(next, column, r is CellRendererText && !(r is CellRendererCombo));
+					args.RetVal = true;
+				}
+				else
+				{
+					args.RetVal = false;
+				}
+			}
+			else
+			{
+				args.RetVal = false;
+			}
+		}
+
+		private CellRenderer NextCell(CellRenderer renderer, TreePath path, bool prev, out TreeViewColumn column, out TreePath nextPath)
+		{
+			TreeViewColumn[] columns = d_treeview.Columns;
+			bool getnext = false;
+			CellRenderer prevedit = null;
+			column = null;
+			
+			nextPath = path.Copy();
+
+			for (int j = 0; j < columns.Length; ++j)
+			{
+				CellRenderer[] renderers = columns[j].CellRenderers;
+
+				for (int i = 0; i < renderers.Length; ++i)
+				{
+					if (renderer == renderers[i])
+					{
+						getnext = true;
+						
+						if (prev)
+						{
+							if (prevedit == null && nextPath.Prev())
+							{
+								column = columns[columns.Length - 1];
+								prevedit = column.CellRenderers[column.CellRenderers.Length - 1];
+							}
+
+							return prevedit;
+						}
+					}
+					else if (getnext)
+					{
+						column = columns[j];
+						return renderers[i];
+					}
+					else
+					{
+						prevedit = renderers[i];
+						column = columns[j];
+					}
+				}
+			}
+			
+			nextPath.Next();
+			
+			if (nextPath.Indices[0] < d_treeview.NodeStore.Count)
+			{
+				column = columns[0];
+				return column.CellRenderers[0];
+			}
+			else
+			{
+				return null;
+			}
+		}
+		
+		private delegate void EditedHandler(string text, string path);
+		
+		private void OnEntryKeyPressed(KeyPressEventArgs args, CellRenderer renderer, EditedHandler handler)
+		{
+			if (args.Event.Key == Gdk.Key.Tab ||
+			    args.Event.Key == Gdk.Key.ISO_Left_Tab ||
+			    args.Event.Key == Gdk.Key.KP_Tab)
+			{
+				TreeViewColumn column;
+				
+				handler(d_editingEntry.Text, d_editingPath);
+				renderer.StopEditing(false);
+				
+				TreePath nextPath;
+
+				/* Start editing the next cell */
+				CellRenderer next = NextCell(renderer, new TreePath(d_editingPath), (args.Event.State & Gdk.ModifierType.ShiftMask) != 0, out column, out nextPath);
+				
+				if (next != null)
+				{
+					d_treeview.SetCursorOnCell(nextPath, column, next, true);
+				}
+				
+				args.RetVal = true;
+			}
+			else
+			{
+				args.RetVal = false;
+			}
+		}
+
 	}
 }
 

@@ -22,7 +22,8 @@ namespace Cpg.Studio.Widgets.Editors
 				Flags = 3,
 				Editable = 4,
 				Target = 5,
-				Tooltip = 6
+				Tooltip = 6,
+				Style = 7
 			}
 			
 			public Node(Cpg.Property property)
@@ -98,7 +99,7 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				get
 				{
-					return d_property.Name;
+					return d_property != null ? d_property.Name : "Add...";
 				}
 			}
 			
@@ -287,6 +288,7 @@ namespace Cpg.Studio.Widgets.Editors
 		private string d_editingPath;
 		private bool d_selectProperty;
 		private bool d_blockInterfaceRemove;
+		private Node d_dummy;
 
 		public Properties(Wrappers.Wrapper wrapper, Actions actions)
 		{
@@ -307,6 +309,8 @@ namespace Cpg.Studio.Widgets.Editors
 		
 		private void DoEditingStarted(object o, EditingStartedArgs args)
 		{
+			d_editingPath = args.Path;
+
 			FillFlagsStore(d_treeview.NodeStore.FindPath(args.Path).Property);
 		}
 
@@ -378,6 +382,7 @@ namespace Cpg.Studio.Widgets.Editors
 			d_treeview.ShowExpanders = false;
 
 			d_treeview.ButtonPressEvent += OnTreeViewButtonPressEvent;
+			d_treeview.KeyPressEvent += OnTreeViewKeyPressEvent;
 			
 			d_treeview.TooltipColumn = (int)Node.Columns.Tooltip;
 			
@@ -394,9 +399,23 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			column.SetCellDataFunc(renderer, VisualizeProperties);
 			
+			CellRenderer rname = renderer;
+			
 			renderer.EditingStarted += delegate(object o, EditingStartedArgs args) {
 				d_editingEntry = args.Editable as Entry;
 				d_editingPath = args.Path;
+				
+				Node node = d_treeview.NodeStore.FindPath(new TreePath(args.Path));
+				
+				if (node.Property == null && !(node is InterfaceNode))
+				{
+					d_editingEntry.Text = "";
+				}
+				
+				d_editingEntry.KeyPressEvent += delegate (object source, KeyPressEventArgs a)
+				{
+					OnEntryKeyPressed(a, rname, NameEdited);
+				};
 			};
 
 			renderer.EditingCanceled += delegate(object sender, EventArgs e) {
@@ -406,7 +425,7 @@ namespace Cpg.Studio.Widgets.Editors
 					NameEdited(d_editingEntry.Text, d_editingPath);
 				}
 			};
-
+			
 			renderer.Edited += DoNameEdited;
 			
 			// Setup renderer for expression of the property
@@ -420,9 +439,16 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			column.SetCellDataFunc(renderer, VisualizeProperties);
 			
+			CellRenderer rexpr = renderer;
+			
 			renderer.EditingStarted += delegate(object o, EditingStartedArgs args) {
 				d_editingEntry = args.Editable as Entry;
 				d_editingPath = args.Path;
+				
+				d_editingEntry.KeyPressEvent += delegate (object source, KeyPressEventArgs a)
+				{
+					OnEntryKeyPressed(a, rexpr, ExpressionEdited);
+				};
 			};
 
 			renderer.EditingCanceled += delegate(object sender, EventArgs e) {
@@ -458,6 +484,7 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			combo.EditingStarted += DoEditingStarted;
 			combo.Edited += DoFlagsEdited;
+
 			combo.HasEntry = false;
 			
 			d_flagsStore = new ListStore(typeof(string));
@@ -477,9 +504,16 @@ namespace Cpg.Studio.Widgets.Editors
 
 				column.SetCellDataFunc(renderer, VisualizeProperties);
 				
+				CellRenderer riface = renderer;
+				
 				renderer.EditingStarted += delegate(object o, EditingStartedArgs args) {
 					d_editingEntry = args.Editable as Entry;
 					d_editingPath = args.Path;
+					
+					d_editingEntry.KeyPressEvent += delegate (object source, KeyPressEventArgs a)
+					{
+						OnEntryKeyPressed(a, riface, InterfaceEdited);
+					};
 				};
 				
 				renderer.EditingCanceled += delegate(object sender, EventArgs e) {
@@ -497,6 +531,152 @@ namespace Cpg.Studio.Widgets.Editors
 			InitializeFlagsList();
 			
 			Add(d_treeview);
+		}
+		
+		private TreeViewColumn NextColumn(TreePath path, TreeViewColumn column, bool prev, out TreePath next)
+		{
+			TreeViewColumn[] columns = d_treeview.Columns;
+			
+			int idx = Array.IndexOf(columns, column);
+			next = null;
+			
+			if (idx < 0)
+			{
+				return null;
+			}
+			
+			next = path.Copy();
+			
+			if (!prev && idx == columns.Length - 1)
+			{
+				next.Next();
+				idx = 0;
+			}
+			else if (prev && idx == 0)
+			{
+				if (!next.Prev())
+				{
+					return null;
+				}
+				
+				idx = columns.Length - 1;
+			}
+			else if (!prev)
+			{
+				++idx;
+			}
+			else
+			{
+				--idx;
+			}
+			
+			return columns[idx];
+		}
+
+		private void OnTreeViewKeyPressEvent(object o, KeyPressEventArgs args)
+		{
+			if (args.Event.Key == Gdk.Key.Tab ||
+			    args.Event.Key == Gdk.Key.KP_Tab ||
+			    args.Event.Key == Gdk.Key.ISO_Left_Tab)
+			{
+				TreePath path;
+				TreeViewColumn column;
+				TreePath next;
+				
+				d_treeview.GetCursor(out path, out column);
+				
+				column = NextColumn(path, column, (args.Event.State & Gdk.ModifierType.ShiftMask) != 0, out next);
+				
+				if (column != null)
+				{
+					CellRenderer r = column.CellRenderers[0];
+					d_treeview.SetCursor(next, column, r is CellRendererText && !(r is CellRendererCombo));
+					args.RetVal = true;
+				}
+				else
+				{
+					args.RetVal = false;
+				}
+			}
+			else
+			{
+				args.RetVal = false;
+			}
+		}
+		
+		private CellRenderer NextCell(CellRenderer renderer, bool prev, out TreeViewColumn column)
+		{
+			TreeViewColumn[] columns = d_treeview.Columns;
+			bool getnext = false;
+			CellRenderer prevedit = null;
+			column = null;
+
+			for (int j = 0; j < columns.Length; ++j)
+			{
+				CellRenderer[] renderers = columns[j].CellRenderers;
+
+				for (int i = 0; i < renderers.Length; ++i)
+				{
+					if (renderer == renderers[i])
+					{
+						getnext = true;
+						
+						if (prev)
+						{
+							return prevedit;
+						}
+					}
+					else if (getnext)
+					{
+						column = columns[j];
+						return renderers[i];
+					}
+					else
+					{
+						prevedit = renderers[i];
+						column = columns[j];
+					}
+				}
+			}
+			
+			column = null;
+			return null;
+		}
+		
+		private delegate void EditedHandler(string text, string path);
+		
+		private void OnEntryKeyPressed(KeyPressEventArgs args, CellRenderer renderer, EditedHandler handler)
+		{
+			if (args.Event.Key == Gdk.Key.Tab ||
+			    args.Event.Key == Gdk.Key.ISO_Left_Tab ||
+			    args.Event.Key == Gdk.Key.KP_Tab)
+			{
+				TreeViewColumn column;
+
+				/* Start editing the next cell */
+				CellRenderer next = NextCell(renderer, (args.Event.State & Gdk.ModifierType.ShiftMask) != 0, out column);
+				
+				if (next != null)
+				{
+					handler(d_editingEntry.Text, d_editingPath);
+					renderer.StopEditing(false);
+					
+					if (next is CellRendererToggle || next is CellRendererCombo)
+					{
+						d_treeview.SetCursorOnCell(new TreePath(d_editingPath), column, next, false);
+					}
+					else
+					{
+						d_treeview.SetCursorOnCell(new TreePath(d_editingPath), column, next, true);
+					}
+				}
+				
+				args.RetVal = true;
+			}
+			else
+			{
+				args.RetVal = false;
+			}
 		}
 		
 		private void Populate()
@@ -521,6 +701,9 @@ namespace Cpg.Studio.Widgets.Editors
 				}
 			}
 			
+			d_dummy = new Node(null);
+			d_treeview.NodeStore.Add(d_dummy);
+			
 			Connect();
 		}
 
@@ -543,7 +726,15 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			if (node.Property == null)
 			{
-				text.Foreground = "#ff0000";
+				if (node is InterfaceNode)
+				{
+					text.Foreground = "#ff0000";
+				}
+				else
+				{
+					text.ForegroundGdk = d_treeview.Style.Foreground(Gtk.StateType.Insensitive);
+					text.Style = Pango.Style.Italic;
+				}
 			}
 			else if (fromtemp || overridden)
 			{
@@ -846,6 +1037,22 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 			
+			if (!(node is InterfaceNode) && node.Property == null)
+			{
+				/* Add a new property */
+				try
+				{
+					d_actions.Do(new Undo.AddProperty(d_wrapper, newName.Trim(), "", PropertyFlags.None));
+				}
+				catch (GLib.GException err)
+				{
+					// Display could not remove, or something
+					Error(this, err);
+				}
+				
+				return;
+			}
+			
 			if (newName.Trim() == node.Property.Name)
 			{
 				return;
@@ -962,7 +1169,9 @@ namespace Cpg.Studio.Widgets.Editors
 		{
 			Node node = new Node(prop);
 
+			d_treeview.NodeStore.Remove(d_dummy);
 			d_treeview.NodeStore.Add(node);
+			d_treeview.NodeStore.Add(d_dummy);
 			
 			if (d_selectProperty)
 			{
