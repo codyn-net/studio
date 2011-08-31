@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
 
-namespace Cpg.Studio.Widgets
+namespace Cpg.Studio.Dialogs
 {
-	public class Monitor : Gtk.Window
+	public class Plotting : Gtk.Window
 	{
 		public class Series : IDisposable
 		{
@@ -184,17 +184,18 @@ namespace Cpg.Studio.Widgets
 		private HPaned d_hpaned;
 		private bool d_configured;
 		
-		private Cpg.Studio.Widgets.Table d_content;
-		private WrappersTree d_tree;
+		private Widgets.Table d_content;
+		private Widgets.WrappersTree d_tree;
 		
 		private List<Graph> d_graphs;
 		Gtk.UIManager d_uimanager;
 		
 		private bool d_autoaxis;
 		private bool d_linkaxis;
-		private bool d_keepaspect;
+		
+		private bool d_ignoreAxisChange;
 
-		public Monitor(Wrappers.Network network, Simulation simulation) : base("Monitor")
+		public Plotting(Wrappers.Network network, Simulation simulation) : base("Monitor")
 		{
 			d_simulation = simulation;
 			d_graphs = new List<Graph>();
@@ -202,11 +203,11 @@ namespace Cpg.Studio.Widgets
 			d_simulation.OnEnd += DoPeriodEnd;
 			
 			d_linkRulers = true;
+			d_ignoreAxisChange = false;
 			
 			d_network = network;
 			d_autoaxis = true;
 			d_linkaxis = true;
-			d_keepaspect = false;
 
 			Build();
 			
@@ -235,7 +236,7 @@ namespace Cpg.Studio.Widgets
 			d_hpaned = new HPaned();
 			d_hpaned.BorderWidth = 0;
 			
-			d_tree = new WrappersTree(d_network);
+			d_tree = new Widgets.WrappersTree(d_network);
 			d_tree.RendererToggle.Visible = false;
 			d_tree.Show();
 			
@@ -259,12 +260,12 @@ namespace Cpg.Studio.Widgets
 			vboxMain.ShowAll();
 		}
 
-		private void HandleTreePopulatePopup(object source, WrappersTree.WrapperNode[] nodes, Menu menu)
+		private void HandleTreePopulatePopup(object source, Widgets.WrappersTree.WrapperNode[] nodes, Menu menu)
 		{
-			List<WrappersTree.WrapperNode> n = new List<WrappersTree.WrapperNode>();
-			List<Property> properties = new List<Property>();
+			List<Widgets.WrappersTree.WrapperNode> n = new List<Widgets.WrappersTree.WrapperNode>();
+			List<Cpg.Property> properties = new List<Cpg.Property>();
 			
-			foreach (WrappersTree.WrapperNode node in nodes)
+			foreach (var node in nodes)
 			{
 				if (node.Property != null)
 				{
@@ -283,7 +284,7 @@ namespace Cpg.Studio.Widgets
 			item = new MenuItem("Add");
 			item.Show();
 			item.Activated += delegate {
-				foreach (WrappersTree.WrapperNode node in n)
+				foreach (var node in n)
 				{
 					Add(node.Property);
 				}
@@ -303,7 +304,7 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 
-		private void HandleTreeActivated(object source, WrappersTree.WrapperNode node)
+		private void HandleTreeActivated(object source, Widgets.WrappersTree.WrapperNode node)
 		{
 			if (node.Property == null)
 			{
@@ -527,6 +528,22 @@ namespace Cpg.Studio.Widgets
 		{
 			return Add(row, col, new Series[] {series});
 		}
+		
+		private delegate void IgnoreHandler();
+		
+		private void IgnoreAxisChange(IgnoreHandler handler)
+		{
+			if (!d_ignoreAxisChange)
+			{
+				d_ignoreAxisChange = true;
+				handler();
+				d_ignoreAxisChange = false;
+			}
+			else
+			{
+				handler();
+			}
+		}
 
 		public Graph Add(int row, int col, IEnumerable<Series> series)
 		{
@@ -559,11 +576,45 @@ namespace Cpg.Studio.Widgets
 			graph.LeaveNotifyEvent += OnGraphLeaveNotify;
 			graph.EnterNotifyEvent += OnGraphEnterNotify;
 			
+			Plot.Graph g = graph.Canvas.Graph;
+			
+			g.XAxis.Changed += delegate
+			{
+				if (d_ignoreAxisChange || !d_linkaxis)
+				{
+					return;
+				}
+				
+				LinkAxes(graph, a => a.XAxis);
+			};
+			
+			g.YAxis.Changed += delegate
+			{
+				if (d_ignoreAxisChange || !d_linkaxis)
+				{
+					return;
+				}
+				
+				LinkAxes(graph, a => a.YAxis);
+			};
+			
 			graph.Canvas.PopulatePopup += delegate (object source, Gtk.UIManager manager) {
 				OnGraphPopulatePopup(graph, manager);
 			};
 			
-			UpdateAutoScaling();
+			if (d_linkaxis && !d_autoaxis && d_graphs.Count > 1)
+			{
+				Graph first = d_graphs[0];
+				
+				IgnoreAxisChange(() => {
+					g.XAxis.Update(first.Canvas.Graph.XAxis);
+					g.YAxis.Update(first.Canvas.Graph.YAxis);
+				});
+			}
+			else
+			{		
+				UpdateAutoScaling();
+			}
 			
 			d_simulation.Resimulate();
 			return graph;
@@ -647,9 +698,8 @@ namespace Cpg.Studio.Widgets
 			ActionGroup ag = new ActionGroup("NormalActions");
 			
 			ag.Add(new ToggleActionEntry[] {
-				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.ZoomFit, "Auto Axis", "<Control>r", "Automatically scale axis to fit data", OnAutoAxisToggled, d_autoaxis),
-				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Scale axis of all plots the same", OnLinkAxisToggled, d_linkaxis),
-				new ToggleActionEntry("ActionKeepAspect", Gtk.Stock.Zoom100, "Keep Aspect", null, "Keep aspect ratio between axis", OnKeepAspectToggled, d_keepaspect)
+				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.ZoomFit, "Auto Axis", "<Control>r", "Automatically scale axes to fit data", OnAutoAxisToggled, d_autoaxis),
+				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Automatically scale all axes to the same range", OnLinkAxisToggled, d_linkaxis)
 			});
 			
 			d_uimanager.InsertActionGroup(ag, 0);
@@ -722,8 +772,6 @@ namespace Cpg.Studio.Widgets
 			{
 				Plot.Graph g = graph.Canvas.Graph;
 				
-				g.KeepAspect = d_keepaspect;
-				
 				if (d_autoaxis && !d_linkaxis)
 				{
 					g.XAxisMode = Plot.AxisMode.Auto;
@@ -735,7 +783,7 @@ namespace Cpg.Studio.Widgets
 					g.YAxisMode = Plot.AxisMode.Fixed;
 				}
 					
-				if (d_linkaxis)
+				if (d_autoaxis && d_linkaxis)
 				{
 					Plot.Range<double> xr = g.DataXRange;
 					Plot.Range<double> yr = g.DataYRange;
@@ -763,17 +811,19 @@ namespace Cpg.Studio.Widgets
 					first = false;
 				}
 			}
-
-			if (d_linkaxis)
-			{
-				foreach (Graph graph in d_graphs)
+			
+			IgnoreAxisChange(() => {
+				if (d_autoaxis && d_linkaxis)
 				{
-					Plot.Graph g = graph.Canvas.Graph;
-					
-					g.XAxis.Update(xrange);
-					g.YAxis.Update(Widen(yrange, 0.1));
+					foreach (Graph graph in d_graphs)
+					{
+						Plot.Graph g = graph.Canvas.Graph;
+						
+						g.XAxis.Update(xrange);
+						g.YAxis.Update(Widen(yrange, 0.1));
+					}
 				}
-			}
+			});
 		}
 		
 		private Plot.Range<double> Widen(Plot.Range<double> range, double fraction)
@@ -804,11 +854,23 @@ namespace Cpg.Studio.Widgets
 			UpdateAutoScaling();
 		}
 		
-		private void OnKeepAspectToggled(object sender, EventArgs args)
+		private delegate Plot.Range<double> RangeSelector(Plot.Graph graph);
+		
+		private void LinkAxes(Graph graph, RangeSelector selector)
 		{
-			d_keepaspect = ((ToggleAction)sender).Active;
-			
-			UpdateAutoScaling();
+			IgnoreAxisChange(() => {
+				Plot.Range<double> nr = selector(graph.Canvas.Graph);
+	
+				foreach (Graph g in d_graphs)
+				{
+					if (g == graph)
+					{
+						continue;
+					}
+					
+					selector(g.Canvas.Graph).Update(nr);
+				}
+			});
 		}
 	}
 }

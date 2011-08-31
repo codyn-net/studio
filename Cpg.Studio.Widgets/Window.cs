@@ -27,7 +27,7 @@ namespace Cpg.Studio.Widgets
 		private ActionGroup d_popupActionGroup;
 		private Dictionary<Wrappers.Wrapper, Dialogs.Property> d_propertyEditors;
 		private Serialization.Project d_project;
-		private Monitor d_monitor;
+		private Dialogs.Plotting d_plotting;
 		private Simulation d_simulation;
 		private string d_prevOpen;
 		private Dialogs.Functions d_functionsDialog;
@@ -126,9 +126,9 @@ namespace Cpg.Studio.Widgets
 				d_progress = null;
 			}
 			
-			if (d_monitor != null)
+			if (d_plotting != null)
 			{
-				d_monitor.Present();
+				d_plotting.Present();
 			}
 		}
 
@@ -724,9 +724,9 @@ namespace Cpg.Studio.Widgets
 				d_messageArea.Destroy();
 			}
 			
-			if (d_monitor != null)
+			if (d_plotting != null)
 			{
-				d_monitor.Destroy();
+				d_plotting.Destroy();
 			}
 			
 			if (d_propertyEditors != null)
@@ -1359,8 +1359,8 @@ namespace Cpg.Studio.Widgets
 				
 				if (mons.Allocation != null)
 				{
-					d_monitor.Resize((int)mons.Allocation.Width, (int)mons.Allocation.Height);
-					d_monitor.Move((int)mons.Allocation.X, (int)mons.Allocation.Y);
+					d_plotting.Resize((int)mons.Allocation.Width, (int)mons.Allocation.Height);
+					d_plotting.Move((int)mons.Allocation.X, (int)mons.Allocation.Y);
 				}
 				
 				for (int i = 0; i < mons.Graphs.Count; ++i)
@@ -1398,7 +1398,7 @@ namespace Cpg.Studio.Widgets
 							x = new Cpg.Monitor(Network, xprop);
 						}
 						
-						Monitor.Graph graph = d_monitor.Add(row, col, x, y);
+						Dialogs.Plotting.Graph graph = d_plotting.Add(row, col, x, y);
 						
 						if (mons.Graphs[i].Settings != null)
 						{
@@ -1546,13 +1546,13 @@ namespace Cpg.Studio.Widgets
 			s.Monitors.Columns = 0;
 			
 			// Save monitor state
-			if (d_monitor != null)
+			if (d_plotting != null)
 			{
-				foreach (Monitor.Graph graph in d_monitor.Graphs)
+				foreach (Dialogs.Plotting.Graph graph in d_plotting.Graphs)
 				{
 					Serialization.Project.Monitor mon = new Serialization.Project.Monitor();
 					
-					foreach (Monitor.Series series in graph.Plots)
+					foreach (Dialogs.Plotting.Series series in graph.Plots)
 					{
 						Serialization.Project.Series ser = new Serialization.Project.Series();
 						
@@ -1579,10 +1579,10 @@ namespace Cpg.Studio.Widgets
 					s.Monitors.Graphs.Add(mon);
 				}
 				
-				s.Monitors.Rows = d_monitor.Rows;
-				s.Monitors.Columns = d_monitor.Columns;
+				s.Monitors.Rows = d_plotting.Rows;
+				s.Monitors.Columns = d_plotting.Columns;
 				
-				s.Monitors.Allocation = WindowAllocation(d_monitor);
+				s.Monitors.Allocation = WindowAllocation(d_plotting);
 			}
 		}
 		
@@ -2296,22 +2296,22 @@ namespace Cpg.Studio.Widgets
 		
 		private void EnsureMonitor()
 		{
-			if (d_monitor != null)
+			if (d_plotting != null)
 			{
 				return;
 			}
 			
-			d_monitor = new Monitor(Network, d_simulation);
+			d_plotting = new Dialogs.Plotting(Network, d_simulation);
 			
-			d_monitor.Realize();
+			d_plotting.Realize();
 			
-			d_windowGroup.AddWindow(d_monitor);
+			d_windowGroup.AddWindow(d_plotting);
 
-			PositionWindow(d_monitor);
-			d_monitor.Present();
+			PositionWindow(d_plotting);
+			d_plotting.Present();
 			
-			d_monitor.Destroyed += delegate(object sender, EventArgs e) {
-				d_monitor = null;
+			d_plotting.Destroyed += delegate(object sender, EventArgs e) {
+				d_plotting = null;
 				(d_normalGroup.GetAction("ViewMonitorAction") as ToggleAction).Active = false;
 			};
 		}
@@ -2320,16 +2320,16 @@ namespace Cpg.Studio.Widgets
 		{
 			ToggleAction toggle = sender as ToggleAction;
 			
-			if (!toggle.Active && d_monitor != null)
+			if (!toggle.Active && d_plotting != null)
 			{
-				Gtk.Window ctrl = d_monitor;
-				d_monitor = null;
+				Gtk.Window ctrl = d_plotting;
+				d_plotting = null;
 				ctrl.Destroy();
 			}
 			else if (toggle.Active)
 			{
 				EnsureMonitor();
-				d_monitor.Present();
+				d_plotting.Present();
 			}
 		}
 		
@@ -2378,7 +2378,7 @@ namespace Cpg.Studio.Widgets
 				properties.Add(obj.Property(property));
 			}
 			
-			d_monitor.Add(properties);
+			d_plotting.Add(properties);
 		}
 
 		private void OnSimulationRunPeriod(object sender, EventArgs args)

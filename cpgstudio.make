@@ -56,6 +56,7 @@ FILES = \
 	Cpg.Studio.Dialogs/Functions.cs \
 	Cpg.Studio.Dialogs/Import.cs \
 	Cpg.Studio.Dialogs/Interpolate.cs \
+	Cpg.Studio.Dialogs/Plotting.cs \
 	Cpg.Studio.Dialogs/PlotSettings.cs \
 	Cpg.Studio.Dialogs/Property.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
@@ -132,7 +133,6 @@ FILES = \
 	Cpg.Studio.Widgets/GenericFunctionNode.cs \
 	Cpg.Studio.Widgets/Grid.cs \
 	Cpg.Studio.Widgets/MessageArea.cs \
-	Cpg.Studio.Widgets/Monitor.cs \
 	Cpg.Studio.Widgets/NodeStore.cs \
 	Cpg.Studio.Widgets/Notebook.cs \
 	Cpg.Studio.Widgets/Pathbar.cs \
