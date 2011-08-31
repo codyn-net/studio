@@ -493,7 +493,8 @@ namespace Cpg.Studio
 			// Reconnect links
 			foreach (Wrappers.Link link in Utils.FilterLink(sel))
 			{
-				if (map.ContainsKey(link.From) && map.ContainsKey(link.To))
+				if ((link.From != null && map.ContainsKey(link.From)) &&
+				    (link.To != null && map.ContainsKey(link.To)))
 				{
 					Wrappers.Wrapper from = map[link.From];
 					Wrappers.Wrapper to = map[link.To];
