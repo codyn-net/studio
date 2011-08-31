@@ -243,6 +243,7 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", OnOpenActivated),
 				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, null, "Revert changes", OnRevertActivated),
 				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", OnSaveActivated),
+				new ActionEntry("SaveProjectAction", null, "Save Project", null, "Save CPG network project file", OnSaveProjectActivated),
 				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", OnSaveAsActivated),
 
 				new ActionEntry("ImportAction", null, "_Import", null, null, null),
@@ -800,6 +801,7 @@ namespace Cpg.Studio.Widgets
 			d_normalGroup.GetAction("ViewControlAction").Visible = false;
 			
 			d_normalGroup.GetAction("RevertAction").Sensitive = !d_simulation.Running && d_project.Filename != null;
+			d_normalGroup.GetAction("SaveProjectAction").Sensitive = d_project.Filename != null;
 			
 			d_grid.Sensitive = !d_simulation.Running;
 			
@@ -1654,6 +1656,19 @@ namespace Cpg.Studio.Widgets
 			return dlg;
 		}
 		
+		private void DoSaveProject()
+		{
+			if (d_project.Filename == null)
+			{
+				return;
+			}
+			
+			SaveProjectSettings();
+			d_project.SaveProject();
+			
+			StatusMessage(String.Format("Saved project of {0}", d_project.Filename), true);
+		}
+		
 		private FileChooserDialog DoSave()
 		{
 			if (d_project.Filename == null)
@@ -1669,6 +1684,11 @@ namespace Cpg.Studio.Widgets
 		private void OnSaveActivated(object sender, EventArgs args)
 		{
 			DoSave();
+		}
+		
+		private void OnSaveProjectActivated(object sender, EventArgs args)
+		{
+			DoSaveProject();
 		}
 		
 		public void StatusMessage(string message)

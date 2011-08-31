@@ -10,6 +10,8 @@
       <menuitem name="Save" action="SaveAction"/>
       <menuitem name="SaveAs" action="SaveAsAction"/>
       <separator/>
+      <menuitem name="SaveProject" action="SaveProjectAction"/>
+      <separator/>
       <menu name="Import" action="ImportAction">
       	<menuitem name="ImportFile" action="ImportFileAction"/>
       	<separator/>

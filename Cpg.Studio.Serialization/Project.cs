@@ -423,6 +423,34 @@ namespace Cpg.Studio.Serialization
 			f.Close();
 		}
 		
+		public void SaveProject()
+		{
+			if (d_externalPath == null)
+			{
+				d_externalPath = GenerateProjectFilename(d_filename);
+			}
+			
+			SaveProjectExternally = true;
+			
+			SaveProject(Path.Combine(Path.GetDirectoryName(d_filename), d_externalPath));
+		}
+		
+		public void SaveProject(string filename)
+		{
+			XmlNode settingsNode = Serialize(d_settings);
+			
+			XmlDocument ext = new XmlDocument();
+			XmlNode root = ext.CreateElement("cpg");
+			ext.AppendChild(root);
+				
+			XmlNode projectNode = ext.CreateElement("project");
+			projectNode.AppendChild(ext.ImportNode(settingsNode, true));
+				
+			root.AppendChild(projectNode);
+				
+			ext.Save(filename);
+		}
+		
 		public void Save(string filename)
 		{
 			Cpg.NetworkSerializer serializer = new Cpg.NetworkSerializer(d_network, d_network.WrappedObject);
