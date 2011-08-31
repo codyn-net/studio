@@ -1162,15 +1162,27 @@ namespace Cpg.Studio.Widgets
 				return true;
 			}
 			
+			Gdk.ModifierType state = evnt.State & Gtk.Accelerator.DefaultModMask;
+			
 			if (evnt.Button != 2)
 			{
-				if (Selected(first) && (evnt.State & Gdk.ModifierType.ShiftMask) != 0)
+				if (Selected(first) && (state & Gdk.ModifierType.ShiftMask) != 0)
 				{
 					Unselect(first);
 					first = null;
 				}
 				
-				if (!(Selected(first) || (evnt.State & Gdk.ModifierType.ShiftMask) != 0))
+				if (Selected(first) && state == 0)
+				{
+					if (evnt.Button == 1)
+					{
+						Point res = ScaledPosition(evnt.X, evnt.Y, System.Math.Floor);
+						UpdateDragState(res);
+					}
+					
+					first = null;
+				}
+				else if (!(Selected(first) || (state & Gdk.ModifierType.ShiftMask) != 0))
 				{
 					Wrappers.Wrapper[] selection = new Wrappers.Wrapper[d_selection.Count];
 					d_selection.CopyTo(selection, 0);
