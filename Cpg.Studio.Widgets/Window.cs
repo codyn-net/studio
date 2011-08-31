@@ -1869,7 +1869,7 @@ namespace Cpg.Studio.Widgets
 			}
 			else if (action.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
 			{
-				d_grid.CenterView(action.Wrapped);
+				d_grid.ScrollInView(action.Wrapped);
 			}
 		}
 		
@@ -1889,7 +1889,7 @@ namespace Cpg.Studio.Widgets
 				}
 				else
 				{
-					d_grid.CenterView(action.Wrapped);
+					d_grid.ScrollInView(action.Wrapped);
 				}
 			}
 		}
@@ -1898,7 +1898,7 @@ namespace Cpg.Studio.Widgets
 		{
 			if (action.Group.TopParent == d_grid.ActiveGroup.TopParent)
 			{
-				d_grid.CenterView(action.Group);
+				d_grid.ScrollInView(action.Group);
 			}
 		}
 		
@@ -1915,7 +1915,7 @@ namespace Cpg.Studio.Widgets
 		{
 			if (action.Link.TopParent == d_grid.ActiveGroup.TopParent)
 			{
-				d_grid.CenterView(action.Link);
+				d_grid.ScrollInView(action.Link);
 			}
 		}
 		

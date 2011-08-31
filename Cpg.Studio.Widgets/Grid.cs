@@ -461,6 +461,68 @@ namespace Cpg.Studio.Widgets
 			return res;
 		}
 		
+		public void ScrollInView(Wrappers.Wrapper obj)
+		{
+			if (obj.Parent == null)
+			{
+				return;
+			}
+			
+			if (d_activeGroup != obj.Parent)
+			{
+				CenterView(obj);
+				return;
+			}
+			
+			UnselectAll();
+			Select(obj);
+			
+			double x;
+			double y;
+			double dx;
+			double dy;
+			
+			if (!LinkFilter(obj))
+			{
+				Wrappers.Link link = (Wrappers.Link)obj;
+				
+				x = System.Math.Min(link.From.Allocation.X, link.To.Allocation.X);
+				dx = System.Math.Max(link.From.Allocation.X + link.From.Allocation.Width,
+				                     link.To.Allocation.X + link.To.Allocation.Width) - x;
+				
+				y = System.Math.Min(link.From.Allocation.Y, link.To.Allocation.Y);
+				dy = System.Math.Max(link.From.Allocation.Y + link.From.Allocation.Height,
+				                     link.To.Allocation.Y + link.To.Allocation.Height) - y;
+			}
+			else
+			{
+				x = obj.Allocation.X;
+				y = obj.Allocation.Y;
+				
+				dx = obj.Allocation.Width;
+				dy = obj.Allocation.Height;
+			}
+			
+			int px = (int)(x * ZoomLevel);
+			int py = (int)(y * ZoomLevel);
+			
+			int pdx = (int)(dx * ZoomLevel);
+			int pdy = (int)(dy * ZoomLevel);
+			
+			/* If object is not in the view, scroll to center it */
+			if (px < ActiveGroup.X ||
+			    py < ActiveGroup.Y ||
+			    px + pdx > Allocation.Width + ActiveGroup.X ||
+			    py + pdy > Allocation.Height + ActiveGroup.Y)
+			{
+				ActiveGroup.X = (int)(px + (pdx - Allocation.Width) / 2.0f);
+				ActiveGroup.Y = (int)(py + (pdy - Allocation.Height) / 2.0f);
+
+				ModifiedView(this, new EventArgs());
+				QueueDraw();
+			}
+		}
+		
 		public void CenterView()
 		{
 			double x, y;
