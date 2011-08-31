@@ -539,7 +539,14 @@ namespace Cpg.Studio.Dialogs
 			d_content.EnsureSize(d_content.NRows + 1, d_content.NColumns);
 			Graph g = Add((int)d_content.NRows - 1, (int)d_content.NColumns - 1, series);
 			
+			Plot.Settings settings = new Plot.Settings();
+
+			settings.Get(graph.Canvas.Graph);
+			settings.Set(g.Canvas.Graph);
+			
 			d_content.SetPosition(g, (int)pt.X, (int)pt.Y + 1);
+			
+			UpdateAutoScaling();
 		}
 		
 		public IEnumerable<Graph> Graphs
