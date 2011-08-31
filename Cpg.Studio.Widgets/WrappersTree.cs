@@ -816,10 +816,20 @@ namespace Cpg.Studio.Widgets
 			if (d_searchText.LastIndexOfAny(new char[] {'/', '"', '.', ':', '('}) != -1)
 			{
 				Cpg.Selector selector = null;
+				string s;
+				
+				if (d_searchText.EndsWith("."))
+				{
+					s = d_searchText.Substring(0, d_searchText.Length - 1) + " | children";
+				}
+				else
+				{
+					s = d_searchText;
+				}
 
 				try
 				{
-					selector = Cpg.Selector.Parse(d_group, d_searchText);
+					selector = Cpg.Selector.Parse(d_group, s);
 				}
 				catch
 				{
