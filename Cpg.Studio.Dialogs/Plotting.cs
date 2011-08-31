@@ -6,6 +6,8 @@ using System.Reflection;
 
 namespace Cpg.Studio.Dialogs
 {
+	[Binding(Gdk.Key.R, Gdk.ModifierType.ControlMask, "ToggleAutoAxis"),
+	 Binding(Gdk.Key.L, Gdk.ModifierType.ControlMask, "ToggleLinkAxis")]
 	public class Plotting : Gtk.Window
 	{
 		public class Series : IDisposable
@@ -298,6 +300,8 @@ namespace Cpg.Studio.Dialogs
 		private bool d_linkaxis;
 		
 		private bool d_ignoreAxisChange;
+		
+		private ActionGroup d_actiongroup;
 
 		public Plotting(Wrappers.Network network, Simulation simulation) : base("Monitor")
 		{
@@ -799,14 +803,14 @@ namespace Cpg.Studio.Dialogs
 		private void BuildUI()
 		{
 			d_uimanager = new UIManager();
-			ActionGroup ag = new ActionGroup("NormalActions");
+			d_actiongroup = new ActionGroup("NormalActions");
 			
-			ag.Add(new ToggleActionEntry[] {
+			d_actiongroup.Add(new ToggleActionEntry[] {
 				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.ZoomFit, "Auto Axis", "<Control>r", "Automatically scale axes to fit data", OnAutoAxisToggled, d_autoaxis),
 				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Automatically scale all axes to the same range", OnLinkAxisToggled, d_linkaxis)
 			});
 			
-			d_uimanager.InsertActionGroup(ag, 0);
+			d_uimanager.InsertActionGroup(d_actiongroup, 0);
 			d_uimanager.AddUiFromResource("monitor-ui.xml");
 
 			AddAccelGroup(d_uimanager.AccelGroup);
@@ -975,6 +979,20 @@ namespace Cpg.Studio.Dialogs
 					selector(g.Canvas.Graph).Update(nr);
 				}
 			});
+		}
+		
+		private void ToggleLinkAxis()
+		{
+			ToggleAction action = d_actiongroup.GetAction("ActionLinkAxis") as ToggleAction;
+			
+			action.Active = !action.Active;
+		}
+		
+		private void ToggleAutoAxis()
+		{
+			ToggleAction action = d_actiongroup.GetAction("ActionAutoAxis") as ToggleAction;
+			
+			action.Active = !action.Active;
 		}
 	}
 }
