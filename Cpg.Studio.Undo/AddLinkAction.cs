@@ -8,6 +8,14 @@ namespace Cpg.Studio.Undo
 		{
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Add action `{0}' on `{0}'", Target, Link.FullId);
+			}
+		}
+		
 		public void Undo()
 		{
 			Remove();

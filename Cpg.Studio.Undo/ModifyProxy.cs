@@ -14,7 +14,15 @@ namespace Cpg.Studio.Undo
 			d_proxy = proxy;
 			d_previousProxy = grp.Proxy;
 		}
-		
+
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change proxy `{0}' to `{1}' on `{2}'", d_previousProxy.Id, d_proxy.Id, d_group.FullId);
+			}
+		}
+
 		public void Undo()
 		{
 			d_group.SetProxy(d_previousProxy);

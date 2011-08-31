@@ -13,6 +13,15 @@ namespace Cpg.Studio.Undo
 			d_previousBegin = piece.Begin;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change polynomial piece beginning from `{0}' to `{1}' on `{2}'",
+				                     d_previousBegin, d_begin, WrappedObject.FullId);
+			}
+		}
+		
 		public void Undo()
 		{
 			Piece.Begin = d_previousBegin;

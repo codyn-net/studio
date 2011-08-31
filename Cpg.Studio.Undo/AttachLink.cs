@@ -19,6 +19,30 @@ namespace Cpg.Studio.Undo
 			d_link = link;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				if (d_from == null)
+				{
+					return String.Format("Deattach link `{0}'", d_link.FullId);
+				}
+				else if (d_from == d_to)
+				{
+					return String.Format("Attach link `{0}' to `{1}'",
+					                     d_link.FullId,
+					                     d_from.FullId);
+				}
+				else
+				{
+					return String.Format("Attach link `{0}' from `{1}' to `{2}'",
+					                     d_link.FullId,
+					                     d_from.FullId,
+					                     d_to.FullId);
+				}
+			}
+		}
+		
 		public void Undo()
 		{
 			d_link.Attach(d_prevFrom, d_prevTo);

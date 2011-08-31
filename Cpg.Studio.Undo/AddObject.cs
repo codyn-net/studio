@@ -8,6 +8,14 @@ namespace Cpg.Studio.Undo
 		{
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Add `{0}'", Wrapped.FullId);
+			}
+		}
+		
 		public void Undo()
 		{
 			DoRemove();

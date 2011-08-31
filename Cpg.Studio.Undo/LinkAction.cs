@@ -23,6 +23,14 @@ namespace Cpg.Studio.Undo
 			}
 		}
 		
+		public string Target
+		{
+			get
+			{
+				return d_target;
+			}
+		}
+		
 		public void Add()
 		{
 			d_link.AddAction(d_target, new Cpg.Expression(d_expression));

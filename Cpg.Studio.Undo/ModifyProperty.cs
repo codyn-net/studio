@@ -24,6 +24,21 @@ namespace Cpg.Studio.Undo
 			d_previousFlags = property.Flags;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				if (d_expression != null)
+				{
+					return String.Format("Modify expression `{0}'", Prop.FullNameForDisplay);
+				}
+				else
+				{
+					return String.Format("Modify flags `{0}'", Prop.FullNameForDisplay);
+				}
+			}
+		}
+		
 		public void Undo()
 		{
 			if (d_expression != null)

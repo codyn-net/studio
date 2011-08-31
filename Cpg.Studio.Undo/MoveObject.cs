@@ -20,6 +20,14 @@ namespace Cpg.Studio.Undo
 			d_mergedGroup = null;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Move `{0}'", Wrapped.FullId);
+			}
+		}
+		
 		public void Undo()
 		{
 			if (d_mergedGroup != null)

@@ -13,6 +13,14 @@ namespace Cpg.Studio.Undo
 			d_prevId = wrapped.Id;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change id from `{0}' to `{1}'", d_prevId, d_id);
+			}
+		}
+		
 		public void Undo()
 		{
 			Wrapped.Id = d_prevId;

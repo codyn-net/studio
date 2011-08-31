@@ -12,6 +12,14 @@ namespace Cpg.Studio.Undo
 		{
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Add property `{0}' in `{1}'", Prop.Name, Prop.Object.FullIdForDisplay);
+			}
+		}
+		
 		public void Undo()
 		{
 			Remove();

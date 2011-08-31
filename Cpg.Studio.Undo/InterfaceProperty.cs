@@ -26,6 +26,30 @@ namespace Cpg.Studio.Undo
 			}
 		}
 		
+		public string Name
+		{
+			get
+			{
+				return d_name;
+			}
+		}
+		
+		public string ChildName
+		{
+			get
+			{
+				return d_childname;
+			}
+		}
+		
+		public string PropertyId
+		{
+			get
+			{
+				return d_propid;
+			}
+		}
+		
 		public void Add()
 		{
 			d_group.PropertyInterface.Add(d_name, d_childname, d_propid);

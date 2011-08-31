@@ -13,6 +13,15 @@ namespace Cpg.Studio.Undo
 			d_previousCoefficients = piece.Coefficients;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change polynomial piece coefficients on `{0}'",
+				                     WrappedObject.FullId);
+			}
+		}
+		
 		public void Undo()
 		{
 			Piece.Coefficients = d_previousCoefficients;

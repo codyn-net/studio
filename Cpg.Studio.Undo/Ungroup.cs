@@ -10,7 +10,7 @@ namespace Cpg.Studio.Undo
 		{
 			d_parent = parent;
 		}
-		
+
 		public Wrappers.Group Parent
 		{
 			get

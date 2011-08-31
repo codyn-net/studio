@@ -18,6 +18,16 @@ namespace Cpg.Studio.Undo
 			d_filename = filename;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Import `{0}' as `{1}'",
+				                     d_filename,
+				                     d_id);
+			}
+		}
+		
 		private void MergeAnnotations(Wrappers.Wrapper original, Wrappers.Wrapper imported)
 		{
 			imported.Allocation = original.Allocation.Copy();

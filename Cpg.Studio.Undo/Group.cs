@@ -12,6 +12,21 @@ namespace Cpg.Studio.Undo
 			d_actions = new List<IAction>(actions);
 		}
 		
+		public string Description
+		{
+			get
+			{
+				List<string> ret = new List<string>();
+				
+				foreach (IAction action in d_actions)
+				{
+					ret.Add(action.Description);
+				}
+				
+				return String.Join(", ", ret.ToArray());
+			}
+		}
+		
 		public List<IAction> Actions
 		{
 			get

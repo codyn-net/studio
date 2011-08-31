@@ -12,6 +12,15 @@ namespace Cpg.Studio.Undo
 			d_end = end;
 			d_previousEnd = piece.End;
 		}
+
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change polynomial piece end from `{0}' to `{1}' on `{2}'",
+				                     d_previousEnd, d_end, WrappedObject.FullId);
+			}
+		}
 		
 		public void Undo()
 		{

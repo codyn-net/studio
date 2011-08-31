@@ -8,6 +8,15 @@ namespace Cpg.Studio.Undo
 		{
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Remove polynomial piece `{0}:{1}' from `{2}'",
+				                     Piece.Begin, Piece.End, WrappedObject.FullId);
+			}
+		}
+		
 		public void Undo()
 		{
 			DoAddPiece();

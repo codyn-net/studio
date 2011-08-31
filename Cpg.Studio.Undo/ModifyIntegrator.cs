@@ -15,6 +15,14 @@ namespace Cpg.Studio.Undo
 			d_integrator = integrator;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change integrator from `{0}' to `{1}'", d_prevIntegrator.Name, d_integrator.Name);
+			}
+		}
+		
 		public void Undo()
 		{
 			d_network.Integrator = d_prevIntegrator;

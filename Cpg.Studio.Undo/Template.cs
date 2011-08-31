@@ -13,6 +13,27 @@ namespace Cpg.Studio.Undo
 			d_template = template;
 		}
 		
+		public abstract string Description
+		{
+			get;
+		}
+		
+		public Wrappers.Wrapper WrappedTemplate
+		{
+			get
+			{
+				return d_template;
+			}
+		}
+		
+		public Wrappers.Wrapper WrappedObject
+		{
+			get
+			{
+				return d_obj;
+			}
+		}
+		
 		protected void Apply()
 		{
 			d_obj.ApplyTemplate(d_template);

@@ -14,6 +14,14 @@ namespace Cpg.Studio.Undo
 			d_expression = expression;
 			d_prevExpression = expr.AsString;
 		}
+
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change expression from `{0}' to `{1}'", d_prevExpression, d_expression);
+			}
+		}
 		
 		public void Undo()
 		{

@@ -17,6 +17,14 @@ namespace Cpg.Studio.Undo
 			d_equation = equation;
 			d_previousEquation = link.GetAction(target).Equation.AsString;
 		}
+
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change action equation `{0}' to `{1}' on `{2}'", d_previousEquation, d_equation, d_link.FullId);
+			}
+		}
 		
 		public void Undo()
 		{

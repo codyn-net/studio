@@ -11,5 +11,10 @@ namespace Cpg.Studio.Undo
 		void Merge(IAction other);
 		
 		bool Verify();
+		
+		string Description
+		{
+			get;
+		}
 	}
 }

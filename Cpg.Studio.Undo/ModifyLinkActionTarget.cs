@@ -15,6 +15,14 @@ namespace Cpg.Studio.Undo
 			d_newTarget = newTarget;
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change action target `{0}' to `{1}' on `{2}'", d_oldTarget, d_newTarget, d_link.FullId);
+			}
+		}
+		
 		public void Undo()
 		{
 			d_link.GetAction(d_newTarget).Target = d_oldTarget;

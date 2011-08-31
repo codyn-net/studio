@@ -8,6 +8,18 @@ namespace Cpg.Studio.Undo
 		{
 		}
 		
+		public string Description
+		{
+			get
+			{
+				return String.Format("Remove interface `{0}' = `{1}.{2}' from `{3}'",
+				                     Name,
+				                     ChildName,
+				                     PropertyId,
+				                     Wrapped.FullId);
+			}
+		}
+		
 		public void Undo()
 		{
 			Add();

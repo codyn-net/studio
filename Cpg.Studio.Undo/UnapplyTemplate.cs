@@ -8,6 +8,16 @@ namespace Cpg.Studio.Undo
 		{
 		}
 		
+		public override string Description
+		{
+			get
+			{
+				return String.Format("Unapply template `{0}' from `{1}'",
+				                     WrappedTemplate.FullId,
+				                     WrappedObject.FullId);
+			}
+		}
+		
 		public override void Undo()
 		{
 			Apply();

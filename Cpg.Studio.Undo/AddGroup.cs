@@ -7,7 +7,7 @@ namespace Cpg.Studio.Undo
 	{
 		private Wrappers.Group d_group;
 
-		public AddGroup (Wrappers.Group grp, IEnumerable<IAction> actions) : base(actions)
+		public AddGroup(Wrappers.Group grp, IEnumerable<IAction> actions) : base(actions)
 		{
 			d_group = grp;
 		}

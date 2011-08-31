@@ -12,6 +12,14 @@ namespace Cpg.Studio.Undo
 			d_prevArguments = function.Arguments;
 			d_arguments = arguments;
 		}
+
+		public string Description
+		{
+			get
+			{
+				return String.Format("Change function arguments of `{0}'", WrappedObject.FullId);
+			}
+		}
 		
 		public void Undo()
 		{
