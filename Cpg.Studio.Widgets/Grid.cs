@@ -301,9 +301,19 @@ namespace Cpg.Studio.Widgets
 		
 		public void Select(Wrappers.Wrapper obj, bool alt)
 		{
-			if (obj.Parent == null || obj.Parent is Cpg.Network && (obj as Cpg.Group) == ((Cpg.Network)obj.Parent).TemplateGroup)
+			if (obj.Parent == null)
 			{
 				return;
+			}
+			
+			if (obj.Parent is Wrappers.Network)
+			{
+				Wrappers.Network net = obj.Parent as Wrappers.Network;
+				
+				if (obj == net.TemplateGroup)
+				{
+					return;
+				}
 			}
 
 			if (d_selection.Contains(obj))
@@ -478,9 +488,6 @@ namespace Cpg.Studio.Widgets
 				CenterView(obj);
 				return;
 			}
-			
-			UnselectAll();
-			Select(obj);
 			
 			double x;
 			double y;
@@ -802,9 +809,6 @@ namespace Cpg.Studio.Widgets
 			}
 
 			SetActiveGroup(obj.Parent);
-			
-			UnselectAll();
-			Select(obj);
 			
 			ZoomLevel = DefaultZoom;
 			
