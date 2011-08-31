@@ -1415,12 +1415,6 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private void UpdateSaveSensitivity()
-		{
-			Gtk.Action action = d_normalGroup.GetAction("SaveAction");
-			action.Sensitive = d_project.CanSave;
-		}
-		
 		public void DoLoad(string filename)
 		{
 			if (!AskUnsavedModified())
@@ -1440,7 +1434,6 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			UpdateSaveSensitivity();					
 			RestoreSettings();
 			UpdateTitle();
 			
@@ -1603,7 +1596,6 @@ namespace Cpg.Studio.Widgets
 			UpdateTitle();
 			
 			StatusMessage("Saved network to " + filename + "...");
-			UpdateSaveSensitivity();
 		}
 		
 		private FileChooserDialog DoSaveAs()
@@ -1671,7 +1663,7 @@ namespace Cpg.Studio.Widgets
 		
 		private FileChooserDialog DoSave()
 		{
-			if (d_project.Filename == null)
+			if (d_project.Filename == null || !d_project.CanSave)
 			{
 				return DoSaveAs();
 			}
