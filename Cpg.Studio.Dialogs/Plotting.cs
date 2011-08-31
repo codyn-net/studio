@@ -621,7 +621,10 @@ namespace Cpg.Studio.Dialogs
 			Plot.Renderers.Line line = new Plot.Renderers.Line();
 			Series s = new Series(x, y, line);
 				
-			return Add(row, col, new Series[] {s});
+			Graph ret = Add(row, col, new Series[] {s});
+			d_simulation.Resimulate();
+			
+			return ret;
 		}
 
 		public Graph Add(int row, int col, IEnumerable<Cpg.Monitor> y)
@@ -636,7 +639,10 @@ namespace Cpg.Studio.Dialogs
 				series.Add(s);
 			}
 			
-			return Add(row, col, series);
+			Graph ret = Add(row, col, series);
+			d_simulation.Resimulate();
+			
+			return ret;
 		}
 		
 		public Graph Add(int row, int col, Series series)
@@ -731,7 +737,6 @@ namespace Cpg.Studio.Dialogs
 				UpdateAutoScaling();
 			}
 			
-			d_simulation.Resimulate();
 			return graph;
 		}
 		
