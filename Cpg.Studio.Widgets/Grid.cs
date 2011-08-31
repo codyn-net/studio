@@ -1544,6 +1544,14 @@ namespace Cpg.Studio.Widgets
 			Status(this, msg);
 		}
 		
+		private void SelectAll(bool isalt)
+		{
+			foreach (Wrappers.Wrapper wrapper in d_activeGroup.Children)
+			{
+				Select(wrapper, isalt);
+			}
+		}
+		
 		protected override bool OnKeyPressEvent(Gdk.EventKey evnt)
 		{
 			base.OnKeyPressEvent(evnt);
@@ -1620,6 +1628,10 @@ namespace Cpg.Studio.Widgets
 				{
 					return false;
 				}
+			}
+			else if ((evnt.Key == Gdk.Key.A || evnt.Key == Gdk.Key.a) && (evnt.State & Gdk.ModifierType.ControlMask) != 0)
+			{
+				SelectAll((evnt.State & Gdk.ModifierType.Mod1Mask) != 0);
 			}
 			else
 			{
