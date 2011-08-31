@@ -273,7 +273,7 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, OnZoomOutActivated),
 				
 				new ActionEntry("AddMenuAction", null, "_Add", null, null, null),
-				new ActionEntry("AddGroupAction", Stock.Group, "Group", null, "Add new group", OnAddGroupActivated),
+				new ActionEntry("AddGroupAction", Stock.GroupState, "Group", null, "Add new group", OnAddGroupActivated),
 				new ActionEntry("AddStateAction", Stock.State, "State", null, "Add new state", OnAddStateActivated),
 				new ActionEntry("AddLinkAction", Stock.Link, "Link", null, "Add new link", OnAddLinkActivated),
 				new ActionEntry("AddInputFileAction", Stock.InputFile, "Input file", null, "Add new input file", OnAddInputFileActivated),
