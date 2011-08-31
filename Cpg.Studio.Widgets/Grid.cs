@@ -301,6 +301,11 @@ namespace Cpg.Studio.Widgets
 		
 		public void Select(Wrappers.Wrapper obj, bool alt)
 		{
+			if (obj.Parent == null || obj.Parent is Cpg.Network && (obj as Cpg.Group) == ((Cpg.Network)obj.Parent).TemplateGroup)
+			{
+				return;
+			}
+
 			if (d_selection.Contains(obj))
 			{
 				if (alt != obj.SelectedAlt)
@@ -320,7 +325,7 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 
-			SetActiveGroup(obj.Parent);
+			ScrollInView(obj);
 			
 			d_selection.Add(obj);
 			
