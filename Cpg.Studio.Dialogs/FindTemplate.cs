@@ -30,7 +30,7 @@ namespace Cpg.Studio.Dialogs
 				};
 			}
 			
-			d_tree.Activated += delegate(object source, Widgets.WrappersTree.WrapperNode wrapper) {
+			d_tree.Activated += delegate(object source, Widgets.WrappersTree.WrapperNode[] wrappers) {
 				Respond(ResponseType.Apply);
 			};
 			

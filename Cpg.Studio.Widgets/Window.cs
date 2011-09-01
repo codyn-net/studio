@@ -2238,16 +2238,19 @@ namespace Cpg.Studio.Widgets
 			};
 		}
 
-		private void HandleTreeWrapperActivated(object source, WrappersTree.WrapperNode node)
+		private void HandleTreeWrapperActivated(object source, WrappersTree.WrapperNode[] nodes)
 		{
-			if (node.Wrapper == null)
+			foreach (WrappersTree.WrapperNode node in nodes)
 			{
-				return;
-			}
+				if (node.Wrapper == null)
+				{
+					continue;
+				}
 
-			if (!(node.Wrapper is Wrappers.Import))
-			{
-				AddFromTemplate(node.Wrapper);
+				if (!(node.Wrapper is Wrappers.Import))
+				{
+					AddFromTemplate(node.Wrapper);
+				}
 			}
 		}
 		

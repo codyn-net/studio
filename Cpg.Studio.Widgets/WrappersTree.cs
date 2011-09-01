@@ -490,9 +490,10 @@ namespace Cpg.Studio.Widgets
 		private CellRendererText d_rendererName;
 		
 		public delegate void NodeHandler(object source, WrapperNode node);
+		public delegate void NodesHandler(object source, WrapperNode[] nodes);
 		public delegate void PopulatePopupHandler(object source, WrapperNode[] nodes, Gtk.Menu menu);
 
-		public event NodeHandler Activated = delegate {};
+		public event NodesHandler Activated = delegate {};
 		public event NodeHandler Toggled = delegate {};
 		public event PopulatePopupHandler PopulatePopup = delegate {};
 		
@@ -551,6 +552,7 @@ namespace Cpg.Studio.Widgets
 			
 			d_treeview.RowActivated += OnTreeViewRowActivated;
 			d_treeview.PopulatePopup += OnTreeViewPopulatePopup;
+			d_treeview.KeyPressEvent += OnTreeViewKeyPressEvent;
 			
 			// Keep expanded
 			d_treeview.Model.RowInserted += delegate(object o, RowInsertedArgs args) {
@@ -620,6 +622,20 @@ namespace Cpg.Studio.Widgets
 			d_treeview.NodeStore.Filter(FilterFunc);
 		}
 
+		[GLib.ConnectBefore]
+		private void OnTreeViewKeyPressEvent(object o, KeyPressEventArgs args)
+		{
+			args.RetVal = false;
+			
+			if (args.Event.Key == Gdk.Key.Return ||
+			    args.Event.Key == Gdk.Key.KP_Enter ||
+			    args.Event.Key == Gdk.Key.ISO_Enter)
+			{
+				args.RetVal = true;
+				Activated(this, SelectedNodes);
+			}
+		}
+
 		private void OnNodeToggled(WrapperNode node)
 		{
 			Toggled(this, node);
@@ -673,15 +689,23 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
+		public WrapperNode[] SelectedNodes
+		{
+			get
+			{
+				List<WrapperNode> nodes = new List<WrapperNode>();
+
+				d_treeview.Selection.SelectedForeach(delegate (TreeModel model, TreePath path, TreeIter iter) {
+					nodes.Add(d_treeview.NodeStore.GetFromIter(iter));
+				});
+				
+				return nodes.ToArray();
+			}
+		}
+		
 		private void OnTreeViewPopulatePopup(object o, Gtk.Menu menu)
 		{
-			List<WrapperNode> nodes = new List<WrapperNode>();
-
-			d_treeview.Selection.SelectedForeach(delegate (TreeModel model, TreePath path, TreeIter iter) {
-				nodes.Add(d_treeview.NodeStore.GetFromIter(iter));
-			});
-			
-			PopulatePopup(this, nodes.ToArray(), menu);
+			PopulatePopup(this, SelectedNodes, menu);
 		}
 
 		void OnTreeViewRowActivated(object o, RowActivatedArgs args)
@@ -690,7 +714,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (node != null)
 			{
-				Activated(this, node);
+				Activated(this, new WrapperNode[] {node});
 			}
 		}
 

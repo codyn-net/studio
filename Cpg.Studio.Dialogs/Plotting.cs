@@ -412,14 +412,19 @@ namespace Cpg.Studio.Dialogs
 			}
 		}
 
-		private void HandleTreeActivated(object source, Widgets.WrappersTree.WrapperNode node)
+		private void HandleTreeActivated(object source, Widgets.WrappersTree.WrapperNode[] nodes)
 		{
-			if (node.Property == null)
+			List<Cpg.Property> properties = new List<Cpg.Property>();
+
+			foreach (Widgets.WrappersTree.WrapperNode node in nodes)
 			{
-				return;
+				if (node.Property != null)
+				{
+					properties.Add(node.Property);
+				}
 			}
 			
-			Add(node.Property);
+			Add(properties);
 		}
 
 		public uint Columns
