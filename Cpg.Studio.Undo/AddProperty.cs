@@ -16,7 +16,7 @@ namespace Cpg.Studio.Undo
 		{
 			get
 			{
-				return String.Format("Add property `{0}' in `{1}'", Prop.Name, Prop.Object.FullIdForDisplay);
+				return String.Format("Add property `{0}' in `{1}'", Name, Wrapped.FullId);
 			}
 		}
 		

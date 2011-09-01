@@ -12,7 +12,7 @@ namespace Cpg.Studio.Undo
 		{
 			get
 			{
-				return String.Format("Remove property `{0}' from `{1}'", Prop.Name, Prop.Object.FullIdForDisplay);
+				return String.Format("Remove property `{0}' from `{1}'", Name, Wrapped.FullId);
 			}
 		}
 		
