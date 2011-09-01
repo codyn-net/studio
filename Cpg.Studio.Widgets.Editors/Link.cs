@@ -70,7 +70,7 @@ namespace Cpg.Studio.Widgets.Editors
 			[NodeColumn(Column.Tooltip)]
 			public string Tooltip
 			{
-				get { return d_action != null ? d_action.Annotation : ""; }
+				get { return d_action != null ? d_action.Annotation : null; }
 			}
 			
 			[NodeColumn(Column.EquationEditable)]
