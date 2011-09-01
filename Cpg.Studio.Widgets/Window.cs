@@ -375,6 +375,9 @@ namespace Cpg.Studio.Widgets
 			d_periodEntry = new Entry();
 			d_periodEntry.SetSizeRequest(75, -1);
 			d_periodEntry.Activated += new EventHandler(OnSimulationRunPeriod);
+			d_periodEntry.FocusOutEvent += delegate {
+				d_simulation.Range = new Range(d_periodEntry.Text);
+			};
 
 			d_simulateButtons = new HBox(false, 3);
 			d_simulateButtons.BorderWidth = 3;
@@ -782,6 +785,8 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			d_periodEntry.Text = "0:0.01:1";
+			d_simulation.Range = new Range(d_periodEntry.Text);
+
 			d_grid.GrabFocus();
 			
 			d_modified = false;
@@ -884,6 +889,7 @@ namespace Cpg.Studio.Widgets
 			set
 			{
 				d_periodEntry.Text = value;
+				d_simulation.Range = new Range(d_periodEntry.Text);
 			}
 		}
 		
@@ -1374,6 +1380,7 @@ namespace Cpg.Studio.Widgets
 			SideBarPanePosition = s.SideBarPanePosition;
 			
 			d_periodEntry.Text = s.SimulatePeriod;
+			d_simulation.Range = new Range(d_periodEntry.Text);
 			
 			// Restore root
 			if (!String.IsNullOrEmpty(s.ActiveRoot))
@@ -2443,13 +2450,9 @@ namespace Cpg.Studio.Widgets
 		{
 			Range r = new Range(d_periodEntry.Text);
 			
-			if (r.From > r.To)
+			if ((r.To - r.From) <= (r.To - (r.From + r.Step)))
 			{
-				Message(Gtk.Stock.DialogInfo, "Invalid simulation range", "The start of the simulation range is larger than the end");
-			}
-			else if (r.Step <= 0)
-			{
-				Message(Gtk.Stock.DialogInfo, "Invalid step size", "The step size for the simulation is invalid");
+				Message(Gtk.Stock.DialogInfo, "Invalid simulation range", "The simulation step does not bring start closer to end");
 			}
 			else
 			{

@@ -52,6 +52,10 @@ namespace Cpg.Studio
 			{
 				return d_range;
 			}
+			set
+			{
+				d_range = value;
+			}
 		}
 		
 		private void HandleNotifyIntegrator(object source, GLib.NotifyArgs args)
