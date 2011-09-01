@@ -324,8 +324,6 @@ namespace Cpg.Studio.Dialogs
 		
 		protected override void OnDestroyed()
 		{
-			Plot.Graph.ResetColors();
-
 			base.OnDestroyed();
 		}
 
