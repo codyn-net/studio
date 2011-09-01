@@ -822,8 +822,12 @@ namespace Cpg.Studio.Dialogs
 				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Automatically scale all axes to the same range", OnLinkAxisToggled, d_linkaxis)
 			});
 			
+			d_actiongroup.Add(new ActionEntry[] {
+				new ActionEntry("ActionReset", Gtk.Stock.RevertToSaved, "Reset", null, "Reset Settings", OnResetActivated)
+			});
+			
 			d_uimanager.InsertActionGroup(d_actiongroup, 0);
-			d_uimanager.AddUiFromResource("monitor-ui.xml");
+			d_uimanager.AddUiFromResource("plotting-ui.xml");
 
 			AddAccelGroup(d_uimanager.AccelGroup);
 		}
@@ -991,6 +995,16 @@ namespace Cpg.Studio.Dialogs
 					selector(g.Canvas.Graph).Update(nr);
 				}
 			});
+		}
+		
+		private void OnResetActivated(object source, EventArgs args)
+		{
+			foreach (Graph graph in d_graphs)
+			{
+				Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
+			}
+			
+			UpdateAutoScaling();
 		}
 		
 		private void ToggleLinkAxis()
