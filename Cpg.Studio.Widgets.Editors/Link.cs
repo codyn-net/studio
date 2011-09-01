@@ -288,9 +288,6 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				d_treeview.Selection.UnselectAll();
 				d_treeview.Selection.SelectIter(iter);
-				
-				TreePath path = d_treeview.NodeStore.GetPath(iter);					
-				d_treeview.SetCursor(path, d_treeview.GetColumn(0), true);
 			}			
 		}
 		
@@ -376,6 +373,9 @@ namespace Cpg.Studio.Widgets.Editors
 			d_selectAction = true;
 			d_actions.Do(new Undo.AddLinkAction(d_link, name, ""));
 			d_selectAction = false;
+
+			TreePath path = d_treeview.Selection.GetSelectedRows()[0];
+			d_treeview.SetCursor(path, d_treeview.GetColumn(0), true);
 		}
 		
 		private void DoRemoveAction()
@@ -385,8 +385,11 @@ namespace Cpg.Studio.Widgets.Editors
 			foreach (TreePath path in d_treeview.Selection.GetSelectedRows())
 			{
 				Node node = d_treeview.NodeStore.FindPath(path);
-
-				actions.Add(new Undo.RemoveLinkAction(d_link, node.LinkAction));
+				
+				if (node != d_dummy)
+				{
+					actions.Add(new Undo.RemoveLinkAction(d_link, node.LinkAction));
+				}
 			}
 			
 			d_actions.Do(new Undo.Group(actions));
@@ -437,6 +440,26 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 
+			TreePath path;
+			
+			if (args.Event.Type == Gdk.EventType.ButtonPress &&
+			    args.Event.Button == 1 &&
+			    args.Event.Window == d_treeview.BinWindow)
+			{
+				if (d_treeview.GetPathAtPos((int)args.Event.X, (int)args.Event.Y, out path))
+				{			
+					Node node = d_treeview.NodeStore.FindPath(path);
+			
+					if (node == d_dummy)
+					{
+						d_treeview.SetCursor(path, d_treeview.Columns[0], true);
+
+						args.RetVal = true;
+						return;
+					}
+				}
+			}
+
 			if (args.Event.Type != Gdk.EventType.TwoButtonPress && args.Event.Type != Gdk.EventType.ThreeButtonPress)
 			{
 				return;
@@ -447,7 +470,6 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 			
-			TreePath path;
 			TreeViewColumn column;
 			TreeView tv = (TreeView)source;
 			
@@ -560,11 +582,17 @@ namespace Cpg.Studio.Widgets.Editors
 			    args.Event.Key == Gdk.Key.KP_Tab ||
 			    args.Event.Key == Gdk.Key.ISO_Left_Tab)
 			{
-				TreePath path;
+				TreePath path = null;
 				TreeViewColumn column;
 				TreePath next;
 				
 				d_treeview.GetCursor(out path, out column);
+				
+				if (path == null)
+				{
+					args.RetVal = false;
+					return;
+				}
 				
 				column = NextColumn(path, column, (args.Event.State & Gdk.ModifierType.ShiftMask) != 0, out next);
 				
@@ -662,9 +690,13 @@ namespace Cpg.Studio.Widgets.Editors
 				if (next != null)
 				{
 					d_treeview.SetCursorOnCell(nextPath, column, next, true);
+					args.RetVal = true;
 				}
-				
-				args.RetVal = true;
+				else
+				{
+					d_treeview.GrabFocus();
+					args.RetVal = false;
+				}
 			}
 			else
 			{

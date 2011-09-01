@@ -532,7 +532,7 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			Add(d_treeview);
 		}
-		
+
 		private TreeViewColumn NextColumn(TreePath path, TreeViewColumn column, bool prev, out TreePath next)
 		{
 			TreeViewColumn[] columns = d_treeview.Columns;
@@ -579,11 +579,17 @@ namespace Cpg.Studio.Widgets.Editors
 			    args.Event.Key == Gdk.Key.KP_Tab ||
 			    args.Event.Key == Gdk.Key.ISO_Left_Tab)
 			{
-				TreePath path;
+				TreePath path = null;
 				TreeViewColumn column;
 				TreePath next;
 				
 				d_treeview.GetCursor(out path, out column);
+				
+				if (path == null)
+				{
+					args.RetVal = false;
+					return;
+				}
 				
 				column = NextColumn(path, column, (args.Event.State & Gdk.ModifierType.ShiftMask) != 0, out next);
 				
@@ -669,9 +675,14 @@ namespace Cpg.Studio.Widgets.Editors
 					{
 						d_treeview.SetCursorOnCell(new TreePath(d_editingPath), column, next, true);
 					}
+					
+					args.RetVal = true;
 				}
-				
-				args.RetVal = true;
+				else
+				{
+					d_treeview.GrabFocus();
+					args.RetVal = false;
+				}
 			}
 			else
 			{
@@ -1139,6 +1150,11 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				Node node = d_treeview.NodeStore.FindPath(path);
 				
+				if (node == d_dummy)
+				{
+					continue;
+				}
+				
 				Wrappers.Wrapper temp = d_wrapper.GetPropertyTemplate(node.Property, false);
 				
 				if (temp != null)
@@ -1231,6 +1247,26 @@ namespace Cpg.Studio.Widgets.Editors
 				args.RetVal = true;
 				return;
 			}
+			
+			TreePath path;
+			
+			if (args.Event.Type == Gdk.EventType.ButtonPress &&
+			    args.Event.Button == 1 &&
+			    args.Event.Window == d_treeview.BinWindow)
+			{
+				if (d_treeview.GetPathAtPos((int)args.Event.X, (int)args.Event.Y, out path))
+				{			
+					Node node = d_treeview.NodeStore.FindPath(path);
+			
+					if (node == d_dummy)
+					{
+						/* Start editing the dummy node */
+						d_treeview.SetCursor(path, d_treeview.Columns[0], true);
+						args.RetVal = true;
+						return;
+					}
+				}
+			}
 
 			if (args.Event.Type != Gdk.EventType.TwoButtonPress &&
 			    args.Event.Type != Gdk.EventType.ThreeButtonPress)
@@ -1243,7 +1279,6 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 			
-			TreePath path;
 			TreeViewColumn column;
 			TreeView tv = (TreeView)source;
 			
