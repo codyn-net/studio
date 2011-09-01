@@ -30,6 +30,12 @@ namespace Cpg.Studio.Serialization
 			 XmlElement(typeof(Series))]
 			public List<Series> Plots;
 			
+			[XmlAttribute("row")]
+			public int Row;
+			
+			[XmlAttribute("column")]
+			public int Column;
+			
 			public Monitor()
 			{
 				Plots = new List<Series>();
@@ -78,10 +84,10 @@ namespace Cpg.Studio.Serialization
 				public List<Monitor> Graphs;
 				
 				[XmlAttribute("rows")]
-				public uint Rows;
+				public int Rows;
 				
 				[XmlAttribute("columns")]
-				public uint Columns;
+				public int Columns;
 				
 				[XmlElement("allocation")]
 				public Allocation Allocation;

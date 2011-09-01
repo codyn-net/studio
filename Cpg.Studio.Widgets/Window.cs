@@ -1415,12 +1415,9 @@ namespace Cpg.Studio.Widgets
 					d_plotting.Move((int)mons.Allocation.X, (int)mons.Allocation.Y);
 				}
 				
-				for (int i = 0; i < mons.Graphs.Count; ++i)
+				foreach (Serialization.Project.Monitor mon in mons.Graphs)
 				{
-					int col = (int)(i % mons.Columns);
-					int row = (int)(i / mons.Columns);
-					
-					foreach (Serialization.Project.Series series in mons.Graphs[i].Plots)
+					foreach (Serialization.Project.Series series in mon.Plots)
 					{
 						Cpg.Monitor y;
 						Cpg.Monitor x = null;
@@ -1450,11 +1447,11 @@ namespace Cpg.Studio.Widgets
 							x = new Cpg.Monitor(Network, xprop);
 						}
 						
-						Dialogs.Plotting.Graph graph = d_plotting.Add(row, col, x, y);
+						Dialogs.Plotting.Graph graph = d_plotting.Add(mon.Row, mon.Column, x, y);
 						
-						if (mons.Graphs[i].Settings != null)
+						if (mon.Settings != null)
 						{
-							mons.Graphs[i].Settings.Set(graph.Canvas.Graph);
+							mon.Settings.Set(graph.Canvas.Graph);
 						}
 						else
 						{
@@ -1621,6 +1618,12 @@ namespace Cpg.Studio.Widgets
 						mon.Settings = settings;
 					}
 					
+					if (!d_plotting.IndexOf(graph, out mon.Row, out mon.Column))
+					{
+						mon.Row = -1;
+						mon.Column = -1;
+					}
+					
 					s.Monitors.Graphs.Add(mon);
 				}
 				
@@ -1674,23 +1677,23 @@ namespace Cpg.Studio.Widgets
 			dlg.DoOverwriteConfirmation = true;
 			
 			dlg.Response += delegate(object o, ResponseArgs args) {
-					d_prevOpen = dlg.CurrentFolder;
+				d_prevOpen = dlg.CurrentFolder;
 
-					if (args.ResponseId == ResponseType.Accept)
-					{
-						string filename = dlg.Filename;
-						
-						try
-						{
-							DoSave(filename, check.Active);
-						}
-						catch (Exception e)
-						{
-							Message(Gtk.Stock.DialogError, "An error occurred while saving the network", e);
-						}
-					}
+				if (args.ResponseId == ResponseType.Accept)
+				{
+					string filename = dlg.Filename;
 					
-					dlg.Destroy();		
+					try
+					{
+						DoSave(filename, check.Active);
+					}
+					catch (Exception e)
+					{
+						Message(Gtk.Stock.DialogError, "An error occurred while saving the network", e);
+					}
+				}
+				
+				dlg.Destroy();		
 			};
 			
 			dlg.Show();

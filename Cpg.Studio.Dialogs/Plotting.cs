@@ -176,10 +176,9 @@ namespace Cpg.Studio.Dialogs
 			}
 		}
 
-		public class Graph : EventBox
+		public class Graph : Frame, Widgets.IDragIcon
 		{
 			private Plot.Widget d_canvas;
-			private Frame d_frame;
 			private List<Series> d_plots;
 			
 			public Graph(Plot.Widget canvas)
@@ -193,17 +192,12 @@ namespace Cpg.Studio.Dialogs
 					d_canvas = new Plot.Widget();
 				}
 				
-				d_frame = new Frame();
-				d_frame.Show();
-
-				d_frame.ShadowType = ShadowType.EtchedIn;
+				ShadowType = ShadowType.EtchedIn;
 				
 				d_canvas.Show();
-				d_frame.Add(d_canvas);
+				Add(d_canvas);
 				
 				d_plots = new List<Series>();
-				
-				Add(d_frame);
 			}
 			
 			public Graph() : this(null)
@@ -267,10 +261,13 @@ namespace Cpg.Studio.Dialogs
 
 			public Gdk.Pixbuf CreateDragIcon()
 			{
-				Gdk.Rectangle a = d_frame.Allocation;
+				Gdk.Rectangle a = Allocation;
 				
-				Gdk.Pixbuf pix = Gdk.Pixbuf.FromDrawable(d_frame.GdkWindow, d_frame.GdkWindow.Colormap, 0, 0, 0, 0, a.Width, a.Height);
-				return pix.ScaleSimple((int)(a.Width * 0.7), (int)(a.Height * 0.7), Gdk.InterpType.Hyper);
+				int w = (int)(a.Width * 0.7);
+				int h = (int)(a.Height * 0.7);
+				
+				Gdk.Pixbuf pix = Gdk.Pixbuf.FromDrawable(GdkWindow, GdkWindow.Colormap, a.X, a.Y, 0, 0, a.Width, a.Height);
+				return pix.ScaleSimple(w, h, Gdk.InterpType.Hyper);
 			}
 			
 			public Plot.Widget Canvas
@@ -351,13 +348,12 @@ namespace Cpg.Studio.Dialogs
 
 			d_hpaned.Pack2(d_tree, false, false);
 			
-			Widgets.Table table = new Widgets.Table(1, 1, true);
-			table.Expand = Widgets.Table.ExpandType.Down;
-			table.RowSpacing = 1;
-			table.ColumnSpacing = 1;
-			d_content = table;
+			d_content = new Widgets.Table();
+			d_content.Expand = Widgets.Table.ExpandType.Down;
+			//d_content.RowSpacing = 1;
+			//d_content.ColumnSpacing = 1;
 			
-			d_hpaned.Pack1(table, true, true);
+			d_hpaned.Pack1(d_content, true, true);
 			vboxContent.PackStart(d_hpaned);
 			
 			vboxMain.PackStart(vboxContent, true, true, 0);
@@ -424,20 +420,25 @@ namespace Cpg.Studio.Dialogs
 			
 			Add(properties);
 		}
+		
+		public bool IndexOf(Graph graph, out int r, out int c)
+		{
+			return d_content.IndexOf(graph, out r, out c);
+		}
 
-		public uint Columns
+		public int Columns
 		{
 			get
 			{
-				return d_content.NColumns;
+				return d_content.Columns;
 			}
 		}
 		
-		public uint Rows
+		public int Rows
 		{
 			get
 			{
-				return d_content.NRows;
+				return d_content.Rows;
 			}
 		}
 		
@@ -474,9 +475,9 @@ namespace Cpg.Studio.Dialogs
 			QueueDraw();
 		}
 		
-		private void MergeTo(Graph source, Point direction)
-		{			
-			Graph target = (Graph)d_content.Find(source, (int)direction.X, (int)direction.Y);
+		private void MergeTo(Graph source, int dr, int dc)
+		{
+			Graph target = (Graph)d_content.Find(source, dr, dc);
 			
 			if (target == null)
 			{
@@ -486,14 +487,10 @@ namespace Cpg.Studio.Dialogs
 			MergeWith(source, target);
 		}
 		
-		private void MakeMergeMenuItem(Graph graph, ActionGroup gp, UIManager manager, Point pos, string stockid, string label, Point dir)
+		private void MakeMergeMenuItem(Graph graph, ActionGroup gp, UIManager manager, int r, int c, string stockid, string label, int dr, int dc)
 		{
-			if (pos.X + dir.X < 0 || pos.X + dir.X >= d_content.NColumns)
-			{
-				return;
-			}
-			
-			if (pos.Y + dir.Y < 0 || pos.Y + dir.Y >= d_content.NRows)
+			if (r + dr < 0 || r + dr >= d_content.Rows ||
+			    c + dc < 0 || c + dc >= d_content.Columns)
 			{
 				return;
 			}
@@ -501,7 +498,7 @@ namespace Cpg.Studio.Dialogs
 			Action action = new Action("ActionMerge" + label, label, null, stockid);
 			
 			action.Activated += delegate {
-				MergeTo(graph, dir);
+				MergeTo(graph, dr, dc);
 			};
 			
 			gp.Add(action);
@@ -535,20 +532,23 @@ namespace Cpg.Studio.Dialogs
 		
 		private void DoUnmerge(Graph graph, Series series)
 		{
-			Point pt = d_content.GetPosition(graph);
+			int r;
+			int c;
+
+			if (!d_content.IndexOf(graph, out r, out c))
+			{
+				return;
+			}
 
 			graph.Remove(series);
 			
-			d_content.EnsureSize(d_content.NRows + 1, d_content.NColumns);
-			Graph g = Add((int)d_content.NRows - 1, (int)d_content.NColumns - 1, series);
+			Graph g = Add(-1, -1, series);
 			
 			Plot.Settings settings = new Plot.Settings();
 
 			settings.Get(graph.Canvas.Graph);
 			settings.Set(g.Canvas.Graph);
-			
-			d_content.SetPosition(g, (int)pt.X, (int)pt.Y + 1);
-			
+						
 			UpdateAutoScaling();
 		}
 		
@@ -576,25 +576,6 @@ namespace Cpg.Studio.Dialogs
 		{
 			return Add(new Cpg.Monitor(d_network, y));
 		}
-		
-		private void NewGraphPosition(out int rr, out int rc)
-		{
-			for (int r = 0; r < d_content.NRows; ++r)
-			{
-				for (int c = 0; c < d_content.NColumns; ++c)
-				{
-					if (d_content.At(c, r) == null)
-					{
-						rr = r;
-						rc = c;
-						return;
-					}
-				}
-			}
-			
-			rr = (int)d_content.NRows;
-			rc = (int)d_content.NColumns - 1;
-		}
 
 		public Graph Add(Cpg.Monitor y)
 		{
@@ -603,20 +584,12 @@ namespace Cpg.Studio.Dialogs
 		
 		public Graph Add(Cpg.Monitor x, Cpg.Monitor y)
 		{
-			int r;
-			int c;
-			
-			NewGraphPosition(out r, out c);
-			return Add(r, c, x, y);
+			return Add(-1, -1, x, y);
 		}
 		
 		public Graph Add(IEnumerable<Cpg.Monitor> ys)
 		{
-			int r;
-			int c;
-			
-			NewGraphPosition(out r, out c);
-			return Add(r, c, ys);
+			return Add(-1, -1, ys);
 		}
 		
 		public Graph Add(int row, int col, Cpg.Monitor x, Cpg.Monitor y)
@@ -671,7 +644,7 @@ namespace Cpg.Studio.Dialogs
 
 		public Graph Add(int row, int col, IEnumerable<Series> series)
 		{
-			Graph graph = (Graph)d_content.At(row, col);
+			Graph graph = (Graph)d_content[row, col];
 			
 			if (graph != null)
 			{
@@ -756,7 +729,10 @@ namespace Cpg.Studio.Dialogs
 			
 			manager.InsertActionGroup(gp, 0);
 			
-			Point pos = d_content.GetPosition(graph);
+			int r;
+			int c;
+			
+			d_content.IndexOf(graph, out r, out c);
 			
 			gp.Add(new Gtk.Action("ActionMergeMenu", "Merge", null, null));
 			manager.AddUi(manager.NewMergeId(),
@@ -765,10 +741,10 @@ namespace Cpg.Studio.Dialogs
 			              "ActionMergeMenu",
 			              UIManagerItemType.Menu, false);
 			
-			MakeMergeMenuItem(graph, gp, manager, pos, Gtk.Stock.GotoTop, "Merge Up", new Point(0, -1));
-			MakeMergeMenuItem(graph, gp, manager, pos, Gtk.Stock.GotoBottom, "Merge Down", new Point(0, 1));
-			MakeMergeMenuItem(graph, gp, manager, pos, Gtk.Stock.GotoLast, "Merge Right", new Point(1, 0));
-			MakeMergeMenuItem(graph, gp, manager, pos, Gtk.Stock.GotoFirst, "Merge Left", new Point(-1, 0));
+			MakeMergeMenuItem(graph, gp, manager, r, c, Gtk.Stock.GotoTop, "Merge Up", -1, 0);
+			MakeMergeMenuItem(graph, gp, manager, r, c, Gtk.Stock.GotoBottom, "Merge Down", 1, 0);
+			MakeMergeMenuItem(graph, gp, manager, r, c, Gtk.Stock.GotoLast, "Merge Right", 0, 1);
+			MakeMergeMenuItem(graph, gp, manager, r, c, Gtk.Stock.GotoFirst, "Merge Left", 0, -1);
 			
 			if (graph.PlotsCount > 1)
 			{
@@ -839,21 +815,21 @@ namespace Cpg.Studio.Dialogs
 		{
 			get
 			{
-				return new Point((int)d_content.NColumns, (int)d_content.NRows);
+				return new Point(d_content.Columns, d_content.Rows);
 			}
 			set
 			{
 				if (value.X <= 0)
 				{
-					value.X = (int)d_content.NColumns;
+					value.X = d_content.Columns;
 				}
 				
 				if (value.Y <= 0)
 				{
-					value.Y = (int)d_content.NRows;
+					value.Y = d_content.Rows;
 				}
 				
-				d_content.Resize((uint)value.X, (uint)value.Y);
+				d_content.Resize((int)value.X, (int)value.Y);
 			}
 		}
 

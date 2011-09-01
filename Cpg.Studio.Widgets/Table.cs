@@ -4,16 +4,8 @@ using System.Drawing;
 
 namespace Cpg.Studio.Widgets
 {
-	public class Table : Gtk.Table
+	public class Table : Gtk.Container
 	{
-		class Placeholder : Gtk.DrawingArea
-		{
-			public Placeholder() : base()
-			{
-				Show();
-			}
-		}
-		
 		public enum ExpandType
 		{
 			Right,
@@ -21,25 +13,186 @@ namespace Cpg.Studio.Widgets
 		}
 		
 		private ExpandType d_expand;
-		private bool d_compacting;
 		private Gtk.Widget d_dragging;
 		private Gtk.Widget d_swapped;
-		private Point d_dragPos;
 		
-		public Table(uint rows, uint cols, bool homogeneous) : base(rows, cols, homogeneous)
+		private int d_dragRow;
+		private int d_dragColumn;
+
+		private int d_swapRow;
+		private int d_swapColumn;
+
+		private int d_rows;
+		private int d_columns;
+		private int d_rowSpacing;
+		private int d_columnSpacing;
+		
+		private int[] d_x;
+		private int[] d_y;
+		private int[] d_width;
+		private int[] d_height;
+
+		private Gtk.Widget[,] d_children;
+		
+		public Table()
 		{
-			d_expand = ExpandType.Right;
+			d_expand = ExpandType.Down;
+			d_children = new Gtk.Widget[,] {};
+			d_rows = 0;
+			d_columns = 0;
 			
-			AddEvents((int)(Gdk.EventMask.KeyPressMask | Gdk.EventMask.ButtonPressMask));
-			CanFocus = true;
+			WidgetFlags |= Gtk.WidgetFlags.NoWindow;
 			
 			Gtk.Drag.DestSet(this, 0, new Gtk.TargetEntry[] {new Gtk.TargetEntry("TableItem", Gtk.TargetFlags.App, 1)}, Gdk.DragAction.Move);
 		}
 		
-		public Table() : this(1, 1, false)
+		public int Columns
 		{
+			get
+			{
+				return d_columns;
+			}
 		}
 		
+		public int Rows
+		{
+			get
+			{
+				return d_rows;
+			}
+		}
+		
+		public int ColumnSpacing
+		{
+			get
+			{
+				return d_columnSpacing;
+			}
+			set
+			{
+				d_columnSpacing = value;
+				Reallocate();
+			}
+		}
+		
+		public int RowSpacing
+		{
+			get
+			{
+				return d_rowSpacing;
+			}
+			set
+			{
+				d_rowSpacing = value;
+				Reallocate();
+			}
+		}
+		
+		public new void Add(Gtk.Widget widget)
+		{
+			base.Add(widget);
+		}
+		
+		public new void Add(Gtk.Widget widget, int row, int col)
+		{
+			if (row < 0 || col < 0)
+			{
+				EmptyCell(out row, out col, true);
+			}
+			
+			Resize(row + 1, col + 1, false);
+			
+			if (d_children[row, col] != null)
+			{
+				return;
+			}
+			
+			d_children[row, col] = widget;
+			widget.Parent = this;
+
+			ReallocateOne(row, col);
+			SetDragSource(widget);
+		}
+
+		public override GLib.GType ChildType()
+		{
+			return Gtk.Widget.GType;
+		}
+		
+		protected override void OnSizeAllocated(Gdk.Rectangle allocation)
+		{
+			base.OnSizeAllocated(allocation);
+			
+			Reallocate();
+		}
+		
+		private void Calculate(int num, int totalSize, int spacing, int stopat, out int[] pos, out int[] size)
+		{
+			pos = new int[d_rows];
+			size = new int[d_rows];
+			
+			int p = 0;
+			
+			for (int i = 0; i < num; ++i)
+			{
+				pos[i] = p;
+
+				int left = num - i;
+				int space = totalSize - pos[i] - (left - 1) * spacing;
+				
+				size[i] = space / left;
+				
+				if (i == stopat)
+				{
+					break;
+				}
+				
+				p += size[i] + spacing;
+			}
+		}
+		
+		private void CalculateRows(out int[] y, out int[] height, int stopat)
+		{
+			Calculate(d_rows, Allocation.Height, d_rowSpacing, stopat, out y, out height);
+		}
+		
+		private void CalculateColumns(out int[] x, out int[] width, int stopat)
+		{
+			Calculate(d_columns, Allocation.Width, d_columnSpacing, stopat, out x, out width);
+		}
+		
+		private void ReallocateOne(int r, int c)
+		{
+			if (d_children[r, c] == null)
+			{
+				return;
+			}
+
+			Gdk.Rectangle alloc = new Gdk.Rectangle(d_x[c] + Allocation.X, d_y[r] + Allocation.Y, d_width[c], d_height[r]);
+			d_children[r, c].SizeAllocate(alloc);
+		}
+		
+		private void Reallocate()
+		{
+			CalculateRows(out d_y, out d_height, d_rows);
+			CalculateColumns(out d_x, out d_width, d_columns);
+			
+			ForeachCell(false, (r, c, child) => {
+				Gdk.Rectangle alloc = new Gdk.Rectangle(d_x[c] + Allocation.X, d_y[r] + Allocation.Y, d_width[c], d_height[r]);
+
+				child.SizeAllocate(alloc);
+				return true;
+			});
+		}
+		
+		protected override void ForAll(bool include_internals, Gtk.Callback callback)
+		{
+			ForeachCell(false, (r, c, child) => {
+				callback(child);
+				return true;
+			});
+		}
+
 		public ExpandType Expand
 		{
 			get
@@ -52,275 +205,238 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		public Gtk.Widget RealChild(Gtk.Widget child)
+		private bool CellAtPixel(int val, out int idx, int offset, int[] pos, int[] size)
 		{
-			while (child != null && child.Parent != this)
-			{
-				child = child.Parent;
-			}
+			idx = 0;
 			
-			return child;
-		}
-		
-		public void PositionChild(Gtk.Widget child, uint left, uint top)
-		{
-			child = RealChild(child);
+			for (int i = 0; i < pos.Length; ++i)
+			{
+				int p = offset + pos[i];
 
-			ChildSetProperty(child, "left-attach", new GLib.Value(left));
-			ChildSetProperty(child, "right-attach", new GLib.Value(left + 1));
-			ChildSetProperty(child, "top-attach", new GLib.Value(top));
-			ChildSetProperty(child, "bottom-attach", new GLib.Value(top + 1));
-		}
-		
-		public void SetPosition(Gtk.Widget child, int left, int top)
-		{
-			if (At(left, top) == null)
-			{
-				PositionChild(child, (uint)left, (uint)top);
-				return;
-			}
-			
-			uint max;
-			
-			if (GetPosition(child).X == left)
-			{
-				max = NRows - 2;
-			}
-			else
-			{
-				max = NRows - 1;
-			}
-			
-			for (uint i = max; i >= top; --i)
-			{
-				Gtk.Widget c = At(left, (int)i);
-				
-				if (c != null)
+				if (val >= p && val <= p + size[i])
 				{
-					PositionChild(c, (uint)left, i + 1);
+					idx = i;
+					return true;
 				}
 			}
 			
-			PositionChild(child, (uint)left, (uint)top);
+			return false;
 		}
 		
-		public Point GetPosition(Gtk.Widget child)
+		private bool CellAtPixel(int x, int y, out int r, out int c)
 		{
-			child = RealChild(child);
-			
-			if (child == null)
-			{
-				return new Point(0, 0);
-			}
-			
-			Point ret = new Point();
-			ret.X = (int)(uint)ChildGetProperty(child, "left-attach").Val;
-			ret.Y = (int)(uint)ChildGetProperty(child, "top-attach").Val;
-			
-			return ret;
+			return CellAtPixel(y, out r, Allocation.Y, d_y, d_height) &&
+			       CellAtPixel(x, out c, Allocation.X, d_x, d_width);
 		}
 		
-		private void MoveTo(Gtk.Widget from, Gtk.Widget to)
+		private void Swap(int r, int c, int or, int oc)
 		{
-			foreach (string attr in new string[] {"left", "right", "top", "bottom"})
-			{
-				ChildSetProperty(from, attr + "-attach", ChildGetProperty(to, attr + "-attach"));
-			}
+			Gtk.Widget tmp = d_children[r, c];
+
+			d_children[r, c] = d_children[or, oc];
+			d_children[or, oc] = tmp;
+			
+			ReallocateOne(r, c);
+			ReallocateOne(or, oc);
 		}
 		
 		private void DoUpdateDragging(int x, int y)
 		{
-			/* We have the child in d_dragging which was dragged from d_dragPos. We need to
-			 * determine the child position under the cursor at x, y and swap accordingly
-			 */
-			Gtk.Widget[,] mtx = new Gtk.Widget[NColumns, NRows];
+			// We have the child in d_dragging which was dragged from d_dragPos. We need to
+			// determine the child position under the cursor at x, y and swap accordingly
+			int r;
+			int c;
 			
-			object[] columns = new object[NColumns];
-			object[] rows = new object[NRows];
-			
-			foreach (Gtk.Widget child in Children)
-			{
-				Gdk.Rectangle alloc = child.Allocation;
-				
-				uint left = (uint)ChildGetProperty(child, "left-attach").Val;
-				uint top = (uint)ChildGetProperty(child, "top-attach").Val;
-				
-				columns[left] = new Point(alloc.X, alloc.X + alloc.Width);
-				rows[top] = new Point(alloc.Y, alloc.Y + alloc.Height);
-				
-				mtx[left, top] = child;
-			}
-			
-			int col = -1;
-			
-			for (int i = 0; i < NColumns; ++i)
-			{
-				if (columns[i] == null)
-				{
-					continue;
-				}
-				
-				Point pt = (Point)columns[i];
-				
-				if (pt.X < x && pt.Y > x)
-				{
-					col = i;
-					break;
-				}
-			}
-			
-			int row = -1;
-			
-			for (int i = 0; i < NRows; ++i)
-			{
-				if (rows[i] == null)
-				{
-					continue;
-				}
-				
-				Point pt = (Point)rows[i];
-				
-				if (pt.X < y && pt.Y > y)
-				{
-					row = i;
-					break;
-				}
-			}
-			
-			if (row == -1 || col == -1)
+			if (!CellAtPixel(x, y, out r, out c))
 			{
 				return;
 			}
-			
-			Gtk.Widget found = mtx[col, row];
-			
-			if (found == d_dragging)
-			{
-				return;
-			}
-			
+
 			if (d_swapped != null)
 			{
-				MoveTo(d_swapped, d_dragging);
+				// Swap back
+				Swap(d_dragRow, d_dragColumn, d_swapRow, d_swapColumn);
 			}
 			
-			if (d_swapped != null && d_swapped == found)
+			d_swapped = null;
+			
+			if (d_children[r, c] == d_dragging)
 			{
-				found = d_dragging;
-				d_swapped = null;
-			}
-			else
-			{
-				PositionChild(d_dragging, (uint)col, (uint)row);
-				d_swapped = found;
+				return;
 			}
 			
-			if (found != null)
+			d_swapRow = r;
+			d_swapColumn = c;
+			
+			d_swapped = d_children[d_swapRow, d_swapColumn];
+			
+			Swap(d_dragRow, d_dragColumn, d_swapRow, d_swapColumn);
+		}
+		
+		public delegate bool ForeachCellHandler(int r, int c, Gtk.Widget widget);
+		
+		public bool ForeachCell(ForeachCellHandler handler)
+		{
+			return ForeachCell(true, handler);
+		}
+		
+		public bool ForeachCell(bool includeempty, ForeachCellHandler handler)
+		{
+			for (int r = 0; r < d_rows; ++r)
 			{
-				PositionChild(found, (uint)d_dragPos.X, (uint)d_dragPos.Y);
+				for (int c = 0; c < d_columns; ++c)
+				{
+					Gtk.Widget child = d_children[r, c];
+					
+					if (includeempty || child != null)
+					{
+						if (!handler(r, c, child))
+						{
+							return false;
+						}
+					}
+				}
+			}
+			
+			return true;
+		}
+		
+		private void CopyChildren(Gtk.Widget[,] ret)
+		{
+			ForeachCell((r, c, child) => {
+				ret[r, c] = child;
+				return true;
+			});
+		}
+		
+		public Gtk.Widget Find(Gtk.Widget source, int dr, int dc)
+		{
+			int r;
+			int c;
+
+			if (!IndexOf(source, out r, out c))
+			{
+				return null;
+			}
+			
+			while (true)
+			{
+				r += dr;
+				c += dc;
+				
+				if (r >= 0 && c >= 0 && r < d_rows && c < d_columns)
+				{
+					return null;
+				}
+				
+				if (d_children[r, c] != null)
+				{
+					return d_children[r, c];
+				}
 			}
 		}
 		
-		private Point FindEmpty()
+		public Gtk.Widget this[int r, int c]
 		{
-			List<Point> all = new List<Point>();
-			
-			for (int x = 0; x < NColumns; ++x)
+			get
 			{
-				for (int y = 0; y < NRows; ++y)
+				if (r >= d_rows || c >= d_columns || r < 0 || c < 0)
 				{
-					all.Add(new Point(x, y));
+					return null;
 				}
+
+				return d_children[r, c];
+			}		
+		}
+		
+		private void Resize(int rows, int columns, bool compact)
+		{
+			if (compact)
+			{
+				Compact();
+			}
+
+			rows = System.Math.Max(rows, d_rows);
+			columns = System.Math.Max(columns, d_columns);
+			
+			if (rows != d_rows || columns != d_columns)
+			{
+				Gtk.Widget[,] nc = new Gtk.Widget[rows, columns];
+				
+				CopyChildren(nc);
+				d_children = nc;
+				
+				d_rows = rows;
+				d_columns = columns;
+				
+				Reallocate();
+			}
+		}
+		
+		public void Resize(int rows, int columns)
+		{
+			Resize(rows, columns, false);
+		}
+		
+		private bool EmptyCell(out int r, out int c, bool resize)
+		{
+			int or = 0;
+			int oc = 0;
+			bool ret;
+			
+			ret = !ForeachCell((rr, cc, child) => {
+				if (child == null)
+				{
+					or = rr;
+					oc = cc;
+					return false;
+				}
+				
+				return true;
+			});
+			
+			r = or;
+			c = oc;
+			
+			if (ret)
+			{
+				return true;
+			}
+			else if (!resize)
+			{
+				return false;
 			}
 			
 			if (d_expand == ExpandType.Down)
 			{
-				all.Sort(delegate (Point first, Point second) {
-					return first.Y == second.Y ? first.X.CompareTo(second.X) : first.Y.CompareTo(second.Y);
-				});
-			}
-			
-			foreach (Gtk.Widget child in Children)
-			{
-				if (child is Placeholder)
-				{
-					continue;
-				}
-			
-				Point pos = ChildPosition(child);
+				Resize(d_rows + 1, d_columns, false);
 				
-				all.RemoveAll(delegate (Point pt) {
-					return pt.Equals(pos);
-				});
-			}
-			
-			if (all.Count > 0)
-			{
-				return all[0];
-			}
-			
-			/* Resize is imminent */
-			if (d_expand == ExpandType.Right)
-			{
-				Resize(NRows, NColumns + 1);
-				return new Point((int)NColumns - 1, 0);
+				r = d_rows - 1;
+				c = 0;
 			}
 			else
 			{
-				Resize(NRows + 1, NColumns);
-				return new Point(0, (int)NRows - 1);
+				Resize(d_rows, d_columns + 1, false);
+				
+				r = d_rows - 1;
+				c = d_columns - 1;
 			}
+			
+			return true;
 		}
 		
-		private Point ChildPosition(Gtk.Widget child)
+		protected override void OnAdded(Gtk.Widget widget)
 		{
-			child = RealChild(child);
-			
-			if (child == null)
-			{
-				return new Point();
-			}
-			
-			int left = (int)(uint)ChildGetProperty(child, "left-attach").Val;
-			int top = (int)(uint)ChildGetProperty(child, "top-attach").Val;
-			
-			return new Point(left, top);
-		}
-		
-		public new void Add(Gtk.Widget child)
-		{
-			Add(child, -1, -1);
-		}
-		
-		public new void Add(Gtk.Widget child, int row, int col)
-		{
-			Point pos;
-			
-			if (row == -1 || col == -1 || At(col, row) != null)
-			{
-				pos = FindEmpty();
-			}
-			else
-			{
-				EnsureSize((uint)row + 1, (uint)col + 1);
-				pos = new Point(col, row);
-			}
+			int r;
+			int c;
 
-			if (child.IsNoWindow)
-			{
-				Gtk.EventBox ev = new Gtk.EventBox();
-				child.Show();
-				
-				child.Destroyed += delegate (object source, EventArgs args) { ev.Destroy(); };
-				ev.Add(child);
-				
-				child = ev;
-			}
+			EmptyCell(out r, out c, true);
+			d_children[r, c] = widget;
+
+			widget.Parent = this;
+			ReallocateOne(r, c);
 			
-			Attach(child, (uint)pos.X, (uint)pos.X + 1, (uint)pos.Y, (uint)pos.Y + 1, Gtk.AttachOptions.Expand | Gtk.AttachOptions.Fill, Gtk.AttachOptions.Expand | Gtk.AttachOptions.Fill, 0, 0);
-			
-			SetDragSource(child);
-			child.Show();
+			SetDragSource(widget);
 		}
 		
 		private void SetDragSource(Gtk.Widget child)
@@ -336,15 +452,13 @@ namespace Cpg.Studio.Widgets
 			Gdk.Rectangle alloc = child.Allocation;
 			Gdk.Pixbuf icon;
 			
-			System.Reflection.MethodInfo info = child.GetType().GetMethod("CreateDragIcon");
-			
-			if (info != null)
+			if (child is IDragIcon)
 			{
-				icon = info.Invoke(child, new object[] {}) as Gdk.Pixbuf;
+				icon = ((IDragIcon)child).CreateDragIcon();
 			}
 			else
 			{
-				icon = Gdk.Pixbuf.FromDrawable(child.GdkWindow, child.GdkWindow.Colormap, 0, 0, 0, 0, alloc.Width, alloc.Height);
+				icon = Gdk.Pixbuf.FromDrawable(child.GdkWindow, child.GdkWindow.Colormap, alloc.X, alloc.Y, 0, 0, alloc.Width, alloc.Height);
 			}
 					
 			Gtk.Drag.SetIconPixbuf(context, icon, icon.Width / 2, icon.Height / 2);
@@ -352,276 +466,124 @@ namespace Cpg.Studio.Widgets
 			d_dragging = child;
 			d_swapped = null;
 			
-			d_dragPos = ChildPosition(child);
-		}
-		
-		private bool EmptyRow(uint idx)
-		{
-			return !(new List<Gtk.Widget>(Children)).Exists(delegate (Gtk.Widget child) {
-				return !(child is Placeholder) && (uint)ChildGetProperty(child, "top-attach") == idx;
-			});
-		}
-		
-		private bool EmptyColumn(uint idx)
-		{
-			return !(new List<Gtk.Widget>(Children)).Exists(delegate (Gtk.Widget child) {
-				return !(child is Placeholder) && (uint)ChildGetProperty(child, "left-attach") == idx;
-			});
-		}
-		
-		private bool FindEmptyRow(ref uint idx)
-		{
-			if (NRows <= 1)
-			{
-				return false;
-			}
-			
-			for (idx = 0; idx < NRows; ++idx)
-			{
-				if (EmptyRow(idx))
-				{
-					return true;
-				}
-			}
-			
-			return false;
-		}
-		
-		private bool FindEmptyColumn(ref uint idx)
-		{
-			if (NColumns <= 1)
-			{
-				return false;
-			}
-			
-			for (idx = 0; idx < NColumns; ++idx)
-			{
-				if (EmptyColumn(idx))
-				{
-					return true;
-				}
-			}
-			
-			return false;							
-		}
-		
-		public Gtk.Widget At(int left, int top)
-		{
-			foreach (Gtk.Widget widget in Children)
-			{
-				Point pos = ChildPosition(widget);
-				
-				if (pos.X == left && pos.Y == top && !(widget is Placeholder))
-				{
-					return widget;
-				}
-			}
-			
-			return null;
-		}
-		
-		public Gtk.Widget Find(Gtk.Widget child, int dx, int dy)
-		{
-			child = RealChild(child);
-			
-			if (child == null)
-			{
-				return null;
-			}
-			
-			Point pt = GetPosition(child);
-			
-			return At((int)(pt.X + dx), (int)(pt.Y + dy));
-		}
-
-		private void RemoveRow(uint idx)
-		{
-			foreach (Gtk.Widget child in Children)
-			{
-				Point pos = ChildPosition(child);
-				
-				if (pos.Y == idx && child is Placeholder)
-				{
-					child.Destroy();
-				}
-				else if (pos.Y >= idx && pos.Y != 0)
-				{
-					ChildSetProperty(child, "top-attach", new GLib.Value(pos.Y - 1));
-					ChildSetProperty(child, "bottom-attach", new GLib.Value(pos.Y));
-				}
-			}
-			
-			Resize(NRows - 1, NColumns);
-			QueueDraw();
-		}
-		
-		private void RemoveColumn(uint idx)
-		{
-			foreach (Gtk.Widget child in Children)
-			{
-				Point pos = ChildPosition(child);
-				
-				if (pos.X == idx && child is Placeholder)
-				{
-					child.Destroy();
-				}
-				else if (pos.X >= idx && pos.X != 0)
-				{
-					ChildSetProperty(child, "left-attach", new GLib.Value(pos.X - 1));
-					ChildSetProperty(child, "right-attach", new GLib.Value(pos.X));
-				}
-			}
-			
-			Resize(NRows, NColumns - 1);
-			QueueDraw();
-		}
-
-		private void Compact()
-		{
-			d_compacting = true;
-		
-			uint idx = 0;
-			while (FindEmptyRow(ref idx))
-			{
-				RemoveRow(idx);
-			}
-			
-			while (FindEmptyColumn(ref idx))
-			{
-				RemoveColumn(idx);
-			}
-		
-			d_compacting = false;
+			IndexOf(child, out d_dragRow, out d_dragColumn);
 		}
 		
 		private void DoDragEnd(Gtk.Widget child, Gdk.DragContext context)
 		{
 			d_dragging = null;
-			Compact();
+		}
+		
+		public bool IndexOf(Gtk.Widget widget, out int r, out int c)
+		{
+			bool ret;
+			int ro = 0;
+			int co = 0;
+
+			ret = !ForeachCell((rr, cc, child) => {
+				if (child == widget)
+				{
+					ro = rr;
+					co = cc;
+
+					return false;
+				}
+				
+				return true;
+			});
+			
+			r = ro;
+			c = co;
+			
+			return ret;
+		}
+		
+		private bool IsEmpty(int r, int c, int dr, int dc)
+		{
+			while (r < d_rows && c < d_columns)
+			{
+				if (d_children[r, c] != null)
+				{
+					return false;
+				}
+				
+				r += dr;
+				c += dc;
+			}
+			
+			return true;
+		}
+		
+		private bool EmptyRow(int r)
+		{
+			return IsEmpty(r, 0, 0, 1);
+		}
+		
+		private bool EmptyColumn(int c)
+		{
+			return IsEmpty(0, c, 1, 0);
+		}
+		
+		private void Compact()
+		{
+			List<int> rows = new List<int>();
+
+			/* Remove empty rows and columns */
+			for (int r = 0; r < d_rows; ++r)
+			{
+				if (!EmptyRow(r))
+				{
+					rows.Add(r);
+				}
+			}
+			
+			List<int> cols = new List<int>();
+			
+			for (int c = 0; c < d_columns; ++c)
+			{
+				if (!EmptyColumn(c))
+				{
+					cols.Add(c);
+				}
+			}
+			
+			if (cols.Count == d_columns && rows.Count == d_rows)
+			{
+				return;
+			}
+			
+			Gtk.Widget[,] children = new Gtk.Widget[rows.Count, cols.Count];
+			
+			for (int r = 0; r < rows.Count; ++r)
+			{
+				for (int c = 0; c < cols.Count; ++c)
+				{
+					children[r, c] = d_children[rows[r], cols[c]];
+				}
+			}
+			
+			d_children = children;
+			
+			d_rows = rows.Count;
+			d_columns = cols.Count;
+			
+			Reallocate();
 		}
 		
 		protected override void OnRemoved(Gtk.Widget widget)
 		{
-			base.OnRemoved(widget);
-			
-			if (!d_compacting)
+			int r;
+			int c;
+
+			if (IndexOf(widget, out r, out c))
 			{
+				widget.Unparent();
+				d_children[r, c] = null;
+				
 				Compact();
 			}
 		}
 
-		private void FindEmptyRowCol(uint last, string what, out Gtk.Widget child, out Placeholder placeholder)
-		{
-			placeholder = null;
-			child = null;
-			
-			foreach (Gtk.Widget widget in Children)
-			{
-				if ((uint)ChildGetProperty(widget, what + "-attach").Val == last)
-				{
-					if (widget is Placeholder)
-					{
-						placeholder = widget as Placeholder;
-					}
-					else
-					{
-						child = widget;
-						break;
-					}
-				}
-			}
-		}
-		
-		private bool RemoveEmptyRow()
-		{
-			uint last = NRows - 1;
-			Gtk.Widget child;
-			Placeholder placeholder;
-			
-			FindEmptyRowCol(last, "top", out child, out placeholder);
-			
-			if (child != null)
-			{
-				return false;
-			}
-		
-			if (placeholder != null)
-			{
-				placeholder.Destroy();
-			}
-		
-			RemoveRow(last);
-			
-			return true;
-		}
-		
-		private bool RemoveEmptyColumn()
-		{
-			uint last = NColumns - 1;
-			Gtk.Widget child;
-			Placeholder placeholder;
-			
-			FindEmptyRowCol(last, "left", out child, out placeholder);
-			
-			if (child != null)
-			{
-				return false;
-			}
-		
-			if (placeholder != null)
-			{
-				placeholder.Destroy();
-			}
-		
-			RemoveColumn(last);
-			
-			return true;
-		}
-		
-		public void EnsureSize(uint rows, uint cols)
-		{
-			uint origRows = NRows;
-			uint origCols = NColumns;
-			
-			Resize(System.Math.Max(origRows, rows), System.Math.Max(origCols, cols));
-
-			for (uint i = origRows; i < rows; ++i)
-			{
-				Attach(new Placeholder(), 0, 1, i, i + 1);
-			}
-			
-			for (uint i = origCols; i < cols; ++i)
-			{
-				Attach(new Placeholder(), i, i + 1, 0, 1);
-			}
-			
-			QueueDraw();
-		}
-		
-		protected override bool OnKeyPressEvent(Gdk.EventKey evnt)
-		{
-			if ((evnt.State & Gdk.ModifierType.ControlMask) == 0)
-			{
-				return false;
-			}
-			
-			switch (evnt.Key)
-			{
-				case Gdk.Key.Down:
-					return RemoveEmptyRow();
-				case Gdk.Key.Up:
-					EnsureSize(NRows + 1, NColumns);
-					return true;
-				case Gdk.Key.Left:
-					EnsureSize(NRows, NColumns + 1);
-					return true;
-				case Gdk.Key.Right:
-					return RemoveEmptyColumn();
-			}
-			
-			return false;
-		}
-		
 		protected override bool OnDragMotion(Gdk.DragContext context, int x, int y, uint time_)
 		{
 			base.OnDragMotion(context, x, y, time_);
@@ -634,17 +596,12 @@ namespace Cpg.Studio.Widgets
 			else
 			{
 				DoUpdateDragging(x, y);
+
 				Gdk.Drag.Status(context, Gdk.DragAction.Move, time_);
 				return true;
 			}
 		}
 		
-		protected override bool OnButtonPressEvent(Gdk.EventButton evnt)
-		{
-			GrabFocus();
-			return false;
-		}
-
 		protected override bool OnDragDrop(Gdk.DragContext context, int x, int y, uint time_)
 		{
 			if (d_dragging == null)
