@@ -263,11 +263,23 @@ namespace Cpg.Studio.Dialogs
 			{
 				Gdk.Rectangle a = Allocation;
 				
-				int w = (int)(a.Width * 0.7);
-				int h = (int)(a.Height * 0.7);
+				int w = (int)(a.Width * 0.5);
+				int h = (int)(a.Height * 0.5);
 				
-				Gdk.Pixbuf pix = Gdk.Pixbuf.FromDrawable(GdkWindow, GdkWindow.Colormap, a.X, a.Y, 0, 0, a.Width, a.Height);
-				return pix.ScaleSimple(w, h, Gdk.InterpType.Hyper);
+				Gdk.Pixmap pix = new Gdk.Pixmap(GdkWindow, w, h);
+				pix.DrawRectangle(Style.WhiteGC, true, new Gdk.Rectangle(0, 0, w, h));
+
+				Plot.Export.Gdk ex = new Plot.Export.Gdk(pix);
+				
+				ex.Do(() => {
+					ex.Export(d_canvas.Graph, new Plot.Rectangle<int>(0, 0, w, h), (ctx, g, d) => {
+						ctx.Rectangle(0, 0, w, h);
+						ctx.SetSourceRGBA(1, 1, 1, 0.5);
+						ctx.Fill();
+					});
+				});
+				
+				return Gdk.Pixbuf.FromDrawable(pix, pix.Colormap, 0, 0, 0, 0, w, h);
 			}
 			
 			public Plot.Widget Canvas
@@ -350,8 +362,8 @@ namespace Cpg.Studio.Dialogs
 			
 			d_content = new Widgets.Table();
 			d_content.Expand = Widgets.Table.ExpandType.Down;
-			//d_content.RowSpacing = 1;
-			//d_content.ColumnSpacing = 1;
+			
+			d_content.Merge += HandleContentMerge;
 			
 			d_hpaned.Pack1(d_content, true, true);
 			vboxContent.PackStart(d_hpaned);
@@ -360,6 +372,14 @@ namespace Cpg.Studio.Dialogs
 			
 			Add(vboxMain);
 			vboxMain.ShowAll();
+		}
+
+		private void HandleContentMerge(object obj, Gtk.Widget a, Gtk.Widget b)
+		{
+			Graph source = (Graph)a;
+			Graph target = (Graph)b;
+			
+			MergeWith(source, target);
 		}
 
 		private void HandleTreePopulatePopup(object source, Widgets.WrappersTree.WrapperNode[] nodes, Menu menu)

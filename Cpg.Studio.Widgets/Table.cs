@@ -14,7 +14,9 @@ namespace Cpg.Studio.Widgets
 		
 		private ExpandType d_expand;
 		private Gtk.Widget d_dragging;
-		private Gtk.Widget d_swapped;
+		private bool d_dragmerge;
+		
+		private bool d_isswapped;
 		
 		private int d_dragRow;
 		private int d_dragColumn;
@@ -31,8 +33,13 @@ namespace Cpg.Studio.Widgets
 		private int[] d_y;
 		private int[] d_width;
 		private int[] d_height;
+		
+		private Gdk.Window d_window;
 
 		private Gtk.Widget[,] d_children;
+		
+		public delegate void MergeHandler(object source, Gtk.Widget a, Gtk.Widget b);
+		public event MergeHandler Merge = delegate {};
 		
 		public Table()
 		{
@@ -41,9 +48,66 @@ namespace Cpg.Studio.Widgets
 			d_rows = 0;
 			d_columns = 0;
 			
-			WidgetFlags |= Gtk.WidgetFlags.NoWindow;
+			AddEvents((int)Gdk.EventMask.ExposureMask);
 			
 			Gtk.Drag.DestSet(this, 0, new Gtk.TargetEntry[] {new Gtk.TargetEntry("TableItem", Gtk.TargetFlags.App, 1)}, Gdk.DragAction.Move);
+		}
+		
+		[System.Runtime.InteropServices.DllImport("libgtk-x11-2.0")]
+		private static extern void gtk_widget_set_realized(IntPtr widget, bool realized);
+		
+		protected override void OnRealized()
+		{
+			Gdk.WindowAttr attr;
+			
+			attr = new Gdk.WindowAttr();
+			attr.X = Allocation.X;
+			attr.Y = Allocation.Y;
+			attr.Width = Allocation.Width;
+			attr.Height = Allocation.Height;
+			
+			attr.EventMask = (int)Events;
+			attr.WindowType = Gdk.WindowType.Child;
+			attr.Wclass = Gdk.WindowClass.InputOutput;
+			attr.Visual = Visual;
+			
+			d_window = new Gdk.Window(ParentWindow,
+			                          attr,
+			                          Gdk.WindowAttributesType.X |
+			                          Gdk.WindowAttributesType.Y |
+			                          Gdk.WindowAttributesType.Visual);
+			
+			d_window.Background = Style.Background(Gtk.StateType.Normal);
+			d_window.UserData = Handle;
+			
+			GdkWindow = d_window;
+			
+			gtk_widget_set_realized(Handle, true);
+		}
+		
+		protected override void OnUnrealized()
+		{
+			if (d_window != null)
+			{
+				d_window.UserData = IntPtr.Zero;
+				d_window.Destroy();
+				d_window = null;
+			}
+			
+			gtk_widget_set_realized(Handle, false);
+		}
+		
+		protected override void OnMapped()
+		{
+			d_window.Show();
+			base.OnMapped();
+		}
+		
+		protected override void OnUnmapped()
+		{
+			d_window.Hide();
+
+			base.OnUnmapped();
 		}
 		
 		public int Columns
@@ -100,7 +164,7 @@ namespace Cpg.Studio.Widgets
 				EmptyCell(out row, out col, true);
 			}
 			
-			Resize(row + 1, col + 1, false);
+			Resize(row + 1, col + 1);
 			
 			if (d_children[row, col] != null)
 			{
@@ -123,13 +187,18 @@ namespace Cpg.Studio.Widgets
 		{
 			base.OnSizeAllocated(allocation);
 			
+			if (IsRealized)
+			{
+				d_window.MoveResize(allocation);
+			}
+			
 			Reallocate();
 		}
 		
-		private void Calculate(int num, int totalSize, int spacing, int stopat, out int[] pos, out int[] size)
+		private void Calculate(int num, int totalSize, int spacing, out int[] pos, out int[] size)
 		{
-			pos = new int[d_rows];
-			size = new int[d_rows];
+			pos = new int[num];
+			size = new int[num];
 			
 			int p = 0;
 			
@@ -142,23 +211,18 @@ namespace Cpg.Studio.Widgets
 				
 				size[i] = space / left;
 				
-				if (i == stopat)
-				{
-					break;
-				}
-				
 				p += size[i] + spacing;
 			}
 		}
 		
-		private void CalculateRows(out int[] y, out int[] height, int stopat)
+		private void CalculateRows(out int[] y, out int[] height)
 		{
-			Calculate(d_rows, Allocation.Height, d_rowSpacing, stopat, out y, out height);
+			Calculate(d_rows, Allocation.Height, d_rowSpacing, out y, out height);
 		}
 		
-		private void CalculateColumns(out int[] x, out int[] width, int stopat)
+		private void CalculateColumns(out int[] x, out int[] width)
 		{
-			Calculate(d_columns, Allocation.Width, d_columnSpacing, stopat, out x, out width);
+			Calculate(d_columns, Allocation.Width, d_columnSpacing, out x, out width);
 		}
 		
 		private void ReallocateOne(int r, int c)
@@ -168,21 +232,25 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 
-			Gdk.Rectangle alloc = new Gdk.Rectangle(d_x[c] + Allocation.X, d_y[r] + Allocation.Y, d_width[c], d_height[r]);
+			Gdk.Rectangle alloc = new Gdk.Rectangle(d_x[c], d_y[r], d_width[c], d_height[r]);
 			d_children[r, c].SizeAllocate(alloc);
+			
+			QueueDraw();
 		}
 		
 		private void Reallocate()
 		{
-			CalculateRows(out d_y, out d_height, d_rows);
-			CalculateColumns(out d_x, out d_width, d_columns);
+			CalculateRows(out d_y, out d_height);
+			CalculateColumns(out d_x, out d_width);
 			
 			ForeachCell(false, (r, c, child) => {
-				Gdk.Rectangle alloc = new Gdk.Rectangle(d_x[c] + Allocation.X, d_y[r] + Allocation.Y, d_width[c], d_height[r]);
+				Gdk.Rectangle alloc = new Gdk.Rectangle(d_x[c], d_y[r], d_width[c], d_height[r]);
 
 				child.SizeAllocate(alloc);
 				return true;
 			});
+			
+			QueueDraw();
 		}
 		
 		protected override void ForAll(bool include_internals, Gtk.Callback callback)
@@ -205,13 +273,13 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private bool CellAtPixel(int val, out int idx, int offset, int[] pos, int[] size)
+		private bool CellAtPixel(int val, out int idx, int[] pos, int[] size)
 		{
 			idx = 0;
 			
 			for (int i = 0; i < pos.Length; ++i)
 			{
-				int p = offset + pos[i];
+				int p = pos[i];
 
 				if (val >= p && val <= p + size[i])
 				{
@@ -225,8 +293,8 @@ namespace Cpg.Studio.Widgets
 		
 		private bool CellAtPixel(int x, int y, out int r, out int c)
 		{
-			return CellAtPixel(y, out r, Allocation.Y, d_y, d_height) &&
-			       CellAtPixel(x, out c, Allocation.X, d_x, d_width);
+			return CellAtPixel(y, out r, d_y, d_height) &&
+			       CellAtPixel(x, out c, d_x, d_width);
 		}
 		
 		private void Swap(int r, int c, int or, int oc)
@@ -240,7 +308,63 @@ namespace Cpg.Studio.Widgets
 			ReallocateOne(or, oc);
 		}
 		
-		private void DoUpdateDragging(int x, int y)
+		private void DimsFrom(ref int num, int d, out int r, out int c)
+		{
+			num += d;
+
+			r = d_rows;
+			c = d_columns;
+			
+			num -= d;
+		}
+		
+		private bool ExpandFromDrag(int pix, int[] pos, int[] size, ref int num, bool isempty)
+		{
+			if (!isempty)
+			{
+				if (pix - pos[num - 1] > 0.8 * size[num - 1])
+				{
+					int r;
+					int c;
+
+					DimsFrom(ref num, 1, out r, out c);
+					Resize(r, c);
+
+					return true;
+				}
+			}
+			else if (pix - pos[num - 1] < 0.2 * size[num - 1])
+			{
+				int r;
+				int c;
+				
+				DimsFrom(ref num, -1, out r, out c);
+				
+				Resize(r, c);
+				return true;
+			}
+			
+			return false;
+		}
+		
+		private bool ExpandFromDrag(int x, int y)
+		{
+			bool ret = false;
+
+			if (ExpandFromDrag(y, d_y, d_height, ref d_rows, EmptyRow(d_rows - 1)))
+			{
+				ret = true;
+			}
+			
+			if (ExpandFromDrag(x, d_x, d_width, ref d_columns, EmptyColumn(d_columns - 1)))
+			{
+				ret = true;
+			}
+			
+			return ret;
+		}
+		
+		private bool DoUpdateDragging(int x, int y)
 		{
 			// We have the child in d_dragging which was dragged from d_dragPos. We need to
 			// determine the child position under the cursor at x, y and swap accordingly
@@ -249,28 +373,52 @@ namespace Cpg.Studio.Widgets
 			
 			if (!CellAtPixel(x, y, out r, out c))
 			{
-				return;
+				return false;
 			}
+			
+			if (ExpandFromDrag(x, y))
+			{
+				if (d_dragRow >= d_rows || d_dragColumn >= d_columns)
+				{
+					d_isswapped = false;
+					d_dragRow = d_swapRow;
+					d_dragColumn = d_swapColumn;
+				}
 
-			if (d_swapped != null)
+				if (!CellAtPixel(x, y, out r, out c))
+				{
+					return false;
+				}
+			}
+			
+			// Do nothing when what we drag is already in this cell
+			if (d_children[r, c] == d_dragging)
+			{
+				return true;
+			}
+			
+			// If we swapped something before, then move it back to its
+			// original location now
+			if (d_isswapped)
 			{
 				// Swap back
 				Swap(d_dragRow, d_dragColumn, d_swapRow, d_swapColumn);
+				d_isswapped = false;
+			
+				if (d_children[r, c] == d_dragging)
+				{
+					return true;
+				}
 			}
 			
-			d_swapped = null;
-			
-			if (d_children[r, c] == d_dragging)
-			{
-				return;
-			}
-			
+			// Swap what we drag (which is at d_dragRow, d_dragColumn) to
+			// with the thing were we are (r, c)
 			d_swapRow = r;
 			d_swapColumn = c;
-			
-			d_swapped = d_children[d_swapRow, d_swapColumn];
+			d_isswapped = true;
 			
 			Swap(d_dragRow, d_dragColumn, d_swapRow, d_swapColumn);
+			return true;
 		}
 		
 		public delegate bool ForeachCellHandler(int r, int c, Gtk.Widget widget);
@@ -303,8 +451,15 @@ namespace Cpg.Studio.Widgets
 		
 		private void CopyChildren(Gtk.Widget[,] ret)
 		{
+			int numr = ret.GetUpperBound(0) + 1;
+			int numc = ret.GetUpperBound(1) + 1;
+
 			ForeachCell((r, c, child) => {
-				ret[r, c] = child;
+				if (r < numr && c < numc)
+				{
+					ret[r, c] = child;
+				}
+
 				return true;
 			});
 		}
@@ -349,15 +504,33 @@ namespace Cpg.Studio.Widgets
 			}		
 		}
 		
-		private void Resize(int rows, int columns, bool compact)
+		public void Resize(int rows, int columns)
 		{
-			if (compact)
-			{
-				Compact();
-			}
+			int nonempty = d_rows;
 
-			rows = System.Math.Max(rows, d_rows);
-			columns = System.Math.Max(columns, d_columns);
+			while (rows < nonempty && nonempty > 0)
+			{
+				if (!EmptyRow(nonempty - 1))
+				{	
+					rows = nonempty;
+					break;
+				}
+				
+				--nonempty;
+			}
+			
+			nonempty = d_columns;
+
+			while (columns < nonempty && nonempty > 0)
+			{
+				if (!EmptyColumn(nonempty - 1))
+				{	
+					columns = nonempty;
+					break;
+				}
+				
+				--nonempty;
+			}
 			
 			if (rows != d_rows || columns != d_columns)
 			{
@@ -371,11 +544,6 @@ namespace Cpg.Studio.Widgets
 				
 				Reallocate();
 			}
-		}
-		
-		public void Resize(int rows, int columns)
-		{
-			Resize(rows, columns, false);
 		}
 		
 		private bool EmptyCell(out int r, out int c, bool resize)
@@ -409,14 +577,14 @@ namespace Cpg.Studio.Widgets
 			
 			if (d_expand == ExpandType.Down)
 			{
-				Resize(d_rows + 1, d_columns, false);
+				Resize(d_rows + 1, d_columns);
 				
 				r = d_rows - 1;
 				c = 0;
 			}
 			else
 			{
-				Resize(d_rows, d_columns + 1, false);
+				Resize(d_rows, d_columns + 1);
 				
 				r = d_rows - 1;
 				c = d_columns - 1;
@@ -464,14 +632,21 @@ namespace Cpg.Studio.Widgets
 			Gtk.Drag.SetIconPixbuf(context, icon, icon.Width / 2, icon.Height / 2);
 			
 			d_dragging = child;
-			d_swapped = null;
+			d_isswapped = false;
+			
+			Gdk.EventMotion evnt = Utils.GetCurrentEvent() as Gdk.EventMotion;
+			
+			d_dragmerge = (evnt != null && (evnt.State & Gdk.ModifierType.ShiftMask) != 0);
 			
 			IndexOf(child, out d_dragRow, out d_dragColumn);
+			
+			QueueDraw();
 		}
 		
 		private void DoDragEnd(Gtk.Widget child, Gdk.DragContext context)
 		{
 			d_dragging = null;
+			QueueDraw();
 		}
 		
 		public bool IndexOf(Gtk.Widget widget, out int r, out int c)
@@ -593,11 +768,32 @@ namespace Cpg.Studio.Widgets
 				Gdk.Drag.Status(context, 0, time_);
 				return false;
 			}
+			else if (d_dragmerge)
+			{
+				int r;
+				int c;
+
+				if (CellAtPixel(x, y, out r, out c) && d_children[r, c] != null)
+				{
+					Gdk.Drag.Status(context, Gdk.DragAction.Move, time_);
+				}
+				else
+				{
+					Gdk.Drag.Status(context, 0, time_);
+				}
+
+				return true;
+			}
 			else
 			{
-				DoUpdateDragging(x, y);
-
-				Gdk.Drag.Status(context, Gdk.DragAction.Move, time_);
+				if (DoUpdateDragging(x, y))
+				{
+					Gdk.Drag.Status(context, Gdk.DragAction.Move, time_);
+				}
+				else
+				{
+					Gdk.Drag.Status(context, 0, time_);
+				}
 				return true;
 			}
 		}
@@ -609,7 +805,31 @@ namespace Cpg.Studio.Widgets
 				return false;
 			}
 			
-			Gtk.Drag.Finish(context, true, false, time_);
+			if (d_dragmerge)
+			{
+				int r;
+				int c;
+
+				if (CellAtPixel(x, y, out r, out c) && d_children[r, c] != null)
+				{
+					if (d_children[r, c] != d_dragging)
+					{
+						/* Merge graphs */
+						Merge(this, d_dragging, d_children[r, c]);
+					}
+
+					Gtk.Drag.Finish(context, true, false, time_);
+				}
+				else
+				{
+					Gtk.Drag.Finish(context, false, false, time_);
+				}
+			}
+			else
+			{			
+				Gtk.Drag.Finish(context, true, false, time_);
+			}
+
 			return true;
 		}
 	}
