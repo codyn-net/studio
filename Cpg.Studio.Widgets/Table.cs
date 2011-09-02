@@ -393,6 +393,11 @@ namespace Cpg.Studio.Widgets
 				return false;
 			}
 			
+			if (ExpandFromDrag(x, y))
+			{
+				CellAtPixel(x, y, out r, out c);
+			}
+			
 			// Do nothing when what we drag is already in this cell
 			Plotting.Graph dragging = d_unmerged != null ? d_unmerged : d_dragging;
 
