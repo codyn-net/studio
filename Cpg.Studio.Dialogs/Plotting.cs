@@ -363,7 +363,7 @@ namespace Cpg.Studio.Dialogs
 			d_content = new Widgets.Table();
 			d_content.Expand = Widgets.Table.ExpandType.Down;
 			
-			d_content.Merge += HandleContentMerge;
+			d_content.CreateGraph += CreateGraph;
 			
 			d_hpaned.Pack1(d_content, true, true);
 			vboxContent.PackStart(d_hpaned);
@@ -372,14 +372,6 @@ namespace Cpg.Studio.Dialogs
 			
 			Add(vboxMain);
 			vboxMain.ShowAll();
-		}
-
-		private void HandleContentMerge(object obj, Gtk.Widget a, Gtk.Widget b)
-		{
-			Graph source = (Graph)a;
-			Graph target = (Graph)b;
-			
-			MergeWith(source, target);
 		}
 
 		private void HandleTreePopulatePopup(object source, Widgets.WrappersTree.WrapperNode[] nodes, Menu menu)
@@ -661,34 +653,16 @@ namespace Cpg.Studio.Dialogs
 				handler();
 			}
 		}
-
-		public Graph Add(int row, int col, IEnumerable<Series> series)
+		
+		private Graph CreateGraph()
 		{
-			Graph graph = (Graph)d_content[row, col];
-			
-			if (graph != null)
-			{
-				foreach (Series s in series)
-				{
-					graph.Add(s);
-				}
-
-				return graph;
-			}
-			
-			graph = new Graph();
-			Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
-			
-			foreach (Series s in series)
-			{
-				graph.Add(s);
-			}
+			Graph graph = new Graph();
 			
 			graph.Show();
+
+			Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
 			d_graphs.Add(graph);
 
-			d_content.Add(graph, row, col);
-			
 			graph.MotionNotifyEvent += OnGraphMotionNotify;
 			graph.LeaveNotifyEvent += OnGraphLeaveNotify;
 			graph.EnterNotifyEvent += OnGraphEnterNotify;
@@ -718,6 +692,34 @@ namespace Cpg.Studio.Dialogs
 			graph.Canvas.PopulatePopup += delegate (object source, Gtk.UIManager manager) {
 				OnGraphPopulatePopup(graph, manager);
 			};
+
+			return graph;
+		}
+
+		public Graph Add(int row, int col, IEnumerable<Series> series)
+		{
+			Graph graph = (Graph)d_content[row, col];
+			
+			if (graph != null)
+			{
+				foreach (Series s in series)
+				{
+					graph.Add(s);
+				}
+
+				return graph;
+			}
+			
+			graph = CreateGraph();
+			
+			foreach (Series s in series)
+			{
+				graph.Add(s);
+			}
+
+			d_content.Add(graph, row, col);
+			
+			Plot.Graph g = graph.Canvas.Graph;
 			
 			if (d_linkaxis && !d_autoaxis && d_graphs.Count > 1)
 			{
@@ -735,7 +737,7 @@ namespace Cpg.Studio.Dialogs
 			
 			return graph;
 		}
-		
+
 		private void OnGraphPopulatePopup(Graph graph, Gtk.UIManager manager)
 		{
 			ActionGroup gp = new ActionGroup("HookActions");
