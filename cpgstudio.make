@@ -53,16 +53,11 @@ FILES = \
 	Cpg.Studio/Config.cs \
 	Cpg.Studio.Dialogs/Editor.cs \
 	Cpg.Studio.Dialogs/FindTemplate.cs \
-	Cpg.Studio.Dialogs/Functions.cs \
 	Cpg.Studio.Dialogs/Import.cs \
-	Cpg.Studio.Dialogs/Interpolate.cs \
-	Cpg.Studio.Dialogs/Plotting.cs \
 	Cpg.Studio.Dialogs/PlotSettings.cs \
+	Cpg.Studio.Dialogs/Plotting.cs \
 	Cpg.Studio.Dialogs/Property.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
-	Cpg.Studio.Interpolators/IInterpolator.cs \
-	Cpg.Studio.Interpolators/Interpolation.cs \
-	Cpg.Studio.Interpolators/PChip.cs \
 	Cpg.Studio/Point.cs \
 	Cpg.Studio/Range.cs \
 	Cpg.Studio/RenderCache.cs \
@@ -72,12 +67,14 @@ FILES = \
 	Cpg.Studio.Renderers/Input.cs \
 	Cpg.Studio.Renderers/Link.cs \
 	Cpg.Studio.Renderers/Oscillator.cs \
+	Cpg.Studio.Renderers/PiecewisePolynomial.cs \
 	Cpg.Studio.Renderers/Renderer.cs \
 	Cpg.Studio.Renderers/State.cs \
 	Cpg.Studio.Serialization/Project.cs \
 	Cpg.Studio/Settings.cs \
 	Cpg.Studio/Simulation.cs \
 	Cpg.Studio/Stock.cs \
+	Cpg.Studio.Undo/AddFunctionArgument.cs \
 	Cpg.Studio.Undo/AddFunctionPolynomialPiece.cs \
 	Cpg.Studio.Undo/AddGroup.cs \
 	Cpg.Studio.Undo/AddInterfaceProperty.cs \
@@ -86,6 +83,7 @@ FILES = \
 	Cpg.Studio.Undo/AddProperty.cs \
 	Cpg.Studio.Undo/ApplyTemplate.cs \
 	Cpg.Studio.Undo/AttachLink.cs \
+	Cpg.Studio.Undo/FunctionArgument.cs \
 	Cpg.Studio.Undo/Function.cs \
 	Cpg.Studio.Undo/FunctionPolynomialPiece.cs \
 	Cpg.Studio.Undo/Group.cs \
@@ -95,6 +93,9 @@ FILES = \
 	Cpg.Studio.Undo/LinkAction.cs \
 	Cpg.Studio.Undo/Manager.cs \
 	Cpg.Studio.Undo/ModifyExpression.cs \
+	Cpg.Studio.Undo/ModifyFunctionArgumentDefaultValue.cs \
+	Cpg.Studio.Undo/ModifyFunctionArgumentExplicit.cs \
+	Cpg.Studio.Undo/ModifyFunctionArgumentName.cs \
 	Cpg.Studio.Undo/ModifyFunctionArguments.cs \
 	Cpg.Studio.Undo/ModifyFunctionPolynomialPieceBegin.cs \
 	Cpg.Studio.Undo/ModifyFunctionPolynomialPieceCoefficients.cs \
@@ -108,6 +109,7 @@ FILES = \
 	Cpg.Studio.Undo/MoveObject.cs \
 	Cpg.Studio.Undo/Object.cs \
 	Cpg.Studio.Undo/Property.cs \
+	Cpg.Studio.Undo/RemoveFunctionArgument.cs \
 	Cpg.Studio.Undo/RemoveFunctionPolynomialPiece.cs \
 	Cpg.Studio.Undo/RemoveInterfaceProperty.cs \
 	Cpg.Studio.Undo/RemoveLinkAction.cs \
@@ -120,23 +122,20 @@ FILES = \
 	Cpg.Studio.Widgets/AboutDialog.cs \
 	Cpg.Studio.Widgets/AddRemovePopup.cs \
 	Cpg.Studio.Widgets/Annotation.cs \
+	Cpg.Studio.Widgets.Editors/Function.cs \
 	Cpg.Studio.Widgets.Editors/Group.cs \
 	Cpg.Studio.Widgets.Editors/Link.cs \
 	Cpg.Studio.Widgets.Editors/Object.cs \
+	Cpg.Studio.Widgets.Editors/PiecewisePolynomial.cs \
 	Cpg.Studio.Widgets.Editors/Properties.cs \
 	Cpg.Studio.Widgets.Editors/Wrapper.cs \
-	Cpg.Studio.Widgets/FunctionNode.cs \
-	Cpg.Studio.Widgets/FunctionPolynomialNode.cs \
-	Cpg.Studio.Widgets/FunctionPolynomialPieceNode.cs \
-	Cpg.Studio.Widgets/FunctionsHelper.cs \
-	Cpg.Studio.Widgets/FunctionsView.cs \
 	Cpg.Studio.Widgets/GenericFunctionNode.cs \
 	Cpg.Studio.Widgets/Grid.cs \
+	Cpg.Studio.Widgets/IDragIcon.cs \
 	Cpg.Studio.Widgets/MessageArea.cs \
 	Cpg.Studio.Widgets/NodeStore.cs \
 	Cpg.Studio.Widgets/Notebook.cs \
 	Cpg.Studio.Widgets/Pathbar.cs \
-	Cpg.Studio.Widgets/PolynomialsView.cs \
 	Cpg.Studio.Widgets/Progress.cs \
 	Cpg.Studio.Widgets/ScrolledWindow.cs \
 	Cpg.Studio.Widgets/Table.cs \
