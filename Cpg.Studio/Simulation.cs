@@ -6,7 +6,7 @@ namespace Cpg.Studio
 	{
 		private Wrappers.Network d_network;
 		private Integrator d_integrator;
-		private Range d_range;
+		private SimulationRange d_range;
 		
 		public event BeginHandler OnBegin = delegate {};
 		public event EventHandler OnEnd = delegate {};
@@ -46,7 +46,7 @@ namespace Cpg.Studio
 			d_network.WrappedObject.AddNotification("integrator", HandleNotifyIntegrator);
 		}
 		
-		public Range Range
+		public SimulationRange Range
 		{
 			get
 			{
@@ -102,7 +102,7 @@ namespace Cpg.Studio
 		
 		private void HandleIntegratorBegin(object source, BeginArgs args)
 		{
-			d_range = new Range(args.From, args.Step, args.To);
+			d_range = new SimulationRange(args.From, args.Step, args.To);
 			d_running = true;
 
 			OnBegin(this, args);

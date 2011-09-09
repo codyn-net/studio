@@ -1,4 +1,5 @@
 using System;
+using Biorob.Math;
 
 namespace Cpg.Studio
 {

@@ -1,4 +1,5 @@
 using System;
+using Biorob.Math;
 
 namespace Cpg.Studio.Undo
 {
@@ -51,13 +52,13 @@ namespace Cpg.Studio.Undo
 		
 		public void Redo()
 		{
-			Point templateMean = new Point();
-			Utils.MeanPosition(d_network.TemplateGroup.Children, out templateMean.X, out templateMean.Y);
+			Point templateMean;
+			templateMean = Utils.MeanPosition(d_network.TemplateGroup.Children);
 			
 			templateMean.Floor();
 			
-			Point parentMean = new Point();
-			Utils.MeanPosition(d_parent.Children, out parentMean.X, out parentMean.Y);
+			Point parentMean;
+			parentMean = Utils.MeanPosition(d_parent.Children);
 			
 			parentMean.Floor();
 

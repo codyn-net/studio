@@ -4,20 +4,20 @@ using System.Globalization;
 
 namespace Cpg.Studio
 {
-	public class Range
+	public class SimulationRange
 	{
 		private double d_from;
 		private double d_step;
 		private double d_to;
 		
-		public Range(double from, double timestep, double to)
+		public SimulationRange(double from, double timestep, double to)
 		{
 			d_from = from;
 			d_step = timestep;
 			d_to = to;
 		}
 		
-		public Range(string s)
+		public SimulationRange(string s)
 		{
 			Regex r = new Regex(@"\s*[:,]\s*");
 			NumberFormatInfo info = NumberFormatInfo.CurrentInfo.Clone() as NumberFormatInfo;

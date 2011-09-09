@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Biorob.Math;
 
 namespace Cpg.Studio
 {
@@ -320,14 +321,13 @@ namespace Cpg.Studio
 			}
 		
 			// After objects are removed, we create a new group
-			double x;
-			double y;
+			Point xy;
 
-			Utils.MeanPosition(ingroup, out x, out y);
+			xy = Utils.MeanPosition(ingroup);
 
 			Wrappers.Group newGroup = new Wrappers.Group();
-			newGroup.Allocation.X = (int)x;
-			newGroup.Allocation.Y = (int)y;
+			newGroup.Allocation.X = (int)xy.X;
+			newGroup.Allocation.Y = (int)xy.Y;
 			
 			actions.Add(new Undo.AddObject(parent, newGroup));
 			
@@ -342,7 +342,7 @@ namespace Cpg.Studio
 				// Move object to center at 0, 0 in the group
 				if (!(wrapper is Wrappers.Link))
 				{
-					actions.Add(new Undo.MoveObject(wrapper, -(int)x, -(int)y));
+					actions.Add(new Undo.MoveObject(wrapper, -(int)xy.X, -(int)xy.Y));
 				}
 				
 				// Add object to the group
@@ -437,13 +437,10 @@ namespace Cpg.Studio
 			// Remove the group itself
 			actions.Add(new Undo.RemoveObject(parent, grp));
 			
-			double cx;
-			double cy;
-
-			Utils.MeanPosition(grp.Children, out cx, out cy);
+			Point cxy = Utils.MeanPosition(grp.Children);
 			
-			int dx = (int)(grp.Allocation.X - cx);
-			int dy = (int)(grp.Allocation.Y - cy);
+			int dx = (int)(grp.Allocation.X - cxy.X);
+			int dy = (int)(grp.Allocation.Y - cxy.Y);
 			
 			foreach (Wrappers.Wrapper wrapper in grp.Children)
 			{
@@ -581,13 +578,11 @@ namespace Cpg.Studio
 				// Paste the new objects by making a copy (yes, again)
 				Wrappers.Wrapper[] copied = MakeCopy(Clipboard.Internal.Objects);
 			
-				double x;
-				double y;
-	
-				Utils.MeanPosition(copied, out x, out y);
+				Point xy;
+				xy = Utils.MeanPosition(copied);
 				
-				dx -= (int)x;
-				dy -= (int)y;
+				dx -= (int)xy.X;
+				dy -= (int)xy.Y;
 				
 				foreach (Wrappers.Wrapper wrapper in copied)
 				{

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using Cpg.Studio.Dialogs;
+using Biorob.Math;
 
 namespace Cpg.Studio.Widgets
 {
@@ -33,7 +33,7 @@ namespace Cpg.Studio.Widgets
 		private int[] d_width;
 		private int[] d_height;
 		
-		private Plot.Point<int> d_lastPress;
+		private Point d_lastPress;
 		
 		private Gdk.Window d_window;
 
@@ -652,7 +652,7 @@ namespace Cpg.Studio.Widgets
 			graph.DragBegin += delegate (object source, Gtk.DragBeginArgs args) { DoDragBegin(graph, args.Context); };
 			graph.DragEnd += delegate (object source, Gtk.DragEndArgs args) { DoDragEnd(graph, args.Context); };
 			graph.ButtonPressEvent += delegate (object source, Gtk.ButtonPressEventArgs args) {
-				d_lastPress = new Plot.Point<int>((int)args.Event.X, (int)args.Event.Y);
+				d_lastPress = new Point(args.Event.X, args.Event.Y);
 			};
 		}
 		
@@ -764,7 +764,7 @@ namespace Cpg.Studio.Widgets
 			d_dragHighlight = null;
 			
 			// Check if this is going to drag a label
-			if (graph.Canvas.Graph.LabelHitTest(new Plot.Point<double>(d_lastPress.X, d_lastPress.Y), out d_dragRenderer))
+			if (graph.Canvas.Graph.LabelHitTest(new Point(d_lastPress), out d_dragRenderer))
 			{
 				icon = PixbufForRenderer(graph.Canvas.Graph, d_dragRenderer);
 			}

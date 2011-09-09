@@ -4,6 +4,7 @@ using System.Reflection;
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Biorob.Math;
 
 namespace Cpg.Studio.Widgets
 {
@@ -377,7 +378,7 @@ namespace Cpg.Studio.Widgets
 			d_periodEntry.SetSizeRequest(75, -1);
 			d_periodEntry.Activated += new EventHandler(OnSimulationRunPeriod);
 			d_periodEntry.FocusOutEvent += delegate {
-				d_simulation.Range = new Range(d_periodEntry.Text);
+				d_simulation.Range = new SimulationRange(d_periodEntry.Text);
 			};
 
 			d_simulateButtons = new HBox(false, 3);
@@ -786,7 +787,7 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			d_periodEntry.Text = "0:0.01:1";
-			d_simulation.Range = new Range(d_periodEntry.Text);
+			d_simulation.Range = new SimulationRange(d_periodEntry.Text);
 
 			d_grid.GrabFocus();
 			
@@ -890,7 +891,7 @@ namespace Cpg.Studio.Widgets
 			set
 			{
 				d_periodEntry.Text = value;
-				d_simulation.Range = new Range(d_periodEntry.Text);
+				d_simulation.Range = new SimulationRange(d_periodEntry.Text);
 			}
 		}
 		
@@ -1381,7 +1382,7 @@ namespace Cpg.Studio.Widgets
 			SideBarPanePosition = s.SideBarPanePosition;
 			
 			d_periodEntry.Text = s.SimulatePeriod;
-			d_simulation.Range = new Range(d_periodEntry.Text);
+			d_simulation.Range = new SimulationRange(d_periodEntry.Text);
 			
 			// Restore root
 			if (!String.IsNullOrEmpty(s.ActiveRoot))
@@ -2426,7 +2427,7 @@ namespace Cpg.Studio.Widgets
 
 		private void OnSimulationRunPeriod(object sender, EventArgs args)
 		{
-			Range r = new Range(d_periodEntry.Text);
+			SimulationRange r = new SimulationRange(d_periodEntry.Text);
 			
 			if ((r.To - r.From) <= (r.To - (r.From + r.Step)))
 			{
@@ -2440,7 +2441,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void OnSimulationStep(object sender, EventArgs args)
 		{
-			Range r = new Range(d_periodEntry.Text);
+			SimulationRange r = new SimulationRange(d_periodEntry.Text);
 			
 			if (r.Step > 0)
 			{
@@ -2576,11 +2577,8 @@ namespace Cpg.Studio.Widgets
 		
 		private void RepositionImport(IEnumerable<Wrappers.Wrapper> current, IEnumerable<Wrappers.Wrapper> objs)
 		{
-			Point currentMean = new Point();
-			Point objsMean = new Point();
-
-			Utils.MeanPosition(current, out currentMean.X, out currentMean.Y);
-			Utils.MeanPosition(objs, out objsMean.X, out objsMean.Y);
+			Point currentMean = Utils.MeanPosition(current);
+			Point objsMean = Utils.MeanPosition(objs);
 			
 			currentMean.Floor();
 			objsMean.Floor();

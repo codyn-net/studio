@@ -58,8 +58,7 @@ FILES = \
 	Cpg.Studio.Dialogs/Plotting.cs \
 	Cpg.Studio.Dialogs/Property.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
-	Cpg.Studio/Point.cs \
-	Cpg.Studio/Range.cs \
+	Cpg.Studio/SimulationRange.cs \
 	Cpg.Studio/RenderCache.cs \
 	Cpg.Studio.Renderers/Box.cs \
 	Cpg.Studio.Renderers/Function.cs \

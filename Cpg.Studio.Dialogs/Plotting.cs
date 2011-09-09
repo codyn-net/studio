@@ -1,8 +1,8 @@
 using System;
 using Gtk;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Reflection;
+using Biorob.Math;
 
 namespace Cpg.Studio.Dialogs
 {
@@ -165,11 +165,11 @@ namespace Cpg.Studio.Dialogs
 				double[] ydata = d_y.GetData();
 				double[] xdata = d_x != null ? d_x.GetData() : d_y.GetSites();
 				
-				Plot.Point<double>[] data = new Plot.Point<double>[xdata.Length];
+				Point[] data = new Point[xdata.Length];
 
 				for (int i = 0; i < xdata.Length; ++i)
 				{
-					data[i] = new Plot.Point<double>(xdata[i], ydata[i]);
+					data[i] = new Point(xdata[i], ydata[i]);
 				}
 				
 				d_renderer.Data = data;
@@ -272,7 +272,7 @@ namespace Cpg.Studio.Dialogs
 				Plot.Export.Gdk ex = new Plot.Export.Gdk(pix);
 				
 				ex.Do(() => {
-					ex.Export(d_canvas.Graph, new Plot.Rectangle<int>(0, 0, w, h), (ctx, g, d) => {
+					ex.Export(d_canvas.Graph, new Plot.Rectangle(0, 0, w, h), (ctx, g, d) => {
 						ctx.Rectangle(0, 0, w, h);
 						ctx.SetSourceRGBA(1, 1, 1, 0.5);
 						ctx.Fill();
@@ -888,8 +888,8 @@ namespace Cpg.Studio.Dialogs
 		
 		private void UpdateAutoScaling()
 		{
-			Plot.Range<double> xrange = new Plot.Range<double>();
-			Plot.Range<double> yrange = new Plot.Range<double>();
+			Biorob.Math.Range xrange = new Biorob.Math.Range();
+			Biorob.Math.Range yrange = new Biorob.Math.Range();
 			
 			bool first = true;
 
@@ -910,8 +910,8 @@ namespace Cpg.Studio.Dialogs
 					
 				if (d_autoaxis && d_linkaxis)
 				{
-					Plot.Range<double> xr = g.DataXRange;
-					Plot.Range<double> yr = g.DataYRange;
+					Biorob.Math.Range xr = g.DataXRange;
+					Biorob.Math.Range yr = g.DataYRange;
 
 					if (first || xr.Min < xrange.Min)
 					{
@@ -945,24 +945,10 @@ namespace Cpg.Studio.Dialogs
 						Plot.Graph g = graph.Canvas.Graph;
 						
 						g.XAxis.Update(xrange);
-						g.YAxis.Update(Widen(yrange, 0.1));
+						g.YAxis.Update(yrange.Widen(0.1));
 					}
 				}
 			});
-		}
-		
-		private Plot.Range<double> Widen(Plot.Range<double> range, double fraction)
-		{
-			double df = range.Max - range.Min;
-			
-			if (df == 0)
-			{
-				return new Plot.Range<double>(-1, 1);
-			}
-			else
-			{
-				return new Plot.Range<double>(range.Min - df * fraction, range.Max + df * fraction);
-			}
 		}
 		
 		private void OnAutoAxisToggled(object sender, EventArgs args)
@@ -979,12 +965,12 @@ namespace Cpg.Studio.Dialogs
 			UpdateAutoScaling();
 		}
 		
-		private delegate Plot.Range<double> RangeSelector(Plot.Graph graph);
+		private delegate Biorob.Math.Range RangeSelector(Plot.Graph graph);
 		
 		private void LinkAxes(Graph graph, RangeSelector selector)
 		{
 			IgnoreAxisChange(() => {
-				Plot.Range<double> nr = selector(graph.Canvas.Graph);
+				Biorob.Math.Range nr = selector(graph.Canvas.Graph);
 	
 				foreach (Graph g in d_graphs)
 				{

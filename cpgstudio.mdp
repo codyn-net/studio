@@ -34,7 +34,7 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Application.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/AssemblyInfo.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/DynamicIntegrator.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Range.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/SimulationRange.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Settings.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Simulation.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Stock.cs" />
@@ -113,7 +113,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionPolynomialPieceBegin.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionPolynomialPieceEnd.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionPolynomialPieceCoefficients.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Point.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Renderers" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ApplyTemplate.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/UnapplyTemplate.cs" />

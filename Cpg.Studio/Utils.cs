@@ -1,9 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
+using Biorob.Math;
 
 namespace Cpg.Studio
 {
@@ -122,10 +122,9 @@ namespace Cpg.Studio
 			return false;
 		}
 		
-		public static void MeanPosition(IEnumerable<Wrappers.Wrapper> objects, out double x, out double y)
+		public static Point MeanPosition(IEnumerable<Wrappers.Wrapper> objects)
 		{
-			x = 0;
-			y = 0;
+			Point ret = new Point(0, 0);
 			int num = 0;
 			
 			foreach (Wrappers.Wrapper obj in objects)
@@ -137,17 +136,19 @@ namespace Cpg.Studio
 					continue;
 				}
 
-				x += obj.Allocation.X + obj.Allocation.Width / 2.0f;
-				y += obj.Allocation.Y + obj.Allocation.Height / 2.0f;
+				ret.X += obj.Allocation.X + obj.Allocation.Width / 2.0;
+				ret.Y += obj.Allocation.Y + obj.Allocation.Height / 2.0;
 				
 				num += 1;
 			}
 			
 			if (num != 0)
 			{
-				x = x / num;
-				y = y / num;
+				ret.Y = ret.X / num;
+				ret.Y = ret.Y / num;
 			}
+			
+			return ret;
 		}
 		
 		public static IEnumerable<Wrappers.Link> FilterLink(IEnumerable<Wrappers.Wrapper> wrappers)

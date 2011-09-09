@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Gtk;
-using System.Drawing;
 using System.Reflection;
+using Biorob.Math;
 
 namespace Cpg.Studio.Widgets
 {
@@ -537,11 +537,12 @@ namespace Cpg.Studio.Widgets
 		
 		public void CenterView()
 		{
-			double x, y;
-			Utils.MeanPosition(ActiveGroup.Children, out x, out y);
+			Point xy;
+
+			xy = Utils.MeanPosition(ActiveGroup.Children);
 			
-			ActiveGroup.X = (int)(x * ZoomLevel - (Allocation.Width / 2.0f));
-			ActiveGroup.Y = (int)(y * ZoomLevel - (Allocation.Height / 2.0f));
+			ActiveGroup.X = (int)(xy.X * ZoomLevel - (Allocation.Width / 2.0f));
+			ActiveGroup.Y = (int)(xy.Y * ZoomLevel - (Allocation.Height / 2.0f));
 			
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
@@ -812,22 +813,20 @@ namespace Cpg.Studio.Widgets
 			
 			ZoomLevel = DefaultZoom;
 			
-			double x;
-			double y;
+			Point xy;
 			
 			if (!LinkFilter(obj))
 			{
 				Wrappers.Link link = (Wrappers.Link)obj;
-				Utils.MeanPosition(new Wrappers.Wrapper[] {link.From, link.To}, out x, out y);
+				xy = Utils.MeanPosition(new Wrappers.Wrapper[] {link.From, link.To});
 			}
 			else
 			{
-				x = obj.Allocation.X;
-				y = obj.Allocation.Y;
+				xy = new Point(obj.Allocation.X, obj.Allocation.Y);
 			}
 
-			ActiveGroup.X = (int)(x * ZoomLevel - Allocation.Width / 2.0f);
-			ActiveGroup.Y = (int)(y * ZoomLevel - Allocation.Height / 2.0f);
+			ActiveGroup.X = (int)(xy.X * ZoomLevel - Allocation.Width / 2.0f);
+			ActiveGroup.Y = (int)(xy.Y * ZoomLevel - Allocation.Height / 2.0f);
 
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
@@ -865,12 +864,12 @@ namespace Cpg.Studio.Widgets
 					}
 
 					Wrappers.Group grp = obj as Wrappers.Group;
-					double x, y;
+					Point xy;
 					
-					Utils.MeanPosition(grp.Children, out x, out y);
+					xy = Utils.MeanPosition(grp.Children);
 					
-					grp.X = (int)(x * MinZoom - pt.X);
-					grp.Y = (int)(y * MinZoom - pt.Y);
+					grp.X = (int)(xy.X * MinZoom - pt.X);
+					grp.Y = (int)(xy.Y * MinZoom - pt.Y);
 					
 					SetActiveGroup(grp);
 					ZoomLevel = MinZoom;
