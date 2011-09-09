@@ -14,6 +14,8 @@ namespace Cpg.Studio.Widgets.Editors
 		private Actions d_actions;
 		private Properties d_properties;
 		private Wrappers.Network d_network;
+		private Function d_function;
+		private PiecewisePolynomial d_piecewise;
 
 		public Wrapper(Wrappers.Wrapper wrapper, Actions actions, Wrappers.Network network) : base(false, 6)
 		{
@@ -30,8 +32,13 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				w.Destroy();
 			}
+			
+			d_properties = null;
+			d_function = null;
+			d_piecewise = null;
 
 			Object obj = new Object(d_wrapper, d_actions, d_network);
+			obj.Show();
 			
 			obj.Error += delegate(object source, Exception exception) {
 				Error(source, exception);
@@ -40,21 +47,38 @@ namespace Cpg.Studio.Widgets.Editors
 			obj.TemplateActivated += delegate(object source, Wrappers.Wrapper template) {
 				TemplateActivated(source, template);
 			};
-			
-			d_properties = new Properties(d_wrapper, d_actions);
-			
-			d_properties.Error += delegate(object source, Exception exception) {
-				Error(source, exception);
-			};
-			
-			obj.Show();
-			d_properties.Show();
-			
+
 			Gtk.HBox top = new Gtk.HBox(false, 6);
 			top.Show();
 			
 			top.PackStart(obj, true, true, 0);
+
+			if (!(d_wrapper is Wrappers.Function))
+			{
+				d_properties = new Properties(d_wrapper, d_actions);
+				d_properties.Show();
 			
+				d_properties.Error += delegate(object source, Exception exception) {
+					Error(source, exception);
+				};
+			}
+			else if (d_wrapper is Wrappers.FunctionPolynomial)
+			{
+				d_piecewise = new PiecewisePolynomial(d_wrapper as Wrappers.FunctionPolynomial, d_actions);
+				d_piecewise.Show();
+				
+				top.PackEnd(d_piecewise.PeriodWidget, false, false, 0);
+			}
+			else
+			{
+				d_function = new Function(d_wrapper as Wrappers.Function, d_actions);
+				d_function.Show();
+				
+				d_function.Error += delegate(object source, Exception exception) {
+					Error(source, exception);
+				};
+			}
+					
 			Wrappers.Group grp = d_wrapper as Wrappers.Group;
 			
 			if (grp != null)
@@ -83,9 +107,17 @@ namespace Cpg.Studio.Widgets.Editors
 				
 				PackStart(paned, true, true, 0);
 			}
-			else
+			else if (d_properties != null)
 			{
 				PackStart(d_properties, true, true, 0);
+			}
+			else if (d_function != null)
+			{
+				PackStart(d_function, true, true, 0);
+			}
+			else if (d_piecewise != null)
+			{
+				PackStart(d_piecewise, true, true, 0);
 			}
 		}
 		

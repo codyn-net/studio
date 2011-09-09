@@ -30,7 +30,6 @@ namespace Cpg.Studio.Widgets
 		private Dialogs.Plotting d_plotting;
 		private Simulation d_simulation;
 		private string d_prevOpen;
-		private Dialogs.Functions d_functionsDialog;
 		private ListStore d_integratorStore;
 		private ComboBox d_integratorCombo;
 		private Widget d_menubar;
@@ -280,7 +279,6 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("GroupAction", Stock.Group, "Group", "<Control>G", "Group objects", OnGroupActivated),
 				new ActionEntry("UngroupAction", Stock.Ungroup, "Ungroup", "<Control><Shift>G", "Ungroup object", OnUngroupActivated),
 				new ActionEntry("EditGlobalsAction", null, "Globals", "<Control>H", "Edit the network globals", OnEditGlobalsActivated),
-				new ActionEntry("EditFunctionsAction", null, "Functions", null, "Edit the network custom functions", OnEditFunctionsActivated),
 				new ActionEntry("EditPlotSettingsAction", null, "Plot Settings", null, "Edit the global plot settings", OnEditPlotSettingsActivated),
 
 				new ActionEntry("SimulateMenuAction", null, "_Simulate", null, null, null),
@@ -299,6 +297,9 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("AddStateAction", Stock.State, "State", null, "Add new state", OnAddStateActivated),
 				new ActionEntry("AddLinkAction", Stock.Link, "Link", null, "Add new link", OnAddLinkActivated),
 				new ActionEntry("AddInputFileAction", Stock.InputFile, "Input file", null, "Add new input file", OnAddInputFileActivated),
+				new ActionEntry("AddFunctionAction", Stock.Function, "Function", null, "Add new function", OnAddFunctionActivated),
+				new ActionEntry("AddPiecewisePolynomialAction", Stock.FunctionPolynomial, "Piecewise Polynomial", null, "Add new piecewise polynomial function", OnAddPiecewisePolynomialActivated),
+				
 
 				new ActionEntry("MonitorMenuAction", null, "Monitor", null, null, null),
 				new ActionEntry("ControlMenuAction", null, "Control", null, null, null),
@@ -1912,19 +1913,6 @@ namespace Cpg.Studio.Widgets
 				Select(d_actions.AddInputFile(d_grid.ActiveGroup, center[0], center[1]));
 			}, "An error occurred while adding a file input");
 		}
-
-		private void SelectFunction(Wrappers.Function function)
-		{
-			ShowFunctions();
-			d_functionsDialog.Select(function);
-		}
-		
-		private void SelectFunction(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece)
-		{
-			ShowFunctions();
-
-			d_functionsDialog.Select(function, piece);
-		}
 		
 		private void SelectFromPropertyAction(Undo.Property action)
 		{
@@ -1940,11 +1928,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void SelectFromObjectAction(Undo.Object action)
 		{
-			if (action.Wrapped is Wrappers.Function)
-			{
-				SelectFunction((Wrappers.Function)action.Wrapped);
-			}
-			else if (action.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
+			if (action.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
 			{
 				if (action is Undo.MoveObject)
 				{
@@ -1984,20 +1968,11 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		private void SelectFromFunctionPolynomialPieceAction(Undo.FunctionPolynomialPiece action)
-		{
-			SelectFunction(action.WrappedObject, action.Piece);
-		}
-		
 		private void SelectFromAction(Undo.IAction action)
 		{
 			if (action is Undo.Property)
 			{
 				SelectFromPropertyAction((Undo.Property)action);
-			}
-			else if (action is Undo.FunctionPolynomialPiece)
-			{
-				SelectFromFunctionPolynomialPieceAction((Undo.FunctionPolynomialPiece)action);
 			}
 			else if (action is Undo.Object)
 			{
@@ -2543,11 +2518,6 @@ namespace Cpg.Studio.Widgets
 					d_propertyView.Select(error.LinkAction);
 				}
 			}
-			
-			if (error.Object != null && error.Object is Cpg.Function)
-			{
-				ShowFunctions();
-			}
 		
 			Message(Gtk.Stock.DialogError, 
 			        "Error while compiling " + title,
@@ -2566,23 +2536,7 @@ namespace Cpg.Studio.Widgets
 				return d_project.Network;
 			}
 		}
-		
-		private void ShowFunctions()
-		{
-			if (d_functionsDialog == null)
-			{
-				d_functionsDialog = new Dialogs.Functions(d_actions, this, Network);
-				d_windowGroup.AddWindow(d_functionsDialog);
 
-				d_functionsDialog.Response += delegate(object o, ResponseArgs a1) {
-					d_functionsDialog.Destroy();
-					d_functionsDialog = null;
-				};
-			}
-			
-			d_functionsDialog.Present();
-		}
-		
 		private void OnEditPlotSettingsActivated(object sender, EventArgs args)
 		{
 			if (d_plotsettingsDialog == null)
@@ -2597,11 +2551,6 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			d_plotsettingsDialog.Present();
-		}
-		
-		private void OnEditFunctionsActivated(object sender, EventArgs args)
-		{
-			ShowFunctions();
 		}
 		
 		private void OnEditTemplateActivated(object sender, EventArgs args)
@@ -2775,6 +2724,24 @@ namespace Cpg.Studio.Widgets
 			
 			dlg.TransientFor = this;
 			dlg.Present();
+		}
+		
+		private void OnAddFunctionActivated(object o, EventArgs args)
+		{
+			int[] center = d_grid.Center;
+
+			HandleError(delegate () {
+				Select(d_actions.AddFunction(d_grid.ActiveGroup, center[0], center[1]));
+			}, "An error occurred while adding a function");
+		}
+		
+		private void OnAddPiecewisePolynomialActivated(object o, EventArgs args)
+		{
+			int[] center = d_grid.Center;
+
+			HandleError(delegate () {
+				Select(d_actions.AddPiecewisePolynomial(d_grid.ActiveGroup, center[0], center[1]));
+			}, "An error occurred while adding a piecewise polynomial function");
 		}
 	}
 }

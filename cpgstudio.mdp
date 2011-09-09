@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="cpgstudio" />
       <Build debugmode="True" target="Exe" />
-      <Execution consolepause="True" commandlineparameters="test.cpg" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
+      <Execution consolepause="False" commandlineparameters="test.cpg" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
     <Configuration name="Release" ctype="DotNetProjectConfiguration">
@@ -28,10 +28,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Box.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/State.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Serialization" />
-    <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Interpolators" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Interpolators/IInterpolator.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Interpolators/Interpolation.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Interpolators/PChip.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/Network.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Allocation.cs" />
@@ -67,9 +63,7 @@
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Dialogs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/Property.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/Interpolate.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/Functions.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio/Actions.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Clipboard" />
@@ -80,13 +74,11 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Table.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/PolynomialsView.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/Grid.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionsView.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/MessageArea.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio" />
@@ -114,10 +106,7 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/Function.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/NodeStore.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Wrappers/FunctionPolynomial.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionNode.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionPolynomialNode.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/GenericFunctionNode.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionPolynomialPieceNode.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/FunctionPolynomialPiece.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/AddFunctionPolynomialPiece.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/RemoveFunctionPolynomialPiece.cs" />
@@ -151,7 +140,6 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/FindTemplate.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/Editor.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/FunctionsHelper.cs" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/Function.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets.Editors" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets.Editors/Properties.cs" />
@@ -167,6 +155,15 @@
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Dialogs/Plotting.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cpg.Studio.Widgets" />
     <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets/IDragIcon.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets.Editors/Function.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Renderers/PiecewisePolynomial.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/AddFunctionArgument.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/FunctionArgument.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/RemoveFunctionArgument.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionArgumentDefaultValue.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionArgumentExplicit.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Undo/ModifyFunctionArgumentName.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cpg.Studio.Widgets.Editors/PiecewisePolynomial.cs" />
   </Contents>
   <References>
     <ProjectReference type="Gac" localcopy="True" refto="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
@@ -180,9 +177,9 @@
     <ProjectReference type="Gac" localcopy="True" refto="Mono.Cairo, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
     <ProjectReference type="Gac" localcopy="True" refto="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/cpg-network-sharp-2.0/CpgNetwork.dll" />
-    <ProjectReference type="Gac" localcopy="True" refto="Biorob.Math, Version=1.0.3947.20262, Culture=neutral" />
     <ProjectReference type="Gac" localcopy="True" refto="gtksourceview2-sharp, Version=2.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/libplot1-sharp/Plot.dll" />
+    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/cpg-network-sharp-2.0/CpgNetwork.dll" />
+    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/libbiorob-math1-sharp/Biorob.Math.dll" />
   </References>
 </Project>

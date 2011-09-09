@@ -12,6 +12,26 @@ namespace Cpg.Studio
 			d_undoManager = undoManager;
 		}
 		
+		public Wrappers.Object[] AddFunction(Wrappers.Group parent, double x, double y)
+		{
+			Wrappers.Function func = new Wrappers.Function();
+			func.Allocation = new Allocation(x, y, 1, 1);
+			
+			Do(new Undo.AddObject(parent, func));
+			
+			return new Wrappers.Object[] {func};
+		}
+		
+		public Wrappers.Object[] AddPiecewisePolynomial(Wrappers.Group parent, double x, double y)
+		{
+			Wrappers.FunctionPolynomial func = new Wrappers.FunctionPolynomial();
+			func.Allocation = new Allocation(x, y, 1, 1);
+			
+			Do(new Undo.AddObject(parent, func));
+			
+			return new Wrappers.Object[] {func};
+		}
+		
 		public Wrappers.Object[] AddState(Wrappers.Group parent, double x, double y)
 		{
 			Wrappers.Object state = new Wrappers.Object();

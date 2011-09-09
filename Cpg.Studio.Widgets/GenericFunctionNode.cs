@@ -14,7 +14,12 @@ namespace Cpg.Studio.Widgets
 			}
 
 			d_function.WrappedObject.RemoveNotification("id", OnPropertyChanged);
-			d_function.Expression.RemoveNotification("id", OnPropertyChanged);
+			
+			if (d_function.Expression != null)
+			{
+				d_function.Expression.RemoveNotification("expression", OnPropertyChanged);
+			}
+
 			d_function.WrappedObject.ArgumentAdded -= OnArgumentsChanged;
 			d_function.WrappedObject.ArgumentRemoved -= OnArgumentsChanged;
 		}
@@ -27,7 +32,12 @@ namespace Cpg.Studio.Widgets
 			}
 
 			d_function.WrappedObject.AddNotification("id", OnPropertyChanged);
-			d_function.Expression.AddNotification("expression", OnPropertyChanged);
+			
+			if (d_function.Expression != null)
+			{
+				d_function.Expression.AddNotification("expression", OnPropertyChanged);
+			}
+
 			d_function.WrappedObject.ArgumentAdded += OnArgumentsChanged;
 			d_function.WrappedObject.ArgumentRemoved += OnArgumentsChanged;
 		}

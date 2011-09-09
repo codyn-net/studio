@@ -12,6 +12,7 @@ namespace Cpg.Studio.Wrappers
 		
 		protected FunctionPolynomial(Cpg.FunctionPolynomial function) : base(function)
 		{
+			Renderer = new Renderers.PiecewisePolynomial(this);
 		}
 		
 		public FunctionPolynomial(string name) : base(new Cpg.FunctionPolynomial(name))

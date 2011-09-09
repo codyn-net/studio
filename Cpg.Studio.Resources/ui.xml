@@ -34,7 +34,6 @@
       <menuitem name="Ungroup" action="UngroupAction"/>
       <separator/>
       <menuitem name="EditGlobals" action="EditGlobalsAction"/>
-      <menuitem name="EditFunctions" action="EditFunctionsAction"/>
       <separator/>
       <menuitem name="PlotSettings" action="EditPlotSettingsAction"/>
     </menu>
@@ -64,6 +63,9 @@
       <menuitem name="AddGroup" action="AddGroupAction"/>
       <menuitem name="AddLink" action="AddLinkAction"/>
       <menuitem name="AddInputFile" action="AddInputFileAction"/>
+      <separator/>
+      <menuitem name="AddFunction" action="AddFunctionAction"/>
+      <menuitem name="AddPiecewisePolynomial" action="AddPiecewisePolynomialAction"/>
     </menu>
     <menu name="HelpMenu" action="HelpMenuAction">
       <menuitem name="About" action="AboutAction"/>

@@ -176,7 +176,7 @@ namespace Cpg.Studio.Wrappers
 				{
 					Wrappers.Function func = obj as Wrappers.Function;
 					
-					if (obj != null)
+					if (func != null)
 					{
 						yield return func;
 					}

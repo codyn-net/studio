@@ -48,7 +48,7 @@ namespace Cpg.Studio.Widgets.Editors
 		
 		private void Build()
 		{
-			Label lbl = new Label("Id:");
+			Label lbl = new Label("Name:");
 			lbl.Show();
 			
 			PackStart(lbl, false, false, 0);
@@ -57,9 +57,6 @@ namespace Cpg.Studio.Widgets.Editors
 			d_entry.Show();
 			
 			d_entry.WidthChars = 15;
-			
-			// This is a bit hacky
-			d_entry.Sensitive = !ObjectIsNetwork;
 			
 			if (d_object != null)
 			{
@@ -84,26 +81,29 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			PackStart(d_entry, false, false, 0);
 			
-			HBox templateBox = new HBox(false, 0);
-			templateBox.Show();
-			
-			lbl = new Label("« (");
-			lbl.Show();
-
-			templateBox.PackStart(lbl, false, false, 0);
-			
-			d_templateParent = new HBox(false, 0);
-			d_templateParent.Show();
-			
-			RebuildTemplateWidgets();
-
-			templateBox.PackStart(d_templateParent, false, false, 0);
-			
-			lbl = new Label(")");
-			lbl.Show();
-			templateBox.PackStart(lbl, false, false, 0);
-			
-			PackStart(templateBox, false, false, 0);
+			if (d_object != null && !(d_object is Wrappers.Function))
+			{			
+				HBox templateBox = new HBox(false, 0);
+				templateBox.Show();
+				
+				lbl = new Label("« (");
+				lbl.Show();
+	
+				templateBox.PackStart(lbl, false, false, 0);
+				
+				d_templateParent = new HBox(false, 0);
+				d_templateParent.Show();
+				
+				RebuildTemplateWidgets();
+	
+				templateBox.PackStart(d_templateParent, false, false, 0);
+				
+				lbl = new Label(")");
+				lbl.Show();
+				templateBox.PackStart(lbl, false, false, 0);
+				
+				PackStart(templateBox, false, false, 0);
+			}
 		}
 		
 		private void RebuildTemplateWidgets()
