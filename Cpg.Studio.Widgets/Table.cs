@@ -46,7 +46,7 @@ namespace Cpg.Studio.Widgets
 		public Table()
 		{
 			d_expand = ExpandType.Down;
-			d_children = new Plotting.Graph[,] {};
+			d_children = new Plotting.Graph[0, 0];
 			d_rows = 0;
 			d_columns = 0;
 			
