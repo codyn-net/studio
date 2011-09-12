@@ -162,8 +162,8 @@ namespace Cpg.Studio.Widgets
 
 		private void UpdateUndoState()
 		{
-			Action undo = d_normalGroup.GetAction("UndoAction");
-			Action redo = d_normalGroup.GetAction("RedoAction");
+			Gtk.Action undo = d_normalGroup.GetAction("UndoAction");
+			Gtk.Action redo = d_normalGroup.GetAction("RedoAction");
 			
 			undo.Sensitive = d_undoManager.CanUndo;
 			redo.Sensitive = d_undoManager.CanRedo;
@@ -828,7 +828,7 @@ namespace Cpg.Studio.Widgets
 			bool singlegroup = singleobj && objects[0] is Wrappers.Group;
 			int anygroup = objects.FindAll(delegate (Wrappers.Wrapper obj) { return obj is Wrappers.Group; }).Count;
 			
-			Action ungroup = d_normalGroup.GetAction("UngroupAction");
+			Gtk.Action ungroup = d_normalGroup.GetAction("UngroupAction");
 			ungroup.Sensitive = !d_simulation.Running && anygroup > 0;
 			
 			if (anygroup > 1)

@@ -507,7 +507,7 @@ namespace Cpg.Studio.Dialogs
 				return;
 			}
 			
-			Action action = new Action("ActionMerge" + label, label, null, stockid);
+			Gtk.Action action = new Gtk.Action("ActionMerge" + label, label, null, stockid);
 			
 			action.Activated += delegate {
 				MergeTo(graph, dr, dc);

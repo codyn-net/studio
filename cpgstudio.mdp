@@ -1,4 +1,4 @@
-<Project name="cpgstudio" fileversion="2.0" DefaultNamespace="Cpg.Studio" language="C#" clr-version="Net_2_0" targetFramework="2.0" ctype="DotNetProject">
+<Project name="cpgstudio" fileversion="2.0" DefaultNamespace="Cpg.Studio" language="C#" clr-version="Net_2_0" targetFramework="3.5" ctype="DotNetProject">
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="cpgstudio" />
@@ -180,5 +180,6 @@
     <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/libplot1-sharp/Plot.dll" />
     <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/cpg-network-sharp-2.0/CpgNetwork.dll" />
     <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cpg/lib/libbiorob-math1-sharp/Biorob.Math.dll" />
+    <ProjectReference type="Gac" localcopy="True" refto="System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   </References>
 </Project>

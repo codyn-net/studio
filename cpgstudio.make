@@ -175,6 +175,7 @@ REFERENCES =  \
 	System.Drawing \
 	Mono.Cairo \
 	System.Xml \
+	System.Core \
 	$(CPGNETWORK_SHARP_LIBS) \
 	$(BIOROB_MATH_SHARP_LIBS) \
 	$(PLOT_SHARP_LIBS)
