@@ -161,7 +161,8 @@ RESOURCES = \
 	Cpg.Studio.Resources/ui.xml \
 	Cpg.Studio.Resources/chain.png \
 	Cpg.Studio.Resources/chain-broken.png \
-	Cpg.Studio.Resources/link.png
+	Cpg.Studio.Resources/link.png \
+	Cpg.Studio.Resources/plotting-ui.xml
 
 EXTRAS = \
 	cpgstudio.in
