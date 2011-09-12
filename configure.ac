@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
 AC_INIT(cpgstudio, 2.0)
 AM_INIT_AUTOMAKE([foreign])
-AM_MAINTAINER_MODE
+AM_MAINTAINER_MODE([enable])
 AC_CONFIG_MACRO_DIR([m4])
 dnl pkg-config
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
