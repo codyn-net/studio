@@ -255,11 +255,6 @@ namespace Cpg.Studio
 		{
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 
-			if (OnlyLinks(sel))
-			{
-				return null;
-			}
-
 			// Collect all the links that go from or to the group, but are not fully in there
 			Wrappers.Wrapper proxy = null;
 
@@ -322,7 +317,7 @@ namespace Cpg.Studio
 		
 			// After objects are removed, we create a new group
 			Point xy;
-
+			
 			xy = Utils.MeanPosition(ingroup);
 
 			Wrappers.Group newGroup = new Wrappers.Group();
