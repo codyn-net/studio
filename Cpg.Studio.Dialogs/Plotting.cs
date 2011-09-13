@@ -184,10 +184,11 @@ namespace Cpg.Studio.Dialogs
 			}
 		}
 
-		public class Graph : Frame, Widgets.IDragIcon
+		public class Graph : EventBox, Widgets.IDragIcon
 		{
 			private Plot.Widget d_canvas;
 			private List<Series> d_plots;
+			private bool d_isTime;
 			
 			public Graph(Plot.Widget canvas)
 			{
@@ -200,16 +201,27 @@ namespace Cpg.Studio.Dialogs
 					d_canvas = new Plot.Widget();
 				}
 				
-				ShadowType = ShadowType.EtchedIn;
-				
 				d_canvas.Show();
-				Add(d_canvas);
+				
+				Frame frame = new Frame();
+				frame.ShadowType = ShadowType.EtchedIn;
+				frame.Add(d_canvas);
+				frame.Show();
+				
+				Add(frame);
 				
 				d_plots = new List<Series>();
+				
+				AddEvents((int)(Gdk.EventMask.AllEventsMask));
 			}
 			
 			public Graph() : this(null)
 			{
+			}
+			
+			public bool IsTime
+			{
+				get { return d_isTime; }
 			}
 			
 			public IEnumerable<Series> Plots
@@ -242,6 +254,8 @@ namespace Cpg.Studio.Dialogs
 				d_canvas.Graph.Add(plot.Renderer);
 				
 				plot.Destroyed += OnPlotDestroyed;
+				
+				d_isTime = plot.X == null;
 			}
 			
 			public void Remove(Series plot)
@@ -319,6 +333,14 @@ namespace Cpg.Studio.Dialogs
 		private bool d_ignoreAxisChange;
 		
 		private ActionGroup d_actiongroup;
+		
+		private Expander d_expanderTime;
+		private Expander d_expanderPhase;
+		
+		private bool d_ignoreExpanderChanged;
+		private Widgets.WrappersTree d_phaseTreeY;
+		private Widgets.WrappersTree d_phaseTreeX;
+		private Widget d_phaseWidget;
 
 		public Plotting(Wrappers.Network network, Simulation simulation) : base("Monitor")
 		{
@@ -347,29 +369,94 @@ namespace Cpg.Studio.Dialogs
 		private void Build()
 		{
 			VBox vboxMain = new VBox(false, 0);
+			vboxMain.Show();
+
 			VBox vboxContent = new VBox(false, 3);
+			vboxContent.Show();
 			
 			BuildUI();
 			
 			Toolbar toolbar = (Toolbar)d_uimanager.GetWidget("/toolbar");
 			toolbar.IconSize = IconSize.SmallToolbar;
+			toolbar.Show();
 			
 			vboxMain.PackStart(toolbar, false, false, 0);
 			
 			d_hpaned = new HPaned();
 			d_hpaned.BorderWidth = 0;
+			d_hpaned.Show();
 			
 			d_tree = new Widgets.WrappersTree(d_network);
 			d_tree.RendererToggle.Visible = false;
 			d_tree.Show();
+
+			d_tree.Filter += FilterFunctions;
+			
+			VBox vboxExpand = new VBox(false, 3);
+			vboxExpand.Show();
+			vboxExpand.BorderWidth = 6;
 			
 			d_tree.PopulatePopup += HandleTreePopulatePopup;
 			d_tree.Activated += HandleTreeActivated;
+			
+			d_expanderTime = new Expander("Time");
+			d_expanderTime.Show();
+			d_expanderTime.Expanded = true;
+			
+			d_expanderTime.AddNotification("expanded", delegate {
+				ExpandedChanged(d_expanderTime, d_expanderPhase);
+			});
+			
+			vboxExpand.PackStart(d_expanderTime, false, false, 0);
+			vboxExpand.PackStart(d_tree, true, true, 0);
+			
+			d_expanderPhase = new Expander("Phase");
+			d_expanderPhase.Show();
+			
+			d_expanderPhase.AddNotification("expanded", delegate {
+				ExpandedChanged(d_expanderPhase, d_expanderTime);
+			});
 
-			d_hpaned.Pack2(d_tree, false, false);
+			vboxExpand.PackStart(d_expanderPhase, false, true, 0);
+			
+			VBox phase = new VBox(false, 6);
+
+			d_phaseTreeX = new Cpg.Studio.Widgets.WrappersTree(d_network);
+			d_phaseTreeX.RendererToggle.Visible = false;
+			d_phaseTreeX.Filter += FilterFunctions;
+			d_phaseTreeX.Label = "X:";
+			d_phaseTreeX.Show();
+			
+			phase.PackStart(d_phaseTreeX, true, true, 0);
+			
+			d_phaseTreeY = new Cpg.Studio.Widgets.WrappersTree(d_network);
+			d_phaseTreeY.RendererToggle.Visible = false;
+			d_phaseTreeY.Filter += FilterFunctions;
+			d_phaseTreeY.Label = "Y:";
+			d_phaseTreeY.Show();
+			
+			phase.PackStart(d_phaseTreeY, true, true, 0);
+			
+			HBox hhbox = new HBox(false, 0);
+			hhbox.Show();
+			
+			Button button = new Button(Gtk.Stock.Add);
+			button.Show();
+			
+			button.Clicked += OnPhaseAddClicked;
+
+			hhbox.PackEnd(button, false, false, 0);
+			
+			phase.PackStart(hhbox, false, false, 0);
+			
+			vboxExpand.PackStart(phase);
+			d_phaseWidget = phase;
+
+			d_hpaned.Pack2(vboxExpand, false, false);
 			
 			d_content = new Widgets.Table();
 			d_content.Expand = Widgets.Table.ExpandType.Down;
+			d_content.Show();
 			
 			d_content.CreateGraph += CreateGraph;
 			
@@ -379,7 +466,75 @@ namespace Cpg.Studio.Dialogs
 			vboxMain.PackStart(vboxContent, true, true, 0);
 			
 			Add(vboxMain);
-			vboxMain.ShowAll();
+		}
+		
+		private void OnPhaseAddClicked(object source, EventArgs args)
+		{
+			Widgets.WrappersTree.WrapperNode[] xnodes = d_phaseTreeX.SelectedNodes;
+			Widgets.WrappersTree.WrapperNode[] ynodes = d_phaseTreeY.SelectedNodes;
+			
+			Cpg.Property[] xprops;
+			Cpg.Property[] yprops;
+			
+			xprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cpg.Property>(Array.FindAll(xnodes, a => a.Property != null), a => a.Property);
+			yprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cpg.Property>(Array.FindAll(ynodes, a => a.Property != null), a => a.Property);
+			
+			if (xprops.Length == 0 || yprops.Length == 0)
+			{
+				return;
+			}
+			
+			List<Cpg.Property> xx = new List<Cpg.Property>();
+			List<Cpg.Property> yy = new List<Cpg.Property>();
+			
+			// If there are as many x properties as y properties, make x/y pairs
+			// otherwise make phase plots for all combinations of x/y
+			if (xprops.Length == yprops.Length)
+			{
+				xx = new List<Cpg.Property>(xprops);
+				yy = new List<Cpg.Property>(yprops);
+			}
+			else
+			{
+				foreach (Cpg.Property x in xprops)
+				{
+					foreach (Cpg.Property y in yprops)
+					{
+						xx.Add(x);
+						yy.Add(y);
+					}
+				}
+			}
+			
+			Add(xx, yy);
+		}
+		
+		private void FilterFunctions(Widgets.WrappersTree.WrapperNode node, ref bool ret)
+		{
+			if (node.Wrapper is Wrappers.Function)
+			{
+				ret = false;
+			}
+			else if (node.Property != null && node.Property.Object is Cpg.Function)
+			{
+				ret = false;
+			}
+		}
+		
+		private void ExpandedChanged(Expander e1, Expander e2)
+		{
+			if (d_ignoreExpanderChanged)
+			{
+				return;
+			}
+
+			d_ignoreExpanderChanged = true;
+			e2.Expanded = !e1.Expanded;
+			
+			d_tree.Visible = d_expanderTime.Expanded;
+			d_phaseWidget.Visible = d_expanderPhase.Expanded;
+
+			d_ignoreExpanderChanged = false;
 		}
 
 		private void HandleTreePopulatePopup(object source, Widgets.WrappersTree.WrapperNode[] nodes, Menu menu)
@@ -462,9 +617,14 @@ namespace Cpg.Studio.Dialogs
 			}
 		}
 		
+		public IEnumerable<Graph> SameGraphs(Graph graph)
+		{
+			return graph.IsTime ? TimeGraphs : PhaseGraphs;
+		}
+		
 		private void DoLinkRulers(Graph graph)
 		{
-			foreach (Graph g in d_graphs)
+			foreach (Graph g in SameGraphs(graph))
 			{
 				if (g != graph)
 				{
@@ -484,6 +644,11 @@ namespace Cpg.Studio.Dialogs
 		private void MergeWith(Graph source, Graph target)
 		{
 			List<Series> cp = new List<Series>(source.Plots);
+			
+			if (source.IsTime != target.IsTime)
+			{
+				return;
+			}
 			
 			foreach (Series series in cp)
 			{
@@ -580,6 +745,25 @@ namespace Cpg.Studio.Dialogs
 			}
 		}
 		
+		public Graph Add(IEnumerable<Cpg.Property> x, IEnumerable<Cpg.Property> y)
+		{
+			List<Cpg.Monitor> mony = new List<Cpg.Monitor>();
+
+			foreach (Cpg.Property p in y)
+			{
+				mony.Add(new Cpg.Monitor(d_network, p));
+			}
+			
+			List<Cpg.Monitor> monx = new List<Cpg.Monitor>();
+
+			foreach (Cpg.Property p in x)
+			{
+				monx.Add(new Cpg.Monitor(d_network, p));
+			}
+			
+			return Add(monx, mony);
+		}
+		
 		public Graph Add(IEnumerable<Cpg.Property> y)
 		{
 			List<Cpg.Monitor> mons = new List<Cpg.Monitor>();
@@ -607,9 +791,14 @@ namespace Cpg.Studio.Dialogs
 			return Add(-1, -1, x, y);
 		}
 		
+		public Graph Add(IEnumerable<Cpg.Monitor> xs, IEnumerable<Cpg.Monitor> ys)
+		{
+			return Add(-1, -1, xs, ys);
+		}
+		
 		public Graph Add(IEnumerable<Cpg.Monitor> ys)
 		{
-			return Add(-1, -1, ys);
+			return Add(-1, -1, null, ys);
 		}
 		
 		public Graph Add(int row, int col, Cpg.Monitor x, Cpg.Monitor y)
@@ -623,16 +812,32 @@ namespace Cpg.Studio.Dialogs
 			return ret;
 		}
 
-		public Graph Add(int row, int col, IEnumerable<Cpg.Monitor> y)
+		public Graph Add(int row, int col, IEnumerable<Cpg.Monitor> x, IEnumerable<Cpg.Monitor> y)
 		{
 			List<Series> series = new List<Series>();
 			
-			foreach (Cpg.Monitor m in y)
-			{
-				Plot.Renderers.Line line = new Plot.Renderers.Line();
-				Series s = new Series(null, m, line);
+			if (x == null)
+			{			
+				foreach (Cpg.Monitor m in y)
+				{
+					Plot.Renderers.Line line = new Plot.Renderers.Line();
+					Series s = new Series(null, m, line);
 				
-				series.Add(s);
+					series.Add(s);
+				}
+			}
+			else
+			{
+				IEnumerator<Cpg.Monitor> xe = x.GetEnumerator();
+				IEnumerator<Cpg.Monitor> ye = y.GetEnumerator();
+				
+				while (xe.MoveNext() && ye.MoveNext())
+				{
+					Plot.Renderers.Line line = new Plot.Renderers.Line();
+					Series s = new Series(xe.Current, ye.Current, line);
+					
+					series.Add(s);
+				}
 			}
 			
 			Graph ret = Add(row, col, series);
@@ -670,6 +875,10 @@ namespace Cpg.Studio.Dialogs
 
 			Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
 			d_graphs.Add(graph);
+			
+			graph.Destroyed += delegate {
+				d_graphs.Remove(graph);
+			};
 
 			graph.MotionNotifyEvent += OnGraphMotionNotify;
 			graph.LeaveNotifyEvent += OnGraphLeaveNotify;
@@ -729,13 +938,21 @@ namespace Cpg.Studio.Dialogs
 			
 			Plot.Graph g = graph.Canvas.Graph;
 			
-			if (d_linkaxis && !d_autoaxis && d_graphs.Count > 1)
+			if (!graph.IsTime)
 			{
-				Graph first = d_graphs[0];
+				graph.Canvas.Graph.AutoMargin.X = graph.Canvas.Graph.AutoMargin.Y;
+				graph.Canvas.Graph.KeepAspect = true;
+			}
+			
+			List<Graph> graphs = new List<Graph>(SameGraphs(graph));
+			
+			if (d_linkaxis && !d_autoaxis && graphs.Count > 1)
+			{
+				Graph first = graphs[0];
 				
 				IgnoreAxisChange(() => {
-					g.XAxis.Update(first.Canvas.Graph.XAxis);
-					g.YAxis.Update(first.Canvas.Graph.YAxis);
+					g.UpdateAxis(first.Canvas.Graph.XAxis,
+					             first.Canvas.Graph.YAxis);
 				});
 			}
 			else
@@ -803,9 +1020,7 @@ namespace Cpg.Studio.Dialogs
 		[GLib.ConnectBefore]
 		private void OnGraphLeaveNotify(object o, LeaveNotifyEventArgs args)
 		{
-			Graph graph = (Graph)o;
-			
-			if (d_linkRulers && graph.Canvas.Graph.ShowRuler)
+			if (d_linkRulers)
 			{
 				DoLinkRulersLeave();
 			}
@@ -894,14 +1109,48 @@ namespace Cpg.Studio.Dialogs
 			UpdateAutoScaling();
 		}
 		
+		private IEnumerable<Graph> TimeGraphs
+		{
+			get
+			{
+				foreach (Graph graph in d_graphs)
+				{
+					if (graph.IsTime)
+					{
+						yield return graph;
+					}
+				}
+			}
+		}
+		
+		private IEnumerable<Graph> PhaseGraphs
+		{
+			get
+			{
+				foreach (Graph graph in d_graphs)
+				{
+					if (!graph.IsTime)
+					{
+						yield return graph;
+					}
+				}
+			}
+		}
+		
 		private void UpdateAutoScaling()
+		{
+			UpdateAutoScaling(TimeGraphs);
+			UpdateAutoScaling(PhaseGraphs);
+		}
+		
+		private void UpdateAutoScaling(IEnumerable<Graph> graphs)
 		{
 			Biorob.Math.Range xrange = new Biorob.Math.Range();
 			Biorob.Math.Range yrange = new Biorob.Math.Range();
 			
 			bool first = true;
 
-			foreach (Graph graph in d_graphs)
+			foreach (Graph graph in graphs)
 			{
 				Plot.Graph g = graph.Canvas.Graph;
 				
@@ -948,12 +1197,13 @@ namespace Cpg.Studio.Dialogs
 			IgnoreAxisChange(() => {
 				if (d_autoaxis && d_linkaxis)
 				{
-					foreach (Graph graph in d_graphs)
+					foreach (Graph graph in graphs)
 					{
 						Plot.Graph g = graph.Canvas.Graph;
+						Point margin = g.AutoMargin;
 						
-						g.XAxis.Update(xrange);
-						g.YAxis.Update(yrange.Widen(0.1));
+						g.UpdateAxis(xrange.Widen(margin.X),
+					                 yrange.Widen(margin.Y));
 					}
 				}
 			});
@@ -979,8 +1229,8 @@ namespace Cpg.Studio.Dialogs
 		{
 			IgnoreAxisChange(() => {
 				Biorob.Math.Range nr = selector(graph.Canvas.Graph);
-	
-				foreach (Graph g in d_graphs)
+				
+				foreach (Graph g in SameGraphs(graph))
 				{
 					if (g == graph)
 					{

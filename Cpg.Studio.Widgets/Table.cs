@@ -938,14 +938,21 @@ namespace Cpg.Studio.Widgets
 					{
 						UnsetDragHighlight();
 					}
-
-					if (d_dragging != d_children[r, c])
+					
+					if (d_children[r, c] != null && d_dragging.IsTime != d_children[r, c].IsTime)
 					{
-						d_dragHighlight = d_children[r, c];
-						Gtk.Drag.Highlight(d_dragHighlight);
+						Gdk.Drag.Status(context, 0, time_);
 					}
+					else
+					{
+						if (d_dragging != d_children[r, c])
+						{
+							d_dragHighlight = d_children[r, c];
+							Gtk.Drag.Highlight(d_dragHighlight);
+						}
 
-					Gdk.Drag.Status(context, Gdk.DragAction.Move, time_);
+						Gdk.Drag.Status(context, Gdk.DragAction.Move, time_);
+					}
 				}
 				else
 				{
