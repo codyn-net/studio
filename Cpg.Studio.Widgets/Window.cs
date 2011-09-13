@@ -840,7 +840,7 @@ namespace Cpg.Studio.Widgets
 				ungroup.Label = "Ungroup";
 			}
 			
-			d_normalGroup.GetAction("GroupAction").Sensitive = !d_simulation.Running && objects.Count > 1 && objects.Find(delegate (Wrappers.Wrapper obj) { return !(obj is Wrappers.Link); }) != null;
+			d_normalGroup.GetAction("GroupAction").Sensitive = !d_simulation.Running && objects.Count > 0;
 			d_normalGroup.GetAction("EditGroupAction").Sensitive = !d_simulation.Running && singlegroup;
 			
 			d_normalGroup.GetAction("PropertiesAction").Sensitive = !d_simulation.Running && singleobj;
