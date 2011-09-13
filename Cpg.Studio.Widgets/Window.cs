@@ -1442,25 +1442,39 @@ namespace Cpg.Studio.Widgets
 							}
 						}
 						
-						y = new Cpg.Monitor(Network, yprop);
+						Dialogs.Plotting.Graph graph;
+						Dialogs.Plotting.Series ss;
 						
-						if (xprop != null)
+						if (series.Vector)
 						{
-							x = new Cpg.Monitor(Network, xprop);
+							ss = d_plotting.CreateVectorSeries(xprop, yprop);
+							graph = d_plotting.Add(mon.Row, mon.Column, ss);
+						}
+						else
+						{
+							y = new Cpg.Monitor(Network, yprop);
+						
+							if (xprop != null)
+							{
+								x = new Cpg.Monitor(Network, xprop);
+							}
+							
+							ss = d_plotting.CreateLineSeries(x, y);
+							graph = d_plotting.Add(mon.Row, mon.Column, ss);
+							
+							if (!double.IsNaN(series.XInitial) && !double.IsNaN(series.YInitial))
+							{
+								d_plotting.SetInitialConditions(ss, new Point(series.XInitial, series.YInitial));
+							}
 						}
 						
-						Dialogs.Plotting.Graph graph = d_plotting.Add(mon.Row, mon.Column, x, y);
-						
-						if (!double.IsNaN(series.XInitial) && !double.IsNaN(series.YInitial))
-						{						
-							foreach (Dialogs.Plotting.Series ss in graph.Plots)
-							{
-								if (ss.X == x && ss.Y == y)
-								{
-									d_plotting.SetInitialConditions(ss, new Point(series.XInitial, series.YInitial));
-									break;
-								}
-							}
+						if (!double.IsNaN(mon.XMin) &&
+						    !double.IsNaN(mon.XMax) &&
+						    !double.IsNaN(mon.YMin) &&
+						    !double.IsNaN(mon.YMin))
+						{
+							graph.Canvas.Graph.UpdateAxis(new Biorob.Math.Range(mon.XMin, mon.XMax),
+							                              new Biorob.Math.Range(mon.YMin, mon.YMax));
 						}
 						
 						if (mon.Settings != null)
@@ -1612,12 +1626,14 @@ namespace Cpg.Studio.Widgets
 					{
 						Serialization.Project.Series ser = new Serialization.Project.Series();
 						
-						ser.Y = series.Y.Property.FullName;
+						ser.Y = series.YProp.FullName;
 						
-						if (series.X != null)
+						if (series.XProp != null)
 						{
-							ser.X = series.X.Property.FullName;
+							ser.X = series.XProp.FullName;
 						}
+						
+						ser.Vector = series.Vector;
 						
 						Point pt;
 						
@@ -1645,6 +1661,12 @@ namespace Cpg.Studio.Widgets
 						mon.Row = -1;
 						mon.Column = -1;
 					}
+					
+					mon.XMin = graph.Canvas.Graph.XAxis.Min;
+					mon.XMax = graph.Canvas.Graph.XAxis.Max;
+					
+					mon.YMin = graph.Canvas.Graph.YAxis.Min;
+					mon.YMax = graph.Canvas.Graph.YAxis.Max;
 					
 					s.Monitors.Graphs.Add(mon);
 				}

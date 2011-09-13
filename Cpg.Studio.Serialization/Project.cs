@@ -22,6 +22,9 @@ namespace Cpg.Studio.Serialization
 			[XmlAttribute("color")]
 			public string Color;
 			
+			[XmlAttribute("vector")]
+			public bool Vector = false;
+			
 			[XmlAttribute("y-initial")]
 			public double YInitial = double.NaN;
 			
@@ -41,7 +44,19 @@ namespace Cpg.Studio.Serialization
 			
 			[XmlAttribute("column")]
 			public int Column;
+
+			[XmlAttribute("xmin")]
+			public double XMin = double.NaN;
 			
+			[XmlAttribute("xmax")]
+			public double XMax = double.NaN;
+			
+			[XmlAttribute("ymin")]
+			public double YMin = double.NaN;
+			
+			[XmlAttribute("ymax")]
+			public double YMax = double.NaN;
+
 			public Monitor()
 			{
 				Plots = new List<Series>();

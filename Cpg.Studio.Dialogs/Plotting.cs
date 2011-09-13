@@ -14,39 +14,64 @@ namespace Cpg.Studio.Dialogs
 		{
 			private Cpg.Monitor d_x;
 			private Cpg.Monitor d_y;
+			
+			private Cpg.Property d_xprop;
+			private Cpg.Property d_yprop;
 
 			private Plot.Renderers.Line d_renderer;
 			
 			public event EventHandler Destroyed = delegate {};
 			private Dictionary<Wrappers.Group, Wrappers.Wrapper> d_ancestors;
 			
-			public Series(Cpg.Monitor x, Cpg.Monitor y, Plot.Renderers.Line renderer)
+			public event EventHandler ActiveChanged = delegate {};
+			
+			public Series(Cpg.Property x, Cpg.Property y, Plot.Renderers.Line renderer)
 			{
-				d_x = x;
-				d_y = y;
-
 				d_renderer = renderer;
 				
-				d_y.Property.AddNotification("name", OnNameChanged);
-				d_y.Property.Object.AddNotification("id", OnNameChanged);
+				d_xprop = x;
+				d_yprop = y;
 				
-				d_y.Property.Object.PropertyRemoved += HandlePropertyRemoved;
+				d_renderer.ActiveChanged += delegate {
+					ActiveChanged(this, new EventArgs());
+				};
 				
 				d_ancestors = new Dictionary<Wrappers.Group, Wrappers.Wrapper>();
 				
-				ConnectParentsRemoved(Wrappers.Wrapper.Wrap(d_y.Property.Object.Parent) as Wrappers.Group, d_y.Property.Object);
-				
-				if (d_x != null)
+				if (y != null)
 				{
-					d_x.Property.AddNotification("name", OnNameChanged);
-					d_x.Property.Object.AddNotification("id", OnNameChanged);
+					y.AddNotification("name", OnNameChanged);
+					y.Object.AddNotification("id", OnNameChanged);
+				
+					y.Object.PropertyRemoved += HandlePropertyRemoved;
+				
+					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(y.Object.Parent) as Wrappers.Group, y.Object);
+				}
+				
+				if (x != null)
+				{
+					x.AddNotification("name", OnNameChanged);
+					x.Object.AddNotification("id", OnNameChanged);
 
-					d_x.Property.Object.PropertyRemoved += HandlePropertyRemoved;
+					x.Object.PropertyRemoved += HandlePropertyRemoved;
 					
-					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(d_x.Property.Object.Parent) as Wrappers.Group, d_x.Property.Object);
+					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(x.Object.Parent) as Wrappers.Group, x.Object);
 				}
 				
 				UpdateName();
+			}
+			
+			public Series(Cpg.Monitor x, Cpg.Monitor y, Plot.Renderers.Line renderer) : this(x != null ? x.Property : null,
+			                                                                                 y != null ? y.Property : null,
+			                                                                                 renderer)
+			{
+				d_x = x;
+				d_y = y;
+			}
+			
+			public bool Vector
+			{
+				get { return d_renderer is Plot.Renderers.Vector; }
 			}
 			
 			private void ConnectParentsRemoved(Wrappers.Group parent, Wrappers.Wrapper obj)
@@ -106,7 +131,7 @@ namespace Cpg.Studio.Dialogs
 			{
 				Cpg.Property property = args.Property;
 
-				if ((d_x != null && property == d_x.Property) || property == d_y.Property)
+				if (property == d_xprop || property == d_yprop)
 				{
 					Destroyed(this, new EventArgs());
 				}
@@ -114,28 +139,45 @@ namespace Cpg.Studio.Dialogs
 			
 			public void Dispose()
 			{
-				d_y.Property.RemoveNotification("name", OnNameChanged);
-				d_y.Property.Object.RemoveNotification("id", OnNameChanged);
-				
-				d_y.Property.Object.PropertyRemoved -= HandlePropertyRemoved;
-				
-				DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_y.Property.Object.Parent) as Wrappers.Group);
-				
-				if (d_x != null)
+				if (d_yprop != null)
 				{
-					d_x.Property.Object.PropertyRemoved -= HandlePropertyRemoved;
-					
-					DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_x.Property.Object.Parent) as Wrappers.Group);
+					d_yprop.RemoveNotification("name", OnNameChanged);
+					d_yprop.Object.RemoveNotification("id", OnNameChanged);
+				
+					d_yprop.Object.PropertyRemoved -= HandlePropertyRemoved;
+				
+					DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_yprop.Object.Parent) as Wrappers.Group);
+				}
+				
+				if (d_xprop != null)
+				{
+					d_xprop.RemoveNotification("name", OnNameChanged);
+					d_xprop.Object.RemoveNotification("id", OnNameChanged);
+				
+					d_xprop.Object.PropertyRemoved -= HandlePropertyRemoved;
+				
+					DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_xprop.Object.Parent) as Wrappers.Group);
 				}				
 			}
 			
 			private void UpdateName()
 			{
-				d_renderer.YLabel = d_y.Property.FullNameForDisplay;
-				
-				if (d_x != null)
+				if (d_yprop != null)
 				{
-					d_renderer.XLabel = d_x.Property.FullNameForDisplay;
+					d_renderer.YLabel = d_yprop.FullNameForDisplay;
+				}
+				else
+				{
+					d_renderer.YLabel = null;
+				}
+				
+				if (d_xprop != null)
+				{
+					d_renderer.XLabel = d_xprop.FullNameForDisplay;
+				}
+				else
+				{
+					d_renderer.XLabel = null;
 				}
 			}
 			
@@ -144,35 +186,54 @@ namespace Cpg.Studio.Dialogs
 				UpdateName();
 			}
 			
+			public Cpg.Property XProp
+			{
+				get { return d_xprop; }
+			}
+			
+			public Cpg.Property YProp
+			{
+				get { return d_yprop; }
+			}
+			
 			public Cpg.Monitor X
 			{
-				get
-				{
-					return d_x;
-				}
+				get { return d_x; }
 			}
 			
 			public Cpg.Monitor Y
 			{
-				get
-				{
-					return d_y;
-				}
+				get { return d_y; }
 			}
 			
 			public Plot.Renderers.Line Renderer
 			{
-				get
+				get { return d_renderer; }
+			}
+			
+			public void Update(List<Point> xy, List<double> alpha)
+			{
+				Plot.Renderers.Vector vector = d_renderer as Plot.Renderers.Vector;
+				
+				if (vector == null)
 				{
-					return d_renderer;
+					return;
 				}
+				
+				vector.Data = xy;
+				vector.Alpha = alpha;
 			}
 			
 			public void Update()
 			{
+				if (d_y == null)
+				{
+					return;
+				}
+
 				double[] ydata = d_y.GetData();
 				double[] xdata = d_x != null ? d_x.GetData() : d_y.GetSites();
-				
+
 				Point[] data = new Point[xdata.Length];
 
 				for (int i = 0; i < xdata.Length; ++i)
@@ -224,6 +285,22 @@ namespace Cpg.Studio.Dialogs
 				get { return d_isTime; }
 			}
 			
+			public bool OnlyVectors
+			{
+				get
+				{
+					foreach (Series series in d_plots)
+					{
+						if (!series.Vector)
+						{
+							return false;
+						}
+					}
+					
+					return true;
+				}
+			}
+			
 			public IEnumerable<Series> Plots
 			{
 				get
@@ -268,7 +345,7 @@ namespace Cpg.Studio.Dialogs
 				
 				plot.Destroyed += OnPlotDestroyed;
 				
-				d_isTime = plot.X == null;
+				d_isTime = plot.Y != null && plot.X == null;
 			}
 			
 			public void Remove(Series plot)
@@ -354,6 +431,8 @@ namespace Cpg.Studio.Dialogs
 		private Widgets.WrappersTree d_phaseTreeY;
 		private Widgets.WrappersTree d_phaseTreeX;
 		private Widget d_phaseWidget;
+		private CheckButton d_vector;
+		private List<Series> d_vectors;
 		
 		private Dictionary<Series, Point> d_initialConditions;
 
@@ -364,7 +443,7 @@ namespace Cpg.Studio.Dialogs
 			
 			d_initialConditions = new Dictionary<Series, Point>();
 
-			d_simulation.OnBegin += ApplyInitialConditions;
+			d_simulation.OnBegin += DoPeriodBegin;
 			d_simulation.OnEnd += DoPeriodEnd;
 			
 			d_linkRulers = true;
@@ -373,13 +452,139 @@ namespace Cpg.Studio.Dialogs
 			d_network = network;
 			d_autoaxis = true;
 			d_linkaxis = true;
+			
+			d_vectors = new List<Series>();
 
 			Build();
 			
 			SetDefaultSize(500, 400);
 		}
+		
+		private List<double> VectorMakeGrid(Plot.Ticks ticks, Biorob.Math.Range range, int factor)
+		{
+			List<double> ret = new List<double>();
+			List<double> tt = new List<double>(ticks);
+			
+			for (int vi = 0; vi < tt.Count; ++vi)
+			{
+				double rest = 0;
+				double v = tt[vi];
 
-		private void ApplyInitialConditions(object o, BeginArgs args)
+				for (int i = 0; i < factor; ++i)
+				{
+					double p = v + rest;
+					
+					if (p > range.Min && p < range.Max)
+					{
+						ret.Add(v + rest);
+					}
+
+					rest += (ticks.CalculatedTickSize - rest) / (factor - i);
+				}
+			}
+			
+			return ret;
+		}
+		
+		private List<Point> VectorGrid(Graph graph)
+		{
+			Plot.Graph g = graph.Canvas.Graph;
+			
+			int factor = 2;
+			
+			List<double> xticks = VectorMakeGrid(g.XTicks, g.XAxis, factor);
+			List<double> yticks = VectorMakeGrid(g.YTicks, g.YAxis, factor);
+
+			List<Point> ret = new List<Point>();
+			
+			for (int x = 0; x < xticks.Count; ++x)
+			{
+				for (int y = 0; y < yticks.Count; ++y)
+				{
+					ret.Add(new Point(xticks[x], yticks[y]));
+				}
+			}
+			
+			return ret;
+		}
+		
+		private void SimulateVectorFields()
+		{
+			if (d_vectors.Count == 0)
+			{
+				return;
+			}
+			
+			// Record the current state
+			IntegratorState s = d_simulation.Network.Integrator.State;
+			
+			List<KeyValuePair<Cpg.Property, double>> state = new List<KeyValuePair<Cpg.Property, double>>();
+			
+			foreach (LinkAction action in s.IntegratedLinkActions())
+			{
+				state.Add(new KeyValuePair<Cpg.Property, double>(action.TargetProperty, action.TargetProperty.Value));
+			}
+			
+			foreach (LinkAction action in s.DirectLinkActions())
+			{
+				state.Add(new KeyValuePair<Cpg.Property, double>(action.TargetProperty, action.TargetProperty.Value));
+			}
+			
+			double step = d_simulation.Range.Step;
+			
+			foreach (Graph graph in d_graphs)
+			{
+				List<Point> grid = null;
+
+				foreach (Series series in graph.Plots)
+				{
+					if (!(series.Renderer is Plot.Renderers.Vector))
+					{
+						continue;
+					}
+					
+					if (grid == null)
+					{
+						grid = VectorGrid(graph);
+					}
+					
+					// We are going to go over the grid, setting initial conditions
+					// Then we simulate exactly one step and compute the difference
+					List<double> alpha = new List<double>(grid.Count);
+					
+					for (int i = 0; i < grid.Count; ++i)
+					{
+						series.XProp.Value = grid[i].X;
+						series.YProp.Value = grid[i].Y;
+
+						d_simulation.Step(step);
+						
+						double dy = series.YProp.Value - grid[i].Y;
+						double dx = series.XProp.Value - grid[i].X;
+						
+						alpha.Add(System.Math.Atan2(dy, dx));
+
+						// Restore the state
+						foreach (KeyValuePair<Cpg.Property, double> ss in state)
+						{
+							ss.Key.Value = ss.Value;
+						}
+					}
+					
+					series.Update(grid, alpha);
+				}
+			}
+		}
+
+		private void DoPeriodBegin(object o, BeginArgs args)
+		{
+			ApplyInitialConditions();
+			
+			// We do this first
+			SimulateVectorFields();
+		}
+		
+		private void ApplyInitialConditions()
 		{
 			foreach (KeyValuePair<Series, Point> pair in d_initialConditions)
 			{
@@ -485,6 +690,11 @@ namespace Cpg.Studio.Dialogs
 
 			hhbox.PackEnd(button, false, false, 0);
 			
+			d_vector = new CheckButton("Vector field");
+			d_vector.Show();
+			
+			hhbox.PackStart(d_vector, false, false, 0);
+			
 			phase.PackStart(hhbox, false, false, 0);
 			
 			vboxExpand.PackStart(phase);
@@ -544,7 +754,21 @@ namespace Cpg.Studio.Dialogs
 				}
 			}
 			
-			Add(xx, yy);
+			if (d_vector.Active)
+			{			
+				List<Series> series = new List<Series>();
+			
+				for (int i = 0; i < xx.Count; ++i)
+				{
+					series.Add(CreateVectorSeries(xx[i], yy[i]));
+				}
+
+				Add(-1, -1, series);
+			}
+			else
+			{			
+				Add(xx, yy);
+			}
 		}
 		
 		private void FilterIntegratedOnly(Widgets.WrappersTree.WrapperNode node, ref bool ret)
@@ -791,6 +1015,15 @@ namespace Cpg.Studio.Dialogs
 			}
 		}
 		
+		public Series CreateVectorSeries(Cpg.Property x, Cpg.Property y)
+		{
+			Plot.Renderers.Vector rend = new Plot.Renderers.Vector();
+			rend.MarkerStyle = Plot.Renderers.Line.MarkerType.FilledCircle;
+			rend.PixelLength = 10;
+
+			return new Series(x, y, rend);
+		}
+		
 		public Graph Add(IEnumerable<Cpg.Property> x, IEnumerable<Cpg.Property> y)
 		{
 			List<Cpg.Monitor> mony = new List<Cpg.Monitor>();
@@ -848,14 +1081,13 @@ namespace Cpg.Studio.Dialogs
 		}
 		
 		public Graph Add(int row, int col, Cpg.Monitor x, Cpg.Monitor y)
+		{				
+			return Add(row, col, new Series[] {CreateLineSeries(x, y)});
+		}
+		
+		public Series CreateLineSeries(Cpg.Monitor x, Cpg.Monitor y)
 		{
-			Plot.Renderers.Line line = new Plot.Renderers.Line();
-			Series s = new Series(x, y, line);
-				
-			Graph ret = Add(row, col, new Series[] {s});
-			d_simulation.Resimulate();
-			
-			return ret;
+			return new Series(x, y, new Plot.Renderers.Line());
 		}
 
 		public Graph Add(int row, int col, IEnumerable<Cpg.Monitor> x, IEnumerable<Cpg.Monitor> y)
@@ -866,10 +1098,7 @@ namespace Cpg.Studio.Dialogs
 			{			
 				foreach (Cpg.Monitor m in y)
 				{
-					Plot.Renderers.Line line = new Plot.Renderers.Line();
-					Series s = new Series(null, m, line);
-				
-					series.Add(s);
+					series.Add(CreateLineSeries(null, m));
 				}
 			}
 			else
@@ -879,10 +1108,7 @@ namespace Cpg.Studio.Dialogs
 				
 				while (xe.MoveNext() && ye.MoveNext())
 				{
-					Plot.Renderers.Line line = new Plot.Renderers.Line();
-					Series s = new Series(xe.Current, ye.Current, line);
-					
-					series.Add(s);
+					series.Add(CreateLineSeries(xe.Current, ye.Current));
 				}
 			}
 			
@@ -1003,9 +1229,9 @@ namespace Cpg.Studio.Dialogs
 				
 				foreach (Series series in graph.Plots)
 				{
-					if (series.Renderer.Active)
+					if (series.Renderer.Active && !(series.Renderer is Plot.Renderers.Vector))
 					{
-						d_initialConditions[series] = axis;
+						d_initialConditions[series] = axis.Copy();
 					}
 				}
 
@@ -1059,6 +1285,18 @@ namespace Cpg.Studio.Dialogs
 		{
 			Graph graph = (Graph)d_content[row, col];
 			
+			foreach (Series s in series)
+			{
+				if (s.Vector)
+				{
+					d_vectors.Add(s);
+					
+					s.Destroyed += delegate(object sender, EventArgs e) {
+						d_vectors.Remove((Series)sender);
+					};
+				}
+			}
+			
 			if (graph != null)
 			{
 				foreach (Series s in series)
@@ -1074,6 +1312,15 @@ namespace Cpg.Studio.Dialogs
 			foreach (Series s in series)
 			{
 				graph.Add(s);
+			}
+			
+			if (graph.OnlyVectors)
+			{
+				graph.Canvas.Graph.XAxisMode = Plot.AxisMode.Fixed;
+				graph.Canvas.Graph.YAxisMode = Plot.AxisMode.Fixed;
+				
+				graph.Canvas.Graph.UpdateAxis(new Biorob.Math.Range(-1, 1),
+				                              new Biorob.Math.Range(-1, 1));
 			}
 
 			d_content.Add(graph, row, col);
@@ -1297,7 +1544,7 @@ namespace Cpg.Studio.Dialogs
 			Biorob.Math.Range yrange = new Biorob.Math.Range();
 			
 			bool first = true;
-
+			
 			foreach (Graph graph in graphs)
 			{
 				Plot.Graph g = graph.Canvas.Graph;
@@ -1315,30 +1562,38 @@ namespace Cpg.Studio.Dialogs
 					
 				if (d_autoaxis && d_linkaxis)
 				{
-					Biorob.Math.Range xr = g.DataXRange;
-					Biorob.Math.Range yr = g.DataYRange;
+					foreach (Series series in graph.Plots)
+					{
+						if (series.Vector)
+						{
+							continue;
+						}
 
-					if (first || xr.Min < xrange.Min)
-					{
-						xrange.Min = xr.Min;
+						Biorob.Math.Range xr = series.Renderer.XRange;
+						Biorob.Math.Range yr = series.Renderer.YRange;
+	
+						if (first || xr.Min < xrange.Min)
+						{
+							xrange.Min = xr.Min;
+						}
+						
+						if (first || xr.Max > xrange.Max)
+						{
+							xrange.Max = xr.Max;
+						}
+						
+						if (first || yr.Min < yrange.Min)
+						{
+							yrange.Min = yr.Min;
+						}
+						
+						if (first || yr.Max > yrange.Max)
+						{
+							yrange.Max = yr.Max;
+						}
+						
+						first = false;
 					}
-					
-					if (first || xr.Max > xrange.Max)
-					{
-						xrange.Max = xr.Max;
-					}
-					
-					if (first || yr.Min < yrange.Min)
-					{
-						yrange.Min = yr.Min;
-					}
-					
-					if (first || yr.Max > yrange.Max)
-					{
-						yrange.Max = yr.Max;
-					}
-					
-					first = false;
 				}
 			}
 			
@@ -1347,11 +1602,14 @@ namespace Cpg.Studio.Dialogs
 				{
 					foreach (Graph graph in graphs)
 					{
-						Plot.Graph g = graph.Canvas.Graph;
-						Point margin = g.AutoMargin;
+						if (!graph.OnlyVectors)
+						{
+							Plot.Graph g = graph.Canvas.Graph;
+							Point margin = g.AutoMargin;
 						
-						g.UpdateAxis(xrange.Widen(margin.X),
-					                 yrange.Widen(margin.Y));
+							g.UpdateAxis(xrange.Widen(margin.X),
+						                 yrange.Widen(margin.Y));
+						}
 					}
 				}
 			});

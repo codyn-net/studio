@@ -14,7 +14,7 @@ namespace Cpg.Studio
 		
 		private bool d_running;
 		private uint d_idleRun;
-
+		
 		public event SteppedHandler OnStepped
 		{
 			add
