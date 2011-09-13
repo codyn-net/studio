@@ -1246,7 +1246,15 @@ namespace Cpg.Studio.Dialogs
 		{
 			foreach (Graph graph in d_graphs)
 			{
-				Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
+				Plot.Graph g = graph.Canvas.Graph;
+
+				Cpg.Studio.Settings.PlotSettings.Set(g);
+				
+				if (!graph.IsTime)
+				{
+					g.AutoMargin.X = g.AutoMargin.Y;
+					g.KeepAspect = true;
+				}
 			}
 			
 			UpdateAutoScaling();
