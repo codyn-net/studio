@@ -19,7 +19,7 @@ namespace Cpg.Studio.Undo
 		{
 			get
 			{
-				return String.Format("Change proxy `{0}' to `{1}' on `{2}'", d_previousProxy.Id, d_proxy.Id, d_group.FullId);
+				return String.Format("Change proxy `{0}' to `{1}' on `{2}'", d_previousProxy != null ? d_previousProxy.Id : "none", d_proxy != null ? d_proxy.Id : "none", d_group.FullId);
 			}
 		}
 
