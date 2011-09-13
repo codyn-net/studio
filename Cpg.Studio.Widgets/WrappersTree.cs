@@ -98,7 +98,7 @@ namespace Cpg.Studio.Widgets
 				
 				d_icon = WrapperIcon();
 				d_inconsistent = new List<WrapperNode>();
-				
+
 				if (d_wrapper != null)
 				{
 					Wrappers.Group grp = wrapper as Wrappers.Group;
@@ -484,6 +484,7 @@ namespace Cpg.Studio.Widgets
 		private string d_searchText;
 		private Wrappers.Group d_group;
 		private Dictionary<GLib.Object, bool> d_selected;
+		private Label d_label;
 		
 		private CellRendererToggle d_rendererToggle;
 		private CellRendererPixbuf d_rendererIcon;
@@ -609,7 +610,11 @@ namespace Cpg.Studio.Widgets
 			Image img = new Image(Gtk.Stock.Find, IconSize.Button);
 			img.Show();
 			
+			d_label = new Label("");
+			d_label.Show();
+			
 			hbox.PackStart(img, false, false, 0);
+			hbox.PackStart(d_label, false, false, 0);
 			hbox.PackStart(d_entry, true, true, 0);
 			hbox.BorderWidth = 3;
 			
@@ -634,6 +639,12 @@ namespace Cpg.Studio.Widgets
 				args.RetVal = true;
 				Activated(this, SelectedNodes);
 			}
+		}
+		
+		public string Label
+		{
+			get { return d_label.Text; }
+			set { d_label.Text = value; }
 		}
 
 		private void OnNodeToggled(WrapperNode node)
