@@ -1544,8 +1544,8 @@ namespace Cpg.Studio.Widgets.Editors
 				
 				d_draggingLine.Color = d_graph.Graph.ColorMap[1];
 				d_draggingLine.LineStyle = Plot.Renderers.Line.LineType.Dotted;
-				d_draggingLine.Label = null;
-				d_draggingLine.LabelMarkup = null;
+				d_draggingLine.YLabel = null;
+				d_draggingLine.YLabelMarkup = null;
 
 				d_graph.Graph.Add(d_draggingLine);
 			}

@@ -38,6 +38,9 @@ namespace Cpg.Studio.Dialogs
 				
 				if (d_x != null)
 				{
+					d_x.Property.AddNotification("name", OnNameChanged);
+					d_x.Property.Object.AddNotification("id", OnNameChanged);
+
 					d_x.Property.Object.PropertyRemoved += HandlePropertyRemoved;
 					
 					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(d_x.Property.Object.Parent) as Wrappers.Group, d_x.Property.Object);
@@ -128,7 +131,12 @@ namespace Cpg.Studio.Dialogs
 			
 			private void UpdateName()
 			{
-				d_renderer.Label = d_y.Property.FullNameForDisplay;
+				d_renderer.YLabel = d_y.Property.FullNameForDisplay;
+				
+				if (d_x != null)
+				{
+					d_renderer.XLabel = d_x.Property.FullNameForDisplay;
+				}
 			}
 			
 			private void OnNameChanged(object source, GLib.NotifyArgs args)

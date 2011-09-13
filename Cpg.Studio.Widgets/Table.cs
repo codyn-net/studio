@@ -691,13 +691,13 @@ namespace Cpg.Studio.Widgets
 			
 			string s;
 			
-			if (lbl.LabelMarkup != null)
+			if (lbl.YLabelMarkup != null)
 			{
-				s = lbl.LabelMarkup;
+				s = lbl.YLabelMarkup;
 			}
 			else
 			{
-				s = System.Security.SecurityElement.Escape(lbl.Label);
+				s = System.Security.SecurityElement.Escape(lbl.YLabel);
 			}
 			
 			if (col != null)
