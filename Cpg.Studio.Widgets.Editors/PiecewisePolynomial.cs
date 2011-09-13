@@ -111,12 +111,11 @@ namespace Cpg.Studio.Widgets.Editors
 		private Plot.Widget d_graph;
 		private bool d_configured;
 		private Entry d_period;
-		private CheckButton d_periodic;
 		private HBox d_periodWidget;
 		private List<Plot.Renderers.Line> d_previewLines;
 		private bool d_iscubic;
 		private Biorob.Math.Point d_lastAddedData;
-		private bool d_ignorePeriodicChange;
+		private bool d_ignoreUpdatePreview;
 		
 		public delegate void ErrorHandler(object source, Exception exception);
 		public event ErrorHandler Error = delegate {};
@@ -298,18 +297,29 @@ namespace Cpg.Studio.Widgets.Editors
 			d_period.Show();
 			d_period.Text = "1";
 			d_period.WidthChars = 5;
-			
-			d_periodic = new CheckButton("Periodic:");
-			d_periodic.Show();
-			d_period.Sensitive = false;
-			d_periodic.Toggled += OnPeriodicToggled;
-			
+			d_period.FocusOutEvent += OnPeriodFocusOut;
+			d_period.Activated += OnPeriodActivated;
+			d_period.TooltipText = "If specified, makes the function periodic on the range 0:<value>";
+
 			d_periodWidget.PackEnd(d_period, false, false, 0);
-			d_periodWidget.PackEnd(d_periodic, false, false, 0);
+			
+			Label lbl = new Label("Period:");
+			lbl.Show();
+			d_periodWidget.PackEnd(lbl, false, false, 0);
 			
 			Pack2(vbox, true, true);
 			
 			Populate();
+		}
+
+		private void OnPeriodActivated(object sender, EventArgs e)
+		{
+			UpdatePieces();
+		}
+
+		private void OnPeriodFocusOut(object o, FocusOutEventArgs args)
+		{
+			UpdatePieces();
 		}
 		
 		private bool ValidPeriod
@@ -329,29 +339,6 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 
-		private void OnPeriodicToggled(object sender, EventArgs e)
-		{
-			if (d_ignorePeriodicChange)
-			{
-				return;
-			}
-			
-			if (!d_periodic.Active)
-			{
-				Biorob.Math.Range range = DeterminePeriod();
-				
-				if (range != null)
-				{
-					// Then remove those pieces now
-					RemovePeriodic();
-				}
-			}
-			else if (ValidPeriod)
-			{
-				UpdateForPeriod();
-			}
-		}
-		
 		public Widget PeriodWidget
 		{
 			get { return d_periodWidget; }
@@ -468,12 +455,24 @@ namespace Cpg.Studio.Widgets.Editors
 		
 		private Biorob.Math.Range DeterminePeriod()
 		{
-			//List<Biorob.Math.Functions.PiecewisePolynomial.Piece> pieces;
+			List<Biorob.Math.Functions.PiecewisePolynomial.Piece> pieces;
+			pieces = new List<Biorob.Math.Functions.PiecewisePolynomial.Piece>();
 			
-			//pieces = new List<Biorob.Math.Functions.PiecewisePolynomial.Piece>();
-			return null;
+			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			{
+				pieces.Add(new Biorob.Math.Functions.PiecewisePolynomial.Piece(new Biorob.Math.Range(piece.Begin, piece.End), piece.Coefficients));
+			}
+			
+			return DeterminePeriod(pieces);
 		}
 		
+		private bool PieceRangeMatch(Biorob.Math.Functions.PiecewisePolynomial.Piece p1,
+		                             Biorob.Math.Functions.PiecewisePolynomial.Piece p2,
+		                             double span)
+		{
+			return System.Math.Abs(p2.End - p1.End - span) < Biorob.Math.Constants.Epsilon;
+		}
+
 		private Biorob.Math.Range DeterminePeriod(List<Biorob.Math.Functions.PiecewisePolynomial.Piece> pieces)
 		{
 			if (pieces.Count < 6)
@@ -485,9 +484,7 @@ namespace Cpg.Studio.Widgets.Editors
 			// and the second piece matches the last
 			int num = pieces.Count;
 
-			if (!PieceMatch(pieces[0], pieces[num - 3]) ||
-			    !PieceMatch(pieces[1], pieces[num - 2]) ||
-			    !PieceMatch(pieces[2], pieces[num - 1]))
+			if (!PieceMatch(pieces[1], pieces[num - 2]))
 			{
 				return null;
 			}
@@ -498,13 +495,24 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 			
 			// So it's periodic, determine the period!
-			double span = pieces[num - 3].Begin - pieces[0].Begin;
+			double span = pieces[num - 2].Begin - pieces[1].Begin;
+			
+			if (!PieceRangeMatch(pieces[0], pieces[num - 3], span) ||
+			    !PieceRangeMatch(pieces[2], pieces[num - 1], span))
+			{
+				return null;
+			}
 
 			return new Biorob.Math.Range(0, span);
 		}
 		
 		private void UpdatePreview()
 		{
+			if (d_ignoreUpdatePreview)
+			{
+				return;
+			}
+
 			foreach (Plot.Renderers.Line line in d_previewLines)
 			{
 				d_graph.Graph.Remove(line);
@@ -528,9 +536,6 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			Biorob.Math.Range period = DeterminePeriod(pieces);
 			
-			d_periodic.Active = (period != null);
-			d_period.Sensitive = d_periodic.Active;
-
 			if (period != null)
 			{
 				d_period.Text = (period.Max - period.Min).ToString();
@@ -1133,11 +1138,17 @@ namespace Cpg.Studio.Widgets.Editors
 		private List<Cpg.FunctionPolynomialPiece> NonPeriodicPieces()
 		{
 			List<Cpg.FunctionPolynomialPiece> ret = new List<Cpg.FunctionPolynomialPiece>();
-			double period = Period;
+			double period = 0;
+			bool hasperiod = ValidPeriod;
+			
+			if (hasperiod)
+			{
+				period = Period;
+			}
 			
 			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
-				if (d_periodic.Active && (piece.Begin < 0 || piece.End > period))
+				if (hasperiod && (piece.Begin < 0 || piece.End > period))
 				{
 					continue;
 				}
@@ -1156,51 +1167,122 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 			
-			// Add a data point, do the interpolation and reset the pieces
-			List<Biorob.Math.Point> data = new List<Biorob.Math.Point>();
-			List<Cpg.FunctionPolynomialPiece> pieces = NonPeriodicPieces();
-			
-			foreach (Cpg.FunctionPolynomialPiece piece in pieces)
-			{
-				data.Add(new Biorob.Math.Point(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]));
-			}
-			
-			if (pieces.Count > 0)
-			{
-				Cpg.FunctionPolynomialPiece piece = pieces[pieces.Count - 1];
-				data.Add(new Biorob.Math.Point(piece.End, piece.Coefficients.Sum()));
-			}
-
 			Biorob.Math.Point pt = d_graph.Graph.PixelToAxis(new Biorob.Math.Point(args.Event.X, args.Event.Y));
+			
+			List<Biorob.Math.Point> added = new List<Biorob.Math.Point>();
 			
 			if (d_graph.Graph.SnapRulerToAxis)
 			{
 				pt = d_graph.Graph.SnapToAxis(pt, d_graph.Graph.SnapRulerToAxisFactor);
 			}
 
-			data.Add(pt);
+			added.Add(pt);
 			
-			if (data.Count == 1 && d_lastAddedData != null)
+			if (d_function.Pieces.Length == 0 && d_lastAddedData != null)
 			{
-				data.Add(d_lastAddedData);
-			}
-
-			Biorob.Math.Interpolation.PChip pchip = new Biorob.Math.Interpolation.PChip();
-			data.Sort();
-			
-			if (d_periodic.Active)
-			{
-				Biorob.Math.Interpolation.Periodic.Extend(data, 0, Period);
+				added.Add(d_lastAddedData);
 			}
 			
-			Biorob.Math.Functions.PiecewisePolynomial poly = pchip.InterpolateSorted(data);
+			d_lastAddedData = pt;
+			
+			UpdatePieces(added.ToArray());
+			args.RetVal = true;
+		} 
+		
+		private List<Undo.IAction> RemovePeriodicActions()
+		{
+			// Remove pieces which were generated from the period
+			Biorob.Math.Range range = DeterminePeriod();
 			
 			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			if (range == null)
+			{
+				return actions;
+			}
+			
+			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			{
+				if (piece.Begin < range.Min || piece.End > range.Max)
+				{
+					actions.Add(new Undo.RemoveFunctionPolynomialPiece(d_function, piece));
+				}
+			}
+			
+			return actions;
+		}
+		
+		private void RemovePeriodic()
+		{
+			List<Undo.IAction> actions = RemovePeriodicActions();
+			
+			if (actions.Count != 0)
+			{
+				try
+				{
+					d_actions.Do(new Undo.Group(actions));
+				}
+				catch (Exception e)
+				{
+					Error(this, e);
+				}
+			}
+		}
+		
+		private void UpdatePieces(params Biorob.Math.Point[] added)
+		{
+			d_ignoreUpdatePreview = true;
+
+			bool hasperiod = ValidPeriod;
+
+			// There is a new period, do it
+			List<Undo.IAction> actions = new List<Undo.IAction>();
+			
+			Biorob.Math.Range range = DeterminePeriod();
+			List<Biorob.Math.Point> data = new List<Biorob.Math.Point>();
+			Cpg.FunctionPolynomialPiece last = null;
+			
+			double period = 0;
+			
+			if (hasperiod)
+			{
+				period = Period;
+			}
 			
 			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				actions.Add(new Undo.RemoveFunctionPolynomialPiece(d_function, piece));
+
+				if ((!hasperiod || (piece.Begin >= 0 && piece.End <= period)) && (range == null || (piece.Begin >= range.Min && piece.End <= range.Max)))
+				{
+					data.Add(new Biorob.Math.Point(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]));
+					last = piece;
+				}
 			}
+			
+			if (last != null)
+			{
+				data.Add(new Biorob.Math.Point(last.End, last.Coefficients.Sum()));
+			}
+			
+			foreach (Biorob.Math.Point pt in added)
+			{
+				if (!hasperiod || (pt.X >= 0 && pt.X <= period))
+				{
+					data.Add(pt);
+				}
+			}
+			
+			// Then make it periodic
+			Biorob.Math.Interpolation.PChip pchip = new Biorob.Math.Interpolation.PChip();
+			data.Sort();
+			
+			if (hasperiod)
+			{
+				Biorob.Math.Interpolation.Periodic.Extend(data, 0, period);
+			}
+
+			Biorob.Math.Functions.PiecewisePolynomial poly = pchip.InterpolateSorted(data);
 			
 			foreach (Biorob.Math.Functions.PiecewisePolynomial.Piece piece in poly.Pieces)
 			{
@@ -1219,25 +1301,9 @@ namespace Cpg.Studio.Widgets.Editors
 				Error(this, e);
 			}
 			
-			d_lastAddedData = pt;
+			d_ignoreUpdatePreview = false;
+			
 			UpdatePreview();
-			
-			args.RetVal = true;
-		} 
-		
-		private void RemovePeriodic()
-		{
-			// Remove pieces which were generated from the period
-			Biorob.Math.Range range = DeterminePeriod();
-			
-			if (range == null)
-			{
-				return;
-			}
-		}
-		
-		private void UpdateForPeriod()
-		{
 		}
 	}
 }
