@@ -144,7 +144,7 @@ namespace Cpg.Studio
 			
 			if (num != 0)
 			{
-				ret.Y = ret.X / num;
+				ret.X = ret.X / num;
 				ret.Y = ret.Y / num;
 			}
 			
