@@ -248,6 +248,19 @@ namespace Cpg.Studio.Dialogs
 				}
 			}
 			
+			public Series Find(Plot.Renderers.Renderer renderer)
+			{
+				foreach (Series series in d_plots)
+				{
+					if (series.Renderer == renderer)
+					{
+						return series;
+					}
+				}
+				
+				return null;
+			}
+			
 			public void Add(Series plot)
 			{
 				d_plots.Add(plot);				
@@ -341,12 +354,17 @@ namespace Cpg.Studio.Dialogs
 		private Widgets.WrappersTree d_phaseTreeY;
 		private Widgets.WrappersTree d_phaseTreeX;
 		private Widget d_phaseWidget;
+		
+		private Dictionary<Series, Point> d_initialConditions;
 
 		public Plotting(Wrappers.Network network, Simulation simulation) : base("Monitor")
 		{
 			d_simulation = simulation;
 			d_graphs = new List<Graph>();
+			
+			d_initialConditions = new Dictionary<Series, Point>();
 
+			d_simulation.OnBegin += ApplyInitialConditions;
 			d_simulation.OnEnd += DoPeriodEnd;
 			
 			d_linkRulers = true;
@@ -359,6 +377,24 @@ namespace Cpg.Studio.Dialogs
 			Build();
 			
 			SetDefaultSize(500, 400);
+		}
+
+		private void ApplyInitialConditions(object o, BeginArgs args)
+		{
+			foreach (KeyValuePair<Series, Point> pair in d_initialConditions)
+			{
+				Series series = pair.Key;
+
+				if (series.X != null)
+				{
+					series.X.Property.Value = pair.Value.X;
+				}
+				
+				if (series.Y != null)
+				{
+					series.Y.Property.Value = pair.Value.Y;
+				}
+			}
 		}
 		
 		protected override void OnDestroyed()
@@ -426,6 +462,7 @@ namespace Cpg.Studio.Dialogs
 			d_phaseTreeX.Filter += FilterFunctions;
 			d_phaseTreeX.Label = "X:";
 			d_phaseTreeX.Show();
+			d_phaseTreeX.Filter += FilterIntegratedOnly;
 			
 			phase.PackStart(d_phaseTreeX, true, true, 0);
 			
@@ -434,6 +471,7 @@ namespace Cpg.Studio.Dialogs
 			d_phaseTreeY.Filter += FilterFunctions;
 			d_phaseTreeY.Label = "Y:";
 			d_phaseTreeY.Show();
+			d_phaseTreeY.Filter += FilterIntegratedOnly;
 			
 			phase.PackStart(d_phaseTreeY, true, true, 0);
 			
@@ -507,6 +545,14 @@ namespace Cpg.Studio.Dialogs
 			}
 			
 			Add(xx, yy);
+		}
+		
+		private void FilterIntegratedOnly(Widgets.WrappersTree.WrapperNode node, ref bool ret)
+		{
+			if (node.Property != null && !node.Property.Integrated)
+			{
+				ret = false;
+			}
 		}
 		
 		private void FilterFunctions(Widgets.WrappersTree.WrapperNode node, ref bool ret)
@@ -878,11 +924,24 @@ namespace Cpg.Studio.Dialogs
 			
 			graph.Destroyed += delegate {
 				d_graphs.Remove(graph);
+				
+				foreach (Series series in graph.Plots)
+				{				
+					if (d_initialConditions.ContainsKey(series))
+					{
+						d_initialConditions.Remove(series);
+					}
+				}
+				
+				UpdateAutoScaling();
 			};
 
 			graph.MotionNotifyEvent += OnGraphMotionNotify;
 			graph.LeaveNotifyEvent += OnGraphLeaveNotify;
 			graph.EnterNotifyEvent += OnGraphEnterNotify;
+			graph.KeyPressEvent += OnGraphKeyPress;
+			graph.ButtonPressEvent += OnGraphButtonPress;
+			graph.KeyReleaseEvent += OnGraphKeyRelease;
 			
 			Plot.Graph g = graph.Canvas.Graph;
 			
@@ -912,6 +971,89 @@ namespace Cpg.Studio.Dialogs
 
 			return graph;
 		}
+		
+		[GLib.ConnectBefore]
+		private void OnGraphButtonPress(object o, ButtonPressEventArgs args)
+		{
+			Graph graph = (Graph)o;
+			
+			if (graph.IsTime)
+			{
+				return;
+			}
+			
+			Plot.Graph g = graph.Canvas.Graph;
+			
+			if (args.Event.Button == 1 && args.Event.Type == Gdk.EventType.TwoButtonPress)
+			{
+				Point pt = new Point(args.Event.X, args.Event.Y);
+				Point axis = g.PixelToAxis(pt);
+				
+				if (g.SnapRulerToAxis && !g.SnapRulerToData)
+				{
+					int factor = g.SnapRulerToAxisFactor;
+					
+					if ((args.Event.State & Gdk.ModifierType.ControlMask) != 0)
+					{
+						factor *= 2;
+					}
+					
+					axis = g.SnapToAxis(axis, factor);
+				}
+				
+				foreach (Series series in graph.Plots)
+				{
+					if (series.Renderer.Active)
+					{
+						d_initialConditions[series] = axis;
+					}
+				}
+
+				d_simulation.Resimulate();
+			}
+		}
+
+		[GLib.ConnectBefore]
+		private void OnGraphKeyPress(object o, KeyPressEventArgs args)
+		{
+			Graph graph = (Graph)o;
+			
+			if (graph.IsTime)
+			{
+				return;
+			}
+			
+			if (args.Event.Key == Gdk.Key.Alt_L ||
+			    args.Event.Key == Gdk.Key.Alt_R)
+			{
+				Plot.Graph g = graph.Canvas.Graph;
+
+				g.SnapRulerToAxis = false;
+				g.SnapRulerToData = true;
+				g.RulerTracksData = true;
+			}
+		}
+		
+		[GLib.ConnectBefore]
+		private void OnGraphKeyRelease(object o, KeyReleaseEventArgs args)
+		{
+			Graph graph = (Graph)o;
+			
+			if (graph.IsTime)
+			{
+				return;
+			}
+
+			if (args.Event.Key == Gdk.Key.Alt_L ||
+			    args.Event.Key == Gdk.Key.Alt_R)
+			{
+				Plot.Graph g = graph.Canvas.Graph;
+
+				g.SnapRulerToAxis = true;
+				g.SnapRulerToData = false;
+				g.RulerTracksData = false;
+			}
+		}
 
 		public Graph Add(int row, int col, IEnumerable<Series> series)
 		{
@@ -940,8 +1082,12 @@ namespace Cpg.Studio.Dialogs
 			
 			if (!graph.IsTime)
 			{
-				graph.Canvas.Graph.AutoMargin.X = graph.Canvas.Graph.AutoMargin.Y;
-				graph.Canvas.Graph.KeepAspect = true;
+				g.AutoMargin.X = graph.Canvas.Graph.AutoMargin.Y;
+				g.KeepAspect = true;
+				
+				g.SnapRulerToAxis = true;
+				g.SnapRulerToData = false;
+				g.RulerTracksData = false;
 			}
 			
 			List<Graph> graphs = new List<Graph>(SameGraphs(graph));
@@ -1010,6 +1156,8 @@ namespace Cpg.Studio.Dialogs
 		private void OnGraphEnterNotify(object o, EnterNotifyEventArgs args)
 		{
 			Graph graph = (Graph)o;
+			
+			graph.Canvas.GrabFocus();
 
 			if (d_linkRulers && graph.Canvas.Graph.ShowRuler)
 			{
@@ -1254,6 +1402,10 @@ namespace Cpg.Studio.Dialogs
 				{
 					g.AutoMargin.X = g.AutoMargin.Y;
 					g.KeepAspect = true;
+					
+					g.SnapRulerToAxis = true;
+					g.SnapRulerToData = false;
+					g.RulerTracksData = false;
 				}
 			}
 			
@@ -1272,6 +1424,21 @@ namespace Cpg.Studio.Dialogs
 			ToggleAction action = d_actiongroup.GetAction("ActionAutoAxis") as ToggleAction;
 			
 			action.Active = !action.Active;
+		}
+		
+		public bool InitialConditions(Series series, out Point pt)
+		{
+			return d_initialConditions.TryGetValue(series, out pt);
+		}
+		
+		public void SetInitialConditions(Series series, Point pt)
+		{
+			if (double.IsNaN(pt.X) || double.IsNaN(pt.Y))
+			{
+				return;
+			}
+			
+			d_initialConditions[series] = pt;
 		}
 	}
 }

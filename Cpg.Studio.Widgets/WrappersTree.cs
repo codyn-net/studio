@@ -644,7 +644,8 @@ namespace Cpg.Studio.Widgets
 		public string Label
 		{
 			get { return d_label.Text; }
-			set { d_label.Text = value; }
+		
+				set { d_label.Text = value; }
 		}
 
 		private void OnNodeToggled(WrapperNode node)

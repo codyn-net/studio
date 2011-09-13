@@ -21,6 +21,12 @@ namespace Cpg.Studio.Serialization
 			
 			[XmlAttribute("color")]
 			public string Color;
+			
+			[XmlAttribute("y-initial")]
+			public double YInitial = double.NaN;
+			
+			[XmlAttribute("x-initial")]
+			public double XInitial = double.NaN;
 		}
 
 		[XmlType("monitor")]

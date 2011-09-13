@@ -527,7 +527,7 @@ namespace Cpg.Studio.Widgets
 				r += dr;
 				c += dc;
 				
-				if (r >= 0 && c >= 0 && r < d_rows && c < d_columns)
+				if (r < 0 || c < 0 || r >= d_rows || c >= d_columns)
 				{
 					return null;
 				}
@@ -1004,8 +1004,10 @@ namespace Cpg.Studio.Widgets
 						/* Merge what we drag onto the graph where we drop */
 						if (d_dragRenderer != null)
 						{
-							d_dragging.Canvas.Graph.Remove(d_dragRenderer);
-							d_children[r, c].Canvas.Graph.Add(d_dragRenderer);
+							Dialogs.Plotting.Series series = d_dragging.Find(d_dragRenderer);
+							
+							d_dragging.Remove(series);
+							d_children[r, c].Add(series);
 						}
 						else
 						{
@@ -1013,8 +1015,10 @@ namespace Cpg.Studio.Widgets
 
 							foreach (Plot.Renderers.Renderer renderer in rr)
 							{
-								d_dragging.Canvas.Graph.Remove(renderer);
-								d_children[r, c].Canvas.Graph.Add(renderer);
+								Dialogs.Plotting.Series series = d_dragging.Find(renderer);
+								
+								d_dragging.Remove(series);
+								d_children[r, c].Add(series);
 							}
 						}
 						

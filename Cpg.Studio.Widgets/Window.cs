@@ -1451,6 +1451,18 @@ namespace Cpg.Studio.Widgets
 						
 						Dialogs.Plotting.Graph graph = d_plotting.Add(mon.Row, mon.Column, x, y);
 						
+						if (!double.IsNaN(series.XInitial) && !double.IsNaN(series.YInitial))
+						{						
+							foreach (Dialogs.Plotting.Series ss in graph.Plots)
+							{
+								if (ss.X == x && ss.Y == y)
+								{
+									d_plotting.SetInitialConditions(ss, new Point(series.XInitial, series.YInitial));
+									break;
+								}
+							}
+						}
+						
 						if (mon.Settings != null)
 						{
 							mon.Settings.Set(graph.Canvas.Graph);
@@ -1605,6 +1617,14 @@ namespace Cpg.Studio.Widgets
 						if (series.X != null)
 						{
 							ser.X = series.X.Property.FullName;
+						}
+						
+						Point pt;
+						
+						if (d_plotting.InitialConditions(series, out pt))
+						{
+							ser.XInitial = pt.X;
+							ser.YInitial = pt.Y;
 						}
 						
 						ser.Color = series.Renderer.Color.Hex;
