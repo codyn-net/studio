@@ -2,6 +2,7 @@ using System;
 using Gtk;
 using System.Collections.Generic;
 using System.Linq;
+using Biorob.Math;
 
 namespace Cpg.Studio.Widgets.Editors
 {
@@ -116,6 +117,10 @@ namespace Cpg.Studio.Widgets.Editors
 		private bool d_iscubic;
 		private Biorob.Math.Point d_lastAddedData;
 		private bool d_ignoreUpdatePreview;
+		private Plot.Renderers.Line d_dataLine;
+		private int d_draggingData;
+		private Plot.Renderers.Line d_draggingLine;
+		private ScrolledWindow d_sw;
 		
 		public delegate void ErrorHandler(object source, Exception exception);
 		public event ErrorHandler Error = delegate {};
@@ -125,6 +130,7 @@ namespace Cpg.Studio.Widgets.Editors
 			d_function = function;
 			d_actions = actions;
 			d_previewLines = new List<Plot.Renderers.Line>();
+			d_draggingData = -1;
 			
 			Build();
 		}
@@ -267,6 +273,8 @@ namespace Cpg.Studio.Widgets.Editors
 			sw.ShadowType = ShadowType.EtchedIn;
 			sw.Add(d_treeview);
 			
+			d_sw = sw;
+			
 			Pack1(sw, true, true);
 			
 			VBox vbox = new VBox(false, 3);
@@ -283,9 +291,13 @@ namespace Cpg.Studio.Widgets.Editors
 			d_graph.Graph.SnapRulerToData = false;
 			d_graph.Graph.RulerTracksData = false;
 			d_graph.Graph.SnapRulerToAxis = true;
+			d_graph.Graph.ShowGrid = true;
+			
+			d_graph.MotionNotifyEvent += OnGraphMotionNotify;
 			d_graph.Show();
 			
 			d_graph.ButtonPressEvent += OnGraphButtonPress;
+			d_graph.ButtonReleaseEvent += OnGraphButtonRelease;
 			frame.Add(d_graph);
 			
 			vbox.PackStart(frame, true, true, 0);
@@ -307,9 +319,24 @@ namespace Cpg.Studio.Widgets.Editors
 			lbl.Show();
 			d_periodWidget.PackEnd(lbl, false, false, 0);
 			
+			CheckButton button = new CheckButton("Show coefficients");
+			button.Active = true;
+			button.Show();
+			button.Toggled += OnShowCoefficientsToggled;
+			d_periodWidget.PackStart(button, false, false, 0);
+			
 			Pack2(vbox, true, true);
 			
 			Populate();
+			
+			button.Active = !d_iscubic;
+		}
+
+		private void OnShowCoefficientsToggled(object sender, EventArgs e)
+		{
+			CheckButton button = (CheckButton)sender;
+			
+			d_sw.Visible = button.Active;
 		}
 
 		private void OnPeriodActivated(object sender, EventArgs e)
@@ -383,6 +410,13 @@ namespace Cpg.Studio.Widgets.Editors
 			Connect();
 			
 			UpdatePreview();
+			
+			// First time we auto scale
+			if (d_previewLines.Count != 0)
+			{
+				d_graph.Graph.UpdateAxis(d_graph.Graph.DataXRange.Widen(0.1),
+				                         d_graph.Graph.DataYRange.Widen(0.1));
+			}
 		}
 		
 		private void Connect()
@@ -444,7 +478,7 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			for (int i = 0; i < p1.Coefficients.Length; ++i)
 			{
-				if (System.Math.Abs(p1.Coefficients[i] - p2.Coefficients[i]) > Biorob.Math.Constants.Epsilon)
+				if (System.Math.Abs(p1.Coefficients[i] - p2.Coefficients[i]) > Constants.Epsilon)
 				{
 					return false;
 				}
@@ -470,7 +504,7 @@ namespace Cpg.Studio.Widgets.Editors
 		                             Biorob.Math.Functions.PiecewisePolynomial.Piece p2,
 		                             double span)
 		{
-			return System.Math.Abs(p2.End - p1.End - span) < Biorob.Math.Constants.Epsilon;
+			return System.Math.Abs(p2.End - p1.End - span) < Constants.Epsilon;
 		}
 
 		private Biorob.Math.Range DeterminePeriod(List<Biorob.Math.Functions.PiecewisePolynomial.Piece> pieces)
@@ -519,6 +553,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 			
 			d_previewLines.Clear();
+			d_dataLine = null;
 			
 			d_iscubic = true;
 			List<Biorob.Math.Functions.PiecewisePolynomial.Piece> pieces = new List<Biorob.Math.Functions.PiecewisePolynomial.Piece>();
@@ -549,19 +584,23 @@ namespace Cpg.Studio.Widgets.Editors
 			poly = new Biorob.Math.Functions.PiecewisePolynomial(pieces);
 			
 			double msize = 8;
+			int lw = 2;
 			Plot.Renderers.Line.MarkerType mtype = Plot.Renderers.Line.MarkerType.FilledCircle;
 			
 			if (poly.Count == 0 && d_lastAddedData != null)
 			{
-				List<Biorob.Math.Point> data = new List<Biorob.Math.Point>();
+				List<Point> data = new List<Point>();
 				data.Add(d_lastAddedData);
 
 				Plot.Renderers.Line line = new Plot.Renderers.Line(data, d_graph.Graph.ColorMap[0], "preview");
 				line.MarkerSize = msize;
 				line.MarkerStyle = mtype;
+				line.LineWidth = lw;
 				
 				d_graph.Graph.Add(line);
 				d_previewLines.Add(line);
+				
+				d_dataLine = line;
 			}
 			else if (d_iscubic && poly.Count != 0)
 			{
@@ -571,15 +610,19 @@ namespace Cpg.Studio.Widgets.Editors
 				bezier.Periodic = period;
 				bezier.MarkerSize = msize;
 				bezier.MarkerStyle = mtype;
+				bezier.LineWidth = lw;
 				
 				d_graph.Graph.Add(bezier);
 				d_previewLines.Add(bezier);
+				
+				d_dataLine = bezier;
 			}
 			else if (poly.Count != 0)
 			{
 				// Otherwise use two lines, one with markers, the other sampled
 				Plot.Renderers.Line line = new Plot.Renderers.Line("preview");
-				line.Color = d_graph.Graph.ColorMap[0];				
+				line.Color = d_graph.Graph.ColorMap[0];			
+				line.LineWidth = lw;	
 				
 				if (pieces.Count > 0)
 				{
@@ -595,23 +638,25 @@ namespace Cpg.Studio.Widgets.Editors
 				markers.MarkerSize = msize;
 				markers.MarkerStyle = mtype;
 				
-				List<Biorob.Math.Point> data = new List<Biorob.Math.Point>();
+				List<Point> data = new List<Point>();
 				
 				foreach (Biorob.Math.Functions.PiecewisePolynomial.Piece piece in pieces)
 				{
-					data.Add(new Biorob.Math.Point(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]));
+					data.Add(new Point(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]));
 				}
 				
 				if (pieces.Count > 0)
 				{
 					Biorob.Math.Functions.PiecewisePolynomial.Piece piece = pieces[pieces.Count - 1];
-					data.Add(new Biorob.Math.Point(piece.End, piece.Coefficients.Sum()));
+					data.Add(new Point(piece.End, piece.Coefficients.Sum()));
 				}
 
 				d_graph.Graph.Add(markers);
 				
 				d_previewLines.Add(line);
 				d_previewLines.Add(markers);
+				
+				d_dataLine = markers;
 			}
 		}
 		
@@ -1159,21 +1204,120 @@ namespace Cpg.Studio.Widgets.Editors
 			return ret;
 		}
 		
+		private bool StartDrag(Point pt)
+		{
+			Point data = DataPointAt(pt);
+			
+			d_draggingData = -1;
+			
+			if (data == null)
+			{
+				return false;
+			}
+			
+			for (int i = 0; i < d_dataLine.Count; ++i)
+			{
+				if (d_dataLine[i].MarginallyEquals(data))
+				{
+					d_draggingData = i;
+					break;
+				}
+			}
+			
+			if (d_draggingData < 0)
+			{
+				return false;
+			}
+
+			return true;
+		}
+		
+		private void CommitDrag(Point pt, bool finegrained)
+		{
+			if (d_draggingLine != null)
+			{
+				Point dpt = d_dataLine[d_draggingData];
+				Point axis = d_graph.Graph.PixelToAxis(pt);
+			
+				if (d_graph.Graph.SnapRulerToAxis)
+				{
+					int factor = d_graph.Graph.SnapRulerToAxisFactor;
+					
+					if (finegrained)
+					{
+						factor *= 2;
+					}
+					
+					axis = d_graph.Graph.SnapToAxis(axis, factor);
+				}
+				
+				if (!dpt.MarginallyEquals(axis))
+				{
+					// Store new data
+					List<Point> data = new List<Point>(d_dataLine.Data);
+					data[d_draggingData] = axis;
+					
+					// Then update the original data
+					UpdatePieces(data);
+				}
+			
+				d_graph.Graph.Remove(d_draggingLine);
+				d_draggingLine = null;
+			}
+			
+			d_draggingData = -1;
+		}
+		
+		[GLib.ConnectBefore]
+		private void OnGraphButtonRelease(object source, ButtonReleaseEventArgs args)
+		{
+			if (args.Event.Button == 1 &&
+			    args.Event.Type == Gdk.EventType.ButtonRelease &&
+			    d_iscubic &&
+			    d_draggingLine != null &&
+			    d_draggingData >= 0)
+			{
+				CommitDrag(new Point(args.Event.X, args.Event.Y), (args.Event.State & Gdk.ModifierType.ControlMask) != 0);
+				args.RetVal = true;
+			}
+		}
+		
 		[GLib.ConnectBefore]
 		private void OnGraphButtonPress(object source, ButtonPressEventArgs args)
 		{
+			if (args.Event.Button == 1 &&
+			    args.Event.Type == Gdk.EventType.ButtonPress &&
+			    d_iscubic &&
+			    d_dataLine != null)
+			{
+				Point ptx = new Point(args.Event.X, args.Event.Y);
+				
+				if (StartDrag(ptx))
+				{
+					args.RetVal = true;
+					return;
+				}
+			}
+
 			if (!d_iscubic || args.Event.Type != Gdk.EventType.TwoButtonPress || args.Event.Button != 1)
 			{
 				return;
 			}
 			
-			Biorob.Math.Point pt = d_graph.Graph.PixelToAxis(new Biorob.Math.Point(args.Event.X, args.Event.Y));
+			Point pt = d_graph.Graph.PixelToAxis(new Point(args.Event.X, args.Event.Y));
 			
-			List<Biorob.Math.Point> added = new List<Biorob.Math.Point>();
+			List<Point> added = new List<Point>();
 			
 			if (d_graph.Graph.SnapRulerToAxis)
 			{
-				pt = d_graph.Graph.SnapToAxis(pt, d_graph.Graph.SnapRulerToAxisFactor);
+				int factor = d_graph.Graph.SnapRulerToAxisFactor;
+				
+				if ((args.Event.State & Gdk.ModifierType.ControlMask) != 0)
+				{
+					factor *= 2;
+				}
+				
+				pt = d_graph.Graph.SnapToAxis(pt, factor);
 			}
 
 			added.Add(pt);
@@ -1229,19 +1373,15 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 		
-		private void UpdatePieces(params Biorob.Math.Point[] added)
+		private void UpdatePieces(List<Point> data)
 		{
 			d_ignoreUpdatePreview = true;
 
 			bool hasperiod = ValidPeriod;
-
-			// There is a new period, do it
+			
 			List<Undo.IAction> actions = new List<Undo.IAction>();
 			
-			Biorob.Math.Range range = DeterminePeriod();
-			List<Biorob.Math.Point> data = new List<Biorob.Math.Point>();
-			Cpg.FunctionPolynomialPiece last = null;
-			
+			Biorob.Math.Range range = DeterminePeriod();		
 			double period = 0;
 			
 			if (hasperiod)
@@ -1252,25 +1392,12 @@ namespace Cpg.Studio.Widgets.Editors
 			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				actions.Add(new Undo.RemoveFunctionPolynomialPiece(d_function, piece));
-
-				if ((!hasperiod || (piece.Begin >= 0 && piece.End <= period)) && (range == null || (piece.Begin >= range.Min && piece.End <= range.Max)))
-				{
-					data.Add(new Biorob.Math.Point(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]));
-					last = piece;
-				}
 			}
 			
-			if (last != null)
+			if (hasperiod && range != null)
 			{
-				data.Add(new Biorob.Math.Point(last.End, last.Coefficients.Sum()));
-			}
-			
-			foreach (Biorob.Math.Point pt in added)
-			{
-				if (!hasperiod || (pt.X >= 0 && pt.X <= period))
-				{
-					data.Add(pt);
-				}
+				// Remove data outside the range
+				data.RemoveAll(d => d.X < range.Min || d.X > range.Max);
 			}
 			
 			// Then make it periodic
@@ -1302,8 +1429,142 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 			
 			d_ignoreUpdatePreview = false;
-			
 			UpdatePreview();
+		}
+		
+		private void UpdatePieces(params Point[] added)
+		{
+			List<Point> data = new List<Point>();
+
+			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			{
+				data.Add(new Point(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]));
+			}
+			
+			if (d_function.Pieces.Length > 0)
+			{
+				Cpg.FunctionPolynomialPiece last = d_function.Pieces[d_function.Pieces.Length - 1];
+				data.Add(new Point(last.End, last.Coefficients.Sum()));
+			}
+			
+			foreach (Point pt in added)
+			{
+				data.Add(pt);
+			}
+			
+			UpdatePieces(data);
+		}
+		
+		private Point DataPointAt(Point pt)
+		{
+			Point axpt = d_graph.Graph.PixelToAxis(pt);
+			Point dpt = d_dataLine.ValueClosestToX(axpt.X);
+			
+			if (dpt == null)
+			{
+				return null;
+			}
+
+			Point pix = d_graph.Graph.AxisToPixel(dpt);
+			Point df = pt - pix;
+
+			double distance = System.Math.Sqrt(df.X * df.X + df.Y * df.Y);
+			
+			if (distance > 6)
+			{
+				return null;
+			}
+			
+			// Check if this is not an automatically added point from the periodicity
+			if (ValidPeriod)
+			{
+				double period = Period;
+				
+				if (dpt.X < 0 || dpt.X > period)
+				{
+					return null;
+				}
+			}
+			
+			return dpt;
+		}
+		
+		private void OnGraphMotionNotify(object source, MotionNotifyEventArgs args)
+		{
+			d_graph.GdkWindow.Cursor = null;
+			
+			if (d_dataLine == null || !d_iscubic)
+			{
+				return;
+			}
+
+			// Test for data point under cursor
+			Point pt = new Point(args.Event.X, args.Event.Y);
+			
+			if (d_draggingData >= 0)
+			{
+				UpdateDragging(pt, (args.Event.State & Gdk.ModifierType.ControlMask) != 0);
+				return;
+			}
+
+			Point axpt = DataPointAt(pt);
+			
+			if (axpt != null)
+			{
+				d_graph.GdkWindow.Cursor = new Gdk.Cursor(Gdk.CursorType.Hand2);
+			}
+		}
+		
+		private void UpdateDragging(Point pt, bool finegrained)
+		{
+			// Check if we moved something
+			Point dpt = d_dataLine[d_draggingData];
+			Point axis = d_graph.Graph.PixelToAxis(pt);
+			
+			if (d_graph.Graph.SnapRulerToAxis)
+			{
+				int factor = d_graph.Graph.SnapRulerToAxisFactor;
+				
+				if (finegrained)
+				{
+					factor *= 2;
+				}
+				
+				axis = d_graph.Graph.SnapToAxis(axis, factor);
+			}
+			
+			if (dpt.MarginallyEquals(axis))
+			{
+				return;
+			}
+
+			if (d_draggingLine == null)
+			{
+				d_draggingLine = d_dataLine.Copy() as Plot.Renderers.Line;
+				
+				d_draggingLine.Color = d_graph.Graph.ColorMap[1];
+				d_draggingLine.LineStyle = Plot.Renderers.Line.LineType.Dotted;
+				d_draggingLine.Label = null;
+				d_draggingLine.LabelMarkup = null;
+
+				d_graph.Graph.Add(d_draggingLine);
+			}
+			
+			List<Point> data = new List<Point>(d_dataLine.Data);
+			data[d_draggingData] = axis;
+			
+			Plot.Renderers.Bezier bezier = d_draggingLine as Plot.Renderers.Bezier;
+
+			if (bezier != null)
+			{
+				// Do interpolation again on data
+				Biorob.Math.Interpolation.PChip pchip = new Biorob.Math.Interpolation.PChip();				
+				bezier.PiecewisePolynomial = pchip.Interpolate(data);
+			}
+			else
+			{
+				d_draggingLine.Data = data;
+			}
 		}
 	}
 }
