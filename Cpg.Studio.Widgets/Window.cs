@@ -287,7 +287,7 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("SimulateAction", Gtk.Stock.MediaForward, "Period", "<Control>p", "(Re)Simulate period", OnSimulateActivated),
 				
 				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
-				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "<Control>h", "Center view", OnCenterViewActivated),
+				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "Home", "Center view", OnCenterViewActivated),
 				new ActionEntry("InsertMenuAction", null, "_Add", null, null, null),
 				new ActionEntry("ZoomDefaultAction", Gtk.Stock.Zoom100, null, "<Control>1", null, OnZoomDefaultActivated),
 				new ActionEntry("ZoomInAction", Gtk.Stock.ZoomIn, null, "<Control>plus", null, OnZoomInActivated),
