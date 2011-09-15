@@ -1018,7 +1018,7 @@ namespace Cpg.Studio.Dialogs
 		public Series CreateVectorSeries(Cpg.Property x, Cpg.Property y)
 		{
 			Plot.Renderers.Vector rend = new Plot.Renderers.Vector();
-			rend.MarkerStyle = Plot.Renderers.Line.MarkerType.FilledCircle;
+			rend.MarkerStyle = Plot.Renderers.MarkerStyle.FilledCircle;
 			rend.PixelLength = 10;
 
 			return new Series(x, y, rend);

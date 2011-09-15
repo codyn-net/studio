@@ -585,7 +585,7 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			double msize = 8;
 			int lw = 2;
-			Plot.Renderers.Line.MarkerType mtype = Plot.Renderers.Line.MarkerType.FilledCircle;
+			Plot.Renderers.MarkerStyle mtype = Plot.Renderers.MarkerStyle.FilledCircle;
 			
 			if (poly.Count == 0 && d_lastAddedData != null)
 			{
@@ -1543,7 +1543,7 @@ namespace Cpg.Studio.Widgets.Editors
 				d_draggingLine = d_dataLine.Copy() as Plot.Renderers.Line;
 				
 				d_draggingLine.Color = d_graph.Graph.ColorMap[1];
-				d_draggingLine.LineStyle = Plot.Renderers.Line.LineType.Dotted;
+				d_draggingLine.LineStyle = Plot.Renderers.LineStyle.Dotted;
 				d_draggingLine.YLabel = null;
 				d_draggingLine.YLabelMarkup = null;
 
