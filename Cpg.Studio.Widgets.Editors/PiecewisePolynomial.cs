@@ -592,7 +592,7 @@ namespace Cpg.Studio.Widgets.Editors
 				List<Point> data = new List<Point>();
 				data.Add(d_lastAddedData);
 
-				Plot.Renderers.Line line = new Plot.Renderers.Line(data, d_graph.Graph.ColorMap[0], "preview");
+				Plot.Renderers.Line line = new Plot.Renderers.Line {Data = data, Color = d_graph.Graph.ColorMap[0], YLabel = "preview"};
 				line.MarkerSize = msize;
 				line.MarkerStyle = mtype;
 				line.LineWidth = lw;
@@ -605,7 +605,7 @@ namespace Cpg.Studio.Widgets.Editors
 			else if (d_iscubic && poly.Count != 0)
 			{
 				// If it's cubic, then use the bezier line
-				Plot.Renderers.Bezier bezier = new Plot.Renderers.Bezier(poly, d_graph.Graph.ColorMap[0], "preview");
+				Plot.Renderers.Bezier bezier = new Plot.Renderers.Bezier {PiecewisePolynomial = poly, Color = d_graph.Graph.ColorMap[0], YLabel = "preview"};
 
 				bezier.Periodic = period;
 				bezier.MarkerSize = msize;
@@ -620,7 +620,7 @@ namespace Cpg.Studio.Widgets.Editors
 			else if (poly.Count != 0)
 			{
 				// Otherwise use two lines, one with markers, the other sampled
-				Plot.Renderers.Line line = new Plot.Renderers.Line("preview");
+				Plot.Renderers.Line line = new Plot.Renderers.Line {YLabel = "preview"};
 				line.Color = d_graph.Graph.ColorMap[0];			
 				line.LineWidth = lw;	
 				
