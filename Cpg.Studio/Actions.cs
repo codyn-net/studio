@@ -632,7 +632,7 @@ namespace Cpg.Studio
 				
 				Type itemType = item.GetType();
 				
-				return itemType != tempType && !itemType.IsInstanceOfType(tempType);
+				return itemType != tempType && !itemType.IsSubclassOf(tempType);
 			});
 			
 			if (sel.Count == 0)
