@@ -38,13 +38,10 @@ namespace Cpg.Studio.Widgets
 		private Notebook d_sideBarNotebook;
 		private Annotation d_annotation;
 		private Dialogs.PlotSettings d_plotsettingsDialog;
-		
 		private bool d_modified;
-		
 		private Undo.Manager d_undoManager;
 		private Actions d_actions;
 		private WindowGroup d_windowGroup;
-		
 		private Wrappers.Wrapper d_templatePopupObject;
 		private Wrappers.Wrapper d_templatePopupTemplate;
 		private DateTime d_runElapsed;
@@ -52,9 +49,9 @@ namespace Cpg.Studio.Widgets
 		private bool d_checkProgress;
 		private uint d_importLibrariesMergeId;
 		private ActionGroup d_importLibrariesGroup;
-		
 		private uint d_idleSelectionChanged;
 		private uint d_updateImportLibrariesTimeout;
+		private Dialogs.Physics d_physics;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -134,7 +131,7 @@ namespace Cpg.Studio.Widgets
 
 		private void HandleSimulationStepped(object o, SteppedArgs args)
 		{
-			if (d_checkProgress)
+			/*if (d_checkProgress)
 			{
 				double realTime = (DateTime.Now - d_runElapsed).TotalSeconds;
 
@@ -157,7 +154,7 @@ namespace Cpg.Studio.Widgets
 			if (d_progress != null)
 			{
 				d_progress.Update((args.Time - d_simulation.Range.From) / (d_simulation.Range.To - d_simulation.Range.From));
-			}
+			}*/
 		}
 
 		private void UpdateUndoState()
@@ -322,6 +319,7 @@ namespace Cpg.Studio.Widgets
 				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", OnViewStatusbarActivated, true),
 				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", OnToggleMonitorActivated, false),
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false),
+				new ToggleActionEntry("ViewPhysicsAction", null, "Physics", "<Control>p", "Show/Hide physics window", OnTogglePhysicsActivated, false),
 				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.Info, "Sidebar", "F9", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
 			});
 			
@@ -437,7 +435,7 @@ namespace Cpg.Studio.Widgets
 		
 		private List<string> UniqueImportPaths()
 		{
-			List<string> ret = new List<string>();
+			List<string > ret = new List<string>();
 			
 			foreach (string path in Cpg.Import.SearchPath)
 			{
@@ -587,7 +585,7 @@ namespace Cpg.Studio.Widgets
 			d_importLibrariesMergeId = d_uimanager.NewMergeId();
 			d_uimanager.InsertActionGroup(d_importLibrariesGroup, 0);
 
-			Dictionary<string, string> libs = new Dictionary<string, string>();
+			Dictionary<string, string > libs = new Dictionary<string, string>();
 			
 			libs["/ui/menubar/FileMenu/Import/ImportLibraries"] = "";
 			
@@ -826,7 +824,8 @@ namespace Cpg.Studio.Widgets
 			
 			bool singleobj = objects.Count == 1;
 			bool singlegroup = singleobj && objects[0] is Wrappers.Group;
-			int anygroup = objects.FindAll(delegate (Wrappers.Wrapper obj) { return obj is Wrappers.Group; }).Count;
+			int anygroup = objects.FindAll(delegate (Wrappers.Wrapper obj) {
+				return obj is Wrappers.Group; }).Count;
 			
 			Gtk.Action ungroup = d_normalGroup.GetAction("UngroupAction");
 			ungroup.Sensitive = !d_simulation.Running && anygroup > 0;
@@ -988,7 +987,7 @@ namespace Cpg.Studio.Widgets
 				return new string[] {};
 			}
 			
-			List<string> props = (new List<Cpg.Property>(objects[0].Properties)).ConvertAll<string>(item => item.Name);
+			List<string > props = (new List<Cpg.Property>(objects[0].Properties)).ConvertAll<string>(item => item.Name);
 			int i = 1;
 			
 			/* Merge in the interface properties */
@@ -1007,7 +1006,7 @@ namespace Cpg.Studio.Widgets
 			
 			while (props.Count > 0 && i < objects.Length)
 			{
-				List<string> pp = (new List<Cpg.Property>(objects[i].Properties)).ConvertAll<string>(item => item.Name);
+				List<string > pp = (new List<Cpg.Property>(objects[i].Properties)).ConvertAll<string>(item => item.Name);
 				
 				grp = objects[i] as Wrappers.Group;
 				
@@ -1828,7 +1827,7 @@ namespace Cpg.Studio.Widgets
 			};
 			
 			d_messageArea.Destroyed += delegate(object sender, EventArgs e) {
-					d_messageArea = null;
+				d_messageArea = null;
 			};
 			
 			d_vboxContents.PackStart(d_messageArea, false, false, 0);
@@ -2401,6 +2400,45 @@ namespace Cpg.Studio.Widgets
 				(d_normalGroup.GetAction("ViewMonitorAction") as ToggleAction).Active = false;
 			};
 		}
+
+		private void EnsurePhysics()
+		{
+			if (d_physics != null)
+			{
+				return;
+			}
+
+			d_physics = new Dialogs.Physics(Network, d_simulation);
+			d_physics.Realize();
+
+			d_windowGroup.AddWindow(d_physics);
+
+			PositionWindow(d_physics);
+			d_physics.Present();
+
+			d_physics.Destroyed += delegate(object sender, EventArgs e) {
+				d_physics = null;
+				(d_normalGroup.GetAction("ViewPhysicsAction") as ToggleAction).Active = false;
+			};
+		}
+
+		private void OnTogglePhysicsActivated(object sender, EventArgs args)
+		{
+			ToggleAction toggle = sender as ToggleAction;
+			
+			if (!toggle.Active && d_plotting != null)
+			{
+				Gtk.Window ctrl = d_physics;
+				d_physics = null;
+				ctrl.Destroy();
+			}
+			else if (toggle.Active)
+			{
+				EnsurePhysics();
+
+				d_physics.Present();
+			}
+		}
 		
 		private void OnToggleMonitorActivated(object sender, EventArgs args)
 		{
@@ -2455,7 +2493,7 @@ namespace Cpg.Studio.Widgets
 		
 		private void OnStartMonitor(Wrappers.Wrapper[] objs, string property)
 		{
-			List<Property> properties = new List<Property>();
+			List<Property > properties = new List<Property>();
 
 			EnsureMonitor();
 			

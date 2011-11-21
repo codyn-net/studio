@@ -56,6 +56,7 @@ FILES = \
 	Cpg.Studio.Dialogs/Import.cs \
 	Cpg.Studio.Dialogs/PlotSettings.cs \
 	Cpg.Studio.Dialogs/Plotting.cs \
+	Cpg.Studio.Dialogs/Physics.cs \
 	Cpg.Studio.Dialogs/Property.cs \
 	Cpg.Studio/DynamicIntegrator.cs \
 	Cpg.Studio/SimulationRange.cs \

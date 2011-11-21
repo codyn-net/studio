@@ -46,6 +46,7 @@
       <separator/>
       <menuitem name="ViewMonitor" action="ViewMonitorAction"/>
       <menuitem name="ViewControl" action="ViewControlAction"/>
+	  <menuitem name="ViewPhysics" action="ViewPhysicsAction"/>
       <separator/>
       <menuitem name="ViewPropertyEditor" action="ViewPropertyEditorAction"/>
       <menuitem name="ViewToolbar" action="ViewToolbarAction"/>
