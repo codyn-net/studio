@@ -7,19 +7,19 @@ namespace Cpg.Studio.Wrappers
 	public class Wrapper : Graphical, IDisposable
 	{
 		public delegate void PropertyHandler(Wrapper source, Cpg.Property property);
+
 		public delegate void TemplateHandler(Wrapper source, Wrapper template);
 
 		protected Cpg.Object d_object;
 		protected List<Wrappers.Link> d_links;
 		
 		public event PropertyHandler PropertyAdded = delegate {};
-		public event PropertyHandler PropertyRemoved = delegate {}; 
+		public event PropertyHandler PropertyRemoved = delegate {};
 		public event PropertyHandler PropertyChanged = delegate {};
 		public event TemplateHandler TemplateApplied = delegate {};
 		public event TemplateHandler TemplateUnapplied = delegate {};
 		
 		public static string WrapperDataKey = "CpgStudioWrapperDataKey";
-		
 		private static Dictionary<Type, ConstructorInfo> s_typeMapping;
 		protected const int RenderAnnotationAtsize = 16;
 		
@@ -32,7 +32,7 @@ namespace Cpg.Studio.Wrappers
 		
 		private static Dictionary<string, Type> ScanWrappers()
 		{
-			Dictionary<string, Type> ret = new Dictionary<string, Type>();
+			Dictionary<string, Type > ret = new Dictionary<string, Type>();
 
 			foreach (Type type in Assembly.GetExecutingAssembly().GetTypes())
 			{
@@ -48,7 +48,7 @@ namespace Cpg.Studio.Wrappers
 		static Wrapper()
 		{
 			s_typeMapping = new Dictionary<Type, ConstructorInfo>();
-			Dictionary<string, Type> wrapperTypes = ScanWrappers();
+			Dictionary<string, Type > wrapperTypes = ScanWrappers();
 			
 			Type cpgObjectType = typeof(Cpg.Object);
 			
@@ -222,7 +222,7 @@ namespace Cpg.Studio.Wrappers
 		
 		public Cpg.Property AddProperty(string name, string val, Cpg.PropertyFlags flags)
 		{
-			Cpg.Property prop = new Cpg.Property(name, val, flags);
+			Cpg.Property prop = new Cpg.Property(name, new Cpg.Expression(val), flags);
 			
 			if (AddProperty(prop))
 			{
