@@ -70,7 +70,47 @@ namespace Cpg.Studio.Widgets.Editors
 			[NodeColumn(Column.Tooltip)]
 			public string Tooltip
 			{
-				get { return d_action != null ? d_action.Annotation : null; }
+				get
+				{
+					if (d_action == null)
+					{
+						return null;
+					}
+
+					List<string > parts = new List<string>();
+
+					string annotation = d_action.Annotation;
+						
+					if (annotation != null)
+					{
+						parts.Add(annotation);
+					}
+
+					if (d_action.Equation != null &&
+						d_action.Equation.Instructions.Length != 0)
+					{
+						parts.Add(String.Format("<i>Value: <tt>{0}</tt></i>", d_action.Equation.Evaluate()));
+
+						ExpressionTreeIter it = new ExpressionTreeIter(d_action.Equation);
+						it.Simplify();
+
+						string its = it.ToStringDbg();
+
+						if (its.Length >= 80)
+						{
+							its = its.Substring(0, 76) + "...";
+						}
+
+						parts.Add(String.Format("<i>Expression: <tt>{0}</tt></i>", its));
+					}
+
+					if (parts.Count == 0)
+					{
+						return null;
+					}
+						
+					return String.Join("\n", parts.ToArray());
+				}
 			}
 			
 			[NodeColumn(Column.EquationEditable)]
@@ -203,7 +243,7 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			EntryCompletion completion = new EntryCompletion();
 			ListStore props = new ListStore(typeof(string));
-			Dictionary<string, bool> found = new Dictionary<string, bool>();
+			Dictionary<string, bool > found = new Dictionary<string, bool>();
 
 			Wrappers.Group grp = d_link.To as Wrappers.Group;
 			
@@ -341,8 +381,8 @@ namespace Cpg.Studio.Widgets.Editors
 
 		private void DoAddAction()
 		{
-			List<string> props = new List<string>(Array.ConvertAll<LinkAction, string>(d_link.Actions, item => item.Target));
-			List<string> prefs = new List<string>();
+			List<string > props = new List<string>(Array.ConvertAll<LinkAction, string>(d_link.Actions, item => item.Target));
+			List<string > prefs = new List<string>();
 			
 			if (d_link.To != null)
 			{
@@ -411,7 +451,8 @@ namespace Cpg.Studio.Widgets.Editors
 			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/Properties/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
 
 			item.Show();
-			item.Activated += delegate { DoAddAction(); };
+			item.Activated += delegate {
+				DoAddAction(); };
 			
 			menu.Append(item);
 
@@ -422,7 +463,8 @@ namespace Cpg.Studio.Widgets.Editors
 			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/Properties/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
 			
 			item.Sensitive = (d_treeview.Selection.CountSelectedRows() > 0);
-			item.Activated += delegate { DoRemoveAction(); };
+			item.Activated += delegate {
+				DoRemoveAction(); };
 			
 			menu.Append(item);
 				

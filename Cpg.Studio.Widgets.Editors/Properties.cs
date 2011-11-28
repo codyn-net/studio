@@ -37,7 +37,7 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 			}
 			
-			public override void Dispose ()
+			public override void Dispose()
 			{
 				UninstallMonitoring();
 				base.Dispose();
@@ -108,7 +108,7 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				get
 				{
-					return d_property != null ? d_property.Expression.AsString : "";
+					return d_property != null && d_property.Expression != null ? d_property.Expression.AsString : "";
 				}
 			}
 			
@@ -124,7 +124,7 @@ namespace Cpg.Studio.Widgets.Editors
 			[NodeColumn(Columns.Flags)]
 			public string Flags
 			{
-				get 
+				get
 				{
 					if (d_property == null)
 					{
@@ -161,34 +161,49 @@ namespace Cpg.Studio.Widgets.Editors
 			{
 				get
 				{
-					if (d_property != null)
-					{
-						Cpg.Object templ = d_property.Object.GetPropertyTemplate(d_property, false);
-						List<string> parts = new List<string>();
-
-						string annotation = d_property.Annotation;
-						
-						if (annotation != null)
-						{
-							parts.Add(annotation);
-						}
-						
-						if (templ != null)
-						{
-							parts.Add(String.Format("<i>On: <tt>{0}</tt> </i>", templ.FullIdForDisplay));
-						}
-						
-						if (parts.Count == 0)
-						{
-							return null;
-						}
-						
-						return String.Join("\n\n", parts.ToArray());
-					}
-					else
+					if (d_property == null)
 					{
 						return null;
 					}
+
+					Cpg.Object templ = d_property.Object.GetPropertyTemplate(d_property, false);
+					List<string > parts = new List<string>();
+
+					string annotation = d_property.Annotation;
+						
+					if (annotation != null)
+					{
+						parts.Add(annotation);
+					}
+						
+					if (templ != null)
+					{
+						parts.Add(String.Format("<i>From: <tt>{0}</tt></i>", templ.FullIdForDisplay));
+					}
+
+					if (d_property.Expression.Instructions.Length != 0)
+					{
+						parts.Add(String.Format("<i>Value: <tt>{0}</tt></i>", d_property.Value));
+
+						ExpressionTreeIter it = new ExpressionTreeIter(d_property.Expression);
+						it.Simplify();
+
+						string its = it.ToStringDbg();
+
+						if (its.Length >= 203)
+						{
+							its = its.Substring(0, 200) + "...";
+						}
+
+						parts.Add(String.Format("<i>Expression: <tt>{0}</tt></i>", its));
+					}
+						
+					if (parts.Count == 0)
+					{
+						return null;
+					}
+						
+					return String.Join("\n", parts.ToArray());
 				}
 			}
 		}
@@ -277,6 +292,7 @@ namespace Cpg.Studio.Widgets.Editors
 		}
 
 		public delegate void ErrorHandler(object source, Exception exception);
+
 		public event ErrorHandler Error = delegate {};
 
 		private Wrappers.Wrapper d_wrapper;
@@ -321,7 +337,7 @@ namespace Cpg.Studio.Widgets.Editors
 			Cpg.PropertyFlags flags = property.Flags;
 			Cpg.PropertyFlags building = Cpg.PropertyFlags.None;
 			
-			List<string> items = new List<string>();
+			List<string > items = new List<string>();
 			List<KeyValuePair<string, Cpg.PropertyFlags>> copy = new List<KeyValuePair<string, Cpg.PropertyFlags>>(d_flaglist);
 			
 			copy.Reverse();
