@@ -26,17 +26,19 @@ namespace Cpg.Studio.Dialogs
 
 			public void Add(Cpg.Object obj, Cpg.Link link)
 			{
-				d_objs.Add(obj);
-
 				if (link != null && link.Property("anchor_x") != null && link.Property("anchor_y") != null)
 				{
 					d_x.Add(link.Property("anchor_x"));
 					d_y.Add(link.Property("anchor_y"));
+
+					d_objs.Add(obj);
 				}
-				else
+				else if (obj.Property("position_x") != null && obj.Property("position_y") != null)
 				{
 					d_x.Add(obj.Property("position_x"));
 					d_y.Add(obj.Property("position_y"));
+
+					d_objs.Add(obj);
 				}
 			}
 
@@ -71,7 +73,6 @@ namespace Cpg.Studio.Dialogs
 		private Network d_network;
 		private Plot.Widget d_canvas;
 		private List<LineSpec> d_specs;
-		private double d_from;
 		private double d_to;
 		private double d_step;
 		private uint d_timeoutid;
@@ -148,7 +149,6 @@ namespace Cpg.Studio.Dialogs
 
 		private void HandleSimOnBegin(object o, Cpg.BeginArgs args)
 		{
-			d_from = args.From;
 			d_to = args.To;
 			d_step = args.Step;
 
@@ -238,7 +238,7 @@ namespace Cpg.Studio.Dialogs
 		private void Scan()
 		{
 			d_specs = new List<LineSpec>();
-			List<Cpg.Object> objs = new List<Cpg.Object>(d_network.FindObjects("descendants | has-template(\"body\")"));
+			List<Cpg.Object> objs = new List<Cpg.Object>(d_network.FindObjects("descendants | has-template(\"physics\" . \"body\")"));
 
 			foreach (Cpg.Object o in objs)
 			{
