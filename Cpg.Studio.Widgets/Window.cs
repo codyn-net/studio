@@ -44,9 +44,9 @@ namespace Cpg.Studio.Widgets
 		private WindowGroup d_windowGroup;
 		private Wrappers.Wrapper d_templatePopupObject;
 		private Wrappers.Wrapper d_templatePopupTemplate;
-		private DateTime d_runElapsed;
-		private Progress d_progress;
-		private bool d_checkProgress;
+		//private DateTime d_runElapsed;
+		//private Progress d_progress;
+		//private bool d_checkProgress;
 		private uint d_importLibrariesMergeId;
 		private ActionGroup d_importLibrariesGroup;
 		private uint d_idleSelectionChanged;
@@ -102,9 +102,9 @@ namespace Cpg.Studio.Widgets
 
 		private void HandleSimulationBegin(object o, BeginArgs args)
 		{
-			d_simulation.OnStepped += HandleSimulationStepped;
-			d_runElapsed = DateTime.Now;
-			d_checkProgress = true;
+			//d_simulation.OnStepped += HandleSimulationStepped;
+			//d_runElapsed = DateTime.Now;
+			//d_checkProgress = true;
 			
 			d_grid.GdkWindow.Cursor = new Gdk.Cursor(Gdk.CursorType.Watch);
 			
@@ -117,11 +117,11 @@ namespace Cpg.Studio.Widgets
 			
 			d_grid.GdkWindow.Cursor = null;
 			
-			if (d_progress != null)
+			/*if (d_progress != null)
 			{
 				d_progress.Dispose();
 				d_progress = null;
-			}
+			}*/
 			
 			if (d_plotting != null)
 			{
