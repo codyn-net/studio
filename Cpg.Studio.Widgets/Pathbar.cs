@@ -99,7 +99,7 @@ namespace Cpg.Studio.Widgets
 			}
 
 			// Check if the group is already in the path
-			if (d_pathWidgets.ContainsKey(grp))
+			if (grp != null && d_pathWidgets.ContainsKey(grp))
 			{
 				SetActive(d_active, false);
 				SetActive(grp, true);
@@ -110,6 +110,11 @@ namespace Cpg.Studio.Widgets
 			{
 				// Construct a new path
 				Clear();
+
+				if (grp == null)
+				{
+					return;
+				}
 
 				List<Wrappers.Group> groups = Collect(grp);
 				

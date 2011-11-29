@@ -62,9 +62,19 @@ namespace Cpg.Studio.Widgets
 			
 			d_project.Network.WrappedObject.CompileError += OnCompileError;
 
-			d_project.Network.WrappedObject.AddNotification("integrator", delegate (object sender, GLib.NotifyArgs args) {
+			d_project.Network.WrappedObject.AddNotification("integrator", OnIntegratorChanged);
+
+			d_project.Network.Reverting += delegate {
+				d_project.Network.WrappedObject.CompileError -= OnCompileError;
+				d_project.Network.WrappedObject.RemoveNotification("integrator", OnIntegratorChanged);
+			};
+
+			d_project.Network.Reverted += delegate {
+				d_project.Network.WrappedObject.CompileError += OnCompileError;
+				d_project.Network.WrappedObject.AddNotification("integrator", OnIntegratorChanged);
+
 				UpdateCurrentIntegrator();
-			});
+			};
 
 			d_simulation = new Simulation(d_project.Network);
 			
@@ -93,6 +103,11 @@ namespace Cpg.Studio.Widgets
 			UpdateTitle();
 			
 			d_propertyEditors = new Dictionary<Wrappers.Wrapper, Dialogs.Property>();
+		}
+
+		private void OnIntegratorChanged(object sender, GLib.NotifyArgs args)
+		{
+			UpdateCurrentIntegrator();
 		}
 
 		private void OnClipboardChanged()
@@ -259,7 +274,7 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
 				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG network", OnFileNew),
 				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", OnOpenActivated),
-				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, null, "Revert changes", OnRevertActivated),
+				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, "<Control>R", "Revert changes", OnRevertActivated),
 				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", OnSaveActivated),
 				new ActionEntry("SaveProjectAction", null, "Save Project", null, "Save CPG network project file", OnSaveProjectActivated),
 				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", OnSaveAsActivated),
@@ -284,7 +299,7 @@ namespace Cpg.Studio.Widgets
 				new ActionEntry("SimulateAction", Gtk.Stock.MediaForward, "Period", "<Control>p", "(Re)Simulate period", OnSimulateActivated),
 				
 				new ActionEntry("ViewMenuAction", null, "_View", null, null, null),
-				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "Home", "Center view", OnCenterViewActivated),
+				new ActionEntry("CenterAction", Gtk.Stock.JustifyCenter, null, "<Control>Home", "Center view", OnCenterViewActivated),
 				new ActionEntry("InsertMenuAction", null, "_Add", null, null, null),
 				new ActionEntry("ZoomDefaultAction", Gtk.Stock.Zoom100, null, "<Control>1", null, OnZoomDefaultActivated),
 				new ActionEntry("ZoomInAction", Gtk.Stock.ZoomIn, null, "<Control>plus", null, OnZoomInActivated),
@@ -320,7 +335,7 @@ namespace Cpg.Studio.Widgets
 				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", OnToggleMonitorActivated, false),
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false),
 				new ToggleActionEntry("ViewPhysicsAction", null, "Physics", "<Control>p", "Show/Hide physics window", OnTogglePhysicsActivated, false),
-				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.Info, "Sidebar", "F9", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
+				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.DialogInfo, "Sidebar", "F9", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
 			});
 			
 			d_normalGroup.Add(recent);
@@ -1122,7 +1137,7 @@ namespace Cpg.Studio.Widgets
 			{
 				d_annotation.Update(selection[0].WrappedObject as Cpg.Annotatable);
 			}
-			else if (selection.Length == 0)
+			else if (selection.Length == 0 && d_grid.ActiveGroup != null)
 			{
 				d_annotation.Update(d_grid.ActiveGroup.WrappedObject as Cpg.Annotatable);
 			}
@@ -1555,8 +1570,12 @@ namespace Cpg.Studio.Widgets
 		private void OnRevertActivated(object sender, EventArgs args)
 		{
 			string filename = d_project.Filename;
-			
-			Clear();
+
+			d_grid.ActiveGroup = null;
+
+			d_project.Network.Revert();
+
+			d_grid.ActiveGroup = d_project.Network;
 			d_modified = false;
 			
 			if (filename != null)

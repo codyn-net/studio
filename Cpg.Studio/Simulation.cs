@@ -41,8 +41,14 @@ namespace Cpg.Studio
 		{
 			d_network = network;
 			
-			UpdateIntegrator();
-			
+			UpdateIntegrator(d_network.Integrator);
+
+			d_network.Reverting += delegate {
+				d_network.WrappedObject.RemoveNotification("integrator", HandleNotifyIntegrator);
+
+				UpdateIntegrator(null);
+			};
+
 			d_network.WrappedObject.AddNotification("integrator", HandleNotifyIntegrator);
 		}
 		
@@ -60,10 +66,10 @@ namespace Cpg.Studio
 		
 		private void HandleNotifyIntegrator(object source, GLib.NotifyArgs args)
 		{
-			UpdateIntegrator();
+			UpdateIntegrator(d_network.Integrator);
 		}
 		
-		private void UpdateIntegrator()
+		private void UpdateIntegrator(Cpg.Integrator integrator)
 		{
 			bool hasSteppers = OnSteppedProxy != null && OnSteppedProxy.GetInvocationList().Length != 0;
 			
@@ -78,7 +84,7 @@ namespace Cpg.Studio
 				d_integrator.End -= HandleIntegratorEnd;
 			}
 			
-			d_integrator = d_network.Integrator;
+			d_integrator = integrator;
 			
 			if (d_integrator != null)
 			{

@@ -4,6 +4,9 @@ namespace Cpg.Studio.Wrappers
 {
 	public class Network : Group
 	{
+		public event EventHandler Reverting = delegate {};
+		public event EventHandler Reverted = delegate {};
+
 		protected Network(Cpg.Network obj) : base (obj)
 		{
 		}
@@ -27,6 +30,13 @@ namespace Cpg.Studio.Wrappers
 			{
 				return base.WrappedObject as Cpg.Network;
 			}
+		}
+
+		public void Revert()
+		{
+			Reverting(this, new EventArgs());
+			SetWrappedObject(new Cpg.Network());
+			Reverted(this, new EventArgs());
 		}
 		
 		public string Path

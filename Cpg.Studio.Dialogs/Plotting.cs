@@ -458,6 +458,13 @@ namespace Cpg.Studio.Dialogs
 			Build();
 			
 			SetDefaultSize(500, 400);
+
+			d_network.Reverting += OnNetworkRevert;
+		}
+
+		private void OnNetworkRevert(object source, EventArgs args)
+		{
+			Destroy();
 		}
 		
 		private List<double> VectorMakeGrid(Plot.Ticks ticks, Biorob.Math.Range range, int factor)
@@ -604,6 +611,7 @@ namespace Cpg.Studio.Dialogs
 		
 		protected override void OnDestroyed()
 		{
+			d_network.Reverting -= OnNetworkRevert;
 			base.OnDestroyed();
 		}
 

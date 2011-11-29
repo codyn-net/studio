@@ -165,6 +165,13 @@ namespace Cpg.Studio.Wrappers
 
 			obj.Data[WrapperDataKey] = this;
 		}
+
+		protected void SetWrappedObject(Cpg.Object obj)
+		{
+			DisconnectWrapped();
+			d_object = obj;
+			ConnectWrapped();
+		}
 		
 		public Wrapper() : this(null)
 		{
@@ -584,7 +591,7 @@ namespace Cpg.Studio.Wrappers
 			double x;
 			double y;
 
-			Cairo.Surface surf = Stock.Surface(context, Gtk.Stock.Info, size);
+			Cairo.Surface surf = Stock.Surface(context, Gtk.Stock.DialogInfo, size);
 			
 			context.Save();
 			
