@@ -126,7 +126,7 @@ namespace Cpg.Studio
 			if (!s_surfaceCache.TryGetValue(id, out surf))
 			{
 				Gtk.IconTheme theme = Gtk.IconTheme.Default;
-				Gdk.Pixbuf pix = theme.LoadIcon(Gtk.Stock.Info, size, Gtk.IconLookupFlags.UseBuiltin);
+				Gdk.Pixbuf pix = theme.LoadIcon(Gtk.Stock.DialogInfo, size, Gtk.IconLookupFlags.UseBuiltin);
 				
 				surf = context.Target.CreateSimilar(Cairo.Content.ColorAlpha, pix.Width, pix.Height);
 			
