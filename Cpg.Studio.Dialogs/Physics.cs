@@ -242,6 +242,8 @@ namespace Cpg.Studio.Dialogs
 
 			foreach (Cpg.Object o in objs)
 			{
+				bool didit = false;
+
 				foreach (Cpg.Link l in o.Links)
 				{
 					if (objs.Contains(l.From))
@@ -252,7 +254,16 @@ namespace Cpg.Studio.Dialogs
 						spec.Add(o, null);
 
 						d_specs.Add(spec);
+						didit = true;
 					}
+				}
+
+				if (!didit)
+				{
+					LineSpec spec = new LineSpec();
+
+					spec.Add(o, null);
+					d_specs.Add(spec);
 				}
 			}
 		}
