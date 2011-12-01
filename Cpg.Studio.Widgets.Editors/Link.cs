@@ -44,7 +44,7 @@ namespace Cpg.Studio.Widgets.Editors
 				base.Dispose();
 			}
 			
-			private void OnActionChanged(object source, GLib.NotifyArgs args)
+			private void OnActionChanged(object source,GLib.NotifyArgs args)
 			{
 				EmitChanged();
 			}
@@ -83,7 +83,7 @@ namespace Cpg.Studio.Widgets.Editors
 						
 					if (annotation != null)
 					{
-						parts.Add(annotation);
+						parts.Add(annotation.Replace("\n", " "));
 					}
 
 					if (d_action.Equation != null &&

@@ -67,7 +67,7 @@ namespace Cpg.Studio.Widgets.Editors
 				d_property.AddNotification("flags", OnPropertyChanged);
 			}
 			
-			private void OnPropertyChanged(object o, GLib.NotifyArgs args)
+			private void OnPropertyChanged(object o,GLib.NotifyArgs args)
 			{
 				EmitChanged();
 			}
@@ -173,7 +173,7 @@ namespace Cpg.Studio.Widgets.Editors
 						
 					if (annotation != null)
 					{
-						parts.Add(annotation);
+						parts.Add(annotation.Replace("\n", " "));
 					}
 						
 					if (templ != null)
