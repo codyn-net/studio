@@ -1,10 +1,10 @@
 using System;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class Import : Group
 	{		
-		protected Import(Cpg.Import obj) : base(obj)
+		protected Import(Cdn.Import obj) : base(obj)
 		{
 		}
 		
@@ -12,19 +12,19 @@ namespace Cpg.Studio.Wrappers
 		{
 		}
 		
-		public Import(Wrappers.Network network, Wrappers.Group parent, string id, string filename) : this(new Cpg.Import(network, parent, id, filename))
+		public Import(Wrappers.Network network, Wrappers.Group parent, string id, string filename) : this(new Cdn.Import(network, parent, id, filename))
 		{
 		}
 		
-		public new Cpg.Import WrappedObject
+		public new Cdn.Import WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cpg.Import;
+				return base.WrappedObject as Cdn.Import;
 			}
 		}
 		
-		public static implicit operator Cpg.Import(Wrappers.Import obj)
+		public static implicit operator Cdn.Import(Wrappers.Import obj)
 		{
 			return obj.WrappedObject;
 		}

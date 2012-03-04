@@ -2,29 +2,29 @@
 using Gtk;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Dialogs
+namespace Cdn.Studio.Dialogs
 {
 	public class Physics : Gtk.Window
 	{
 		private class LineSpec
 		{
-			private List<Cpg.Property> d_x;
-			private List<Cpg.Property> d_y;
-			private List<Cpg.Object> d_objs;
+			private List<Cdn.Property> d_x;
+			private List<Cdn.Property> d_y;
+			private List<Cdn.Object> d_objs;
 			private List<List<Biorob.Math.Point>> d_data;
 			private Plot.Renderers.Line d_renderer;
 
 			public LineSpec()
 			{
-				d_x = new List<Cpg.Property>();
-				d_y = new List<Cpg.Property>();
+				d_x = new List<Cdn.Property>();
+				d_y = new List<Cdn.Property>();
 				d_data = new List<List<Biorob.Math.Point>>();
 				d_objs = new List<Object>();
 				d_renderer = new Plot.Renderers.Line {LineStyle = Plot.Renderers.LineStyle.Single,
 				MarkerStyle = Plot.Renderers.MarkerStyle.FilledCircle, MarkerSize = 10};
 			}
 
-			public void Add(Cpg.Object obj, Cpg.Link link)
+			public void Add(Cdn.Object obj, Cdn.Link link)
 			{
 				if (link != null && link.Property("anchor_x") != null && link.Property("anchor_y") != null)
 				{
@@ -147,7 +147,7 @@ namespace Cpg.Studio.Dialogs
 			d_button.Sensitive = true;
 		}
 
-		private void HandleSimOnBegin(object o, Cpg.BeginArgs args)
+		private void HandleSimOnBegin(object o, Cdn.BeginArgs args)
 		{
 			d_to = args.To;
 			d_step = args.Step;
@@ -238,13 +238,13 @@ namespace Cpg.Studio.Dialogs
 		private void Scan()
 		{
 			d_specs = new List<LineSpec>();
-			List<Cpg.Object> objs = new List<Cpg.Object>(d_network.FindObjects("descendants | has-template(\"physics\" . \"body\")"));
+			List<Cdn.Object> objs = new List<Cdn.Object>(d_network.FindObjects("descendants | has-template(\"physics\" . \"body\")"));
 
-			foreach (Cpg.Object o in objs)
+			foreach (Cdn.Object o in objs)
 			{
 				bool didit = false;
 
-				foreach (Cpg.Link l in o.Links)
+				foreach (Cdn.Link l in o.Links)
 				{
 					if (objs.Contains(l.From))
 					{

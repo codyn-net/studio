@@ -1,13 +1,13 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class ModifyFunctionArgumentExplicit : FunctionArgument, IAction
 	{
 		private bool d_prevVal;
 		private bool d_newVal;
 
-		public ModifyFunctionArgumentExplicit(Wrappers.Function function, Cpg.FunctionArgument argument, bool val) : base(function, argument)
+		public ModifyFunctionArgumentExplicit(Wrappers.Function function, Cdn.FunctionArgument argument, bool val) : base(function, argument)
 		{
 			d_prevVal = argument.Explicit;
 			d_newVal = val;
@@ -21,9 +21,9 @@ namespace Cpg.Studio.Undo
 			}
 		}
 		
-		private Cpg.FunctionArgument Lookup()
+		private Cdn.FunctionArgument Lookup()
 		{
-			foreach (Cpg.FunctionArgument arg in Wrapped.Arguments)
+			foreach (Cdn.FunctionArgument arg in Wrapped.Arguments)
 			{
 				if (arg.Name == Argument.Name)
 				{

@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Cpg.Studio.Dialogs;
+using Cdn.Studio.Dialogs;
 using Biorob.Math;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class Table : Gtk.Container
 	{
@@ -645,7 +645,7 @@ namespace Cpg.Studio.Widgets
 		{
 			Gtk.Drag.SourceSet(graph,
 			                   Gdk.ModifierType.Button1Mask | Gdk.ModifierType.ControlMask,
-			                   new Gtk.TargetEntry[] {new Gtk.TargetEntry("Cpg.Studio.TableItem", Gtk.TargetFlags.App, 1),
+			                   new Gtk.TargetEntry[] {new Gtk.TargetEntry("Cdn.Studio.TableItem", Gtk.TargetFlags.App, 1),
 			                                          new Gtk.TargetEntry("Plot.Renderer", Gtk.TargetFlags.App, 2)},
 			                   Gdk.DragAction.Move);
 			
@@ -674,7 +674,7 @@ namespace Cpg.Studio.Widgets
 		{
 			get
 			{
-				return Gdk.Atom.Intern("Cpg.Studio.TableItem", false);
+				return Gdk.Atom.Intern("Cdn.Studio.TableItem", false);
 			}
 		}
 		

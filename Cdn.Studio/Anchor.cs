@@ -1,7 +1,7 @@
 using System;
 using Biorob.Math;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class Anchor
 	{

@@ -4,10 +4,10 @@ bin
 config.log
 config.status
 configure
-cpgstudio
+cdnstudio
 *.tar.gz
-cpgstudio.pidb
-cpgstudio.userprefs
+cdnstudio.pidb
+cdnstudio.userprefs
 Config.cs
 install-sh
 Makefile

@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class FunctionPolynomial : Function
 	{
@@ -10,12 +10,12 @@ namespace Cpg.Studio.Wrappers
 			public double End;
 		}
 		
-		protected FunctionPolynomial(Cpg.FunctionPolynomial function) : base(function)
+		protected FunctionPolynomial(Cdn.FunctionPolynomial function) : base(function)
 		{
 			Renderer = new Renderers.PiecewisePolynomial(this);
 		}
 		
-		public FunctionPolynomial(string name) : base(new Cpg.FunctionPolynomial(name))
+		public FunctionPolynomial(string name) : base(new Cdn.FunctionPolynomial(name))
 		{
 		}
 
@@ -23,20 +23,20 @@ namespace Cpg.Studio.Wrappers
 		{
 		}
 		
-		public new Cpg.FunctionPolynomial WrappedObject
+		public new Cdn.FunctionPolynomial WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cpg.FunctionPolynomial;
+				return base.WrappedObject as Cdn.FunctionPolynomial;
 			}
 		}
 		
-		public static implicit operator Cpg.FunctionPolynomial(Wrappers.FunctionPolynomial obj)
+		public static implicit operator Cdn.FunctionPolynomial(Wrappers.FunctionPolynomial obj)
 		{
 			return obj.WrappedObject;
 		}
 		
-		public static implicit operator FunctionPolynomial(Cpg.FunctionPolynomial obj)
+		public static implicit operator FunctionPolynomial(Cdn.FunctionPolynomial obj)
 		{
 			if (obj == null)
 			{
@@ -46,7 +46,7 @@ namespace Cpg.Studio.Wrappers
 			return (FunctionPolynomial)Wrap(obj);
 		}
 		
-		public Cpg.FunctionPolynomialPiece[] Pieces
+		public Cdn.FunctionPolynomialPiece[] Pieces
 		{
 			get
 			{
@@ -54,12 +54,12 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public void Add(Cpg.FunctionPolynomialPiece piece)
+		public void Add(Cdn.FunctionPolynomialPiece piece)
 		{
 			WrappedObject.Add(piece);
 		}
 		
-		public bool Remove(Cpg.FunctionPolynomialPiece piece)
+		public bool Remove(Cdn.FunctionPolynomialPiece piece)
 		{
 			return WrappedObject.Remove(piece);
 		}

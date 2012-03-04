@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class Object
 	{

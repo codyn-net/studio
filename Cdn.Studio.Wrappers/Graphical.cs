@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Biorob.Math;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public abstract class Graphical
 	{

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class RenderCache : IDisposable
 	{

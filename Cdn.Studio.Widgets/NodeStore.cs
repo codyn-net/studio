@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	[AttributeUsage(AttributeTargets.Property)]
 	public class NodeColumnAttribute : System.Attribute

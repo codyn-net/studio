@@ -1,7 +1,7 @@
 using System;
 using Gtk;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class Annotation : Gtk.Alignment
 	{
@@ -12,7 +12,7 @@ namespace Cpg.Studio.Widgets
 		private ScrolledWindow d_editorWindow;
 		private string d_info;
 		private string d_title;
-		private Cpg.Annotatable d_annotatable;
+		private Cdn.Annotatable d_annotatable;
 		
 		public event EventHandler TitleChanged = delegate {};
 
@@ -152,7 +152,7 @@ namespace Cpg.Studio.Widgets
 			}
 		}
 		
-		public void Update(Cpg.Annotatable annotatable)
+		public void Update(Cdn.Annotatable annotatable)
 		{
 			StopEdit(false);
 

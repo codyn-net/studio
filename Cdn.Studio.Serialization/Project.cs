@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Cpg.Studio.Serialization
+namespace Cdn.Studio.Serialization
 {
 	public class Project
 	{
@@ -254,7 +254,7 @@ namespace Cpg.Studio.Serialization
 			
 			if (doc != null)
 			{
-				projectNode = doc.SelectSingleNode("/cpg/project");
+				projectNode = doc.SelectSingleNode("/cdn/project");
 				d_cansave = true;
 			}
 			else
@@ -316,7 +316,7 @@ namespace Cpg.Studio.Serialization
 					doc = new XmlDocument();
 					doc.Load(extfile);
 
-					projectNode = doc.SelectSingleNode("/cpg/project");
+					projectNode = doc.SelectSingleNode("/cdn/project");
 					d_externalProjectFile = extfile;
 					
 					d_saveProjectExternally = true;
@@ -355,7 +355,7 @@ namespace Cpg.Studio.Serialization
 		{
 			Gtk.RecentData data = new Gtk.RecentData();
 			
-			data.AppName = "cpgstudio";
+			data.AppName = "cdnstudio";
 			
 			if (IsXml(filename))
 			{
@@ -363,10 +363,10 @@ namespace Cpg.Studio.Serialization
 			}
 			else
 			{
-				data.MimeType = "text/x-cpg";
+				data.MimeType = "text/x-cdn";
 			}
 
-			data.AppExec = System.IO.Path.Combine(System.IO.Path.Combine(Config.Prefix, "bin"), "cpgstudio");
+			data.AppExec = System.IO.Path.Combine(System.IO.Path.Combine(Config.Prefix, "bin"), "cdnstudio");
 
 			Gtk.RecentManager.Default.AddFull("file://" + filename, data);
 		}
@@ -467,7 +467,7 @@ namespace Cpg.Studio.Serialization
 			XmlNode settingsNode = Serialize(d_settings);
 			
 			XmlDocument ext = new XmlDocument();
-			XmlNode root = ext.CreateElement("cpg");
+			XmlNode root = ext.CreateElement("cdn");
 			ext.AppendChild(root);
 				
 			XmlNode projectNode = ext.CreateElement("project");
@@ -480,7 +480,7 @@ namespace Cpg.Studio.Serialization
 		
 		public void Save(string filename)
 		{
-			Cpg.NetworkSerializer serializer = new Cpg.NetworkSerializer(d_network, d_network.WrappedObject);
+			Cdn.NetworkSerializer serializer = new Cdn.NetworkSerializer(d_network, d_network.WrappedObject);
 			
 			XmlNode settingsNode = Serialize(d_settings);
 			
@@ -497,7 +497,7 @@ namespace Cpg.Studio.Serialization
 				doc.LoadXml(xml);
 				
 				// Append a project xml which imports
-				XmlNode root = doc.SelectSingleNode("cpg");
+				XmlNode root = doc.SelectSingleNode("cdn");
 				XmlElement projectNode = doc.CreateElement("project");
 				projectNode.SetAttribute("path", d_externalPath);
 				
@@ -513,7 +513,7 @@ namespace Cpg.Studio.Serialization
 				string extfile = Path.Combine(Path.GetDirectoryName(filename), d_externalPath);;
 				
 				XmlDocument ext = new XmlDocument();
-				root = ext.CreateElement("cpg");
+				root = ext.CreateElement("cdn");
 				ext.AppendChild(root);
 				
 				projectNode = ext.CreateElement("project");
@@ -534,7 +534,7 @@ namespace Cpg.Studio.Serialization
 				doc.LoadXml(xml);
 			
 				// Append a project xml
-				XmlNode root = doc.SelectSingleNode("cpg");
+				XmlNode root = doc.SelectSingleNode("cdn");
 				
 				XmlElement projectNode = doc.CreateElement("project");
 

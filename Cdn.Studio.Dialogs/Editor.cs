@@ -1,7 +1,7 @@
 using System;
 using Gtk;
 
-namespace Cpg.Studio.Dialogs
+namespace Cdn.Studio.Dialogs
 {
 	public class Editor : Gtk.Window
 	{
@@ -14,7 +14,7 @@ namespace Cpg.Studio.Dialogs
 			
 			wd.Show();
 			
-			GtkSourceView.SourceLanguage lang = GtkSourceView.SourceLanguageManager.Default.GetLanguage("cpg");
+			GtkSourceView.SourceLanguage lang = GtkSourceView.SourceLanguageManager.Default.GetLanguage("cdn");
 			GtkSourceView.SourceBuffer buffer = new GtkSourceView.SourceBuffer(lang);
 
 			GtkSourceView.SourceView view = new GtkSourceView.SourceView(buffer);

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Clipboard
+namespace Cdn.Studio.Clipboard
 {
 	public class Internal
 	{

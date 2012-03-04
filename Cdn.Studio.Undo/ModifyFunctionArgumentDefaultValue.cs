@@ -1,13 +1,13 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class ModifyFunctionArgumentDefaultValue : FunctionArgument, IAction
 	{
 		private string d_prevVal;
 		private string d_newVal;
 
-		public ModifyFunctionArgumentDefaultValue(Wrappers.Function function, Cpg.FunctionArgument argument, string val) : base(function, argument)
+		public ModifyFunctionArgumentDefaultValue(Wrappers.Function function, Cdn.FunctionArgument argument, string val) : base(function, argument)
 		{
 			d_prevVal = argument.Optional ? argument.DefaultValue.AsString : null;
 			d_newVal = val;
@@ -21,9 +21,9 @@ namespace Cpg.Studio.Undo
 			}
 		}
 		
-		private Cpg.FunctionArgument Lookup()
+		private Cdn.FunctionArgument Lookup()
 		{
-			foreach (Cpg.FunctionArgument arg in Wrapped.Arguments)
+			foreach (Cdn.FunctionArgument arg in Wrapped.Arguments)
 			{
 				if (arg.Name == Argument.Name)
 				{
@@ -36,12 +36,12 @@ namespace Cpg.Studio.Undo
 		
 		public void Redo()
 		{
-			Lookup().DefaultValue = d_newVal == null ? null : new Cpg.Expression(d_newVal);
+			Lookup().DefaultValue = d_newVal == null ? null : new Cdn.Expression(d_newVal);
 		}
 		
 		public void Undo()
 		{
-			Lookup().DefaultValue = d_prevVal == null ? null : new Cpg.Expression(d_prevVal);
+			Lookup().DefaultValue = d_prevVal == null ? null : new Cdn.Expression(d_prevVal);
 		}
 	}
 }

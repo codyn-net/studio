@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class TreeView<T> : Gtk.TreeView where T : Node
 	{

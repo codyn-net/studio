@@ -1,4 +1,4 @@
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	class Config
 	{

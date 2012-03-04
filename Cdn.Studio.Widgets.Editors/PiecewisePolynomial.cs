@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Biorob.Math;
 
-namespace Cpg.Studio.Widgets.Editors
+namespace Cdn.Studio.Widgets.Editors
 {
 	[Gtk.Binding(Gdk.Key.Delete, "HandleDeleteBinding"),
 	 Gtk.Binding(Gdk.Key.KP_Subtract, "HandleDeleteBinding"),
@@ -22,13 +22,13 @@ namespace Cpg.Studio.Widgets.Editors
 				Editable
 			}
 
-			private Cpg.FunctionPolynomialPiece d_piece;
+			private Cdn.FunctionPolynomialPiece d_piece;
 			
 			public Node() : this(null)
 			{
 			}
 			
-			public Node(Cpg.FunctionPolynomialPiece piece)
+			public Node(Cdn.FunctionPolynomialPiece piece)
 			{
 				d_piece = piece;
 				
@@ -84,7 +84,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 			
 			[PrimaryKey]
-			public Cpg.FunctionPolynomialPiece Piece
+			public Cdn.FunctionPolynomialPiece Piece
 			{
 				get
 				{
@@ -399,7 +399,7 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 			
-			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			foreach (Cdn.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				d_treeview.NodeStore.Add(new Node(piece));
 			}
@@ -441,7 +441,7 @@ namespace Cpg.Studio.Widgets.Editors
 			d_function.WrappedObject.PieceRemoved -= OnPieceRemoved;
 		}
 		
-		private void OnPieceAdded(object source, Cpg.PieceAddedArgs args)
+		private void OnPieceAdded(object source, Cdn.PieceAddedArgs args)
 		{
 			Node node = new Node(args.Piece);
 
@@ -460,7 +460,7 @@ namespace Cpg.Studio.Widgets.Editors
 			UpdatePreview();
 		}
 		
-		private void OnPieceRemoved(object source, Cpg.PieceRemovedArgs args)
+		private void OnPieceRemoved(object source, Cdn.PieceRemovedArgs args)
 		{
 			d_treeview.NodeStore.Remove(args.Piece);
 			d_lastAddedData = null;
@@ -492,7 +492,7 @@ namespace Cpg.Studio.Widgets.Editors
 			List<Biorob.Math.Functions.PiecewisePolynomial.Piece> pieces;
 			pieces = new List<Biorob.Math.Functions.PiecewisePolynomial.Piece>();
 			
-			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			foreach (Cdn.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				pieces.Add(new Biorob.Math.Functions.PiecewisePolynomial.Piece(new Biorob.Math.Range(piece.Begin, piece.End), piece.Coefficients));
 			}
@@ -559,7 +559,7 @@ namespace Cpg.Studio.Widgets.Editors
 			List<Biorob.Math.Functions.PiecewisePolynomial.Piece> pieces = new List<Biorob.Math.Functions.PiecewisePolynomial.Piece>();
 			
 			// Determine if we are going to draw cubics or just sampled
-			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			foreach (Cdn.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				if (piece.Coefficients.Length != 4)
 				{
@@ -874,9 +874,9 @@ namespace Cpg.Studio.Widgets.Editors
 			MenuItem item;
 			
 			item = new MenuItem("Add");
-			item.AccelPath = "<CpgStudio>/Widgets/Editors/PiecewisePolynomial/Add";
+			item.AccelPath = "<CdnStudio>/Widgets/Editors/PiecewisePolynomial/Add";
 			
-			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/PiecewisePolynomial/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
+			AccelMap.AddEntry("<CdnStudio>/Widgets/Editors/PiecewisePolynomial/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
 
 			item.Show();
 			item.Activated += DoAddPiece;
@@ -884,10 +884,10 @@ namespace Cpg.Studio.Widgets.Editors
 			menu.Append(item);
 
 			item = new MenuItem("Remove");
-			item.AccelPath = "<CpgStudio>/Widgets/Editors/PiecewisePolynomial/Remove";
+			item.AccelPath = "<CdnStudio>/Widgets/Editors/PiecewisePolynomial/Remove";
 			item.Show();
 			
-			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/PiecewisePolynomial/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
+			AccelMap.AddEntry("<CdnStudio>/Widgets/Editors/PiecewisePolynomial/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
 			
 			item.Sensitive = (d_treeview.Selection.CountSelectedRows() > 0);
 			item.Activated += DoRemovePiece;
@@ -1180,9 +1180,9 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 		
-		private List<Cpg.FunctionPolynomialPiece> NonPeriodicPieces()
+		private List<Cdn.FunctionPolynomialPiece> NonPeriodicPieces()
 		{
-			List<Cpg.FunctionPolynomialPiece> ret = new List<Cpg.FunctionPolynomialPiece>();
+			List<Cdn.FunctionPolynomialPiece> ret = new List<Cdn.FunctionPolynomialPiece>();
 			double period = 0;
 			bool hasperiod = ValidPeriod;
 			
@@ -1191,7 +1191,7 @@ namespace Cpg.Studio.Widgets.Editors
 				period = Period;
 			}
 			
-			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			foreach (Cdn.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				if (hasperiod && (piece.Begin < 0 || piece.End > period))
 				{
@@ -1345,7 +1345,7 @@ namespace Cpg.Studio.Widgets.Editors
 				return actions;
 			}
 			
-			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			foreach (Cdn.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				if (piece.Begin < range.Min || piece.End > range.Max)
 				{
@@ -1389,7 +1389,7 @@ namespace Cpg.Studio.Widgets.Editors
 				period = Period;
 			}
 			
-			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			foreach (Cdn.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				actions.Add(new Undo.RemoveFunctionPolynomialPiece(d_function, piece));
 			}
@@ -1413,7 +1413,7 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			foreach (Biorob.Math.Functions.PiecewisePolynomial.Piece piece in poly.Pieces)
 			{
-				Cpg.FunctionPolynomialPiece p;
+				Cdn.FunctionPolynomialPiece p;
 				
 				p = new FunctionPolynomialPiece(piece.Begin, piece.End, piece.Coefficients);
 				actions.Add(new Undo.AddFunctionPolynomialPiece(d_function, p));
@@ -1436,14 +1436,14 @@ namespace Cpg.Studio.Widgets.Editors
 		{
 			List<Point> data = new List<Point>();
 
-			foreach (Cpg.FunctionPolynomialPiece piece in d_function.Pieces)
+			foreach (Cdn.FunctionPolynomialPiece piece in d_function.Pieces)
 			{
 				data.Add(new Point(piece.Begin, piece.Coefficients[piece.Coefficients.Length - 1]));
 			}
 			
 			if (d_function.Pieces.Length > 0)
 			{
-				Cpg.FunctionPolynomialPiece last = d_function.Pieces[d_function.Pieces.Length - 1];
+				Cdn.FunctionPolynomialPiece last = d_function.Pieces[d_function.Pieces.Length - 1];
 				data.Add(new Point(last.End, last.Coefficients.Sum()));
 			}
 			

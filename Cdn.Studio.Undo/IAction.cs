@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public interface IAction
 	{

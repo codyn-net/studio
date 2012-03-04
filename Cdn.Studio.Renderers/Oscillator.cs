@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
-namespace Cpg.Studio.Wrappers.Renderers
+namespace Cdn.Studio.Wrappers.Renderers
 {
 	[Name("Oscillator")]
 	public class Oscillator : Group

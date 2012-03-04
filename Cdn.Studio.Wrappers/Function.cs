@@ -1,10 +1,10 @@
 using System;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class Function : Object
 	{
-		public delegate void ArgumentHandler (Function source, Cpg.FunctionArgument argument);
+		public delegate void ArgumentHandler (Function source, Cdn.FunctionArgument argument);
 
 		public delegate void ArgumentsReorderedHandler (Function source);
 
@@ -12,16 +12,16 @@ namespace Cpg.Studio.Wrappers
 		public event ArgumentHandler ArgumentRemoved = delegate {};
 		public event ArgumentsReorderedHandler ArgumentsReordered = delegate {};
 
-		protected Function (Cpg.Function obj) : base(obj)
+		protected Function (Cdn.Function obj) : base(obj)
 		{
 			Renderer = new Renderers.Function (this);
 		}
 		
-		public Function () : this(new Cpg.Function("f", new Cpg.Expression("0")))
+		public Function () : this(new Cdn.Function("f", new Cdn.Expression("0")))
 		{
 		}
 		
-		public Function (string name, string expression) : this(new Cpg.Function(name, new Cpg.Expression(expression)))
+		public Function (string name, string expression) : this(new Cdn.Function(name, new Cdn.Expression(expression)))
 		{
 		}
 		
@@ -43,18 +43,18 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.ArgumentsReordered -= HandleArgumentsReordered;
 		}
 		
-		public new Cpg.Function WrappedObject {
+		public new Cdn.Function WrappedObject {
 			get {
-				return base.WrappedObject as Cpg.Function;
+				return base.WrappedObject as Cdn.Function;
 			}
 		}
 		
-		public static implicit operator Cpg.Function (Wrappers.Function obj)
+		public static implicit operator Cdn.Function (Wrappers.Function obj)
 		{
 			return obj.WrappedObject;
 		}
 		
-		public static implicit operator Function (Cpg.Function obj)
+		public static implicit operator Function (Cdn.Function obj)
 		{
 			if (obj == null) {
 				return null;
@@ -76,7 +76,7 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Cpg.Expression Expression {
+		public Cdn.Expression Expression {
 			get {
 				return WrappedObject.Expression;
 			}
@@ -97,12 +97,12 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.ClearArguments ();
 		}
 		
-		private void HandleArgumentAdded (object o, Cpg.ArgumentAddedArgs args)
+		private void HandleArgumentAdded (object o, Cdn.ArgumentAddedArgs args)
 		{
 			ArgumentAdded (this, args.Argument);
 		}
 		
-		private void HandleArgumentRemoved (object o, Cpg.ArgumentRemovedArgs args)
+		private void HandleArgumentRemoved (object o, Cdn.ArgumentRemovedArgs args)
 		{
 			ArgumentRemoved (this, args.Argument);
 		}

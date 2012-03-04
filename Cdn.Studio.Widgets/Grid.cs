@@ -4,7 +4,7 @@ using Gtk;
 using System.Reflection;
 using Biorob.Math;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class Grid : DrawingArea
 	{
@@ -1858,7 +1858,7 @@ namespace Cpg.Studio.Widgets
 		{
 			base.OnStyleSet(previous_style);
 			
-			Cpg.Studio.Settings.Font = Style.FontDescription;
+			Cdn.Studio.Settings.Font = Style.FontDescription;
 		}
 
 	}

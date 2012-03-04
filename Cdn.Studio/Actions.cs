@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Biorob.Math;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class Actions
 	{
@@ -158,7 +158,7 @@ namespace Cpg.Studio
 
 				if (temp == null)
 				{
-					link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cpg.Link(name, pair.Key, pair.Value));
+					link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cdn.Link(name, pair.Key, pair.Value));
 				}
 				else
 				{
@@ -469,7 +469,7 @@ namespace Cpg.Studio
 			// Copy properties defined on the group to the proxy
 			if (grp.Proxy != null)
 			{
-				foreach (Cpg.Property prop in grp.Properties)
+				foreach (Cdn.Property prop in grp.Properties)
 				{
 					if (!grp.PropertyIsProxy(prop.Name))
 					{
@@ -490,7 +490,7 @@ namespace Cpg.Studio
 				return new Wrappers.Wrapper[] {};
 			}
 			
-			Dictionary<Cpg.Object, Wrappers.Wrapper> map = new Dictionary<Cpg.Object, Wrappers.Wrapper>();
+			Dictionary<Cdn.Object, Wrappers.Wrapper> map = new Dictionary<Cdn.Object, Wrappers.Wrapper>();
 			List<Wrappers.Wrapper> copied = new List<Wrappers.Wrapper>();
 			
 			// Create copies and store in a map the mapping from the orig to the copy

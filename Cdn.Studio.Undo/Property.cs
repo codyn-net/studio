@@ -1,16 +1,16 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class Property
 	{
 		private Wrappers.Wrapper d_wrapped;
 		private string d_name;
 		private string d_expression;
-		private Cpg.PropertyFlags d_flags;
-		private Cpg.Property d_property;
+		private Cdn.PropertyFlags d_flags;
+		private Cdn.Property d_property;
 		
-		public Property(Wrappers.Wrapper wrapped, string name, string expression, Cpg.PropertyFlags flags)
+		public Property(Wrappers.Wrapper wrapped, string name, string expression, Cdn.PropertyFlags flags)
 		{
 			d_wrapped = wrapped;
 			
@@ -19,7 +19,7 @@ namespace Cpg.Studio.Undo
 			d_flags = flags;
 		}
 		
-		public Property(Wrappers.Wrapper wrapped, Cpg.Property property) : this(wrapped, property.Name, property.Expression.AsString, property.Flags)
+		public Property(Wrappers.Wrapper wrapped, Cdn.Property property) : this(wrapped, property.Name, property.Expression.AsString, property.Flags)
 		{
 			d_property = property;
 		}
@@ -32,7 +32,7 @@ namespace Cpg.Studio.Undo
 			}
 		}
 		
-		public Cpg.Property Prop
+		public Cdn.Property Prop
 		{
 			get
 			{

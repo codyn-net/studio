@@ -1,17 +1,17 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class FunctionPolynomialPiece : Function
 	{
-		private Cpg.FunctionPolynomialPiece d_piece;
+		private Cdn.FunctionPolynomialPiece d_piece;
 
-		public FunctionPolynomialPiece(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece) : base(function)
+		public FunctionPolynomialPiece(Wrappers.FunctionPolynomial function, Cdn.FunctionPolynomialPiece piece) : base(function)
 		{
 			d_piece = piece;
 		}
 		
-		public FunctionPolynomialPiece(Cpg.FunctionPolynomialPiece piece) : this(null, piece)
+		public FunctionPolynomialPiece(Cdn.FunctionPolynomialPiece piece) : this(null, piece)
 		{
 		}
 		
@@ -23,7 +23,7 @@ namespace Cpg.Studio.Undo
 			}
 		}
 		
-		public Cpg.FunctionPolynomialPiece Piece
+		public Cdn.FunctionPolynomialPiece Piece
 		{
 			get
 			{

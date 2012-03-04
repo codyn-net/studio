@@ -2,7 +2,7 @@ using System;
 using Gtk;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Widgets.Editors
+namespace Cdn.Studio.Widgets.Editors
 {
 	[Gtk.Binding(Gdk.Key.Delete, "HandleDeleteBinding"),
 	 Gtk.Binding(Gdk.Key.KP_Subtract, "HandleDeleteBinding"),
@@ -297,7 +297,7 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 
-			foreach (Cpg.LinkAction action in d_link.Actions)
+			foreach (Cdn.LinkAction action in d_link.Actions)
 			{
 				AddLinkAction(action);
 			}
@@ -306,19 +306,19 @@ namespace Cpg.Studio.Widgets.Editors
 			d_treeview.NodeStore.Add(d_dummy);
 		}
 		
-		private void HandleLinkActionRemoved(object source, Cpg.LinkAction action)
+		private void HandleLinkActionRemoved(object source, Cdn.LinkAction action)
 		{
 			d_treeview.NodeStore.Remove(action);
 		}
 
-		private void HandleLinkActionAdded(object source, Cpg.LinkAction action)
+		private void HandleLinkActionAdded(object source, Cdn.LinkAction action)
 		{
 			d_treeview.NodeStore.Remove(d_dummy);
 			AddLinkAction(action);
 			d_treeview.NodeStore.Add(d_dummy);
 		}
 		
-		private void AddLinkAction(Cpg.LinkAction action)
+		private void AddLinkAction(Cdn.LinkAction action)
 		{
 			TreeIter iter;
 			
@@ -446,9 +446,9 @@ namespace Cpg.Studio.Widgets.Editors
 			MenuItem item;
 			
 			item = new MenuItem("Add");
-			item.AccelPath = "<CpgStudio>/Widgets/Editors/Properties/Add";
+			item.AccelPath = "<CdnStudio>/Widgets/Editors/Properties/Add";
 			
-			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/Properties/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
+			AccelMap.AddEntry("<CdnStudio>/Widgets/Editors/Properties/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
 
 			item.Show();
 			item.Activated += delegate {
@@ -457,10 +457,10 @@ namespace Cpg.Studio.Widgets.Editors
 			menu.Append(item);
 
 			item = new MenuItem("Remove");
-			item.AccelPath = "<CpgStudio>/Widgets/Editors/Properties/Remove";
+			item.AccelPath = "<CdnStudio>/Widgets/Editors/Properties/Remove";
 			item.Show();
 			
-			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/Properties/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
+			AccelMap.AddEntry("<CdnStudio>/Widgets/Editors/Properties/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
 			
 			item.Sensitive = (d_treeview.Selection.CountSelectedRows() > 0);
 			item.Activated += delegate {

@@ -7,21 +7,21 @@
 using System;
 using System.Collections.Generic;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	class Stock
 	{
-		public static string State = "cpg-state";
-		public static string Link = "cpg-link";
-		public static string Sensor = "cpg-sensor";
-		public static string Chain = "cpg-chain";
-		public static string ChainBroken = "cpg-chain-broken";
-		public static string Group = "cpg-group";
-		public static string Ungroup = "cpg-ungroup";
-		public static string GroupState = "cpg-group-state";
-		public static string InputFile = "cpg-input-file";
-		public static string Function = "cpg-function";
-		public static string FunctionPolynomial = "cpg-function-polynomial";
+		public static string State = "cdn-state";
+		public static string Link = "cdn-link";
+		public static string Sensor = "cdn-sensor";
+		public static string Chain = "cdn-chain";
+		public static string ChainBroken = "cdn-chain-broken";
+		public static string Group = "cdn-group";
+		public static string Ungroup = "cdn-ungroup";
+		public static string GroupState = "cdn-group-state";
+		public static string InputFile = "cdn-input-file";
+		public static string Function = "cdn-function";
+		public static string FunctionPolynomial = "cdn-function-polynomial";
 		
 		private static Dictionary<string, Cairo.Surface> s_surfaceCache;
 		

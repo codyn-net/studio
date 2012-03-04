@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class Notebook : Gtk.Notebook
 	{

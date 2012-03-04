@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using CCpg = Cpg;
+using CCdn = Cdn;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class Group : Wrappers.Object
 	{
@@ -16,11 +16,11 @@ namespace Cpg.Studio.Wrappers
 		private int d_y;
 		private int d_zoom;
 		
-		public Group() : this(new Cpg.Group("group", null))
+		public Group() : this(new Cdn.Group("group", null))
 		{
 		}
 		
-		protected Group(Cpg.Group obj) : base(obj)
+		protected Group(Cdn.Group obj) : base(obj)
 		{
 			d_x = 0;
 			d_y = 0;
@@ -29,12 +29,12 @@ namespace Cpg.Studio.Wrappers
 			Renderer = new Renderers.Group(this);
 		}
 		
-		public static implicit operator Cpg.Object(Group obj)
+		public static implicit operator Cdn.Object(Group obj)
 		{
 			return obj.WrappedObject;
 		}
 		
-		public static implicit operator Cpg.Group(Group obj)
+		public static implicit operator Cdn.Group(Group obj)
 		{
 			return obj.WrappedObject;
 		}
@@ -70,11 +70,11 @@ namespace Cpg.Studio.Wrappers
 			return WrappedObject.PropertyIsProxy(name);
 		}
 		
-		public new Cpg.Group WrappedObject
+		public new Cdn.Group WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cpg.Group;
+				return base.WrappedObject as Cdn.Group;
 			}
 		}
 		
@@ -116,7 +116,7 @@ namespace Cpg.Studio.Wrappers
 			return WrappedObject.FindObject(name);
 		}
 		
-		public Cpg.Property FindProperty(string name)
+		public Cdn.Property FindProperty(string name)
 		{
 			return WrappedObject.FindProperty(name);
 		}
@@ -144,7 +144,7 @@ namespace Cpg.Studio.Wrappers
 		
 		public int IndexOf(Wrapper obj)
 		{
-			return Array.IndexOf<Cpg.Object>(WrappedObject.Children, obj.WrappedObject);
+			return Array.IndexOf<Cdn.Object>(WrappedObject.Children, obj.WrappedObject);
 		}
 		
 		public Wrapper Proxy
@@ -160,7 +160,7 @@ namespace Cpg.Studio.Wrappers
 			return WrappedObject.SetProxy(val);
 		}
 		
-		public Cpg.PropertyInterface PropertyInterface
+		public Cdn.PropertyInterface PropertyInterface
 		{
 			get
 			{

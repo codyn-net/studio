@@ -2,7 +2,7 @@ using System;
 using System.Text.RegularExpressions;
 using System.Globalization;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class SimulationRange
 	{

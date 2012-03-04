@@ -1,13 +1,13 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class ModifyFunctionArguments : Function, IAction
 	{
-		Cpg.FunctionArgument[] d_arguments;
-		Cpg.FunctionArgument[] d_prevArguments;
+		Cdn.FunctionArgument[] d_arguments;
+		Cdn.FunctionArgument[] d_prevArguments;
 
-		public ModifyFunctionArguments(Wrappers.Function function, Cpg.FunctionArgument[] arguments) : base(function)
+		public ModifyFunctionArguments(Wrappers.Function function, Cdn.FunctionArgument[] arguments) : base(function)
 		{
 			d_prevArguments = function.Arguments;
 			d_arguments = arguments;

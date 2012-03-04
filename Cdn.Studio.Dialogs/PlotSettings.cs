@@ -3,7 +3,7 @@ using Gtk;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Dialogs
+namespace Cdn.Studio.Dialogs
 {
 	public class PlotSettings : Dialog
 	{

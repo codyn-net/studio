@@ -1,10 +1,10 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class RemoveLinkAction : LinkAction, IAction
 	{
-		public RemoveLinkAction(Wrappers.Link link, Cpg.LinkAction action) : base(link, action.Target, action.Equation.AsString)
+		public RemoveLinkAction(Wrappers.Link link, Cdn.LinkAction action) : base(link, action.Target, action.Equation.AsString)
 		{
 		}
 

@@ -1,41 +1,41 @@
 using System;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class Network : Group
 	{
 		public event EventHandler Reverting = delegate {};
 		public event EventHandler Reverted = delegate {};
 
-		protected Network(Cpg.Network obj) : base (obj)
+		protected Network(Cdn.Network obj) : base (obj)
 		{
 		}
 		
-		public Network() : this(new Cpg.Network())
+		public Network() : this(new Cdn.Network())
 		{
 		}
 		
-		public Network(string filename) : this(new Cpg.Network(filename))
+		public Network(string filename) : this(new Cdn.Network(filename))
 		{
 		}
 		
 		public static Network NewFromString(string s)
 		{
-			return new Network(Cpg.Network.NewFromString(s));
+			return new Network(Cdn.Network.NewFromString(s));
 		}
 		
-		public new Cpg.Network WrappedObject
+		public new Cdn.Network WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cpg.Network;
+				return base.WrappedObject as Cdn.Network;
 			}
 		}
 
 		public void Revert()
 		{
 			Reverting(this, new EventArgs());
-			SetWrappedObject(new Cpg.Network());
+			SetWrappedObject(new Cdn.Network());
 			Reverted(this, new EventArgs());
 		}
 		
@@ -52,12 +52,12 @@ namespace Cpg.Studio.Wrappers
 			return (Wrappers.Import)Wrappers.Wrapper.Wrap(WrappedObject.GetImportFromPath(path));
 		}
 		
-		public static implicit operator Cpg.Network(Network obj)
+		public static implicit operator Cdn.Network(Network obj)
 		{
 			return obj.WrappedObject;
 		}
 		
-		public Cpg.Integrator Integrator
+		public Cdn.Integrator Integrator
 		{
 			get
 			{
@@ -84,7 +84,7 @@ namespace Cpg.Studio.Wrappers
 			WrappedObject.Merge(other);
 		}
 		
-		public void Merge(Cpg.Network other)
+		public void Merge(Cdn.Network other)
 		{
 			WrappedObject.Merge(other);
 		}

@@ -1,10 +1,10 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class RemoveFunctionPolynomialPiece : FunctionPolynomialPiece, IAction
 	{
-		public RemoveFunctionPolynomialPiece(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece) : base(function, piece)
+		public RemoveFunctionPolynomialPiece(Wrappers.FunctionPolynomial function, Cdn.FunctionPolynomialPiece piece) : base(function, piece)
 		{
 		}
 		

@@ -1,14 +1,14 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class ModifyIntegrator : IAction
 	{
 		private Wrappers.Network d_network;
-		private Cpg.Integrator d_prevIntegrator;
-		private Cpg.Integrator d_integrator;
+		private Cdn.Integrator d_prevIntegrator;
+		private Cdn.Integrator d_integrator;
 
-		public ModifyIntegrator(Wrappers.Network network, Cpg.Integrator integrator)
+		public ModifyIntegrator(Wrappers.Network network, Cdn.Integrator integrator)
 		{
 			d_network = network;
 			d_prevIntegrator = network.Integrator;

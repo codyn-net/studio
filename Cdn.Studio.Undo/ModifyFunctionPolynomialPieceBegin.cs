@@ -1,13 +1,13 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class ModifyFunctionPolynomialPieceBegin : FunctionPolynomialPiece, IAction
 	{
 		private double d_begin;
 		private double d_previousBegin;
 
-		public ModifyFunctionPolynomialPieceBegin(Wrappers.FunctionPolynomial function, Cpg.FunctionPolynomialPiece piece, double begin) : base(function, piece)
+		public ModifyFunctionPolynomialPieceBegin(Wrappers.FunctionPolynomial function, Cdn.FunctionPolynomialPiece piece, double begin) : base(function, piece)
 		{
 			d_begin = begin;
 			d_previousBegin = piece.Begin;

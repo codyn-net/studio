@@ -1,31 +1,31 @@
 using System;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class InputFile : Wrappers.Input
 	{
-		protected InputFile(Cpg.InputFile obj) : base(obj)
+		protected InputFile(Cdn.InputFile obj) : base(obj)
 		{
 		}
 		
-		public InputFile() : this(new Cpg.InputFile("input"))
+		public InputFile() : this(new Cdn.InputFile("input"))
 		{
 		}
 		
-		public new Cpg.InputFile WrappedObject
+		public new Cdn.InputFile WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cpg.InputFile;
+				return base.WrappedObject as Cdn.InputFile;
 			}
 		}
 		
-		public static implicit operator Cpg.InputFile(Wrappers.InputFile obj)
+		public static implicit operator Cdn.InputFile(Wrappers.InputFile obj)
 		{
 			return obj.WrappedObject;
 		}
 		
-		public static implicit operator InputFile(Cpg.InputFile obj)
+		public static implicit operator InputFile(Cdn.InputFile obj)
 		{
 			if (obj == null)
 			{

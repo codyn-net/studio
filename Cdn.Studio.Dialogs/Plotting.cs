@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Biorob.Math;
 
-namespace Cpg.Studio.Dialogs
+namespace Cdn.Studio.Dialogs
 {
 	[Binding(Gdk.Key.R, Gdk.ModifierType.ControlMask, "ToggleAutoAxis"),
 	 Binding(Gdk.Key.L, Gdk.ModifierType.ControlMask, "ToggleLinkAxis")]
@@ -12,11 +12,11 @@ namespace Cpg.Studio.Dialogs
 	{
 		public class Series : IDisposable
 		{
-			private Cpg.Monitor d_x;
-			private Cpg.Monitor d_y;
+			private Cdn.Monitor d_x;
+			private Cdn.Monitor d_y;
 			
-			private Cpg.Property d_xprop;
-			private Cpg.Property d_yprop;
+			private Cdn.Property d_xprop;
+			private Cdn.Property d_yprop;
 
 			private Plot.Renderers.Line d_renderer;
 			
@@ -25,7 +25,7 @@ namespace Cpg.Studio.Dialogs
 			
 			public event EventHandler ActiveChanged = delegate {};
 			
-			public Series(Cpg.Property x, Cpg.Property y, Plot.Renderers.Line renderer)
+			public Series(Cdn.Property x, Cdn.Property y, Plot.Renderers.Line renderer)
 			{
 				d_renderer = renderer;
 				
@@ -61,7 +61,7 @@ namespace Cpg.Studio.Dialogs
 				UpdateName();
 			}
 			
-			public Series(Cpg.Monitor x, Cpg.Monitor y, Plot.Renderers.Line renderer) : this(x != null ? x.Property : null,
+			public Series(Cdn.Monitor x, Cdn.Monitor y, Plot.Renderers.Line renderer) : this(x != null ? x.Property : null,
 			                                                                                 y != null ? y.Property : null,
 			                                                                                 renderer)
 			{
@@ -127,9 +127,9 @@ namespace Cpg.Studio.Dialogs
 				}
 			}
 			
-			private void HandlePropertyRemoved(object source, Cpg.PropertyRemovedArgs args)
+			private void HandlePropertyRemoved(object source, Cdn.PropertyRemovedArgs args)
 			{
-				Cpg.Property property = args.Property;
+				Cdn.Property property = args.Property;
 
 				if (property == d_xprop || property == d_yprop)
 				{
@@ -186,22 +186,22 @@ namespace Cpg.Studio.Dialogs
 				UpdateName();
 			}
 			
-			public Cpg.Property XProp
+			public Cdn.Property XProp
 			{
 				get { return d_xprop; }
 			}
 			
-			public Cpg.Property YProp
+			public Cdn.Property YProp
 			{
 				get { return d_yprop; }
 			}
 			
-			public Cpg.Monitor X
+			public Cdn.Monitor X
 			{
 				get { return d_x; }
 			}
 			
-			public Cpg.Monitor Y
+			public Cdn.Monitor Y
 			{
 				get { return d_y; }
 			}
@@ -525,16 +525,16 @@ namespace Cpg.Studio.Dialogs
 			// Record the current state
 			IntegratorState s = d_simulation.Network.Integrator.State;
 			
-			List<KeyValuePair<Cpg.Property, double>> state = new List<KeyValuePair<Cpg.Property, double>>();
+			List<KeyValuePair<Cdn.Property, double>> state = new List<KeyValuePair<Cdn.Property, double>>();
 			
 			foreach (LinkAction action in s.IntegratedLinkActions())
 			{
-				state.Add(new KeyValuePair<Cpg.Property, double>(action.TargetProperty, action.TargetProperty.Value));
+				state.Add(new KeyValuePair<Cdn.Property, double>(action.TargetProperty, action.TargetProperty.Value));
 			}
 			
 			foreach (LinkAction action in s.DirectLinkActions())
 			{
-				state.Add(new KeyValuePair<Cpg.Property, double>(action.TargetProperty, action.TargetProperty.Value));
+				state.Add(new KeyValuePair<Cdn.Property, double>(action.TargetProperty, action.TargetProperty.Value));
 			}
 			
 			double step = d_simulation.Range.Step;
@@ -572,7 +572,7 @@ namespace Cpg.Studio.Dialogs
 						alpha.Add(System.Math.Atan2(dy, dx));
 
 						// Restore the state
-						foreach (KeyValuePair<Cpg.Property, double> ss in state)
+						foreach (KeyValuePair<Cdn.Property, double> ss in state)
 						{
 							ss.Key.Value = ss.Value;
 						}
@@ -670,7 +670,7 @@ namespace Cpg.Studio.Dialogs
 			
 			VBox phase = new VBox(false, 6);
 
-			d_phaseTreeX = new Cpg.Studio.Widgets.WrappersTree(d_network);
+			d_phaseTreeX = new Cdn.Studio.Widgets.WrappersTree(d_network);
 			d_phaseTreeX.RendererToggle.Visible = false;
 			d_phaseTreeX.Filter += FilterFunctions;
 			d_phaseTreeX.Label = "X:";
@@ -679,7 +679,7 @@ namespace Cpg.Studio.Dialogs
 			
 			phase.PackStart(d_phaseTreeX, true, true, 0);
 			
-			d_phaseTreeY = new Cpg.Studio.Widgets.WrappersTree(d_network);
+			d_phaseTreeY = new Cdn.Studio.Widgets.WrappersTree(d_network);
 			d_phaseTreeY.RendererToggle.Visible = false;
 			d_phaseTreeY.Filter += FilterFunctions;
 			d_phaseTreeY.Label = "Y:";
@@ -729,32 +729,32 @@ namespace Cpg.Studio.Dialogs
 			Widgets.WrappersTree.WrapperNode[] xnodes = d_phaseTreeX.SelectedNodes;
 			Widgets.WrappersTree.WrapperNode[] ynodes = d_phaseTreeY.SelectedNodes;
 			
-			Cpg.Property[] xprops;
-			Cpg.Property[] yprops;
+			Cdn.Property[] xprops;
+			Cdn.Property[] yprops;
 			
-			xprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cpg.Property>(Array.FindAll(xnodes, a => a.Property != null), a => a.Property);
-			yprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cpg.Property>(Array.FindAll(ynodes, a => a.Property != null), a => a.Property);
+			xprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cdn.Property>(Array.FindAll(xnodes, a => a.Property != null), a => a.Property);
+			yprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cdn.Property>(Array.FindAll(ynodes, a => a.Property != null), a => a.Property);
 			
 			if (xprops.Length == 0 || yprops.Length == 0)
 			{
 				return;
 			}
 			
-			List<Cpg.Property> xx = new List<Cpg.Property>();
-			List<Cpg.Property> yy = new List<Cpg.Property>();
+			List<Cdn.Property> xx = new List<Cdn.Property>();
+			List<Cdn.Property> yy = new List<Cdn.Property>();
 			
 			// If there are as many x properties as y properties, make x/y pairs
 			// otherwise make phase plots for all combinations of x/y
 			if (xprops.Length == yprops.Length)
 			{
-				xx = new List<Cpg.Property>(xprops);
-				yy = new List<Cpg.Property>(yprops);
+				xx = new List<Cdn.Property>(xprops);
+				yy = new List<Cdn.Property>(yprops);
 			}
 			else
 			{
-				foreach (Cpg.Property x in xprops)
+				foreach (Cdn.Property x in xprops)
 				{
-					foreach (Cpg.Property y in yprops)
+					foreach (Cdn.Property y in yprops)
 					{
 						xx.Add(x);
 						yy.Add(y);
@@ -793,7 +793,7 @@ namespace Cpg.Studio.Dialogs
 			{
 				ret = false;
 			}
-			else if (node.Property != null && node.Property.Object is Cpg.Function)
+			else if (node.Property != null && node.Property.Object is Cdn.Function)
 			{
 				ret = false;
 			}
@@ -818,7 +818,7 @@ namespace Cpg.Studio.Dialogs
 		private void HandleTreePopulatePopup(object source, Widgets.WrappersTree.WrapperNode[] nodes, Menu menu)
 		{
 			List<Widgets.WrappersTree.WrapperNode> n = new List<Widgets.WrappersTree.WrapperNode>();
-			List<Cpg.Property> properties = new List<Cpg.Property>();
+			List<Cdn.Property> properties = new List<Cdn.Property>();
 			
 			foreach (var node in nodes)
 			{
@@ -861,7 +861,7 @@ namespace Cpg.Studio.Dialogs
 
 		private void HandleTreeActivated(object source, Widgets.WrappersTree.WrapperNode[] nodes)
 		{
-			List<Cpg.Property> properties = new List<Cpg.Property>();
+			List<Cdn.Property> properties = new List<Cdn.Property>();
 
 			foreach (Widgets.WrappersTree.WrapperNode node in nodes)
 			{
@@ -1023,7 +1023,7 @@ namespace Cpg.Studio.Dialogs
 			}
 		}
 		
-		public Series CreateVectorSeries(Cpg.Property x, Cpg.Property y)
+		public Series CreateVectorSeries(Cdn.Property x, Cdn.Property y)
 		{
 			Plot.Renderers.Vector rend = new Plot.Renderers.Vector();
 			rend.MarkerStyle = Plot.Renderers.MarkerStyle.FilledCircle;
@@ -1032,87 +1032,87 @@ namespace Cpg.Studio.Dialogs
 			return new Series(x, y, rend);
 		}
 		
-		public Graph Add(IEnumerable<Cpg.Property> x, IEnumerable<Cpg.Property> y)
+		public Graph Add(IEnumerable<Cdn.Property> x, IEnumerable<Cdn.Property> y)
 		{
-			List<Cpg.Monitor> mony = new List<Cpg.Monitor>();
+			List<Cdn.Monitor> mony = new List<Cdn.Monitor>();
 
-			foreach (Cpg.Property p in y)
+			foreach (Cdn.Property p in y)
 			{
-				mony.Add(new Cpg.Monitor(d_network, p));
+				mony.Add(new Cdn.Monitor(d_network, p));
 			}
 			
-			List<Cpg.Monitor> monx = new List<Cpg.Monitor>();
+			List<Cdn.Monitor> monx = new List<Cdn.Monitor>();
 
-			foreach (Cpg.Property p in x)
+			foreach (Cdn.Property p in x)
 			{
-				monx.Add(new Cpg.Monitor(d_network, p));
+				monx.Add(new Cdn.Monitor(d_network, p));
 			}
 			
 			return Add(monx, mony);
 		}
 		
-		public Graph Add(IEnumerable<Cpg.Property> y)
+		public Graph Add(IEnumerable<Cdn.Property> y)
 		{
-			List<Cpg.Monitor> mons = new List<Cpg.Monitor>();
+			List<Cdn.Monitor> mons = new List<Cdn.Monitor>();
 
-			foreach (Cpg.Property p in y)
+			foreach (Cdn.Property p in y)
 			{
-				mons.Add(new Cpg.Monitor(d_network, p));
+				mons.Add(new Cdn.Monitor(d_network, p));
 			}
 			
 			return Add(mons);
 		}
 		
-		public Graph Add(Cpg.Property y)
+		public Graph Add(Cdn.Property y)
 		{
-			return Add(new Cpg.Monitor(d_network, y));
+			return Add(new Cdn.Monitor(d_network, y));
 		}
 
-		public Graph Add(Cpg.Monitor y)
+		public Graph Add(Cdn.Monitor y)
 		{
 			return Add(null, y);
 		}
 		
-		public Graph Add(Cpg.Monitor x, Cpg.Monitor y)
+		public Graph Add(Cdn.Monitor x, Cdn.Monitor y)
 		{
 			return Add(-1, -1, x, y);
 		}
 		
-		public Graph Add(IEnumerable<Cpg.Monitor> xs, IEnumerable<Cpg.Monitor> ys)
+		public Graph Add(IEnumerable<Cdn.Monitor> xs, IEnumerable<Cdn.Monitor> ys)
 		{
 			return Add(-1, -1, xs, ys);
 		}
 		
-		public Graph Add(IEnumerable<Cpg.Monitor> ys)
+		public Graph Add(IEnumerable<Cdn.Monitor> ys)
 		{
 			return Add(-1, -1, null, ys);
 		}
 		
-		public Graph Add(int row, int col, Cpg.Monitor x, Cpg.Monitor y)
+		public Graph Add(int row, int col, Cdn.Monitor x, Cdn.Monitor y)
 		{				
 			return Add(row, col, new Series[] {CreateLineSeries(x, y)});
 		}
 		
-		public Series CreateLineSeries(Cpg.Monitor x, Cpg.Monitor y)
+		public Series CreateLineSeries(Cdn.Monitor x, Cdn.Monitor y)
 		{
 			return new Series(x, y, new Plot.Renderers.Line());
 		}
 
-		public Graph Add(int row, int col, IEnumerable<Cpg.Monitor> x, IEnumerable<Cpg.Monitor> y)
+		public Graph Add(int row, int col, IEnumerable<Cdn.Monitor> x, IEnumerable<Cdn.Monitor> y)
 		{
 			List<Series> series = new List<Series>();
 			
 			if (x == null)
 			{			
-				foreach (Cpg.Monitor m in y)
+				foreach (Cdn.Monitor m in y)
 				{
 					series.Add(CreateLineSeries(null, m));
 				}
 			}
 			else
 			{
-				IEnumerator<Cpg.Monitor> xe = x.GetEnumerator();
-				IEnumerator<Cpg.Monitor> ye = y.GetEnumerator();
+				IEnumerator<Cdn.Monitor> xe = x.GetEnumerator();
+				IEnumerator<Cdn.Monitor> ye = y.GetEnumerator();
 				
 				while (xe.MoveNext() && ye.MoveNext())
 				{
@@ -1153,7 +1153,7 @@ namespace Cpg.Studio.Dialogs
 			
 			graph.Show();
 
-			Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
+			Cdn.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
 			d_graphs.Add(graph);
 			
 			graph.Destroyed += delegate {
@@ -1446,7 +1446,7 @@ namespace Cpg.Studio.Dialogs
 			
 			d_actiongroup.Add(new ToggleActionEntry[] {
 				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.ZoomFit, "Auto Axis", "<Control>r", "Automatically scale axes to fit data", OnAutoAxisToggled, d_autoaxis),
-				new ToggleActionEntry("ActionLinkAxis", Cpg.Studio.Stock.Chain, "Link Axis", "<Control>l", "Automatically scale all axes to the same range", OnLinkAxisToggled, d_linkaxis)
+				new ToggleActionEntry("ActionLinkAxis", Cdn.Studio.Stock.Chain, "Link Axis", "<Control>l", "Automatically scale all axes to the same range", OnLinkAxisToggled, d_linkaxis)
 			});
 			
 			d_actiongroup.Add(new ActionEntry[] {
@@ -1662,7 +1662,7 @@ namespace Cpg.Studio.Dialogs
 			{
 				Plot.Graph g = graph.Canvas.Graph;
 
-				Cpg.Studio.Settings.PlotSettings.Set(g);
+				Cdn.Studio.Settings.PlotSettings.Set(g);
 				
 				if (!graph.IsTime)
 				{

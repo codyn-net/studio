@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class LinkAction : Object
 	{
@@ -33,7 +33,7 @@ namespace Cpg.Studio.Undo
 		
 		public void Add()
 		{
-			d_link.AddAction(d_target, new Cpg.Expression(d_expression));
+			d_link.AddAction(d_target, new Cdn.Expression(d_expression));
 		}
 		
 		public void Remove()

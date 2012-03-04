@@ -2,7 +2,7 @@ using System;
 using System.Xml.Serialization;
 using Biorob.Math;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class Allocation
 	{

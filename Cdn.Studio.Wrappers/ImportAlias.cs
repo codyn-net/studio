@@ -1,26 +1,26 @@
 using System;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class ImportAlias : Group
 	{		
-		protected ImportAlias(Cpg.ImportAlias obj) : base(obj)
+		protected ImportAlias(Cdn.ImportAlias obj) : base(obj)
 		{
 		}
 		
-		public ImportAlias(Wrappers.Import source) : this(new Cpg.ImportAlias(source))
+		public ImportAlias(Wrappers.Import source) : this(new Cdn.ImportAlias(source))
 		{
 		}
 		
-		public new Cpg.ImportAlias WrappedObject
+		public new Cdn.ImportAlias WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cpg.ImportAlias;
+				return base.WrappedObject as Cdn.ImportAlias;
 			}
 		}
 		
-		public static implicit operator Cpg.ImportAlias(Wrappers.ImportAlias obj)
+		public static implicit operator Cdn.ImportAlias(Wrappers.ImportAlias obj)
 		{
 			return obj.WrappedObject;
 		}

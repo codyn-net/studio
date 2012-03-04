@@ -1,23 +1,23 @@
 using System;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public abstract class Input : Wrappers.Object
 	{
-		protected Input(Cpg.Input obj) : base(obj)
+		protected Input(Cdn.Input obj) : base(obj)
 		{
 			Renderer = new Renderers.Input(this);
 		}
 
-		public new Cpg.Input WrappedObject
+		public new Cdn.Input WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cpg.Input;
+				return base.WrappedObject as Cdn.Input;
 			}
 		}
 		
-		public static implicit operator Cpg.Input(Wrappers.Input obj)
+		public static implicit operator Cdn.Input(Wrappers.Input obj)
 		{
 			return obj.WrappedObject;
 		}

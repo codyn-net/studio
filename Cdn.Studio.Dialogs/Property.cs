@@ -1,8 +1,8 @@
 using System;
 using Gtk;
-using Cpg.Studio.Widgets;
+using Cdn.Studio.Widgets;
 
-namespace Cpg.Studio.Dialogs
+namespace Cdn.Studio.Dialogs
 {
 	public class Property : Dialog
 	{
@@ -31,7 +31,7 @@ namespace Cpg.Studio.Dialogs
 			
 			VBox.PackStart(d_view, true, true, 0);
 			
-			d_object.PropertyChanged += delegate(Wrappers.Wrapper source, Cpg.Property name) {
+			d_object.PropertyChanged += delegate(Wrappers.Wrapper source, Cdn.Property name) {
 				UpdateTitle();
 			};
 			

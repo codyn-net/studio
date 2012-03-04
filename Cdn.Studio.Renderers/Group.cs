@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Wrappers.Renderers
+namespace Cdn.Studio.Wrappers.Renderers
 {
 	[Name("Group")]
 	public class Group : Renderer

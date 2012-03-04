@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class AboutDialog : Gtk.AboutDialog
 	{
@@ -32,7 +32,7 @@ namespace Cpg.Studio.Widgets
 			Version = Config.Version;
 			Authors = new string[] {"Jesse van den Kieboom (jesse.vandenkieboom@epfl.ch)"};
 			Website = "http://biorob.epfl.ch";
-			ProgramName = "CPG Studio";
+			ProgramName = "CDN Studio";
 		}
 	}
 }

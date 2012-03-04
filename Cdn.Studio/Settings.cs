@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class Settings
 	{
@@ -13,7 +13,7 @@ namespace Cpg.Studio
 			get
 			{
 				string cpath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-				cpath = Path.Combine(cpath, "cpgstudio");
+				cpath = Path.Combine(cpath, "cdnstudio");
 				
 				Directory.CreateDirectory(cpath);
 				

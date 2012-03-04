@@ -2,7 +2,7 @@ using System;
 using Gtk;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Widgets.Editors
+namespace Cdn.Studio.Widgets.Editors
 {
 	public class Group : Gtk.HBox
 	{

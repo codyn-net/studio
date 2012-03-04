@@ -1,7 +1,7 @@
 using System;
 using Gtk;
 
-namespace Cpg.Studio.Widgets.Editors
+namespace Cdn.Studio.Widgets.Editors
 {
 	public class Object : Gtk.HBox
 	{

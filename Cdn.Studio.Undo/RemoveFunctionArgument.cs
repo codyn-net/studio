@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class RemoveFunctionArgument : FunctionArgument, IAction
 	{
@@ -8,7 +8,7 @@ namespace Cpg.Studio.Undo
 		{
 		}
 		
-		public RemoveFunctionArgument(Wrappers.Function function, Cpg.FunctionArgument argument) : base(function, argument)
+		public RemoveFunctionArgument(Wrappers.Function function, Cdn.FunctionArgument argument) : base(function, argument)
 		{
 		}
 		

@@ -1,7 +1,7 @@
 using System;
 using Biorob.Math;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class Import : IAction
 	{

@@ -1,7 +1,7 @@
 using System;
 using Biorob.Math;
 
-namespace Cpg.Studio.Wrappers.Renderers
+namespace Cdn.Studio.Wrappers.Renderers
 {
 	// Only used for generating icons for now
 	public class Link : Renderer

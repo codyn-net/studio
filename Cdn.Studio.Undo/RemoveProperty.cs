@@ -1,10 +1,10 @@
 using System;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class RemoveProperty : Property, IAction
 	{
-		public RemoveProperty(Wrappers.Wrapper wrapped, Cpg.Property property) : base(wrapped, property)
+		public RemoveProperty(Wrappers.Wrapper wrapped, Cdn.Property property) : base(wrapped, property)
 		{
 		}
 		

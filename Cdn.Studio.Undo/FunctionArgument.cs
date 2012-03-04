@@ -1,7 +1,7 @@
 using System;
-using CCpg = Cpg;
+using CCdn = Cdn;
 
-namespace Cpg.Studio.Undo
+namespace Cdn.Studio.Undo
 {
 	public class FunctionArgument
 	{
@@ -9,7 +9,7 @@ namespace Cpg.Studio.Undo
 		private string d_name;
 		private string d_defaultValue;
 		private bool d_implicit;
-		private Cpg.FunctionArgument d_argument;
+		private Cdn.FunctionArgument d_argument;
 		
 		public FunctionArgument(Wrappers.Function wrapped, string name, string defaultValue, bool isimplicit)
 		{
@@ -20,7 +20,7 @@ namespace Cpg.Studio.Undo
 			d_implicit = isimplicit;
 		}
 		
-		public FunctionArgument(Wrappers.Function wrapped, Cpg.FunctionArgument argument) : this(wrapped, argument.Name, argument.Optional ? argument.DefaultValue.AsString : null, !argument.Explicit)
+		public FunctionArgument(Wrappers.Function wrapped, Cdn.FunctionArgument argument) : this(wrapped, argument.Name, argument.Optional ? argument.DefaultValue.AsString : null, !argument.Explicit)
 		{
 			d_argument = argument;
 		}
@@ -33,7 +33,7 @@ namespace Cpg.Studio.Undo
 			}
 		}
 		
-		public Cpg.FunctionArgument Argument
+		public Cdn.FunctionArgument Argument
 		{
 			get
 			{
@@ -53,17 +53,17 @@ namespace Cpg.Studio.Undo
 		{
 			if (d_defaultValue != null)
 			{
-				d_wrapped.AddArgument(new CCpg.FunctionArgument(d_name, new Cpg.Expression(d_defaultValue), !d_implicit));
+				d_wrapped.AddArgument(new CCdn.FunctionArgument(d_name, new Cdn.Expression(d_defaultValue), !d_implicit));
 			}
 			else
 			{
-				d_wrapped.AddArgument(new CCpg.FunctionArgument(d_name, null, !d_implicit));
+				d_wrapped.AddArgument(new CCdn.FunctionArgument(d_name, null, !d_implicit));
 			}
 		}
 		
 		public void Remove()
 		{
-			foreach (Cpg.FunctionArgument argument in d_wrapped.Arguments)
+			foreach (Cdn.FunctionArgument argument in d_wrapped.Arguments)
 			{
 				if (argument.Name == d_name)
 				{

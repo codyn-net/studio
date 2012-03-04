@@ -1,5 +1,5 @@
 using System;
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class ScrolledWindow : Gtk.ScrolledWindow
 	{

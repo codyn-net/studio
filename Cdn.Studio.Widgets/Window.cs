@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Biorob.Math;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class Window : Gtk.Window
 	{
@@ -258,7 +258,7 @@ namespace Cpg.Studio.Widgets
 			recent = new RecentAction("RecentAction", "Open Recent", "Open recently used network", Gtk.Stock.Open, null);
 			RecentFilter filter = new RecentFilter();
 			
-			filter.AddApplication("cpgstudio");
+			filter.AddApplication("cdnstudio");
 
 			recent.ShowNumbers = true;
 			recent.LocalOnly = true;
@@ -272,16 +272,16 @@ namespace Cpg.Studio.Widgets
 			
 			d_normalGroup.Add(new ActionEntry[] {
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
-				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CPG network", OnFileNew),
-				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CPG network", OnOpenActivated),
+				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CDN network", OnFileNew),
+				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CDN network", OnOpenActivated),
 				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, "<Control>R", "Revert changes", OnRevertActivated),
-				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CPG network", OnSaveActivated),
-				new ActionEntry("SaveProjectAction", null, "Save Project", null, "Save CPG network project file", OnSaveProjectActivated),
-				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CPG network", OnSaveAsActivated),
+				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CDN network", OnSaveActivated),
+				new ActionEntry("SaveProjectAction", null, "Save Project", null, "Save CDN network project file", OnSaveProjectActivated),
+				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CDN network", OnSaveAsActivated),
 
 				new ActionEntry("ImportAction", null, "_Import", null, null, null),
-				new ActionEntry("ImportFileAction", null, "_File", "<Control>i", "Import CPG network objects", OnImportFileActivated),
-				new ActionEntry("ExportAction", null, "_Export", "<Control>e", "Export CPG network objects", null),
+				new ActionEntry("ImportFileAction", null, "_File", "<Control>i", "Import CDN network objects", OnImportFileActivated),
+				new ActionEntry("ExportAction", null, "_Export", "<Control>e", "Export CDN network objects", null),
 
 				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, "<Control>Q", "Quit", OnQuitActivated),
 
@@ -452,7 +452,7 @@ namespace Cpg.Studio.Widgets
 		{
 			List<string > ret = new List<string>();
 			
-			foreach (string path in Cpg.Import.SearchPath)
+			foreach (string path in Cdn.Import.SearchPath)
 			{
 				string p = System.IO.Path.GetFullPath(path);
 
@@ -652,7 +652,7 @@ namespace Cpg.Studio.Widgets
 		private void UpdateCurrentIntegrator()
 		{
 			d_integratorStore.Foreach(delegate (TreeModel model, TreePath path, TreeIter piter) {
-				Cpg.Integrator intgr = (Cpg.Integrator)model.GetValue(piter, 0);
+				Cdn.Integrator intgr = (Cdn.Integrator)model.GetValue(piter, 0);
 				
 				if (intgr.Id == Network.Integrator.Id)
 				{
@@ -669,14 +669,14 @@ namespace Cpg.Studio.Widgets
 		
 		private ComboBox CreateIntegrators()
 		{
-			ListStore store = new ListStore(typeof(Cpg.Integrator));
+			ListStore store = new ListStore(typeof(Cdn.Integrator));
 			CellRendererText renderer = new CellRendererText();
 			ComboBox combo = new ComboBox(store);
 			
 			combo.PackStart(renderer, true);
 			
 			combo.SetCellDataFunc(renderer, delegate (CellLayout layout, CellRenderer rd, TreeModel model, TreeIter piter) {
-				Cpg.Integrator intgr = (Cpg.Integrator)model.GetValue(piter, 0);
+				Cdn.Integrator intgr = (Cdn.Integrator)model.GetValue(piter, 0);
 				
 				if (intgr != null)
 				{
@@ -684,7 +684,7 @@ namespace Cpg.Studio.Widgets
 				}
 			});
 			
-			Integrator[] integrators = Cpg.Integrators.Create();
+			Integrator[] integrators = Cdn.Integrators.Create();
 			
 			foreach (Integrator integrator in integrators)
 			{
@@ -702,8 +702,8 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			store.SetSortFunc(0, delegate (TreeModel model, TreeIter a, TreeIter b) {
-				Cpg.Integrator i1 = (Cpg.Integrator)model.GetValue(a, 0);
-				Cpg.Integrator i2 = (Cpg.Integrator)model.GetValue(b, 0);
+				Cdn.Integrator i1 = (Cdn.Integrator)model.GetValue(a, 0);
+				Cdn.Integrator i2 = (Cdn.Integrator)model.GetValue(b, 0);
 				
 				return i1.Name.CompareTo(i2.Name);
 			});
@@ -723,7 +723,7 @@ namespace Cpg.Studio.Widgets
 			TreeIter piter;
 			
 			combo.GetActiveIter(out piter);
-			Cpg.Integrator integrator = (Cpg.Integrator)combo.Model.GetValue(piter, 0);
+			Cdn.Integrator integrator = (Cdn.Integrator)combo.Model.GetValue(piter, 0);
 
 			if (integrator != Network.Integrator)
 			{
@@ -823,11 +823,11 @@ namespace Cpg.Studio.Widgets
 			
 			if (!String.IsNullOrEmpty(d_project.Filename))
 			{
-				Title = extra + System.IO.Path.GetFileName(d_project.Filename) + " - CPG Studio";
+				Title = extra + System.IO.Path.GetFileName(d_project.Filename) + " - CDN Studio";
 			}
 			else
 			{
-				Title = extra + "New Network - CPG Studio";
+				Title = extra + "New Network - CDN Studio";
 			}
 		}
 		
@@ -1002,7 +1002,7 @@ namespace Cpg.Studio.Widgets
 				return new string[] {};
 			}
 			
-			List<string > props = (new List<Cpg.Property>(objects[0].Properties)).ConvertAll<string>(item => item.Name);
+			List<string > props = (new List<Cdn.Property>(objects[0].Properties)).ConvertAll<string>(item => item.Name);
 			int i = 1;
 			
 			/* Merge in the interface properties */
@@ -1021,7 +1021,7 @@ namespace Cpg.Studio.Widgets
 			
 			while (props.Count > 0 && i < objects.Length)
 			{
-				List<string > pp = (new List<Cpg.Property>(objects[i].Properties)).ConvertAll<string>(item => item.Name);
+				List<string > pp = (new List<Cdn.Property>(objects[i].Properties)).ConvertAll<string>(item => item.Name);
 				
 				grp = objects[i] as Wrappers.Group;
 				
@@ -1135,11 +1135,11 @@ namespace Cpg.Studio.Widgets
 			
 			if (selection.Length == 1)
 			{
-				d_annotation.Update(selection[0].WrappedObject as Cpg.Annotatable);
+				d_annotation.Update(selection[0].WrappedObject as Cdn.Annotatable);
 			}
 			else if (selection.Length == 0 && d_grid.ActiveGroup != null)
 			{
-				d_annotation.Update(d_grid.ActiveGroup.WrappedObject as Cpg.Annotatable);
+				d_annotation.Update(d_grid.ActiveGroup.WrappedObject as Cdn.Annotatable);
 			}
 			else
 			{
@@ -1435,11 +1435,11 @@ namespace Cpg.Studio.Widgets
 				{
 					foreach (Serialization.Project.Series series in mon.Plots)
 					{
-						Cpg.Monitor y;
-						Cpg.Monitor x = null;
+						Cdn.Monitor y;
+						Cdn.Monitor x = null;
 						
-						Cpg.Property yprop = Network.FindProperty(series.Y);
-						Cpg.Property xprop = null;
+						Cdn.Property yprop = Network.FindProperty(series.Y);
+						Cdn.Property xprop = null;
 						
 						if (yprop == null)
 						{
@@ -1466,11 +1466,11 @@ namespace Cpg.Studio.Widgets
 						}
 						else
 						{
-							y = new Cpg.Monitor(Network, yprop);
+							y = new Cdn.Monitor(Network, yprop);
 						
 							if (xprop != null)
 							{
-								x = new Cpg.Monitor(Network, xprop);
+								x = new Cdn.Monitor(Network, xprop);
 							}
 							
 							ss = d_plotting.CreateLineSeries(x, y);
@@ -1497,7 +1497,7 @@ namespace Cpg.Studio.Widgets
 						}
 						else
 						{
-							Cpg.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
+							Cdn.Studio.Settings.PlotSettings.Set(graph.Canvas.Graph);
 						}
 					}
 				}
@@ -1669,7 +1669,7 @@ namespace Cpg.Studio.Widgets
 					Plot.Settings settings = new Plot.Settings();
 					settings.Get(graph.Canvas.Graph);
 					
-					if (settings != Cpg.Studio.Settings.PlotSettings)
+					if (settings != Cdn.Studio.Settings.PlotSettings)
 					{
 						mon.Settings = settings;
 					}
@@ -2571,7 +2571,7 @@ namespace Cpg.Studio.Widgets
 			d_simulation.Reset();
 		}
 		
-		private void HandleCompileError(Cpg.CompileError error)
+		private void HandleCompileError(Cdn.CompileError error)
 		{
 			string title;
 			string expression;
@@ -2588,9 +2588,9 @@ namespace Cpg.Studio.Widgets
 				title += "»" + error.LinkAction.Target;
 				expression = error.LinkAction.Equation.AsString;
 			}
-			else if (error.Object is Cpg.Function)
+			else if (error.Object is Cdn.Function)
 			{
-				expression = ((Cpg.Function)error.Object).Expression.AsString;
+				expression = ((Cdn.Function)error.Object).Expression.AsString;
 			}
 			else
 			{
@@ -2624,7 +2624,7 @@ namespace Cpg.Studio.Widgets
 			        error.String() + ": " + error.Message + "\n\nExpression: \"" + expression + "\"");
 		}
 		
-		private void OnCompileError(object sender, Cpg.CompileErrorArgs args)
+		private void OnCompileError(object sender, Cdn.CompileErrorArgs args)
 		{
 			HandleCompileError(args.Error);
 		}
@@ -2641,7 +2641,7 @@ namespace Cpg.Studio.Widgets
 		{
 			if (d_plotsettingsDialog == null)
 			{
-				d_plotsettingsDialog = new Dialogs.PlotSettings(this, Cpg.Studio.Settings.PlotSettings);
+				d_plotsettingsDialog = new Dialogs.PlotSettings(this, Cdn.Studio.Settings.PlotSettings);
 				d_windowGroup.AddWindow(d_plotsettingsDialog);
 				
 				d_plotsettingsDialog.Response += delegate(object o, ResponseArgs a1) {
@@ -2704,11 +2704,11 @@ namespace Cpg.Studio.Widgets
 				return;
 			}
 			
-			List<Cpg.Property> skippedProperties = new List<Cpg.Property>();
+			List<Cdn.Property> skippedProperties = new List<Cdn.Property>();
 			List<Undo.IAction> actions = new List<Undo.IAction>();
 			
 			// Copy globals
-			foreach (Cpg.Property property in project.Network.Properties)
+			foreach (Cdn.Property property in project.Network.Properties)
 			{
 				if (!Network.HasProperty(property.Name))
 				{
@@ -2749,7 +2749,7 @@ namespace Cpg.Studio.Widgets
 				        "Some globals could not be imported",
 				        String.Format("The {0} `{1}' already existed",
 				                      skippedProperties.Count == 1 ? "global" : "globals",
-				                      String.Join(", ", Array.ConvertAll<Cpg.Property, string>(skippedProperties.ToArray(), item => item.Name))));
+				                      String.Join(", ", Array.ConvertAll<Cdn.Property, string>(skippedProperties.ToArray(), item => item.Name))));
 			}
 		}
 		

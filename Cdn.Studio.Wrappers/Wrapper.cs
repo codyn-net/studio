@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class Wrapper : Graphical, IDisposable
 	{
-		public delegate void PropertyHandler(Wrapper source, Cpg.Property property);
+		public delegate void PropertyHandler(Wrapper source, Cdn.Property property);
 
 		public delegate void TemplateHandler(Wrapper source, Wrapper template);
 
-		protected Cpg.Object d_object;
+		protected Cdn.Object d_object;
 		protected List<Wrappers.Link> d_links;
 		
 		public event PropertyHandler PropertyAdded = delegate {};
@@ -19,15 +19,15 @@ namespace Cpg.Studio.Wrappers
 		public event TemplateHandler TemplateApplied = delegate {};
 		public event TemplateHandler TemplateUnapplied = delegate {};
 		
-		public static string WrapperDataKey = "CpgStudioWrapperDataKey";
+		public static string WrapperDataKey = "CdnStudioWrapperDataKey";
 		private static Dictionary<Type, ConstructorInfo> s_typeMapping;
 		protected const int RenderAnnotationAtsize = 16;
 		
-		private static ConstructorInfo WrapperConstructor(Type wrapperType, Type cpgType)
+		private static ConstructorInfo WrapperConstructor(Type wrapperType, Type cdnType)
 		{
 			BindingFlags binding = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 			
-			return wrapperType.GetConstructor(binding, null, new Type[] {cpgType}, null);
+			return wrapperType.GetConstructor(binding, null, new Type[] {cdnType}, null);
 		}
 		
 		private static Dictionary<string, Type> ScanWrappers()
@@ -50,11 +50,11 @@ namespace Cpg.Studio.Wrappers
 			s_typeMapping = new Dictionary<Type, ConstructorInfo>();
 			Dictionary<string, Type > wrapperTypes = ScanWrappers();
 			
-			Type cpgObjectType = typeof(Cpg.Object);
+			Type cdnObjectType = typeof(Cdn.Object);
 			
-			foreach (Type type in cpgObjectType.Assembly.GetTypes())
+			foreach (Type type in cdnObjectType.Assembly.GetTypes())
 			{
-				if (type.IsSubclassOf(cpgObjectType))
+				if (type.IsSubclassOf(cdnObjectType))
 				{
 					// Then find the wrapper for it
 					Type child = type;
@@ -84,7 +84,7 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 
-		public static Wrapper Wrap(Cpg.Object obj)
+		public static Wrapper Wrap(Cdn.Object obj)
 		{
 			if (obj == null)
 			{
@@ -96,18 +96,18 @@ namespace Cpg.Studio.Wrappers
 				return obj.Data[WrapperDataKey] as Wrapper;
 			}
 			
-			Type cpgType = obj.GetType();
+			Type cdnType = obj.GetType();
 			
-			if (!s_typeMapping.ContainsKey(cpgType))
+			if (!s_typeMapping.ContainsKey(cdnType))
 			{
-				Console.Error.WriteLine("Could not find wrapper for type `{0}'", cpgType);
+				Console.Error.WriteLine("Could not find wrapper for type `{0}'", cdnType);
 				return null;
 			}	
 			
-			return (Wrapper)s_typeMapping[cpgType].Invoke(new object[] {obj});			
+			return (Wrapper)s_typeMapping[cdnType].Invoke(new object[] {obj});			
 		}
 		
-		public static Wrapper[] Wrap(Cpg.Object[] objs)
+		public static Wrapper[] Wrap(Cdn.Object[] objs)
 		{
 			if (objs == null)
 			{
@@ -124,7 +124,7 @@ namespace Cpg.Studio.Wrappers
 			return ret;
 		}
 			
-		public static implicit operator Cpg.Object(Wrapper obj)
+		public static implicit operator Cdn.Object(Wrapper obj)
 		{
 			if (obj == null)
 			{
@@ -134,7 +134,7 @@ namespace Cpg.Studio.Wrappers
 			return obj.WrappedObject;
 		}
 		
-		public static implicit operator Wrapper(Cpg.Object obj)
+		public static implicit operator Wrapper(Cdn.Object obj)
 		{
 			if (obj == null)
 			{
@@ -144,7 +144,7 @@ namespace Cpg.Studio.Wrappers
 			return Wrap(obj);
 		}
 		
-		protected Wrapper(Cpg.Object obj) : base()
+		protected Wrapper(Cdn.Object obj) : base()
 		{
 			d_links = new List<Link>();
 
@@ -166,7 +166,7 @@ namespace Cpg.Studio.Wrappers
 			obj.Data[WrapperDataKey] = this;
 		}
 
-		protected void SetWrappedObject(Cpg.Object obj)
+		protected void SetWrappedObject(Cdn.Object obj)
 		{
 			DisconnectWrapped();
 			d_object = obj;
@@ -188,7 +188,7 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Cpg.Property this[string name]
+		public Cdn.Property this[string name]
 		{
 			get
 			{
@@ -196,12 +196,12 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Cpg.Property Property(string name)
+		public Cdn.Property Property(string name)
 		{
 			return d_object.Property(name);
 		}
 		
-		public Cpg.Property[] Actors
+		public Cdn.Property[] Actors
 		{
 			get
 			{
@@ -222,14 +222,14 @@ namespace Cpg.Studio.Wrappers
 			return d_object.HasProperty(name);
 		}
 		
-		public bool AddProperty(Cpg.Property property)
+		public bool AddProperty(Cdn.Property property)
 		{
 			return d_object.AddProperty(property);
 		}
 		
-		public Cpg.Property AddProperty(string name, string val, Cpg.PropertyFlags flags)
+		public Cdn.Property AddProperty(string name, string val, Cdn.PropertyFlags flags)
 		{
-			Cpg.Property prop = new Cpg.Property(name, new Cpg.Expression(val), flags);
+			Cdn.Property prop = new Cdn.Property(name, new Cdn.Expression(val), flags);
 			
 			if (AddProperty(prop))
 			{
@@ -241,9 +241,9 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Cpg.Property AddProperty(string name, string val)
+		public Cdn.Property AddProperty(string name, string val)
 		{
-			return AddProperty(name, val, Cpg.PropertyFlags.None);
+			return AddProperty(name, val, Cdn.PropertyFlags.None);
 		}
 		
 		public bool RemoveProperty(string name)
@@ -267,7 +267,7 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Cpg.Property[] Properties
+		public Cdn.Property[] Properties
 		{
 			get
 			{
@@ -295,17 +295,17 @@ namespace Cpg.Studio.Wrappers
 			DoRequestRedraw();
 		}
 		
-		private void HandlePropertyAdded(object o, Cpg.PropertyAddedArgs args)
+		private void HandlePropertyAdded(object o, Cdn.PropertyAddedArgs args)
 		{
 			PropertyAdded(this, args.Property);
 		}
 		
-		private void HandlePropertyRemoved(object o, Cpg.PropertyRemovedArgs args)
+		private void HandlePropertyRemoved(object o, Cdn.PropertyRemovedArgs args)
 		{
 			PropertyRemoved(this, args.Property);
 		}
 		
-		private void HandlePropertyChanged(object o, Cpg.PropertyChangedArgs args)
+		private void HandlePropertyChanged(object o, Cdn.PropertyChangedArgs args)
 		{
 			PropertyChanged(this, args.Property);
 		}
@@ -314,7 +314,7 @@ namespace Cpg.Studio.Wrappers
 		{
 			WrappedObject.RemoveNotification("id", NotifyIdHandler);
 			
-			if (WrappedObject is Cpg.Annotatable)
+			if (WrappedObject is Cdn.Annotatable)
 			{
 				WrappedObject.RemoveNotification("annotation", NotifyAnnotationHandler);
 			}
@@ -349,7 +349,7 @@ namespace Cpg.Studio.Wrappers
 		{
 			WrappedObject.AddNotification("id", NotifyIdHandler);
 			
-			if (WrappedObject is Cpg.Annotatable)
+			if (WrappedObject is Cdn.Annotatable)
 			{
 				WrappedObject.AddNotification("annotation", NotifyAnnotationHandler);
 			}
@@ -414,7 +414,7 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public virtual Cpg.Object WrappedObject
+		public virtual Cdn.Object WrappedObject
 		{
 			get
 			{
@@ -427,12 +427,12 @@ namespace Cpg.Studio.Wrappers
 			return Compile(null);
 		}
 		
-		public bool Compile(Cpg.CompileContext context)
+		public bool Compile(Cdn.CompileContext context)
 		{
 			return Compile(context, null);
 		}
 		
-		public bool Compile(Cpg.CompileContext context, Cpg.CompileError error)
+		public bool Compile(Cdn.CompileContext context, Cdn.CompileError error)
 		{
 			return WrappedObject.Compile(context, error);
 		}
@@ -507,7 +507,7 @@ namespace Cpg.Studio.Wrappers
 			return WrappedObject.VerifyRemoveProperty(prop);
 		}
 		
-		public Wrappers.Wrapper GetPropertyTemplate(Cpg.Property prop, bool matchFull)
+		public Wrappers.Wrapper GetPropertyTemplate(Cdn.Property prop, bool matchFull)
 		{
 			return Wrappers.Wrapper.Wrap(WrappedObject.GetPropertyTemplate(prop, matchFull));
 		}
@@ -575,7 +575,7 @@ namespace Cpg.Studio.Wrappers
 			return w > 2 * RenderAnnotationAtsize && h > 2 * RenderAnnotationAtsize;
 		}
 		
-		protected virtual void DrawAnnotation(Cairo.Context context, Cpg.Annotatable annotatable)
+		protected virtual void DrawAnnotation(Cairo.Context context, Cdn.Annotatable annotatable)
 		{
 			if (!CanDrawAnnotation(context))
 			{
@@ -609,7 +609,7 @@ namespace Cpg.Studio.Wrappers
 		{
 			base.Draw(context);
 			
-			Cpg.Annotatable annotatable = WrappedObject as Cpg.Annotatable;
+			Cdn.Annotatable annotatable = WrappedObject as Cdn.Annotatable;
 			
 			if (annotatable != null && !String.IsNullOrEmpty(annotatable.Annotation))
 			{

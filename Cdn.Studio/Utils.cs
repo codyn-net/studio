@@ -5,7 +5,7 @@ using System.Drawing.Drawing2D;
 using System.Runtime.InteropServices;
 using Biorob.Math;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class Utils
 	{

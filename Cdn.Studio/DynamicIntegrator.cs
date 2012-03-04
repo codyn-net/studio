@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class DynamicIntegrator
 	{
@@ -33,7 +33,7 @@ namespace Cpg.Studio
 			d_gtype = GLib.GType.Invalid;
 
 			// Define dynamic PInvoke method
-			meb = tb.DefinePInvokeMethod("cpg_register_integrator",
+			meb = tb.DefinePInvokeMethod("cdn_register_integrator",
 			                             filename,
 			                             MethodAttributes.Public |
 			                             MethodAttributes.Static |
@@ -71,7 +71,7 @@ namespace Cpg.Studio
 			{
 				try
 				{
-					d_gtype = (GLib.GType)d_dynamicType.InvokeMember("cpg_register_integrator",
+					d_gtype = (GLib.GType)d_dynamicType.InvokeMember("cdn_register_integrator",
 					                                                 BindingFlags.InvokeMethod,
 					                                                 null,
 					                                                 Activator.CreateInstance(d_dynamicType), null);

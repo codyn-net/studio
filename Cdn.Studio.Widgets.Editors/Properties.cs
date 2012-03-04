@@ -2,7 +2,7 @@ using System;
 using Gtk;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Widgets.Editors
+namespace Cdn.Studio.Widgets.Editors
 {
 	[Gtk.Binding(Gdk.Key.Delete, "HandleDeleteBinding"),
 	 Gtk.Binding(Gdk.Key.KP_Subtract, "HandleDeleteBinding"),
@@ -12,7 +12,7 @@ namespace Cpg.Studio.Widgets.Editors
 	{
 		private class Node : Widgets.Node
 		{
-			private Cpg.Property d_property;
+			private Cdn.Property d_property;
 			
 			public enum Columns
 			{
@@ -26,7 +26,7 @@ namespace Cpg.Studio.Widgets.Editors
 				Style = 7
 			}
 			
-			public Node(Cpg.Property property)
+			public Node(Cdn.Property property)
 			{
 				d_property = property;
 				
@@ -73,7 +73,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 			
 			[PrimaryKey]
-			public Cpg.Property Property
+			public Cdn.Property Property
 			{
 				get
 				{
@@ -166,7 +166,7 @@ namespace Cpg.Studio.Widgets.Editors
 						return null;
 					}
 
-					Cpg.Object templ = d_property.Object.GetPropertyTemplate(d_property, false);
+					Cdn.Object templ = d_property.Object.GetPropertyTemplate(d_property, false);
 					List<string > parts = new List<string>();
 
 					string annotation = d_property.Annotation;
@@ -210,10 +210,10 @@ namespace Cpg.Studio.Widgets.Editors
 		
 		private class InterfaceNode : Node
 		{
-			private Cpg.PropertyInterface d_iface;
+			private Cdn.PropertyInterface d_iface;
 			private string d_name;
 	
-			public InterfaceNode(Cpg.PropertyInterface iface, string name)
+			public InterfaceNode(Cdn.PropertyInterface iface, string name)
 			{
 				d_iface = iface;
 				d_name = name;
@@ -299,7 +299,7 @@ namespace Cpg.Studio.Widgets.Editors
 		private Actions d_actions;
 		private TreeView<Node> d_treeview;
 		private ListStore d_flagsStore;
-		private List<KeyValuePair<string, Cpg.PropertyFlags>> d_flaglist;
+		private List<KeyValuePair<string, Cdn.PropertyFlags>> d_flaglist;
 		private Entry d_editingEntry;
 		private string d_editingPath;
 		private bool d_selectProperty;
@@ -330,19 +330,19 @@ namespace Cpg.Studio.Widgets.Editors
 			FillFlagsStore(d_treeview.NodeStore.FindPath(args.Path).Property);
 		}
 
-		private void FillFlagsStore(Cpg.Property property)
+		private void FillFlagsStore(Cdn.Property property)
 		{
 			d_flagsStore.Clear();
 
-			Cpg.PropertyFlags flags = property.Flags;
-			Cpg.PropertyFlags building = Cpg.PropertyFlags.None;
+			Cdn.PropertyFlags flags = property.Flags;
+			Cdn.PropertyFlags building = Cdn.PropertyFlags.None;
 			
 			List<string > items = new List<string>();
-			List<KeyValuePair<string, Cpg.PropertyFlags>> copy = new List<KeyValuePair<string, Cpg.PropertyFlags>>(d_flaglist);
+			List<KeyValuePair<string, Cdn.PropertyFlags>> copy = new List<KeyValuePair<string, Cdn.PropertyFlags>>(d_flaglist);
 			
 			copy.Reverse();
 			
-			foreach (KeyValuePair<string, Cpg.PropertyFlags> pair in copy)
+			foreach (KeyValuePair<string, Cdn.PropertyFlags> pair in copy)
 			{
 				string name = pair.Key;
 				
@@ -366,19 +366,19 @@ namespace Cpg.Studio.Widgets.Editors
 
 		private void InitializeFlagsList()
 		{
-			d_flaglist = new List<KeyValuePair<string, Cpg.PropertyFlags>>();
-			Type type = typeof(Cpg.PropertyFlags);
+			d_flaglist = new List<KeyValuePair<string, Cdn.PropertyFlags>>();
+			Type type = typeof(Cdn.PropertyFlags);
 
 			Array values = Enum.GetValues(type);
 			
 			for (int i = 0; i < values.Length; ++i)
 			{
-				Cpg.PropertyFlags flags = (Cpg.PropertyFlags)values.GetValue(i);
+				Cdn.PropertyFlags flags = (Cdn.PropertyFlags)values.GetValue(i);
 				
 				// Don't show 'None' and Integrated is handled separately
 				if ((int)flags != 0 && flags != PropertyFlags.Integrated)
 				{
-					d_flaglist.Add(new KeyValuePair<string, Cpg.PropertyFlags>(Property.FlagsToString(flags, 0), flags));
+					d_flaglist.Add(new KeyValuePair<string, Cdn.PropertyFlags>(Property.FlagsToString(flags, 0), flags));
 				}
 			}
 		}
@@ -713,7 +713,7 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 
-			foreach (Cpg.Property prop in d_wrapper.Properties)
+			foreach (Cdn.Property prop in d_wrapper.Properties)
 			{
 				d_treeview.NodeStore.Add(new Node(prop));
 			}
@@ -804,14 +804,14 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			if (d_wrapper is Wrappers.Group && !ObjectIsNetwork)
 			{
-				Cpg.PropertyInterface iface = (d_wrapper as Wrappers.Group).PropertyInterface;
+				Cdn.PropertyInterface iface = (d_wrapper as Wrappers.Group).PropertyInterface;
 				
 				iface.Added -= HandleGroupInterfacePropertyAdded;
 				iface.Removed -= HandleGroupInterfacePropertyRemoved;
 			}
 		}
 		
-		private void HandleGroupInterfacePropertyAdded(object source, Cpg.AddedArgs args)
+		private void HandleGroupInterfacePropertyAdded(object source, Cdn.AddedArgs args)
 		{
 			Wrappers.Group grp = (Wrappers.Group)d_wrapper;
 			
@@ -830,7 +830,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 		
-		private void HandleGroupInterfacePropertyRemoved(object source, Cpg.RemovedArgs args)
+		private void HandleGroupInterfacePropertyRemoved(object source, Cdn.RemovedArgs args)
 		{
 			if (!d_blockInterfaceRemove)
 			{
@@ -850,7 +850,7 @@ namespace Cpg.Studio.Widgets.Editors
 			
 			if (d_wrapper is Wrappers.Group && !ObjectIsNetwork)
 			{
-				Cpg.PropertyInterface iface = (d_wrapper as Wrappers.Group).PropertyInterface;
+				Cdn.PropertyInterface iface = (d_wrapper as Wrappers.Group).PropertyInterface;
 				
 				iface.Added += HandleGroupInterfacePropertyAdded;
 				iface.Removed += HandleGroupInterfacePropertyRemoved;
@@ -893,11 +893,11 @@ namespace Cpg.Studio.Widgets.Editors
 				name = name.Substring(2);
 			}
 
-			Cpg.PropertyFlags add_flags;
-			Cpg.PropertyFlags remove_flags;
+			Cdn.PropertyFlags add_flags;
+			Cdn.PropertyFlags remove_flags;
 			
 			Property.FlagsFromString(name, out add_flags, out remove_flags);
-			Cpg.PropertyFlags newflags = node.Property.Flags;
+			Cdn.PropertyFlags newflags = node.Property.Flags;
 
 			if (wason)
 			{
@@ -987,7 +987,7 @@ namespace Cpg.Studio.Widgets.Editors
 					actions.Add(new Undo.RemoveInterfaceProperty((Wrappers.Group)d_wrapper, n.Name, n.ChildName, n.PropertyName));
 					
 					string expr = "0";
-					Cpg.PropertyFlags flags = Cpg.PropertyFlags.None;
+					Cdn.PropertyFlags flags = Cdn.PropertyFlags.None;
 					
 					if (node.Property != null)
 					{
@@ -1149,7 +1149,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 			
 			d_selectProperty = true;
-			d_actions.Do(new Undo.AddProperty(d_wrapper, "x" + num, "0", Cpg.PropertyFlags.None));
+			d_actions.Do(new Undo.AddProperty(d_wrapper, "x" + num, "0", Cdn.PropertyFlags.None));
 			d_selectProperty = false;
 		}
 		
@@ -1175,7 +1175,7 @@ namespace Cpg.Studio.Widgets.Editors
 				
 				if (temp != null)
 				{
-					Cpg.Property tempProp = temp.Property(node.Property.Name);
+					Cdn.Property tempProp = temp.Property(node.Property.Name);
 
 					actions.Add(new Undo.ModifyProperty(d_wrapper, node.Property, tempProp.Expression.AsString));
 					actions.Add(new Undo.ModifyProperty(d_wrapper, node.Property, tempProp.Flags));
@@ -1197,7 +1197,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 		
-		private void DoPropertyAdded(Wrappers.Wrapper obj, Cpg.Property prop)
+		private void DoPropertyAdded(Wrappers.Wrapper obj, Cdn.Property prop)
 		{
 			Node node = new Node(prop);
 
@@ -1214,7 +1214,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 		
-		private void DoPropertyRemoved(Wrappers.Wrapper obj, Cpg.Property prop)
+		private void DoPropertyRemoved(Wrappers.Wrapper obj, Cdn.Property prop)
 		{
 			d_treeview.NodeStore.Remove(prop);
 		}
@@ -1230,9 +1230,9 @@ namespace Cpg.Studio.Widgets.Editors
 			MenuItem item;
 			
 			item = new MenuItem("Add");
-			item.AccelPath = "<CpgStudio>/Widgets/Editors/Properties/Add";
+			item.AccelPath = "<CdnStudio>/Widgets/Editors/Properties/Add";
 			
-			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/Properties/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
+			AccelMap.AddEntry("<CdnStudio>/Widgets/Editors/Properties/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
 
 			item.Show();
 			item.Activated += DoAddProperty;
@@ -1240,10 +1240,10 @@ namespace Cpg.Studio.Widgets.Editors
 			menu.Append(item);
 
 			item = new MenuItem("Remove");
-			item.AccelPath = "<CpgStudio>/Widgets/Editors/Properties/Remove";
+			item.AccelPath = "<CdnStudio>/Widgets/Editors/Properties/Remove";
 			item.Show();
 			
-			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/Properties/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
+			AccelMap.AddEntry("<CdnStudio>/Widgets/Editors/Properties/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
 			
 			item.Sensitive = (d_treeview.Selection.CountSelectedRows() > 0);
 			item.Activated += DoRemoveProperty;

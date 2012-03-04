@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Wrappers.Renderers
+namespace Cdn.Studio.Wrappers.Renderers
 {
 	public class Renderer
 	{

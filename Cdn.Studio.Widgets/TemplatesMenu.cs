@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class TemplatesMenu
 	{
@@ -153,7 +153,7 @@ namespace Cpg.Studio
 		
 		private void HandleIdChanged(object source, GLib.NotifyArgs args)
 		{
-			Wrappers.Wrapper wrapped = Wrappers.Wrapper.Wrap((Cpg.Object)source);
+			Wrappers.Wrapper wrapped = Wrappers.Wrapper.Wrap((Cdn.Object)source);
 			Gtk.MenuItem item = d_map[wrapped].Item;
 			
 			item.Remove(item.Child);

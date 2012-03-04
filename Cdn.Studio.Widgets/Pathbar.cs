@@ -3,7 +3,7 @@ using Gtk;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class Pathbar : HBox
 	{

@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	public class Simulation
 	{
@@ -69,7 +69,7 @@ namespace Cpg.Studio
 			UpdateIntegrator(d_network.Integrator);
 		}
 		
-		private void UpdateIntegrator(Cpg.Integrator integrator)
+		private void UpdateIntegrator(Cdn.Integrator integrator)
 		{
 			bool hasSteppers = OnSteppedProxy != null && OnSteppedProxy.GetInvocationList().Length != 0;
 			
@@ -136,7 +136,7 @@ namespace Cpg.Studio
 			d_network.Run(from, timestep, to);
 		}
 		
-		public Cpg.Network Network
+		public Cdn.Network Network
 		{
 			get
 			{

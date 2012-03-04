@@ -1,14 +1,14 @@
 using System;
 using Gtk;
 
-namespace Cpg.Studio.Dialogs
+namespace Cdn.Studio.Dialogs
 {
 	public class Import : FileChooserDialog
 	{
 		private ComboBox d_comboAction;
 		private ComboBox d_comboSelection;
 
-		public Import(Widgets.Window parent) : base("Import CPG Network", parent, FileChooserAction.Open)
+		public Import(Widgets.Window parent) : base("Import CDN Network", parent, FileChooserAction.Open)
 		{
 			AddButton(Gtk.Stock.Cancel, ResponseType.Cancel);
 			AddButton("Import", ResponseType.Ok);
@@ -23,11 +23,11 @@ namespace Cpg.Studio.Dialogs
 				SetCurrentFolder(System.IO.Path.GetDirectoryName(path));
 			}
 			
-			FileFilter cpg = new FileFilter();
-			cpg.AddPattern("*.cpg");
-			cpg.Name = "CPG Files (*.cpg)";
+			FileFilter cdn = new FileFilter();
+			cdn.AddPattern("*.cdn");
+			cdn.Name = "CDN Files (*.cdn)";
 
-			AddFilter(cpg);
+			AddFilter(cdn);
 			
 			FileFilter all = new FileFilter();
 			all.AddPattern("*");

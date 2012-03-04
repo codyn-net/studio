@@ -2,7 +2,7 @@ using System;
 using Gtk;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Widgets.Editors
+namespace Cdn.Studio.Widgets.Editors
 {
 	[Gtk.Binding(Gdk.Key.Delete, "HandleDeleteBinding"),
 	 Gtk.Binding(Gdk.Key.KP_Subtract, "HandleDeleteBinding"),
@@ -20,13 +20,13 @@ namespace Cpg.Studio.Widgets.Editors
 				Editable
 			}
 			
-			private Cpg.FunctionArgument d_argument;
+			private Cdn.FunctionArgument d_argument;
 			
 			public Node() : this(null)
 			{
 			}
 
-			public Node(Cpg.FunctionArgument argument)
+			public Node(Cdn.FunctionArgument argument)
 			{
 				d_argument = argument;
 				
@@ -74,7 +74,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 			
 			[PrimaryKey]
-			public Cpg.FunctionArgument Argument
+			public Cdn.FunctionArgument Argument
 			{
 				get { return d_argument; }
 			}
@@ -312,7 +312,7 @@ namespace Cpg.Studio.Widgets.Editors
 				return;
 			}
 			
-			foreach (Cpg.FunctionArgument argument in d_function.Arguments)
+			foreach (Cdn.FunctionArgument argument in d_function.Arguments)
 			{
 				d_treeview.NodeStore.Add(new Node(argument));
 			}
@@ -364,7 +364,7 @@ namespace Cpg.Studio.Widgets.Editors
 			Repopulate();
 		}
 
-		private void DoArgumentAdded(Wrappers.Function obj, Cpg.FunctionArgument arg)
+		private void DoArgumentAdded(Wrappers.Function obj, Cdn.FunctionArgument arg)
 		{
 			Node node = new Node(arg);
 
@@ -381,7 +381,7 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 		
-		private void DoArgumentRemoved(Wrappers.Function obj, Cpg.FunctionArgument arg)
+		private void DoArgumentRemoved(Wrappers.Function obj, Cdn.FunctionArgument arg)
 		{
 			d_treeview.NodeStore.Remove(arg);
 		}
@@ -683,7 +683,7 @@ namespace Cpg.Studio.Widgets.Editors
 		
 		private bool ArgumentExists(string name)
 		{
-			foreach (Cpg.FunctionArgument argument in d_function.Arguments)
+			foreach (Cdn.FunctionArgument argument in d_function.Arguments)
 			{
 				if (argument.Name == name)
 				{
@@ -719,9 +719,9 @@ namespace Cpg.Studio.Widgets.Editors
 			MenuItem item;
 			
 			item = new MenuItem("Add");
-			item.AccelPath = "<CpgStudio>/Widgets/Editors/Functions/Add";
+			item.AccelPath = "<CdnStudio>/Widgets/Editors/Functions/Add";
 			
-			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/Functions/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
+			AccelMap.AddEntry("<CdnStudio>/Widgets/Editors/Functions/Add", (uint)Gdk.Key.KP_Add, Gdk.ModifierType.None);
 
 			item.Show();
 			item.Activated += DoAddArgument;
@@ -729,10 +729,10 @@ namespace Cpg.Studio.Widgets.Editors
 			menu.Append(item);
 
 			item = new MenuItem("Remove");
-			item.AccelPath = "<CpgStudio>/Widgets/Editors/Functions/Remove";
+			item.AccelPath = "<CdnStudio>/Widgets/Editors/Functions/Remove";
 			item.Show();
 			
-			AccelMap.AddEntry("<CpgStudio>/Widgets/Editors/Functions/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
+			AccelMap.AddEntry("<CdnStudio>/Widgets/Editors/Functions/Remove", (uint)Gdk.Key.KP_Subtract, Gdk.ModifierType.None);
 			
 			item.Sensitive = (d_treeview.Selection.CountSelectedRows() > 0);
 			item.Activated += DoRemoveArgument;

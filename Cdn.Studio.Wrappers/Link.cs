@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Biorob.Math;
 
-namespace Cpg.Studio.Wrappers
+namespace Cdn.Studio.Wrappers
 {
 	public class Link : Object
 	{		
-		public delegate void ActionEventHandler(object source, Cpg.LinkAction action);
+		public delegate void ActionEventHandler(object source, Cdn.LinkAction action);
 
 		public event ActionEventHandler ActionAdded = delegate {};
 		public event ActionEventHandler ActionRemoved = delegate {};
@@ -18,15 +18,15 @@ namespace Cpg.Studio.Wrappers
 		private List<Point> d_fromAnchors;
 		private List<Point> d_toAnchors;
 		
-		protected Link(Cpg.Link obj) : this(obj, null, null)
+		protected Link(Cdn.Link obj) : this(obj, null, null)
 		{
 		}
 		
-		public Link() : this(new Cpg.Link("link", null, null), null, null)
+		public Link() : this(new Cdn.Link("link", null, null), null, null)
 		{
 		}
 		
-		public Link(Cpg.Link obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
+		public Link(Cdn.Link obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
 		{
 			Renderer = new Renderers.Link(this);
 
@@ -53,12 +53,12 @@ namespace Cpg.Studio.Wrappers
 			CalculateAnchors();
 		}
 
-		public static implicit operator Cpg.Object(Link obj)
+		public static implicit operator Cdn.Object(Link obj)
 		{
 			return obj.WrappedObject;
 		}
 		
-		public static implicit operator Cpg.Link(Link obj)
+		public static implicit operator Cdn.Link(Link obj)
 		{
 			return obj.WrappedObject;
 		}
@@ -285,7 +285,7 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Cpg.LinkAction[] Actions
+		public Cdn.LinkAction[] Actions
 		{
 			get
 			{
@@ -293,9 +293,9 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Cpg.LinkAction AddAction(string target, Cpg.Expression expression)
+		public Cdn.LinkAction AddAction(string target, Cdn.Expression expression)
 		{
-			Cpg.LinkAction action = new Cpg.LinkAction(target, expression);
+			Cdn.LinkAction action = new Cdn.LinkAction(target, expression);
 			
 			if (AddAction(action))
 			{
@@ -307,26 +307,26 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public bool AddAction(Cpg.LinkAction action)
+		public bool AddAction(Cdn.LinkAction action)
 		{
 			return WrappedObject.AddAction(action);
 		}
 		
-		public Cpg.LinkAction GetAction(string target)
+		public Cdn.LinkAction GetAction(string target)
 		{
 			return WrappedObject.GetAction(target);
 		}
 		
-		public bool RemoveAction(Cpg.LinkAction action)
+		public bool RemoveAction(Cdn.LinkAction action)
 		{
 			return WrappedObject.RemoveAction(action);
 		}
 		
-		public new Cpg.Link WrappedObject
+		public new Cdn.Link WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cpg.Link;
+				return base.WrappedObject as Cdn.Link;
 			}
 		}
 		
@@ -596,7 +596,7 @@ namespace Cpg.Studio.Wrappers
 			}
 		}
 		
-		public Wrappers.Link GetActionTemplate(Cpg.LinkAction action, bool match_full)
+		public Wrappers.Link GetActionTemplate(Cdn.LinkAction action, bool match_full)
 		{
 			return (Wrappers.Link)Wrapper.Wrap(WrappedObject.GetActionTemplate(action, match_full));
 		}

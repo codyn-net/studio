@@ -6,13 +6,13 @@
 using System;
 using Gtk;
 using System.IO;
-using Cpg.Studio.Widgets;
+using Cdn.Studio.Widgets;
 
-namespace Cpg.Studio
+namespace Cdn.Studio
 {
 	class Application
 	{
-		private Cpg.Studio.Widgets.Window d_window;
+		private Cdn.Studio.Widgets.Window d_window;
 		
 		private void RegisterNativeIntegrators(string dir)
 		{
@@ -40,9 +40,9 @@ namespace Cpg.Studio
 		
 		private void RegisterNativeIntegrators()
 		{
-			RegisterNativeIntegrators(Path.Combine(Path.Combine(Config.Lib, "cpgstudio"), "integrators"));
+			RegisterNativeIntegrators(Path.Combine(Path.Combine(Config.Lib, "cdnstudio"), "integrators"));
 
-			string path = Environment.GetEnvironmentVariable("CPG_INTEGRATOR_PATH");
+			string path = Environment.GetEnvironmentVariable("CDN_INTEGRATOR_PATH");
 			
 			if (String.IsNullOrEmpty(path))
 			{
@@ -80,7 +80,7 @@ namespace Cpg.Studio
 			System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
 			GLib.GType.Init();
 
-			Gtk.Application.Init("Cpg Studio", ref args);
+			Gtk.Application.Init("Cdn Studio", ref args);
 			Wrappers.Renderers.Oscillator renderer = new Wrappers.Renderers.Oscillator();
 
 			Gtk.Window.DefaultIconList = new Gdk.Pixbuf[] {
@@ -98,7 +98,7 @@ namespace Cpg.Studio
 			Studio.Application instance = new Studio.Application();
 			instance.Run(args);
 			
-			Cpg.Studio.Settings.PlotSettings.Save(Cpg.Studio.Settings.PlotSettingsPath);
+			Cdn.Studio.Settings.PlotSettings.Save(Cdn.Studio.Settings.PlotSettingsPath);
 		}
 	}
 }

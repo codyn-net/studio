@@ -2,7 +2,7 @@ using System;
 using Gtk;
 using System.Collections.Generic;
 
-namespace Cpg.Studio.Widgets
+namespace Cdn.Studio.Widgets
 {
 	public class WrappersTree : VBox
 	{
@@ -78,11 +78,11 @@ namespace Cpg.Studio.Widgets
 				return icon;
 			}
 			
-			public WrapperNode(Widget widget, Cpg.Property property) : this(widget, null, property)
+			public WrapperNode(Widget widget, Cdn.Property property) : this(widget, null, property)
 			{
 			}
 			
-			public WrapperNode(Widget widget, Cpg.LinkAction action) : this(widget, null, action)
+			public WrapperNode(Widget widget, Cdn.LinkAction action) : this(widget, null, action)
 			{
 			}
 			
@@ -127,7 +127,7 @@ namespace Cpg.Studio.Widgets
 					d_wrapper.PropertyAdded += OnPropertyAdded;
 					d_wrapper.PropertyRemoved += OnPropertyRemoved;
 					
-					foreach (Cpg.Property prop in d_wrapper.WrappedObject.Properties)
+					foreach (Cdn.Property prop in d_wrapper.WrappedObject.Properties)
 					{
 						OnPropertyAdded(wrapper, prop);	
 					}
@@ -135,11 +135,11 @@ namespace Cpg.Studio.Widgets
 				
 				if (d_object != null)
 				{
-					if (d_object is Cpg.Property)
+					if (d_object is Cdn.Property)
 					{
 						d_object.AddNotification("name", OnIdChanged);
 					}
-					else if (d_object is Cpg.LinkAction)
+					else if (d_object is Cdn.LinkAction)
 					{
 						d_object.AddNotification("target", OnIdChanged);
 					}
@@ -170,11 +170,11 @@ namespace Cpg.Studio.Widgets
 				
 				if (d_object != null)
 				{
-					if (d_object is Cpg.Property)
+					if (d_object is Cdn.Property)
 					{
 						d_object.RemoveNotification("name", OnIdChanged);
 					}
-					else if (d_object is Cpg.LinkAction)
+					else if (d_object is Cdn.LinkAction)
 					{
 						d_object.RemoveNotification("target", OnIdChanged);
 					}
@@ -215,14 +215,14 @@ namespace Cpg.Studio.Widgets
 				}
 			}
 
-			private void OnPropertyAdded(Wrappers.Wrapper wrapper, Cpg.Property property)
+			private void OnPropertyAdded(Wrappers.Wrapper wrapper, Cdn.Property property)
 			{
 				TreeIter iter;
 				
 				Add(new WrapperNode(d_widget, property), out iter);
 			}
 			
-			private void OnPropertyRemoved(Wrappers.Wrapper wrapper, Cpg.Property property)
+			private void OnPropertyRemoved(Wrappers.Wrapper wrapper, Cdn.Property property)
 			{
 				foreach (WrapperNode node in AllChildren)
 				{
@@ -273,14 +273,14 @@ namespace Cpg.Studio.Widgets
 				}
 				else if (d_object != null)
 				{
-					Cpg.Property prop = d_object as Cpg.Property;
+					Cdn.Property prop = d_object as Cdn.Property;
 					
 					if (prop != null)
 					{
 						return prop.Name;
 					}
 					
-					Cpg.LinkAction action = d_object as Cpg.LinkAction;
+					Cdn.LinkAction action = d_object as Cdn.LinkAction;
 					
 					if (action != null)
 					{
@@ -335,20 +335,20 @@ namespace Cpg.Studio.Widgets
 			}
 			
 			[PrimaryKey()]
-			public Cpg.Property Property
+			public Cdn.Property Property
 			{
 				get
 				{
-					return d_object != null ? d_object as Cpg.Property : null;
+					return d_object != null ? d_object as Cdn.Property : null;
 				}
 			}
 			
 			[PrimaryKey()]
-			public Cpg.LinkAction Action
+			public Cdn.LinkAction Action
 			{
 				get
 				{
-					return d_object != null ? d_object as Cpg.LinkAction : null;
+					return d_object != null ? d_object as Cdn.LinkAction : null;
 				}
 			}
 			
@@ -439,11 +439,11 @@ namespace Cpg.Studio.Widgets
 					}
 					else if (d_object != null)
 					{
-						if (d_object is Cpg.Property)
+						if (d_object is Cdn.Property)
 						{	
 							return HeaderType.Property;
 						}
-						else if (d_object is Cpg.LinkAction)
+						else if (d_object is Cdn.LinkAction)
 						{
 							return HeaderType.Action;
 						}
@@ -791,13 +791,13 @@ namespace Cpg.Studio.Widgets
 		{
 			ret[obj] = true;
 			
-			Cpg.Object o = obj as Cpg.Object;
+			Cdn.Object o = obj as Cdn.Object;
 
-			Cpg.Group grp = obj as Cpg.Group;
+			Cdn.Group grp = obj as Cdn.Group;
 						
 			if (grp != null)
 			{
-				foreach (Cpg.Object child in grp.Children)
+				foreach (Cdn.Object child in grp.Children)
 				{
 					AddAll(child, ret);
 				}
@@ -810,17 +810,17 @@ namespace Cpg.Studio.Widgets
 			
 			if (o != null)
 			{			
-				foreach (Cpg.Property prop in o.Properties)
+				foreach (Cdn.Property prop in o.Properties)
 				{
 					d_selected[prop] = true;
 				}
 			}
 			
-			Cpg.Link link = obj as Cpg.Link;
+			Cdn.Link link = obj as Cdn.Link;
 			
 			if (link != null)
 			{
-				foreach (Cpg.LinkAction action in link.Actions)
+				foreach (Cdn.LinkAction action in link.Actions)
 				{
 					d_selected[action] = true;
 				}
@@ -851,7 +851,7 @@ namespace Cpg.Studio.Widgets
 			
 			if (d_searchText.LastIndexOfAny(new char[] {'/', '"', '.', ':', '('}) != -1)
 			{
-				Cpg.Selector selector = null;
+				Cdn.Selector selector = null;
 				string s;
 				
 				if (d_searchText.EndsWith("."))
@@ -865,7 +865,7 @@ namespace Cpg.Studio.Widgets
 
 				try
 				{
-					selector = Cpg.Selector.Parse(d_group, s);
+					selector = Cdn.Selector.Parse(d_group, s);
 				}
 				catch
 				{
@@ -882,9 +882,9 @@ namespace Cpg.Studio.Widgets
 					
 					foreach (Wrappers.Object o in all)
 					{					
-						Cpg.Selection[] selections = selector.Select(o, SelectorType.Any, null);
+						Cdn.Selection[] selections = selector.Select(o, SelectorType.Any, null);
 					
-						foreach (Cpg.Selection sel in selections)
+						foreach (Cdn.Selection sel in selections)
 						{
 							AddAll(GLib.Object.GetObject(sel.Object), d_selected);
 						}

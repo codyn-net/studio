@@ -1,6 +1,6 @@
 using System;
 
-namespace Cpg.Studio.Widgets.Editors
+namespace Cdn.Studio.Widgets.Editors
 {
 	public class Wrapper : Gtk.VBox
 	{
@@ -137,12 +137,12 @@ namespace Cpg.Studio.Widgets.Editors
 			}
 		}
 		
-		public void Select(Cpg.Property property)
+		public void Select(Cdn.Property property)
 		{
 			/* TODO */
 		}
 		
-		public void Select(Cpg.LinkAction action)
+		public void Select(Cdn.LinkAction action)
 		{
 			/* TODO */
 		}

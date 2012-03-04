@@ -1,13 +1,13 @@
 [Desktop Entry]
-Name=cpgstudio
-GenericName=CPG Studio
+Name=cdnstudio
+GenericName=CDN Studio
 Comment=Edit dynamical systems
-Exec=cpgstudio %U
-TryExec=cpgstudio
+Exec=cdnstudio %U
+TryExec=cdnstudio
 Terminal=false
 Type=Application
 StartupNotify=true
-MimeType=text/x-cpg;
-Icon=cpgstudio
+MimeType=text/x-cdn;
+Icon=cdnstudio
 Categories=GNOME;GTK;
-StartupWMClass=Cpgstudio
+StartupWMClass=Cdnstudio
