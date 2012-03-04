@@ -8,13 +8,10 @@ namespace Cpg.Studio.Widgets
 		private VBox d_vbox;
 		private Label d_labelInfo;
 		private EventBox d_eventBox;
-
 		private TextView d_editor;
 		private ScrolledWindow d_editorWindow;
-
 		private string d_info;
 		private string d_title;
-		
 		private Cpg.Annotatable d_annotatable;
 		
 		public event EventHandler TitleChanged = delegate {};
@@ -33,6 +30,8 @@ namespace Cpg.Studio.Widgets
 			d_labelInfo = new Label();
 			d_labelInfo.Show();
 			d_labelInfo.SetAlignment(0, 0);
+			d_labelInfo.Wrap = true;
+			d_labelInfo.LineWrapMode = Pango.WrapMode.WordChar;
 			
 			d_eventBox.Add(d_labelInfo);
 			d_vbox.PackStart(d_eventBox, true, true, 0);
