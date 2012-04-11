@@ -12,7 +12,7 @@ namespace Cdn.Studio.Widgets.Editors
 
 		private Wrappers.Wrapper d_wrapper;
 		private Actions d_actions;
-		private Properties d_properties;
+		private Variables d_properties;
 		private Wrappers.Network d_network;
 		private Function d_function;
 		private PiecewisePolynomial d_piecewise;
@@ -55,7 +55,7 @@ namespace Cdn.Studio.Widgets.Editors
 
 			if (!(d_wrapper is Wrappers.Function))
 			{
-				d_properties = new Properties(d_wrapper, d_actions);
+				d_properties = new Variables(d_wrapper, d_actions);
 				d_properties.Show();
 			
 				d_properties.Error += delegate(object source, Exception exception) {
@@ -79,11 +79,11 @@ namespace Cdn.Studio.Widgets.Editors
 				};
 			}
 					
-			Wrappers.Group grp = d_wrapper as Wrappers.Group;
+			Wrappers.Node grp = d_wrapper as Wrappers.Node;
 			
 			if (grp != null)
 			{
-				Group gp = new Group(grp, d_actions);
+				Node gp = new Node(grp, d_actions);
 				gp.Show();
 				
 				top.PackStart(gp, false, false, 0);
@@ -91,7 +91,7 @@ namespace Cdn.Studio.Widgets.Editors
 
 			PackStart(top, false, false, 0);
 			
-			Wrappers.Link link = d_wrapper as Wrappers.Link;
+			Wrappers.Edge link = d_wrapper as Wrappers.Edge;
 			
 			if (link != null)
 			{
@@ -100,7 +100,7 @@ namespace Cdn.Studio.Widgets.Editors
 
 				paned.Pack1(d_properties, true, true);
 				
-				Link actions = new Link(link, d_actions);
+				Edge actions = new Edge(link, d_actions);
 				actions.Show();
 				
 				paned.Pack2(actions, true, true);
@@ -137,12 +137,12 @@ namespace Cdn.Studio.Widgets.Editors
 			}
 		}
 		
-		public void Select(Cdn.Property property)
+		public void Select(Cdn.Variable property)
 		{
 			/* TODO */
 		}
 		
-		public void Select(Cdn.LinkAction action)
+		public void Select(Cdn.EdgeAction action)
 		{
 			/* TODO */
 		}

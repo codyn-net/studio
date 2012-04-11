@@ -4,7 +4,7 @@ using Biorob.Math;
 namespace Cdn.Studio.Wrappers.Renderers
 {
 	// Only used for generating icons for now
-	public class Link : Renderer
+	public class Edge : Renderer
 	{
 		private static double[] s_normalColor;
 		private static double[] s_selectedColor;
@@ -13,12 +13,11 @@ namespace Cdn.Studio.Wrappers.Renderers
 		private static double[] s_iconColor;
 		private static double[] s_linkColor;
 		private static double s_arrowSize;
-		
 		private Point[] d_controlPoints;
 		private Allocation d_prevFrom;
 		private Allocation d_prevTo;
 
-		static Link()
+		static Edge()
 		{
 			s_normalColor = new double[] {0.7, 0.7, 0.7, 0.6};
 			s_selectedColor = new double[] {0.6, 0.6, 1, 0.6};
@@ -38,19 +37,19 @@ namespace Cdn.Studio.Wrappers.Renderers
 			}
 		}
 		
-		public Link() : base()
+		public Edge() : base()
 		{
 		}
 
-		public Link(Wrappers.Wrapper obj) : base(obj)
+		public Edge(Wrappers.Wrapper obj) : base(obj)
 		{
 		}
 		
-		public new Wrappers.Link WrappedObject
+		public new Wrappers.Edge WrappedObject
 		{
 			get
 			{
-				return (Wrappers.Link)base.WrappedObject;
+				return (Wrappers.Edge)base.WrappedObject;
 			}
 		}
 		
@@ -170,13 +169,13 @@ namespace Cdn.Studio.Wrappers.Renderers
 		
 		public Point[] ControlPoints()
 		{
-			if (WrappedObject.From == null || WrappedObject.To == null)
+			if (WrappedObject.Input == null || WrappedObject.Output == null)
 			{
 				return null;
 			}
 
-			Allocation a1 = WrappedObject.From.Allocation;
-			Allocation a2 = WrappedObject.To.Allocation;
+			Allocation a1 = WrappedObject.Input.Allocation;
+			Allocation a2 = WrappedObject.Output.Allocation;
 			
 			if (d_prevFrom != null && d_prevTo != null && a1.Equals(d_prevFrom) && a2.Equals(d_prevTo))
 			{

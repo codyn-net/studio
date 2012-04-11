@@ -6,7 +6,6 @@ namespace Cdn.Studio.Undo
 	{
 		private int d_dx;
 		private int d_dy;
-		
 		private Group d_mergedGroup;
 
 		public MoveObject(Wrappers.Wrapper wrapped, int dx, int dy) : base(null, wrapped)

@@ -2,13 +2,13 @@ using System;
 
 namespace Cdn.Studio.Wrappers.Renderers
 {
-	public class Input : State
+	public class Io : Node
 	{
-		public Input(Wrappers.Wrapper obj) : base(obj)
+		public Io(Wrappers.Wrapper obj) : base(obj)
 		{
 		}
 		
-		public Input() : this(null)
+		public Io() : this(null)
 		{
 		}
 		

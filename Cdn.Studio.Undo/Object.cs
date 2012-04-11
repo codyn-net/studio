@@ -5,33 +5,31 @@ namespace Cdn.Studio.Undo
 {
 	public class Object
 	{
-		private Wrappers.Group d_parent;
+		private Wrappers.Node d_parent;
 		private Wrappers.Wrapper d_wrapped;
-		
-		private Wrappers.Wrapper d_from;
-		private Wrappers.Wrapper d_to;
-		
+		private Wrappers.Node d_from;
+		private Wrappers.Node d_to;
 		private List<Wrappers.Wrapper> d_templates;
 
-		public Object(Wrappers.Group parent, Wrappers.Wrapper wrapped)
+		public Object(Wrappers.Node parent, Wrappers.Wrapper wrapped)
 		{
 			d_parent = parent;
 			d_wrapped = wrapped;
 			
 			d_templates = new List<Wrappers.Wrapper>();
 			
-			Wrappers.Link link = wrapped as Wrappers.Link;
+			Wrappers.Edge link = wrapped as Wrappers.Edge;
 			
 			if (link != null)
 			{
-				d_from = link.From;
-				d_to = link.To;
+				d_from = link.Input;
+				d_to = link.Output;
 			}
 		}
 		
 		protected void DoAdd()
 		{
-			Wrappers.Link link = d_wrapped as Wrappers.Link;
+			Wrappers.Edge link = d_wrapped as Wrappers.Edge;
 			
 			if (link != null)
 			{
@@ -63,13 +61,13 @@ namespace Cdn.Studio.Undo
 				}
 			}
 
-			Wrappers.Link link = d_wrapped as Wrappers.Link;
+			Wrappers.Edge link = d_wrapped as Wrappers.Edge;
 			
-			if (link != null && link.To != null)
+			if (link != null && link.Output != null)
 			{
 				// Do this so that link offsets are recalculated correctly. This is a bit of a hack
 				// really, and might be solved differently in the distant future, the year 2000
-				link.To.Unlink(link);
+				link.Output.Unlink(link);
 			}
 			
 			d_templates = new List<Wrappers.Wrapper>(d_wrapped.AppliedTemplates);

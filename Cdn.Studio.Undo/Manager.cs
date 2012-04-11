@@ -72,7 +72,7 @@ namespace Cdn.Studio.Undo
 		
 		public void Add(IAction action)
 		{
-			if (action is Group)
+			if (action is Node)
 			{
 				Group grp = (Group)action;
 				

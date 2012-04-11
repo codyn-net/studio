@@ -4,7 +4,7 @@ namespace Cdn.Studio.Undo
 {
 	public class RemoveObject : Object, IAction
 	{
-		public RemoveObject(Wrappers.Group parent, Wrappers.Wrapper wrapped) : base(parent, wrapped)
+		public RemoveObject(Wrappers.Node parent, Wrappers.Wrapper wrapped) : base(parent, wrapped)
 		{
 		}
 

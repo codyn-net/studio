@@ -1,7 +1,7 @@
 dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
-AC_INIT(cdnstudio, 2.1)
+AC_INIT(cdn-studio, 3.0)
 AM_INIT_AUTOMAKE([foreign])
 AM_MAINTAINER_MODE([enable])
 AC_CONFIG_MACRO_DIR([m4])
@@ -51,14 +51,14 @@ PKG_CHECK_MODULES([GLIB_SHARP_20], [glib-sharp-2.0])
 PKG_CHECK_MODULES([GTKSOURCEVIEW_SHARP_20], [gtksourceview2-sharp])
 
 dnl package checks, per config
-PKG_CHECK_MODULES([CDNNETWORK_SHARP], [cdn-network-sharp-2.0])
+PKG_CHECK_MODULES([CDNNETWORK_SHARP], [codyn-sharp-3.0])
 
 PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
 PKG_CHECK_MODULES([PLOT_SHARP], [plot-sharp-1])
 
 dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
-UNSTABLE_INSTALL_ASSEMBLIES="cdn-network-sharp-2.0 biorob-math-sharp-1.0 plot-sharp-1"
+UNSTABLE_INSTALL_ASSEMBLIES="codyn-sharp-3.0 biorob-math-sharp-1.0 plot-sharp-1"
 INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES\"`"
 
 AC_SUBST(INSTALLED_ASSEMBLIES)
@@ -67,7 +67,7 @@ AC_CONFIG_FILES([
 data/Makefile
 data/icons/Makefile
 m4/Makefile
-cdnstudio
+cdn-studio
 Makefile
 Cdn.Studio/Config.cs
 ])

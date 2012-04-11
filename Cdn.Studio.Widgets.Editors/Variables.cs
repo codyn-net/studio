@@ -8,11 +8,11 @@ namespace Cdn.Studio.Widgets.Editors
 	 Gtk.Binding(Gdk.Key.KP_Subtract, "HandleDeleteBinding"),
 	 Gtk.Binding(Gdk.Key.Insert, "HandleAddBinding"),
 	 Gtk.Binding(Gdk.Key.KP_Add, "HandleAddBinding")]
-	public class Properties : Gtk.ScrolledWindow
+	public class Variables : Gtk.ScrolledWindow
 	{
 		private class Node : Widgets.Node
 		{
-			private Cdn.Property d_property;
+			private Cdn.Variable d_variable;
 			
 			public enum Columns
 			{
@@ -26,9 +26,9 @@ namespace Cdn.Studio.Widgets.Editors
 				Style = 7
 			}
 			
-			public Node(Cdn.Property property)
+			public Node(Cdn.Variable property)
 			{
-				d_property = property;
+				d_variable = property;
 				
 				InstallMonitoring();
 			}
@@ -45,47 +45,47 @@ namespace Cdn.Studio.Widgets.Editors
 			
 			private void UninstallMonitoring()
 			{
-				if (d_property == null)
+				if (d_variable == null)
 				{
 					return;
 				}
 				
-				d_property.RemoveNotification("name", OnPropertyChanged);
-				d_property.RemoveNotification("expression", OnPropertyChanged);
-				d_property.RemoveNotification("flags", OnPropertyChanged);
+				d_variable.RemoveNotification("name", OnPropertyChanged);
+				d_variable.RemoveNotification("expression", OnPropertyChanged);
+				d_variable.RemoveNotification("flags", OnPropertyChanged);
 			}
 			
 			private void InstallMonitoring()
 			{
-				if (d_property == null)
+				if (d_variable == null)
 				{
 					return;
 				}
 	
-				d_property.AddNotification("name", OnPropertyChanged);
-				d_property.AddNotification("expression", OnPropertyChanged);
-				d_property.AddNotification("flags", OnPropertyChanged);
+				d_variable.AddNotification("name", OnPropertyChanged);
+				d_variable.AddNotification("expression", OnPropertyChanged);
+				d_variable.AddNotification("flags", OnPropertyChanged);
 			}
 			
-			private void OnPropertyChanged(object o,GLib.NotifyArgs args)
+			private void OnPropertyChanged(object o, GLib.NotifyArgs args)
 			{
 				EmitChanged();
 			}
 			
 			[PrimaryKey]
-			public Cdn.Property Property
+			public Cdn.Variable Variable
 			{
 				get
 				{
-					return d_property;
+					return d_variable;
 				}
 				set
 				{
-					if (d_property != value)
+					if (d_variable != value)
 					{
 						UninstallMonitoring();
 	
-						d_property = value;
+						d_variable = value;
 						
 						InstallMonitoring();
 	
@@ -99,7 +99,7 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				get
 				{
-					return d_property != null ? d_property.Name : "Add...";
+					return d_variable != null ? d_variable.Name : "Add...";
 				}
 			}
 			
@@ -108,7 +108,7 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				get
 				{
-					return d_property != null && d_property.Expression != null ? d_property.Expression.AsString : "";
+					return d_variable != null && d_variable.Expression != null ? d_variable.Expression.AsString : "";
 				}
 			}
 			
@@ -117,7 +117,7 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				get
 				{
-					return d_property != null ? d_property.Integrated : false;
+					return d_variable != null ? d_variable.Integrated : false;
 				}
 			}
 			
@@ -126,15 +126,15 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				get
 				{
-					if (d_property == null)
+					if (d_variable == null)
 					{
 						return "";
 					}
 	
 					// Ignore integrated
-					PropertyFlags filt = d_property.Flags & ~PropertyFlags.Integrated;
+					VariableFlags filt = d_variable.Flags & ~VariableFlags.Integrated;
 	
-					return Property.FlagsToString(filt, 0);
+					return Variable.FlagsToString(filt, 0);
 				}
 			}
 			
@@ -143,7 +143,7 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				get
 				{
-					return d_property != null;
+					return d_variable != null;
 				}
 			}
 			
@@ -161,15 +161,15 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				get
 				{
-					if (d_property == null)
+					if (d_variable == null)
 					{
 						return null;
 					}
 
-					Cdn.Object templ = d_property.Object.GetPropertyTemplate(d_property, false);
+					Cdn.Object templ = d_variable.Object.GetVariableTemplate(d_variable, false);
 					List<string > parts = new List<string>();
 
-					string annotation = d_property.Annotation;
+					string annotation = d_variable.Annotation;
 						
 					if (annotation != null)
 					{
@@ -181,11 +181,11 @@ namespace Cdn.Studio.Widgets.Editors
 						parts.Add(String.Format("<i>From: <tt>{0}</tt></i>", templ.FullIdForDisplay));
 					}
 
-					if (d_property.Expression.Instructions.Length != 0)
+					if (d_variable.Expression.Instructions.Length != 0)
 					{
-						parts.Add(String.Format("<i>Value: <tt>{0}</tt></i>", d_property.Value));
+						parts.Add(String.Format("<i>Value: <tt>{0}</tt></i>", d_variable.Value));
 
-						ExpressionTreeIter it = new ExpressionTreeIter(d_property.Expression);
+						ExpressionTreeIter it = new ExpressionTreeIter(d_variable.Expression);
 						it.Simplify();
 
 						string its = it.ToStringDbg();
@@ -210,15 +210,15 @@ namespace Cdn.Studio.Widgets.Editors
 		
 		private class InterfaceNode : Node
 		{
-			private Cdn.PropertyInterface d_iface;
+			private Cdn.VariableInterface d_iface;
 			private string d_name;
 	
-			public InterfaceNode(Cdn.PropertyInterface iface, string name)
+			public InterfaceNode(Cdn.VariableInterface iface, string name)
 			{
 				d_iface = iface;
 				d_name = name;
 				
-				Property = iface.Lookup(name);
+				Variable = iface.Lookup(name);
 				
 				InstallMonitoring();
 			}
@@ -245,11 +245,11 @@ namespace Cdn.Studio.Widgets.Editors
 				}
 			}
 			
-			public string PropertyName
+			public string VariableName
 			{
 				get
 				{
-					return d_iface.LookupPropertyName(d_name);
+					return d_iface.LookupVariableName(d_name);
 				}
 			}
 			
@@ -257,41 +257,41 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				get
 				{
-					return ChildName + "." + PropertyName;
+					return ChildName + "." + VariableName;
 				}
 			}
 			
 			private void UninstallMonitoring()
 			{
-				d_iface.Group.ChildAdded -= OnChildAdded;
-				d_iface.Group.ChildRemoved -= OnChildRemoved;
-				d_iface.Group.RemoveNotification("proxy", OnProxyChanged);
+				d_iface.Node.ChildAdded -= OnChildAdded;
+				d_iface.Node.ChildRemoved -= OnChildRemoved;
+				d_iface.Node.RemoveNotification("proxy", OnProxyChanged);
 			}
 			
 			private void InstallMonitoring()
 			{
-				d_iface.Group.ChildAdded += OnChildAdded;
-				d_iface.Group.ChildRemoved += OnChildRemoved;
-				d_iface.Group.AddNotification("proxy", OnProxyChanged);
+				d_iface.Node.ChildAdded += OnChildAdded;
+				d_iface.Node.ChildRemoved += OnChildRemoved;
+				d_iface.Node.AddNotification("proxy", OnProxyChanged);
 			}
 	
 			private void OnChildAdded(object o, ChildAddedArgs args)
 			{
-				Property = d_iface.Lookup(d_name);
+				Variable = d_iface.Lookup(d_name);
 			}
 			
 			private void OnChildRemoved(object o, ChildRemovedArgs args)
 			{
-				Property = d_iface.Lookup(d_name);
+				Variable = d_iface.Lookup(d_name);
 			}
 			
 			private void OnProxyChanged(object o, GLib.NotifyArgs args)
 			{
-				Property = d_iface.Lookup(d_name);
+				Variable = d_iface.Lookup(d_name);
 			}
 		}
 
-		public delegate void ErrorHandler(object source, Exception exception);
+		public delegate void ErrorHandler(object source,Exception exception);
 
 		public event ErrorHandler Error = delegate {};
 
@@ -299,14 +299,14 @@ namespace Cdn.Studio.Widgets.Editors
 		private Actions d_actions;
 		private TreeView<Node> d_treeview;
 		private ListStore d_flagsStore;
-		private List<KeyValuePair<string, Cdn.PropertyFlags>> d_flaglist;
+		private List<KeyValuePair<string, Cdn.VariableFlags>> d_flaglist;
 		private Entry d_editingEntry;
 		private string d_editingPath;
 		private bool d_selectProperty;
 		private bool d_blockInterfaceRemove;
 		private Node d_dummy;
 
-		public Properties(Wrappers.Wrapper wrapper, Actions actions)
+		public Variables(Wrappers.Wrapper wrapper, Actions actions)
 		{
 			d_wrapper = wrapper;
 			d_actions = actions;
@@ -327,22 +327,22 @@ namespace Cdn.Studio.Widgets.Editors
 		{
 			d_editingPath = args.Path;
 
-			FillFlagsStore(d_treeview.NodeStore.FindPath(args.Path).Property);
+			FillFlagsStore(d_treeview.NodeStore.FindPath(args.Path).Variable);
 		}
 
-		private void FillFlagsStore(Cdn.Property property)
+		private void FillFlagsStore(Cdn.Variable property)
 		{
 			d_flagsStore.Clear();
 
-			Cdn.PropertyFlags flags = property.Flags;
-			Cdn.PropertyFlags building = Cdn.PropertyFlags.None;
+			Cdn.VariableFlags flags = property.Flags;
+			Cdn.VariableFlags building = Cdn.VariableFlags.None;
 			
 			List<string > items = new List<string>();
-			List<KeyValuePair<string, Cdn.PropertyFlags>> copy = new List<KeyValuePair<string, Cdn.PropertyFlags>>(d_flaglist);
+			List<KeyValuePair<string, Cdn.VariableFlags>> copy = new List<KeyValuePair<string, Cdn.VariableFlags>>(d_flaglist);
 			
 			copy.Reverse();
 			
-			foreach (KeyValuePair<string, Cdn.PropertyFlags> pair in copy)
+			foreach (KeyValuePair<string, Cdn.VariableFlags> pair in copy)
 			{
 				string name = pair.Key;
 				
@@ -366,19 +366,19 @@ namespace Cdn.Studio.Widgets.Editors
 
 		private void InitializeFlagsList()
 		{
-			d_flaglist = new List<KeyValuePair<string, Cdn.PropertyFlags>>();
-			Type type = typeof(Cdn.PropertyFlags);
+			d_flaglist = new List<KeyValuePair<string, Cdn.VariableFlags>>();
+			Type type = typeof(Cdn.VariableFlags);
 
 			Array values = Enum.GetValues(type);
 			
 			for (int i = 0; i < values.Length; ++i)
 			{
-				Cdn.PropertyFlags flags = (Cdn.PropertyFlags)values.GetValue(i);
+				Cdn.VariableFlags flags = (Cdn.VariableFlags)values.GetValue(i);
 				
 				// Don't show 'None' and Integrated is handled separately
-				if ((int)flags != 0 && flags != PropertyFlags.Integrated)
+				if ((int)flags != 0 && flags != VariableFlags.Integrated)
 				{
-					d_flaglist.Add(new KeyValuePair<string, Cdn.PropertyFlags>(Property.FlagsToString(flags, 0), flags));
+					d_flaglist.Add(new KeyValuePair<string, Cdn.VariableFlags>(Variable.FlagsToString(flags, 0), flags));
 				}
 			}
 		}
@@ -423,7 +423,7 @@ namespace Cdn.Studio.Widgets.Editors
 				
 				Node node = d_treeview.NodeStore.FindPath(new TreePath(args.Path));
 				
-				if (node.Property == null && !(node is InterfaceNode))
+				if (node.Variable == null && !(node is InterfaceNode))
 				{
 					d_editingEntry.Text = "";
 				}
@@ -509,7 +509,7 @@ namespace Cdn.Studio.Widgets.Editors
 			
 			column.MinWidth = 50;
 			
-			if (d_wrapper != null && d_wrapper is Wrappers.Group)
+			if (d_wrapper != null && d_wrapper is Wrappers.Node)
 			{
 				renderer = new Gtk.CellRendererText();
 
@@ -665,7 +665,7 @@ namespace Cdn.Studio.Widgets.Editors
 			return null;
 		}
 		
-		private delegate void EditedHandler(string text, string path);
+		private delegate void EditedHandler(string text,string path);
 		
 		private void OnEntryKeyPressed(KeyPressEventArgs args, CellRenderer renderer, EditedHandler handler)
 		{
@@ -713,18 +713,18 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 
-			foreach (Cdn.Property prop in d_wrapper.Properties)
+			foreach (Cdn.Variable prop in d_wrapper.Variables)
 			{
 				d_treeview.NodeStore.Add(new Node(prop));
 			}
 			
-			Wrappers.Group grp = d_wrapper as Wrappers.Group;
+			Wrappers.Node grp = d_wrapper as Wrappers.Node;
 
 			if (grp != null)
 			{
-				foreach (string name in grp.PropertyInterface.Names)
+				foreach (string name in grp.VariableInterface.Names)
 				{
-					d_treeview.NodeStore.Add(new InterfaceNode(grp.PropertyInterface, name));
+					d_treeview.NodeStore.Add(new InterfaceNode(grp.VariableInterface, name));
 				}
 			}
 			
@@ -742,16 +742,16 @@ namespace Cdn.Studio.Widgets.Editors
 			bool fromtemp = false;
 			bool overridden = false;
 			
-			if (node.Property != null)
+			if (node.Variable != null)
 			{
-				fromtemp = (node.Property.Object.GetPropertyTemplate(node.Property, true) != null);
-				overridden = (node.Property.Object.GetPropertyTemplate(node.Property, false) != null);
+				fromtemp = (node.Variable.Object.GetVariableTemplate(node.Variable, true) != null);
+				overridden = (node.Variable.Object.GetVariableTemplate(node.Variable, false) != null);
 			}
 			
 			text.Weight = (int)Pango.Weight.Normal;
 			text.Style = Pango.Style.Normal;
 			
-			if (node.Property == null)
+			if (node.Variable == null)
 			{
 				if (node is InterfaceNode)
 				{
@@ -799,25 +799,25 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 			
-			d_wrapper.PropertyAdded -= DoPropertyAdded;
-			d_wrapper.PropertyRemoved -= DoPropertyRemoved;
+			d_wrapper.VariableAdded -= DoVariableAdded;
+			d_wrapper.VariableRemoved -= DoVariableRemoved;
 			
-			if (d_wrapper is Wrappers.Group && !ObjectIsNetwork)
+			if (d_wrapper is Wrappers.Node && !ObjectIsNetwork)
 			{
-				Cdn.PropertyInterface iface = (d_wrapper as Wrappers.Group).PropertyInterface;
+				Cdn.VariableInterface iface = (d_wrapper as Wrappers.Node).VariableInterface;
 				
-				iface.Added -= HandleGroupInterfacePropertyAdded;
-				iface.Removed -= HandleGroupInterfacePropertyRemoved;
+				iface.Added -= HandleGroupInterfaceVariableAdded;
+				iface.Removed -= HandleGroupInterfaceVariableRemoved;
 			}
 		}
 		
-		private void HandleGroupInterfacePropertyAdded(object source, Cdn.AddedArgs args)
+		private void HandleGroupInterfaceVariableAdded(object source, Cdn.AddedArgs args)
 		{
-			Wrappers.Group grp = (Wrappers.Group)d_wrapper;
+			Wrappers.Node grp = (Wrappers.Node)d_wrapper;
 			
 			if (!d_blockInterfaceRemove)
 			{
-				d_treeview.NodeStore.Add(new InterfaceNode(grp.PropertyInterface, args.Name));
+				d_treeview.NodeStore.Add(new InterfaceNode(grp.VariableInterface, args.Name));
 			}
 			else
 			{
@@ -830,7 +830,7 @@ namespace Cdn.Studio.Widgets.Editors
 			}
 		}
 		
-		private void HandleGroupInterfacePropertyRemoved(object source, Cdn.RemovedArgs args)
+		private void HandleGroupInterfaceVariableRemoved(object source, Cdn.RemovedArgs args)
 		{
 			if (!d_blockInterfaceRemove)
 			{
@@ -845,34 +845,34 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 			
-			d_wrapper.PropertyAdded += DoPropertyAdded;
-			d_wrapper.PropertyRemoved += DoPropertyRemoved;
+			d_wrapper.VariableAdded += DoVariableAdded;
+			d_wrapper.VariableRemoved += DoVariableRemoved;
 			
-			if (d_wrapper is Wrappers.Group && !ObjectIsNetwork)
+			if (d_wrapper is Wrappers.Node && !ObjectIsNetwork)
 			{
-				Cdn.PropertyInterface iface = (d_wrapper as Wrappers.Group).PropertyInterface;
+				Cdn.VariableInterface iface = (d_wrapper as Wrappers.Node).VariableInterface;
 				
-				iface.Added += HandleGroupInterfacePropertyAdded;
-				iface.Removed += HandleGroupInterfacePropertyRemoved;
+				iface.Added += HandleGroupInterfaceVariableAdded;
+				iface.Removed += HandleGroupInterfaceVariableRemoved;
 			}
 		}
 
 		private void DoIntegratedToggled(object source, ToggledArgs args)
 		{
 			Node node = d_treeview.NodeStore.FindPath(args.Path);
-			PropertyFlags flags = node.Property.Flags;
+			VariableFlags flags = node.Variable.Flags;
 			CellRendererToggle toggle = (CellRendererToggle)source;
 			
 			if (!toggle.Active)
 			{
-				flags |= PropertyFlags.Integrated;
+				flags |= VariableFlags.Integrated;
 			}
 			else
 			{
-				flags &= ~PropertyFlags.Integrated;
+				flags &= ~VariableFlags.Integrated;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Property, flags));
+			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Variable, flags));
 		}
 		
 		private void DoFlagsEdited(object source, EditedArgs args)
@@ -893,11 +893,11 @@ namespace Cdn.Studio.Widgets.Editors
 				name = name.Substring(2);
 			}
 
-			Cdn.PropertyFlags add_flags;
-			Cdn.PropertyFlags remove_flags;
+			Cdn.VariableFlags add_flags;
+			Cdn.VariableFlags remove_flags;
 			
-			Property.FlagsFromString(name, out add_flags, out remove_flags);
-			Cdn.PropertyFlags newflags = node.Property.Flags;
+			Variable.FlagsFromString(name, out add_flags, out remove_flags);
+			Cdn.VariableFlags newflags = node.Variable.Flags;
 
 			if (wason)
 			{
@@ -908,12 +908,12 @@ namespace Cdn.Studio.Widgets.Editors
 				newflags |= add_flags;
 			}
 			
-			if (newflags == node.Property.Flags)
+			if (newflags == node.Variable.Flags)
 			{
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Property, newflags));
+			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Variable, newflags));
 		}
 		
 		private void ExpressionEdited(string newValue, string path)
@@ -925,12 +925,12 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 			
-			if (newValue.Trim() == node.Property.Expression.AsString)
+			if (newValue.Trim() == node.Variable.Expression.AsString)
 			{
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Property, newValue.Trim()));
+			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Variable, newValue.Trim()));
 		}
 		
 		private void DoExpressionEdited(object source, EditedArgs args)
@@ -984,19 +984,19 @@ namespace Cdn.Studio.Widgets.Editors
 				if (val == "")
 				{
 					// Remove interface
-					actions.Add(new Undo.RemoveInterfaceProperty((Wrappers.Group)d_wrapper, n.Name, n.ChildName, n.PropertyName));
+					actions.Add(new Undo.RemoveInterfaceVariable((Wrappers.Node)d_wrapper, n.Name, n.ChildName, n.VariableName));
 					
 					string expr = "0";
-					Cdn.PropertyFlags flags = Cdn.PropertyFlags.None;
+					Cdn.VariableFlags flags = Cdn.VariableFlags.None;
 					
-					if (node.Property != null)
+					if (node.Variable != null)
 					{
-						expr = node.Property.Expression.AsString;
-						flags = node.Property.Flags;
+						expr = node.Variable.Expression.AsString;
+						flags = node.Variable.Flags;
 					}
 
 					// Add normal property instead
-					actions.Add(new Undo.AddProperty(d_wrapper, n.Name, expr, flags));
+					actions.Add(new Undo.AddVariable(d_wrapper, n.Name, expr, flags));
 				}
 				else
 				{
@@ -1010,8 +1010,8 @@ namespace Cdn.Studio.Widgets.Editors
 
 					d_blockInterfaceRemove = true;
 
-					actions.Add(new Undo.RemoveInterfaceProperty((Wrappers.Group)d_wrapper, n.Name, n.ChildName, n.PropertyName));
-					actions.Add(new Undo.AddInterfaceProperty((Wrappers.Group)d_wrapper, n.Name, child, prop));
+					actions.Add(new Undo.RemoveInterfaceVariable((Wrappers.Node)d_wrapper, n.Name, n.ChildName, n.VariableName));
+					actions.Add(new Undo.AddInterfaceProperty((Wrappers.Node)d_wrapper, n.Name, child, prop));
 				}
 			}
 			else if (val != "")
@@ -1024,8 +1024,8 @@ namespace Cdn.Studio.Widgets.Editors
 					return;
 				}
 
-				actions.Add(new Undo.RemoveProperty(d_wrapper, node.Property));
-				actions.Add(new Undo.AddInterfaceProperty((Wrappers.Group)d_wrapper, node.Property.Name, child, prop));
+				actions.Add(new Undo.RemoveVariable(d_wrapper, node.Variable));
+				actions.Add(new Undo.AddInterfaceProperty((Wrappers.Node)d_wrapper, node.Variable.Name, child, prop));
 			}
 			else
 			{
@@ -1064,12 +1064,12 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 			
-			if (!(node is InterfaceNode) && node.Property == null)
+			if (!(node is InterfaceNode) && node.Variable == null)
 			{
 				/* Add a new property */
 				try
 				{
-					d_actions.Do(new Undo.AddProperty(d_wrapper, newName.Trim(), "", PropertyFlags.None));
+					d_actions.Do(new Undo.AddVariable(d_wrapper, newName.Trim(), "", VariableFlags.None));
 				}
 				catch (GLib.GException err)
 				{
@@ -1080,7 +1080,7 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 			
-			if (newName.Trim() == node.Property.Name)
+			if (newName.Trim() == node.Variable.Name)
 			{
 				return;
 			}
@@ -1091,13 +1091,13 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				InterfaceNode n = (InterfaceNode)node;
 
-				actions.Add(new Undo.RemoveInterfaceProperty((Wrappers.Group)d_wrapper, n.Name, n.ChildName, n.PropertyName));
-				actions.Add(new Undo.AddInterfaceProperty((Wrappers.Group)d_wrapper, newName.Trim(), n.ChildName, n.PropertyName));
+				actions.Add(new Undo.RemoveInterfaceVariable((Wrappers.Node)d_wrapper, n.Name, n.ChildName, n.VariableName));
+				actions.Add(new Undo.AddInterfaceProperty((Wrappers.Node)d_wrapper, newName.Trim(), n.ChildName, n.VariableName));
 			}
 			else
 			{
-				actions.Add(new Undo.RemoveProperty(d_wrapper, node.Property));
-				actions.Add(new Undo.AddProperty(d_wrapper, newName.Trim(), node.Property.Expression.AsString, node.Property.Flags));
+				actions.Add(new Undo.RemoveVariable(d_wrapper, node.Variable));
+				actions.Add(new Undo.AddVariable(d_wrapper, newName.Trim(), node.Variable.Expression.AsString, node.Variable.Flags));
 			}
 			
 			try
@@ -1124,19 +1124,19 @@ namespace Cdn.Studio.Widgets.Editors
 		
 		private bool PropertyExists(string name)
 		{
-			if (d_wrapper.Property(name) != null)
+			if (d_wrapper.Variable(name) != null)
 			{
 				return true;
 			}
 			
-			Wrappers.Group grp = d_wrapper as Wrappers.Group;
+			Wrappers.Node grp = d_wrapper as Wrappers.Node;
 			
 			if (grp == null)
 			{
 				return false;
 			}
 			
-			return grp.PropertyInterface.Implements(name);
+			return grp.VariableInterface.Implements(name);
 		}
 		
 		private void DoAddProperty()
@@ -1149,7 +1149,7 @@ namespace Cdn.Studio.Widgets.Editors
 			}
 			
 			d_selectProperty = true;
-			d_actions.Do(new Undo.AddProperty(d_wrapper, "x" + num, "0", Cdn.PropertyFlags.None));
+			d_actions.Do(new Undo.AddVariable(d_wrapper, "x" + num, "0", Cdn.VariableFlags.None));
 			d_selectProperty = false;
 		}
 		
@@ -1171,18 +1171,18 @@ namespace Cdn.Studio.Widgets.Editors
 					continue;
 				}
 				
-				Wrappers.Wrapper temp = d_wrapper.GetPropertyTemplate(node.Property, false);
+				Wrappers.Wrapper temp = d_wrapper.GetVariableTemplate(node.Variable, false);
 				
 				if (temp != null)
 				{
-					Cdn.Property tempProp = temp.Property(node.Property.Name);
+					Cdn.Variable tempProp = temp.Variable(node.Variable.Name);
 
-					actions.Add(new Undo.ModifyProperty(d_wrapper, node.Property, tempProp.Expression.AsString));
-					actions.Add(new Undo.ModifyProperty(d_wrapper, node.Property, tempProp.Flags));
+					actions.Add(new Undo.ModifyProperty(d_wrapper, node.Variable, tempProp.Expression.AsString));
+					actions.Add(new Undo.ModifyProperty(d_wrapper, node.Variable, tempProp.Flags));
 				}
 				else
 				{
-					actions.Add(new Undo.RemoveProperty(d_wrapper, node.Property));
+					actions.Add(new Undo.RemoveVariable(d_wrapper, node.Variable));
 				}
 			}
 
@@ -1197,7 +1197,7 @@ namespace Cdn.Studio.Widgets.Editors
 			}
 		}
 		
-		private void DoPropertyAdded(Wrappers.Wrapper obj, Cdn.Property prop)
+		private void DoVariableAdded(Wrappers.Wrapper obj, Cdn.Variable prop)
 		{
 			Node node = new Node(prop);
 
@@ -1214,7 +1214,7 @@ namespace Cdn.Studio.Widgets.Editors
 			}
 		}
 		
-		private void DoPropertyRemoved(Wrappers.Wrapper obj, Cdn.Property prop)
+		private void DoVariableRemoved(Wrappers.Wrapper obj, Cdn.Variable prop)
 		{
 			d_treeview.NodeStore.Remove(prop);
 		}

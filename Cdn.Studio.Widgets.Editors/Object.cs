@@ -194,8 +194,8 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				Gtk.Window par = (Gtk.Window)Toplevel;
 
-				d_findTemplate = new Dialogs.FindTemplate(d_network.TemplateGroup, delegate (Wrappers.Wrapper node) {
-					return (node is Wrappers.Link) == (d_object is Wrappers.Link);
+				d_findTemplate = new Dialogs.FindTemplate(d_network.TemplateNode, delegate (Wrappers.Wrapper node) {
+					return (node is Wrappers.Edge) == (d_object is Wrappers.Edge);
 				}, par);
 				
 				d_findTemplate.Destroyed += delegate (object sr, EventArgs ar)

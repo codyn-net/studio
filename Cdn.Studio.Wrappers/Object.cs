@@ -6,7 +6,7 @@ namespace Cdn.Studio.Wrappers
 	{
 		protected Object(Cdn.Object obj) : base(obj)
 		{
-			Renderer = new Renderers.State(this);
+			Renderer = new Renderers.Node(this);
 		}
 
 		public Object() : this("state")

@@ -4,7 +4,7 @@ bin
 config.log
 config.status
 configure
-cdnstudio
+cdn-studio
 *.tar.gz
 cdnstudio.pidb
 cdnstudio.userprefs

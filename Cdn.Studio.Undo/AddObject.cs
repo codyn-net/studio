@@ -4,7 +4,7 @@ namespace Cdn.Studio.Undo
 {
 	public class AddObject : Object, IAction
 	{
-		public AddObject(Wrappers.Group parent, Wrappers.Wrapper wrapped) : base(parent, wrapped)
+		public AddObject(Wrappers.Node parent, Wrappers.Wrapper wrapped) : base(parent, wrapped)
 		{
 		}
 		

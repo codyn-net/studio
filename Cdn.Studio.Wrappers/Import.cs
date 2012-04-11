@@ -2,7 +2,7 @@ using System;
 
 namespace Cdn.Studio.Wrappers
 {
-	public class Import : Group
+	public class Import : Node
 	{		
 		protected Import(Cdn.Import obj) : base(obj)
 		{
@@ -12,7 +12,7 @@ namespace Cdn.Studio.Wrappers
 		{
 		}
 		
-		public Import(Wrappers.Network network, Wrappers.Group parent, string id, string filename) : this(new Cdn.Import(network, parent, id, filename))
+		public Import(Wrappers.Network network, Wrappers.Node parent, string id, string filename) : this(new Cdn.Import(network, parent, id, filename))
 		{
 		}
 		

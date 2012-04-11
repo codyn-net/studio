@@ -13,7 +13,7 @@ namespace Cdn.Studio
 			d_undoManager = undoManager;
 		}
 		
-		public Wrappers.Object[] AddFunction(Wrappers.Group parent, double x, double y)
+		public Wrappers.Object[] AddFunction(Wrappers.Node parent, double x, double y)
 		{
 			Wrappers.Function func = new Wrappers.Function();
 			func.Allocation = new Allocation(x, y, 1, 1);
@@ -23,7 +23,7 @@ namespace Cdn.Studio
 			return new Wrappers.Object[] {func};
 		}
 		
-		public Wrappers.Object[] AddPiecewisePolynomial(Wrappers.Group parent, double x, double y)
+		public Wrappers.Object[] AddPiecewisePolynomial(Wrappers.Node parent, double x, double y)
 		{
 			Wrappers.FunctionPolynomial func = new Wrappers.FunctionPolynomial();
 			func.Allocation = new Allocation(x, y, 1, 1);
@@ -33,43 +33,22 @@ namespace Cdn.Studio
 			return new Wrappers.Object[] {func};
 		}
 		
-		public Wrappers.Object[] AddState(Wrappers.Group parent, double x, double y)
+		public Wrappers.Object[] AddNode(Wrappers.Node parent, double x, double y)
 		{
-			Wrappers.Object state = new Wrappers.Object();
-			state.Allocation = new Allocation(x, y, 1, 1);
+			Wrappers.Node node = new Wrappers.Node();
+			node.Allocation = new Allocation(x, y, 1, 1);
 			
-			Do(new Undo.AddObject(parent, state));
+			Do(new Undo.AddObject(parent, node));
 			
-			return new Wrappers.Object[] {state};
+			return new Wrappers.Object[] {node};
 		}
 		
-		public Wrappers.Object[] AddGroup(Wrappers.Group parent, double x, double y)
-		{
-			Wrappers.Object state = new Wrappers.Group();
-			state.Allocation = new Allocation(x, y, 1, 1);
-			
-			Do(new Undo.AddObject(parent, state));
-			
-			return new Wrappers.Object[] {state};
-		}
-		
-		public Wrappers.Object[] AddInputFile(Wrappers.Group parent, double x, double y)
-		{
-			Wrappers.InputFile ret = new Wrappers.InputFile();
-			
-			ret.Allocation = new Allocation(x, y, 1, 1);
-			
-			Do(new Undo.AddObject(parent, ret));
-			
-			return new Wrappers.Object[] {ret};
-		}
-		
-		public void AddObject(Wrappers.Group parent, Wrappers.Wrapper wrapper)
+		public void AddObject(Wrappers.Node parent, Wrappers.Wrapper wrapper)
 		{
 			AddObject(parent, wrapper, wrapper.Allocation.X, wrapper.Allocation.Y);
 		}
 		
-		public void AddObject(Wrappers.Group parent, Wrappers.Wrapper wrapper, double x, double y)
+		public void AddObject(Wrappers.Node parent, Wrappers.Wrapper wrapper, double x, double y)
 		{
 			wrapper.Allocation.X = x;
 			wrapper.Allocation.Y = y;
@@ -77,36 +56,36 @@ namespace Cdn.Studio
 			Do(new Undo.AddObject(parent, wrapper));
 		}
 		
-		private IEnumerable<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>> GetLinkPairs(Wrappers.Wrapper[] selection)
+		private IEnumerable<KeyValuePair<Wrappers.Node, Wrappers.Node>> GetLinkPairs(Wrappers.Wrapper[] selection)
 		{
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 
-			sel.RemoveAll(item => item is Wrappers.Link);
+			sel.RemoveAll(item => !(item is Wrappers.Node));
 			
 			if (sel.Count == 0)
 			{
-				yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(null, null);
+				yield return new KeyValuePair<Wrappers.Node, Wrappers.Node>(null, null);
 			}
 			else if (sel.Count == 1)
 			{
 				// Self link
-				yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(sel[0], sel[0]);
+				yield return new KeyValuePair<Wrappers.Node, Wrappers.Node>(sel[0] as Wrappers.Node, sel[0] as Wrappers.Node);
 			}
 			else
 			{			
 				// Separate source and target selection
-				List<Wrappers.Wrapper> source = new List<Wrappers.Wrapper>();
-				List<Wrappers.Wrapper> target = new List<Wrappers.Wrapper>();
+				List<Wrappers.Node> source = new List<Wrappers.Node>();
+				List<Wrappers.Node> target = new List<Wrappers.Node>();
 				
 				foreach (Wrappers.Wrapper wrapper in sel)
 				{
 					if (wrapper.SelectedAlt)
 					{
-						target.Add(wrapper);
+						target.Add(wrapper as Wrappers.Node);
 					}
 					else
 					{
-						source.Add(wrapper);
+						source.Add(wrapper as Wrappers.Node);
 					}
 				}
 				
@@ -123,27 +102,27 @@ namespace Cdn.Studio
 						// Don't do self coupling though
 						if (source[i] != target[j])
 						{
-							yield return new KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>(source[i], target[j]);
+							yield return new KeyValuePair<Wrappers.Node, Wrappers.Node>(source[i], target[j]);
 						}
 					}
 				}
 			}
 		}
 		
-		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Wrapper[] selection, double cx, double cy)
+		public Wrappers.Edge[] AddEdge(Wrappers.Node parent, Wrappers.Wrapper[] selection, double cx, double cy)
 		{
-			return AddLink(parent, null, selection, cx, cy);
+			return AddEdge(parent, null, selection, cx, cy);
 		}
 		
-		public Wrappers.Link[] AddLink(Wrappers.Group parent, Wrappers.Link temp, Wrappers.Wrapper[] selection, double cx, double cy)
+		public Wrappers.Edge[] AddEdge(Wrappers.Node parent, Wrappers.Edge temp, Wrappers.Wrapper[] selection, double cx, double cy)
 		{
 			// Add links from source to target selection. If there is no target selection, use source selection also as target selection
 			List<Undo.IAction> actions = new List<Undo.IAction>();
-			List<Wrappers.Link> ret = new List<Wrappers.Link>();
+			List<Wrappers.Edge> ret = new List<Wrappers.Edge>();
 			
-			foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper> pair in GetLinkPairs(selection))
+			foreach (KeyValuePair<Wrappers.Node, Wrappers.Node> pair in GetLinkPairs(selection))
 			{
-				Wrappers.Link link;
+				Wrappers.Edge link;
 				
 				string name;
 				
@@ -158,11 +137,11 @@ namespace Cdn.Studio
 
 				if (temp == null)
 				{
-					link = (Wrappers.Link)Wrappers.Wrapper.Wrap(new Cdn.Link(name, pair.Key, pair.Value));
+					link = (Wrappers.Edge)Wrappers.Wrapper.Wrap(new Cdn.Edge(name, pair.Key, pair.Value));
 				}
 				else
 				{
-					link = (Wrappers.Link)temp.CopyAsTemplate();
+					link = (Wrappers.Edge)temp.CopyAsTemplate();
 					link.Id = name;
 				 
 					link.Attach(pair.Key, pair.Value);
@@ -184,10 +163,10 @@ namespace Cdn.Studio
 		
 		private bool OnlyLinks(List<Wrappers.Wrapper> wrappers)
 		{
-			return !wrappers.Exists(item => !(item is Wrappers.Link));
+			return !wrappers.Exists(item => !(item is Wrappers.Edge));
 		}
 		
-		private List<Wrappers.Wrapper> NormalizeSelection(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		private List<Wrappers.Wrapper> NormalizeSelection(Wrappers.Node parent, Wrappers.Wrapper[] selection)
 		{
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 			
@@ -195,14 +174,14 @@ namespace Cdn.Studio
 			{
 				foreach (Wrappers.Wrapper child in parent.Children)
 				{
-					if (sel.Contains(child) || !(child is Wrappers.Link))
+					if (sel.Contains(child) || !(child is Wrappers.Edge))
 					{
 						continue;
 					}
 					
-					Wrappers.Link link = (Wrappers.Link)child;
+					Wrappers.Edge link = (Wrappers.Edge)child;
 				
-					if (sel.Contains(link.To) || sel.Contains(link.From))
+					if (sel.Contains(link.Output) || sel.Contains(link.Input))
 					{
 						sel.Insert(0, link);
 					}
@@ -217,9 +196,9 @@ namespace Cdn.Studio
 				}
 
 				sel.RemoveAll(delegate (Wrappers.Wrapper wrapper) {
-					Wrappers.Link link = wrapper as Wrappers.Link;
+					Wrappers.Edge link = wrapper as Wrappers.Edge;
 				
-					return link != null && !(sel.Contains(link.To) && sel.Contains(link.From));
+					return link != null && !(sel.Contains(link.Output) && sel.Contains(link.Input));
 				});
 			}
 			
@@ -231,7 +210,7 @@ namespace Cdn.Studio
 			return NormalizeSelection(null, selection);
 		}
 		
-		public void Delete(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		public void Delete(Wrappers.Node parent, Wrappers.Wrapper[] selection)
 		{
 			List<Wrappers.Wrapper> sel = NormalizeSelection(parent, selection);
 			
@@ -251,27 +230,27 @@ namespace Cdn.Studio
 			Do(new Undo.Group(actions));
 		}
 		
-		public Wrappers.Group Group(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		public Wrappers.Node Group(Wrappers.Node parent, Wrappers.Wrapper[] selection)
 		{
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 
 			// Collect all the links that go from or to the group, but are not fully in there
 			Wrappers.Wrapper proxy = null;
 
-			List<Wrappers.Link> proxyLinks = new List<Wrappers.Link>();
+			List<Wrappers.Edge> proxyLinks = new List<Wrappers.Edge>();
 
-			foreach (Wrappers.Link link in Utils.FilterLink(parent.Children))
+			foreach (Wrappers.Edge link in Utils.FilterLink(parent.Children))
 			{
-				bool containsTo = sel.Contains(link.To);
-				bool containsFrom = sel.Contains(link.From);
+				bool containsTo = sel.Contains(link.Output);
+				bool containsFrom = sel.Contains(link.Input);
 
 				if (containsTo != containsFrom)
 				{
 					if (proxy == null)
 					{
-						proxy = containsTo ? link.To : link.From;
+						proxy = containsTo ? link.Output : link.Input;
 					}
-					else if ((containsTo && link.To != proxy) || (containsFrom && link.From != proxy))
+					else if ((containsTo && link.Output != proxy) || (containsFrom && link.Input != proxy))
 					{
 						throw new Exception(String.Format("Links outside the group are acting on different objects in the group. The current behavior of the network cannot be preserved."));
 					}
@@ -299,14 +278,14 @@ namespace Cdn.Studio
 			
 			foreach (Wrappers.Wrapper wrapper in sel)
 			{
-				Wrappers.Link link = wrapper as Wrappers.Link;
+				Wrappers.Edge link = wrapper as Wrappers.Edge;
 				
-				if (link == null || (sel.Contains(link.To) && sel.Contains(link.From)))
+				if (link == null || (sel.Contains(link.Output) && sel.Contains(link.Input)))
 				{
 					ingroup.Add(wrapper);
 				}
 				
-				if (proxy == null && !(wrapper is Wrappers.Link))
+				if (proxy == null && !(wrapper is Wrappers.Edge))
 				{
 					proxy = wrapper;
 				}
@@ -320,7 +299,7 @@ namespace Cdn.Studio
 			
 			xy = Utils.MeanPosition(ingroup);
 
-			Wrappers.Group newGroup = new Wrappers.Group();
+			Wrappers.Node newGroup = new Wrappers.Node();
 			newGroup.Allocation.X = (int)xy.X;
 			newGroup.Allocation.Y = (int)xy.Y;
 			
@@ -335,7 +314,7 @@ namespace Cdn.Studio
 			foreach (Wrappers.Wrapper wrapper in ingroup)
 			{
 				// Move object to center at 0, 0 in the group
-				if (!(wrapper is Wrappers.Link))
+				if (!(wrapper is Wrappers.Edge))
 				{
 					actions.Add(new Undo.MoveObject(wrapper, -(int)xy.X, -(int)xy.Y));
 				}
@@ -351,29 +330,29 @@ namespace Cdn.Studio
 			}
 			
 			// Then reconnect all the proxy links to the group instead
-			foreach (Wrappers.Link link in proxyLinks)
+			foreach (Wrappers.Edge link in proxyLinks)
 			{
-				if (sel.Contains(link.From))
+				if (sel.Contains(link.Input))
 				{
-					actions.Add(new Undo.AttachLink(link, newGroup, link.To));
+					actions.Add(new Undo.AttachEdge(link, newGroup, link.Output));
 				}
 				else
 				{
-					actions.Add(new Undo.AttachLink(link, link.From, newGroup));
+					actions.Add(new Undo.AttachEdge(link, link.Input, newGroup));
 				}
 			}
 			
-			Do(new Undo.AddGroup(newGroup, actions));
+			Do(new Undo.AddNode(newGroup, actions));
 			return newGroup;
 		}
 		
-		public void Ungroup(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		public void Ungroup(Wrappers.Node parent, Wrappers.Wrapper[] selection)
 		{
 			List<Undo.IAction> actions = new List<Undo.IAction>();
 			
 			foreach (Wrappers.Wrapper wrapper in selection)
 			{
-				Wrappers.Group grp = wrapper as Wrappers.Group;
+				Wrappers.Node grp = wrapper as Wrappers.Node;
 				
 				if (grp != null)
 				{
@@ -396,9 +375,9 @@ namespace Cdn.Studio
 				return true;
 			}
 			
-			foreach (Wrappers.Link link in Utils.FilterLink(grp.Parent.Children))
+			foreach (Wrappers.Edge link in Utils.FilterLink(grp.Parent.Children))
 			{
-				if (link.From == grp)
+				if (link.Input == grp)
 				{
 					return true;
 				}
@@ -407,7 +386,7 @@ namespace Cdn.Studio
 			return false;
 		}
 		
-		private Undo.IAction[] Ungroup(Wrappers.Group parent, Wrappers.Group grp)
+		private Undo.IAction[] Ungroup(Wrappers.Node parent, Wrappers.Node grp)
 		{
 			// Check if links can be redirected to the proxy
 			if (HasLinks(grp) && grp.Proxy == null)
@@ -439,7 +418,7 @@ namespace Cdn.Studio
 			
 			foreach (Wrappers.Wrapper wrapper in grp.Children)
 			{
-				if (!(wrapper is Wrappers.Link))
+				if (!(wrapper is Wrappers.Edge))
 				{
 					// Center the objects around the position of the group
 					actions.Add(new Undo.MoveObject(wrapper, dx, dy));
@@ -450,30 +429,30 @@ namespace Cdn.Studio
 			}
 			
 			// Reattach any links coming from or going to the group, redirect to proxy
-			foreach (Wrappers.Link link in Utils.FilterLink(grp.Parent.Children))
+			foreach (Wrappers.Edge link in Utils.FilterLink(grp.Parent.Children))
 			{
-				if (link.To == grp && link.From == grp)
+				if (link.Output == grp && link.Input == grp)
 				{
-					actions.Add(new Undo.AttachLink(link, grp.Proxy, grp.Proxy));
+					actions.Add(new Undo.AttachEdge(link, grp.Proxy as Wrappers.Node, grp.Proxy as Wrappers.Node));
 				}
-				else if (link.To == grp)
+				else if (link.Output == grp)
 				{
-					actions.Add(new Undo.AttachLink(link, link.From, grp.Proxy));
+					actions.Add(new Undo.AttachEdge(link, link.Input, grp.Proxy as Wrappers.Node));
 				}
-				else if (link.From == grp)
+				else if (link.Input == grp)
 				{
-					actions.Add(new Undo.AttachLink(link, grp.Proxy, link.To));
+					actions.Add(new Undo.AttachEdge(link, grp.Proxy as Wrappers.Node, link.Output));
 				}
 			}
 			
 			// Copy properties defined on the group to the proxy
 			if (grp.Proxy != null)
 			{
-				foreach (Cdn.Property prop in grp.Properties)
+				foreach (Cdn.Variable prop in grp.Variables)
 				{
-					if (!grp.PropertyIsProxy(prop.Name))
+					if (!grp.VariableIsProxy(prop.Name))
 					{
-						actions.Add(new Undo.AddProperty(grp.Proxy, prop));
+						actions.Add(new Undo.AddVariable(grp.Proxy, prop));
 					}
 				}
 			}
@@ -503,15 +482,15 @@ namespace Cdn.Studio
 			}
 			
 			// Reconnect links
-			foreach (Wrappers.Link link in Utils.FilterLink(sel))
+			foreach (Wrappers.Edge link in Utils.FilterLink(sel))
 			{
-				if ((link.From != null && map.ContainsKey(link.From)) &&
-				    (link.To != null && map.ContainsKey(link.To)))
+				if ((link.Input != null && map.ContainsKey(link.Input)) &&
+				    (link.Output != null && map.ContainsKey(link.Output)))
 				{
-					Wrappers.Wrapper from = map[link.From];
-					Wrappers.Wrapper to = map[link.To];
+					Wrappers.Node from = map[link.Input] as Wrappers.Node;
+					Wrappers.Node to = map[link.Output] as Wrappers.Node;
 				
-					Wrappers.Link target = (Wrappers.Link)map[link.WrappedObject];
+					Wrappers.Edge target = (Wrappers.Edge)map[link.WrappedObject];
 					target.Attach(from, to);
 				}
 			}
@@ -533,13 +512,13 @@ namespace Cdn.Studio
 			// TODO: serialize to XML too
 		}
 		
-		public void Cut(Wrappers.Group parent, Wrappers.Wrapper[] selection)
+		public void Cut(Wrappers.Node parent, Wrappers.Wrapper[] selection)
 		{
 			Copy(selection);
 			Delete(parent, selection);
 		}
 		
-		public void Paste(Wrappers.Group parent, Wrappers.Wrapper[] selection, int dx, int dy)
+		public void Paste(Wrappers.Node parent, Wrappers.Wrapper[] selection, int dx, int dy)
 		{
 			if (Clipboard.Internal.Empty)
 			{
@@ -553,15 +532,15 @@ namespace Cdn.Studio
 			if (OnlyLinks(clip))
 			{
 				// Add links between each first selected N-1 objects and selected object N
-				List<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>> pairs = new List<KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper>>(GetLinkPairs(selection));
+				List<KeyValuePair<Wrappers.Node, Wrappers.Node>> pairs = new List<KeyValuePair<Wrappers.Node, Wrappers.Node>>(GetLinkPairs(selection));
 			
 				foreach (Wrappers.Wrapper obj in clip)
 				{
-					Wrappers.Link link = (Wrappers.Link)obj;
+					Wrappers.Edge link = (Wrappers.Edge)obj;
 					
-					foreach (KeyValuePair<Wrappers.Wrapper, Wrappers.Wrapper> pair in pairs)
+					foreach (KeyValuePair<Wrappers.Node, Wrappers.Node> pair in pairs)
 					{
-						Wrappers.Link copy = (Wrappers.Link)link.Copy();
+						Wrappers.Edge copy = (Wrappers.Edge)link.Copy();
 						copy.Attach(pair.Key, pair.Value);
 
 						actions.Add(new Undo.AddObject(parent, copy));
@@ -594,7 +573,7 @@ namespace Cdn.Studio
 		public void Move(List<Wrappers.Wrapper> all, int dx, int dy)
 		{
 			List<Wrappers.Wrapper> objs = new List<Wrappers.Wrapper>(all);
-			objs.RemoveAll(item => item is Wrappers.Link && !((Wrappers.Link)item).Empty);
+			objs.RemoveAll(item => item is Wrappers.Edge && !((Wrappers.Edge)item).Empty);
 			
 			if (objs.Count == 0)
 			{
@@ -622,7 +601,7 @@ namespace Cdn.Studio
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 
 			Type tempType = template.GetType();
-			bool isGroup = template is Wrappers.Group;
+			bool isGroup = template is Wrappers.Node;
 			
 			sel.RemoveAll(delegate (Wrappers.Wrapper item) {
 				if (isGroup && item is Wrappers.Object)

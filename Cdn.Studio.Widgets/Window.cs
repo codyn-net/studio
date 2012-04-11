@@ -10,8 +10,8 @@ namespace Cdn.Studio.Widgets
 {
 	public class Window : Gtk.Window
 	{
-		private ActionGroup d_normalGroup;
-		private ActionGroup d_selectionGroup;
+		private ActionGroup d_normalNode;
+		private ActionGroup d_selectionNode;
 		private Pathbar d_pathbar;
 		private VBox d_vboxContents;
 		private VPaned d_vpaned;
@@ -26,7 +26,7 @@ namespace Cdn.Studio.Widgets
 		private uint d_popupMergeId;
 		private UIManager d_uimanager;
 		private ActionGroup d_popupActionGroup;
-		private Dictionary<Wrappers.Wrapper, Dialogs.Property> d_propertyEditors;
+		private Dictionary<Wrappers.Wrapper, Dialogs.Variable> d_propertyEditors;
 		private Serialization.Project d_project;
 		private Dialogs.Plotting d_plotting;
 		private Simulation d_simulation;
@@ -48,7 +48,7 @@ namespace Cdn.Studio.Widgets
 		//private Progress d_progress;
 		//private bool d_checkProgress;
 		private uint d_importLibrariesMergeId;
-		private ActionGroup d_importLibrariesGroup;
+		private ActionGroup d_importLibrariesNode;
 		private uint d_idleSelectionChanged;
 		private uint d_updateImportLibrariesTimeout;
 		private Dialogs.Physics d_physics;
@@ -102,7 +102,7 @@ namespace Cdn.Studio.Widgets
 			UpdateUndoState();
 			UpdateTitle();
 			
-			d_propertyEditors = new Dictionary<Wrappers.Wrapper, Dialogs.Property>();
+			d_propertyEditors = new Dictionary<Wrappers.Wrapper, Dialogs.Variable>();
 		}
 
 		private void OnIntegratorChanged(object sender, GLib.NotifyArgs args)
@@ -115,7 +115,7 @@ namespace Cdn.Studio.Widgets
 			UpdateSensitivity();
 		}
 
-		private void HandleSimulationBegin(object o, BeginArgs args)
+		private void HandleSimulationBegin(object o, BegunArgs args)
 		{
 			//d_simulation.OnStepped += HandleSimulationStepped;
 			//d_runElapsed = DateTime.Now;
@@ -174,8 +174,8 @@ namespace Cdn.Studio.Widgets
 
 		private void UpdateUndoState()
 		{
-			Gtk.Action undo = d_normalGroup.GetAction("UndoAction");
-			Gtk.Action redo = d_normalGroup.GetAction("RedoAction");
+			Gtk.Action undo = d_normalNode.GetAction("UndoAction");
+			Gtk.Action redo = d_normalNode.GetAction("RedoAction");
 			
 			undo.Sensitive = d_undoManager.CanUndo;
 			redo.Sensitive = d_undoManager.CanRedo;
@@ -210,7 +210,7 @@ namespace Cdn.Studio.Widgets
 		
 		private bool AddFromTemplate(Wrappers.Wrapper template)
 		{
-			if (template is Wrappers.Link)
+			if (template is Wrappers.Edge)
 			{
 				return AddLinkFromTemplate(template);
 			}
@@ -224,7 +224,7 @@ namespace Cdn.Studio.Widgets
 		{
 			return HandleError(delegate () {
 				int[] center = d_grid.Center;
-				d_actions.AddObject(d_grid.ActiveGroup, template.CopyAsTemplate(), center[0], center[1]);
+				d_actions.AddObject(d_grid.ActiveNode, template.CopyAsTemplate(), center[0], center[1]);
 			}, "An error occurred while adding an object from a template");
 		}
 		
@@ -232,18 +232,18 @@ namespace Cdn.Studio.Widgets
 		{
 			return HandleError(delegate () {
 				int[] center = d_grid.Center;
-				d_actions.AddLink(d_grid.ActiveGroup, (Wrappers.Link)template, d_grid.Selection, center[0], center[1]);
+				d_actions.AddEdge(d_grid.ActiveNode, (Wrappers.Edge)template, d_grid.Selection, center[0], center[1]);
 			}, "An error occurred while adding a link from a template");
 		}
 		
 		private bool FilterStates(Wrappers.Wrapper wrapper)
 		{
-			return !(wrapper is Wrappers.Link);
+			return !(wrapper is Wrappers.Edge);
 		}
 		
 		private bool FilterLinks(Wrappers.Wrapper wrapper)
 		{
-			return wrapper is Wrappers.Link;
+			return wrapper is Wrappers.Edge;
 		}
 
 		private void Build()
@@ -251,7 +251,7 @@ namespace Cdn.Studio.Widgets
 			SetDefaultSize(700, 600);
 			
 			d_uimanager = new UIManager();
-			d_normalGroup = new ActionGroup("NormalActions");
+			d_normalNode = new ActionGroup("NormalActions");
 			
 			RecentAction recent;
 			
@@ -270,18 +270,18 @@ namespace Cdn.Studio.Widgets
 			
 			recent.ItemActivated += OnRecentItemActivated;
 			
-			d_normalGroup.Add(new ActionEntry[] {
+			d_normalNode.Add(new ActionEntry[] {
 				new ActionEntry("FileMenuAction", null, "_File", null, null, null),
-				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New CDN network", OnFileNew),
-				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open CDN network", OnOpenActivated),
+				new ActionEntry("NewAction", Gtk.Stock.New, null, "<Control>N", "New network", OnFileNew),
+				new ActionEntry("OpenAction", Gtk.Stock.Open, null, "<Control>O", "Open network", OnOpenActivated),
 				new ActionEntry("RevertAction", Gtk.Stock.RevertToSaved, null, "<Control>R", "Revert changes", OnRevertActivated),
-				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save CDN network", OnSaveActivated),
-				new ActionEntry("SaveProjectAction", null, "Save Project", null, "Save CDN network project file", OnSaveProjectActivated),
-				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save CDN network", OnSaveAsActivated),
+				new ActionEntry("SaveAction", Gtk.Stock.Save, null, "<Control>S", "Save network", OnSaveActivated),
+				new ActionEntry("SaveProjectAction", null, "Save Project", null, "Save network project file", OnSaveProjectActivated),
+				new ActionEntry("SaveAsAction", Gtk.Stock.SaveAs, null, "<Control><Shift>S", "Save network", OnSaveAsActivated),
 
 				new ActionEntry("ImportAction", null, "_Import", null, null, null),
-				new ActionEntry("ImportFileAction", null, "_File", "<Control>i", "Import CDN network objects", OnImportFileActivated),
-				new ActionEntry("ExportAction", null, "_Export", "<Control>e", "Export CDN network objects", null),
+				new ActionEntry("ImportFileAction", null, "_File", "<Control>i", "Import network objects", OnImportFileActivated),
+				new ActionEntry("ExportAction", null, "_Export", "<Control>e", "Export network objects", null),
 
 				new ActionEntry("QuitAction", Gtk.Stock.Quit, null, "<Control>Q", "Quit", OnQuitActivated),
 
@@ -289,7 +289,7 @@ namespace Cdn.Studio.Widgets
 				new ActionEntry("UndoAction", Gtk.Stock.Undo, null, "<control>Z", "Undo last action", OnUndoActivated),
 				new ActionEntry("RedoAction", Gtk.Stock.Redo, null, "<control><shift>Z", "Redo last action", OnRedoActivated),
 				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", OnPasteActivated),
-				new ActionEntry("GroupAction", Stock.Group, "Group", "<Control>G", "Group objects", OnGroupActivated),
+				new ActionEntry("GroupAction", Stock.Node, "Group", "<Control>G", "Group objects", OnGroupActivated),
 				new ActionEntry("UngroupAction", Stock.Ungroup, "Ungroup", "<Control><Shift>G", "Ungroup object", OnUngroupActivated),
 				new ActionEntry("EditGlobalsAction", null, "Globals", "<Control>H", "Edit the network globals", OnEditGlobalsActivated),
 				new ActionEntry("EditPlotSettingsAction", null, "Plot Settings", null, "Edit the global plot settings", OnEditPlotSettingsActivated),
@@ -306,17 +306,15 @@ namespace Cdn.Studio.Widgets
 				new ActionEntry("ZoomOutAction", Gtk.Stock.ZoomOut, null, "<Control>minus", null, OnZoomOutActivated),
 				
 				new ActionEntry("AddMenuAction", null, "_Add", null, null, null),
-				new ActionEntry("AddGroupAction", Stock.GroupState, "Group", null, "Add new group", OnAddGroupActivated),
-				new ActionEntry("AddStateAction", Stock.State, "State", null, "Add new state", OnAddStateActivated),
-				new ActionEntry("AddLinkAction", Stock.Link, "Link", null, "Add new link", OnAddLinkActivated),
-				new ActionEntry("AddInputFileAction", Stock.InputFile, "Input file", null, "Add new input file", OnAddInputFileActivated),
+				new ActionEntry("AddNodeAction", Stock.Node, "Node", null, "Add new node", OnAddNodeActivated),
+				new ActionEntry("AddEdgeAction", Stock.Edge, "Edge", null, "Add new link", OnAddEdgeActivated),
 				new ActionEntry("AddFunctionAction", Stock.Function, "Function", null, "Add new function", OnAddFunctionActivated),
 				new ActionEntry("AddPiecewisePolynomialAction", Stock.FunctionPolynomial, "Piecewise Polynomial", null, "Add new piecewise polynomial function", OnAddPiecewisePolynomialActivated),
 				
 
 				new ActionEntry("MonitorMenuAction", null, "Monitor", null, null, null),
 				new ActionEntry("ControlMenuAction", null, "Control", null, null, null),
-				new ActionEntry("PropertiesAction", null, "Properties", null, null, OnPropertiesActivated),
+				new ActionEntry("VariablesAction", null, "Variables", null, null, OnVariablesActivated),
 				new ActionEntry("EditGroupAction", null, "Edit group", null, null, OnEditGroupActivated),
 				
 				new ActionEntry("EditTemplateAction", null, "Edit template", null, null, OnEditTemplateActivated),
@@ -326,8 +324,8 @@ namespace Cdn.Studio.Widgets
 				new ActionEntry("AboutAction", null, "About", null, null, OnAboutActivated)
 			});
 			
-			d_normalGroup.Add(new ToggleActionEntry[] {
-				new ToggleActionEntry("ViewPropertyEditorAction", Gtk.Stock.Properties, "Property Editor", "<Control>F9", "Show/Hide property editor pane", OnViewPropertyEditorActivated, true),
+			d_normalNode.Add(new ToggleActionEntry[] {
+				new ToggleActionEntry("ViewVariableEditorAction", Gtk.Stock.Properties, "Variable Editor", "<Control>F9", "Show/Hide variable editor pane", OnViewVariableEditorActivated, true),
 				new ToggleActionEntry("ViewToolbarAction", null, "Toolbar", null, "Show/Hide toolbar", OnViewToolbarActivated, true),
 				new ToggleActionEntry("ViewPathbarAction", null, "Pathbar", null, "Show/Hide pathbar", OnViewPathbarActivated, true),
 				new ToggleActionEntry("ViewSimulateButtonsAction", null, "Simulate Buttons", null, "Show/Hide simulate buttons", OnViewSimulateButtonsActivated, true),
@@ -338,18 +336,18 @@ namespace Cdn.Studio.Widgets
 				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.DialogInfo, "Sidebar", "F9", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
 			});
 			
-			d_normalGroup.Add(recent);
+			d_normalNode.Add(recent);
 				
-			d_uimanager.InsertActionGroup(d_normalGroup, 0);
+			d_uimanager.InsertActionGroup(d_normalNode, 0);
 			
-			d_selectionGroup = new ActionGroup("SelectionActions");
-			d_selectionGroup.Add(new ActionEntry[] {
+			d_selectionNode = new ActionGroup("SelectionActions");
+			d_selectionNode.Add(new ActionEntry[] {
 				new ActionEntry("CutAction", Gtk.Stock.Cut, null, "<Control>X", "Cut objects", OnCutActivated),
 				new ActionEntry("CopyAction", Gtk.Stock.Copy, null, "<Control>C", "Copy objects", OnCopyActivated),
 				new ActionEntry("DeleteAction", Gtk.Stock.Delete, null, null, "Delete object", OnDeleteActivated)			
 			});
 			
-			d_uimanager.InsertActionGroup(d_selectionGroup, 0);
+			d_uimanager.InsertActionGroup(d_selectionNode, 0);
 			d_uimanager.AddUiFromResource("ui.xml");
 			
 			d_uimanager.ConnectProxy += HandleUIManagerConnectProxy;
@@ -366,7 +364,7 @@ namespace Cdn.Studio.Widgets
 
 			d_uimanager.EnsureUpdate();
 
-			d_pathbar = new Pathbar(Network, Network.TemplateGroup);
+			d_pathbar = new Pathbar(Network, Network.TemplateNode);
 			d_pathbar.BorderWidth = 1;
 
 			vbox.PackStart(d_pathbar, false, false, 0);
@@ -404,23 +402,23 @@ namespace Cdn.Studio.Widgets
 			d_statusbar.Show();
 			vbox.PackStart(d_statusbar, false, false, 0);
 
-			OnViewPropertyEditorActivated(d_normalGroup.GetAction("ViewPropertyEditorAction"), new EventArgs());
-			OnViewToolbarActivated(d_normalGroup.GetAction("ViewToolbarAction"), new EventArgs());
-			OnViewPathbarActivated(d_normalGroup.GetAction("ViewPathbarAction"), new EventArgs());
-			OnViewSimulateButtonsActivated(d_normalGroup.GetAction("ViewSimulateButtonsAction"), new EventArgs());
-			OnViewStatusbarActivated(d_normalGroup.GetAction("ViewStatusbarAction"), new EventArgs());
-			OnViewSideBarActivated(d_normalGroup.GetAction("ViewSideBarAction"), new EventArgs());
+			OnViewVariableEditorActivated(d_normalNode.GetAction("ViewVariableEditorAction"), new EventArgs());
+			OnViewToolbarActivated(d_normalNode.GetAction("ViewToolbarAction"), new EventArgs());
+			OnViewPathbarActivated(d_normalNode.GetAction("ViewPathbarAction"), new EventArgs());
+			OnViewSimulateButtonsActivated(d_normalNode.GetAction("ViewSimulateButtonsAction"), new EventArgs());
+			OnViewStatusbarActivated(d_normalNode.GetAction("ViewStatusbarAction"), new EventArgs());
+			OnViewSideBarActivated(d_normalNode.GetAction("ViewSideBarAction"), new EventArgs());
 			
 			Add(vbox);
 
-			d_pathbar.Update(d_grid.ActiveGroup);
+			d_pathbar.Update(d_grid.ActiveNode);
 
 			d_grid.Activated += DoObjectActivated;
 			d_grid.Popup += DoPopup;
 
 			d_grid.SelectionChanged += DoSelectionChanged;
 			d_grid.Error += DoError;
-			d_grid.ActiveGroupChanged += DoActiveGroupChanged;
+			d_grid.ActiveNodeChanged += DoActiveNodeChanged;
 			d_grid.Status += DoStatus;
 			
 			d_pathbar.Activated += HandlePathbarActivated;
@@ -533,7 +531,7 @@ namespace Cdn.Studio.Widgets
 			CreateImportParents(parentpath, libs);
 			libs[actionpath] = "";
 			
-			d_importLibrariesGroup.Add(new Gtk.Action(name + "Action", name));
+			d_importLibrariesNode.Add(new Gtk.Action(name + "Action", name));
 			d_uimanager.AddUi(d_importLibrariesMergeId, parentpath, name, name + "Action", UIManagerItemType.Menu, false);
 		}
 		
@@ -581,7 +579,7 @@ namespace Cdn.Studio.Widgets
 					DoImport(thename, false);
 				};
 
-				d_importLibrariesGroup.Add(action);
+				d_importLibrariesNode.Add(action);
 				d_uimanager.AddUi(d_importLibrariesMergeId, actionpath, fullname, fullname + "Action", UIManagerItemType.Menuitem, false);
 				
 				libs[myaction] = filename;
@@ -593,12 +591,12 @@ namespace Cdn.Studio.Widgets
 			if (d_importLibrariesMergeId != 0)
 			{
 				d_uimanager.RemoveUi(d_importLibrariesMergeId);
-				d_uimanager.RemoveActionGroup(d_importLibrariesGroup);
+				d_uimanager.RemoveActionGroup(d_importLibrariesNode);
 			}
 			
-			d_importLibrariesGroup = new ActionGroup("ImportLibrariesGroup");			
+			d_importLibrariesNode = new ActionGroup("ImportLibrariesNode");			
 			d_importLibrariesMergeId = d_uimanager.NewMergeId();
-			d_uimanager.InsertActionGroup(d_importLibrariesGroup, 0);
+			d_uimanager.InsertActionGroup(d_importLibrariesNode, 0);
 
 			Dictionary<string, string > libs = new Dictionary<string, string>();
 			
@@ -636,14 +634,14 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 
-		private void HandlePathbarActivated(object source, Wrappers.Group grp)
+		private void HandlePathbarActivated(object source, Wrappers.Node grp)
 		{
-			d_grid.ActiveGroup = grp;
+			d_grid.ActiveNode = grp;
 		}
 		
-		private void DoActiveGroupChanged(object source, Wrappers.Wrapper prev)
+		private void DoActiveNodeChanged(object source, Wrappers.Wrapper prev)
 		{
-			d_pathbar.Update(d_grid.ActiveGroup);
+			d_pathbar.Update(d_grid.ActiveNode);
 			UpdateAnnotation();
 			
 			UpdateSensitivity();
@@ -793,7 +791,7 @@ namespace Cdn.Studio.Widgets
 			
 			if (d_propertyEditors != null)
 			{
-				foreach (Dialogs.Property dlg in d_propertyEditors.Values)
+				foreach (Dialogs.Variable dlg in d_propertyEditors.Values)
 				{
 					dlg.Destroy();
 				}
@@ -823,11 +821,11 @@ namespace Cdn.Studio.Widgets
 			
 			if (!String.IsNullOrEmpty(d_project.Filename))
 			{
-				Title = extra + System.IO.Path.GetFileName(d_project.Filename) + " - CDN Studio";
+				Title = extra + System.IO.Path.GetFileName(d_project.Filename) + " - Codyn Studio";
 			}
 			else
 			{
-				Title = extra + "New Network - CDN Studio";
+				Title = extra + "New Network - Codyn Studio";
 			}
 		}
 		
@@ -835,14 +833,14 @@ namespace Cdn.Studio.Widgets
 		{
 			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>(d_grid.Selection);
 			
-			d_selectionGroup.Sensitive = !d_simulation.Running && objects.Count > 0 && d_grid.HasFocus;
+			d_selectionNode.Sensitive = !d_simulation.Running && objects.Count > 0 && d_grid.HasFocus;
 			
 			bool singleobj = objects.Count == 1;
-			bool singlegroup = singleobj && objects[0] is Wrappers.Group;
+			bool singlegroup = singleobj && objects[0] is Wrappers.Node;
 			int anygroup = objects.FindAll(delegate (Wrappers.Wrapper obj) {
-				return obj is Wrappers.Group; }).Count;
+				return obj is Wrappers.Node; }).Count;
 			
-			Gtk.Action ungroup = d_normalGroup.GetAction("UngroupAction");
+			Gtk.Action ungroup = d_normalNode.GetAction("UngroupAction");
 			ungroup.Sensitive = !d_simulation.Running && anygroup > 0;
 			
 			if (anygroup > 1)
@@ -854,18 +852,18 @@ namespace Cdn.Studio.Widgets
 				ungroup.Label = "Ungroup";
 			}
 			
-			d_normalGroup.GetAction("GroupAction").Sensitive = !d_simulation.Running && objects.Count > 0;
-			d_normalGroup.GetAction("EditGroupAction").Sensitive = !d_simulation.Running && singlegroup;
+			d_normalNode.GetAction("GroupAction").Sensitive = !d_simulation.Running && objects.Count > 0;
+			d_normalNode.GetAction("EditGroupAction").Sensitive = !d_simulation.Running && singlegroup;
 			
-			d_normalGroup.GetAction("PropertiesAction").Sensitive = !d_simulation.Running && singleobj;
-			d_normalGroup.GetAction("PasteAction").Sensitive = !d_simulation.Running && !Studio.Clipboard.Internal.Empty;
+			d_normalNode.GetAction("VariablesAction").Sensitive = !d_simulation.Running && singleobj;
+			d_normalNode.GetAction("PasteAction").Sensitive = !d_simulation.Running && !Studio.Clipboard.Internal.Empty;
 			
 			// Disable control for now
-			d_normalGroup.GetAction("ControlMenuAction").Visible = false;
-			d_normalGroup.GetAction("ViewControlAction").Visible = false;
+			d_normalNode.GetAction("ControlMenuAction").Visible = false;
+			d_normalNode.GetAction("ViewControlAction").Visible = false;
 			
-			d_normalGroup.GetAction("RevertAction").Sensitive = !d_simulation.Running && d_project.Filename != null;
-			d_normalGroup.GetAction("SaveProjectAction").Sensitive = d_project.Filename != null;
+			d_normalNode.GetAction("RevertAction").Sensitive = !d_simulation.Running && d_project.Filename != null;
+			d_normalNode.GetAction("SaveProjectAction").Sensitive = d_project.Filename != null;
 			
 			d_grid.Sensitive = !d_simulation.Running;
 			
@@ -876,7 +874,7 @@ namespace Cdn.Studio.Widgets
 			
 			if (d_propertyEditors != null)
 			{			
-				foreach (KeyValuePair<Wrappers.Wrapper, Dialogs.Property> pair in d_propertyEditors)
+				foreach (KeyValuePair<Wrappers.Wrapper, Dialogs.Variable> pair in d_propertyEditors)
 				{
 					pair.Value.View.Sensitive = pair.Value.View.Object != null && !d_simulation.Running;
 				}
@@ -973,10 +971,10 @@ namespace Cdn.Studio.Widgets
 				return;
 			}
 			
-			Dialogs.Property dlg = new Dialogs.Property(d_project.Network, this, obj);
+			Dialogs.Variable dlg = new Dialogs.Variable(d_project.Network, this, obj);
 			PositionWindow(dlg);
 			
-			dlg.View.TemplateActivated += HandlePropertyTemplateActivated;
+			dlg.View.TemplateActivated += HandleVariableTemplateActivated;
 			
 			dlg.View.Error += delegate (object s, Exception exception)
 			{
@@ -995,22 +993,22 @@ namespace Cdn.Studio.Widgets
 			};
 		}
 		
-		private string[] CommonProperties(Wrappers.Wrapper[] objects)
+		private string[] CommonVariables(Wrappers.Wrapper[] objects)
 		{
 			if (objects.Length == 0)
 			{
 				return new string[] {};
 			}
 			
-			List<string > props = (new List<Cdn.Property>(objects[0].Properties)).ConvertAll<string>(item => item.Name);
+			List<string > props = (new List<Cdn.Variable>(objects[0].Variables)).ConvertAll<string>(item => item.Name);
 			int i = 1;
 			
 			/* Merge in the interface properties */
-			Wrappers.Group grp = objects[0] as Wrappers.Group;
+			Wrappers.Node grp = objects[0] as Wrappers.Node;
 			
 			if (grp != null)
 			{
-				foreach (string name in grp.PropertyInterface.Names)
+				foreach (string name in grp.VariableInterface.Names)
 				{
 					if (!props.Contains(name))
 					{
@@ -1021,13 +1019,13 @@ namespace Cdn.Studio.Widgets
 			
 			while (props.Count > 0 && i < objects.Length)
 			{
-				List<string > pp = (new List<Cdn.Property>(objects[i].Properties)).ConvertAll<string>(item => item.Name);
+				List<string > pp = (new List<Cdn.Variable>(objects[i].Variables)).ConvertAll<string>(item => item.Name);
 				
-				grp = objects[i] as Wrappers.Group;
+				grp = objects[i] as Wrappers.Node;
 				
 				if (grp != null)
 				{
-					foreach (string name in grp.PropertyInterface.Names)
+					foreach (string name in grp.VariableInterface.Names)
 					{
 						if (!pp.Contains(name))
 						{
@@ -1047,16 +1045,16 @@ namespace Cdn.Studio.Widgets
 		{
 			get
 			{
-				Wrappers.Group grp = d_grid.ActiveGroup;
+				Wrappers.Node grp = d_grid.ActiveNode;
 				
 				while (grp != null)
 				{
-					if (grp == Network.TemplateGroup)
+					if (grp == Network.TemplateNode)
 					{
 						return true;
 					}
 					
-					grp = grp.Parent as Wrappers.Group;
+					grp = grp.Parent as Wrappers.Node;
 				}
 				
 				return false;
@@ -1076,19 +1074,19 @@ namespace Cdn.Studio.Widgets
 			d_uimanager.InsertActionGroup(d_popupActionGroup, 0);
 			
 			// Merge monitor
-			if (d_grid.ActiveGroup.TopParent != Network.TemplateGroup)
+			if (d_grid.ActiveNode.TopParent != Network.TemplateNode)
 			{
 				Wrappers.Wrapper[] selection = d_grid.Selection;
 				
-				foreach (string prop in CommonProperties(selection))
+				foreach (string prop in CommonVariables(selection))
 				{
 					string name = "Monitor" + prop;
 					string p = (string)prop.Clone();
 					
 					d_popupActionGroup.Add(new ActionEntry[] {
 						new ActionEntry(name + "Action", null, p.Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
-							OnStartMonitor(selection, p);
-						})
+						OnStartMonitor(selection, p);
+					})
 					});
 					
 					d_uimanager.AddUi(d_popupMergeId, "/GridPopup/MonitorMenu/MonitorPlaceholder", name, name + "Action", UIManagerItemType.Menuitem, false);
@@ -1137,9 +1135,9 @@ namespace Cdn.Studio.Widgets
 			{
 				d_annotation.Update(selection[0].WrappedObject as Cdn.Annotatable);
 			}
-			else if (selection.Length == 0 && d_grid.ActiveGroup != null)
+			else if (selection.Length == 0 && d_grid.ActiveNode != null)
 			{
-				d_annotation.Update(d_grid.ActiveGroup.WrappedObject as Cdn.Annotatable);
+				d_annotation.Update(d_grid.ActiveNode.WrappedObject as Cdn.Annotatable);
 			}
 			else
 			{
@@ -1243,7 +1241,7 @@ namespace Cdn.Studio.Widgets
 			}
 			set
 			{
-				ToggleAction action = d_normalGroup.GetAction("ViewPropertyEditorAction") as ToggleAction;
+				ToggleAction action = d_normalNode.GetAction("ViewPropertyEditorAction") as ToggleAction;
 			
 				if (value == -1)
 				{
@@ -1265,7 +1263,7 @@ namespace Cdn.Studio.Widgets
 			}
 			set
 			{
-				ToggleAction action = d_normalGroup.GetAction("ViewSideBarAction") as ToggleAction;
+				ToggleAction action = d_normalNode.GetAction("ViewSideBarAction") as ToggleAction;
 			
 				if (value == -1)
 				{
@@ -1283,11 +1281,11 @@ namespace Cdn.Studio.Widgets
 		{
 			get
 			{
-				return ((ToggleAction)d_normalGroup.GetAction("ViewStatusbarAction")).Active;
+				return ((ToggleAction)d_normalNode.GetAction("ViewStatusbarAction")).Active;
 			}
 			set
 			{
-				((ToggleAction)d_normalGroup.GetAction("ViewStatusbarAction")).Active = value;
+				((ToggleAction)d_normalNode.GetAction("ViewStatusbarAction")).Active = value;
 			}
 		}
 		
@@ -1295,11 +1293,11 @@ namespace Cdn.Studio.Widgets
 		{
 			get
 			{
-				return ((ToggleAction)d_normalGroup.GetAction("ViewToolbarAction")).Active;
+				return ((ToggleAction)d_normalNode.GetAction("ViewToolbarAction")).Active;
 			}
 			set
 			{
-				((ToggleAction)d_normalGroup.GetAction("ViewToolbarAction")).Active = value;
+				((ToggleAction)d_normalNode.GetAction("ViewToolbarAction")).Active = value;
 			}
 		}
 		
@@ -1307,11 +1305,11 @@ namespace Cdn.Studio.Widgets
 		{
 			get
 			{
-				return ((ToggleAction)d_normalGroup.GetAction("ViewPathbarAction")).Active;
+				return ((ToggleAction)d_normalNode.GetAction("ViewPathbarAction")).Active;
 			}
 			set
 			{
-				((ToggleAction)d_normalGroup.GetAction("ViewPathbarAction")).Active = value;
+				((ToggleAction)d_normalNode.GetAction("ViewPathbarAction")).Active = value;
 			}
 		}
 		
@@ -1319,11 +1317,11 @@ namespace Cdn.Studio.Widgets
 		{
 			get
 			{
-				return ((ToggleAction)d_normalGroup.GetAction("ViewSimulateButtonsAction")).Active;
+				return ((ToggleAction)d_normalNode.GetAction("ViewSimulateButtonsAction")).Active;
 			}
 			set
 			{
-				((ToggleAction)d_normalGroup.GetAction("ViewSimulateButtonsAction")).Active = value;
+				((ToggleAction)d_normalNode.GetAction("ViewSimulateButtonsAction")).Active = value;
 			}
 		}
 		
@@ -1403,18 +1401,18 @@ namespace Cdn.Studio.Widgets
 			{
 				if (s.ActiveRoot == "templates")
 				{
-					d_grid.ActiveGroup = Network.TemplateGroup;
+					d_grid.ActiveNode = Network.TemplateNode;
 				}
 			}
 			
 			// Restore active group
-			if (!String.IsNullOrEmpty(s.ActiveGroup))
+			if (!String.IsNullOrEmpty(s.ActiveNode))
 			{
-				Wrappers.Group w = Network.FindObject(s.ActiveGroup) as Wrappers.Group;
+				Wrappers.Node w = Network.FindObject(s.ActiveNode) as Wrappers.Node;
 				
 				if (w != null)
 				{
-					d_grid.ActiveGroup = w;
+					d_grid.ActiveNode = w;
 				}
 			}
 			
@@ -1438,8 +1436,8 @@ namespace Cdn.Studio.Widgets
 						Cdn.Monitor y;
 						Cdn.Monitor x = null;
 						
-						Cdn.Property yprop = Network.FindProperty(series.Y);
-						Cdn.Property xprop = null;
+						Cdn.Variable yprop = Network.FindVariable(series.Y);
+						Cdn.Variable xprop = null;
 						
 						if (yprop == null)
 						{
@@ -1448,7 +1446,7 @@ namespace Cdn.Studio.Widgets
 						
 						if (!String.IsNullOrEmpty(series.X))
 						{
-							xprop = Network.FindProperty(series.X);
+							xprop = Network.FindVariable(series.X);
 							
 							if (xprop == null)
 							{
@@ -1571,11 +1569,11 @@ namespace Cdn.Studio.Widgets
 		{
 			string filename = d_project.Filename;
 
-			d_grid.ActiveGroup = null;
+			d_grid.ActiveNode = null;
 
 			d_project.Network.Revert();
 
-			d_grid.ActiveGroup = d_project.Network;
+			d_grid.ActiveNode = d_project.Network;
 			d_modified = false;
 			
 			if (filename != null)
@@ -1611,16 +1609,16 @@ namespace Cdn.Studio.Widgets
 			
 			s.Allocation = WindowAllocation(this);
 			
-			if (d_grid.ActiveGroup.Parent == null)
+			if (d_grid.ActiveNode.Parent == null)
 			{
-				s.ActiveGroup = null;
+				s.ActiveNode = null;
 			}
 			else
 			{
-				s.ActiveGroup = d_grid.ActiveGroup.FullId;
+				s.ActiveNode = d_grid.ActiveNode.FullId;
 			}
 			
-			if (d_grid.ActiveGroup.TopParent == Network.TemplateGroup)
+			if (d_grid.ActiveNode.TopParent == Network.TemplateNode)
 			{
 				s.ActiveRoot = "templates";
 			}
@@ -1905,14 +1903,14 @@ namespace Cdn.Studio.Widgets
 			int[] center = d_grid.Center;
 			
 			HandleError(delegate () {
-				d_actions.Paste(d_grid.ActiveGroup, d_grid.Selection, center[0], center[1]);
+				d_actions.Paste(d_grid.ActiveNode, d_grid.Selection, center[0], center[1]);
 			}, "An error occurred while pasting");
 		}
 		
 		private void OnGroupActivated(object sender, EventArgs args)
 		{
 			HandleError(delegate () {
-				Wrappers.Group grp = d_actions.Group(d_grid.ActiveGroup, d_grid.Selection);
+				Wrappers.Node grp = d_actions.Group(d_grid.ActiveNode, d_grid.Selection);
 				
 				if (grp != null)
 				{
@@ -1925,7 +1923,7 @@ namespace Cdn.Studio.Widgets
 		private void OnUngroupActivated(object sender, EventArgs args)
 		{
 			HandleError(delegate () {
-				d_actions.Ungroup(d_grid.ActiveGroup, d_grid.Selection);
+				d_actions.Ungroup(d_grid.ActiveNode, d_grid.Selection);
 			}, "An error occurred while ungrouping");
 		}
 		
@@ -1939,49 +1937,31 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 		
-		private void OnAddGroupActivated(object sender, EventArgs args)
+		private void OnAddNodeActivated(object sender, EventArgs args)
 		{
 			int[] center = d_grid.Center;
 			
 			HandleError(delegate () {
-				Select(d_actions.AddGroup(d_grid.ActiveGroup, center[0], center[1]));
-			}, "An error occurred while adding a group");
-		}
-		
-		private void OnAddStateActivated(object sender, EventArgs args)
-		{
-			int[] center = d_grid.Center;
-			
-			HandleError(delegate () {
-				Select(d_actions.AddState(d_grid.ActiveGroup, center[0], center[1]));
+				Select(d_actions.AddNode(d_grid.ActiveNode, center[0], center[1]));
 			}, "An error occurred while adding a state");
 		}
 			
-		private void OnAddLinkActivated(object sender, EventArgs args)
+		private void OnAddEdgeActivated(object sender, EventArgs args)
 		{
 			int[] center = d_grid.Center;
 
 			HandleError(delegate () {
-				Select(d_actions.AddLink(d_grid.ActiveGroup, d_grid.Selection, center[0], center[1]));
+				Select(d_actions.AddEdge(d_grid.ActiveNode, d_grid.Selection, center[0], center[1]));
 			}, "An error occurred while adding a link");
 		}
 
-		private void OnAddInputFileActivated(object sender, EventArgs args)
-		{
-			int[] center = d_grid.Center;
-			
-			HandleError(delegate() {
-				Select(d_actions.AddInputFile(d_grid.ActiveGroup, center[0], center[1]));
-			}, "An error occurred while adding a file input");
-		}
-		
-		private void SelectFromPropertyAction(Undo.Property action)
+		private void SelectFromPropertyAction(Undo.Variable action)
 		{
 			if (action.Wrapped == Network)
 			{
 				ObjectActivated(Network);
 			}
-			else if (action.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
+			else if (action.Wrapped.TopParent == d_grid.ActiveNode.TopParent)
 			{
 				d_grid.ScrollInView(action.Wrapped);
 			}
@@ -1989,11 +1969,11 @@ namespace Cdn.Studio.Widgets
 		
 		private void SelectFromObjectAction(Undo.Object action)
 		{
-			if (action.Wrapped.TopParent == d_grid.ActiveGroup.TopParent)
+			if (action.Wrapped.TopParent == d_grid.ActiveNode.TopParent)
 			{
 				if (action is Undo.MoveObject)
 				{
-					d_grid.ActiveGroup = action.Wrapped.Parent;
+					d_grid.ActiveNode = action.Wrapped.Parent;
 					d_grid.UnselectAll();
 					d_grid.Select(action.Wrapped);
 				}
@@ -2004,52 +1984,52 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 		
-		private void SelectFromAddGroupAction(Undo.AddGroup action)
+		private void SelectFromAddNodeAction(Undo.AddNode action)
 		{
-			if (action.Group.TopParent == d_grid.ActiveGroup.TopParent)
+			if (action.Node.TopParent == d_grid.ActiveNode.TopParent)
 			{
-				d_grid.ScrollInView(action.Group);
+				d_grid.ScrollInView(action.Node);
 			}
 		}
 		
 		private void SelectFromUngroupAction(Undo.Ungroup action)
 		{
-			if (action.Parent.TopParent == d_grid.ActiveGroup.TopParent || action.Parent == d_grid.ActiveGroup.TopParent)
+			if (action.Parent.TopParent == d_grid.ActiveNode.TopParent || action.Parent == d_grid.ActiveNode.TopParent)
 			{
-				d_grid.ActiveGroup = action.Parent;
+				d_grid.ActiveNode = action.Parent;
 				d_grid.CenterView();
 			}
 		}
 		
-		private void SelectFromLinkAction(Undo.LinkAction action)
+		private void SelectFromLinkAction(Undo.EdgeAction action)
 		{
-			if (action.Link.TopParent == d_grid.ActiveGroup.TopParent)
+			if (action.Edge.TopParent == d_grid.ActiveNode.TopParent)
 			{
-				d_grid.ScrollInView(action.Link);
+				d_grid.ScrollInView(action.Edge);
 			}
 		}
 		
 		private void SelectFromAction(Undo.IAction action)
 		{
-			if (action is Undo.Property)
+			if (action is Undo.Variable)
 			{
-				SelectFromPropertyAction((Undo.Property)action);
+				SelectFromPropertyAction((Undo.Variable)action);
 			}
 			else if (action is Undo.Object)
 			{
 				SelectFromObjectAction((Undo.Object)action);
 			}
-			else if (action is Undo.AddGroup)
+			else if (action is Undo.AddNode)
 			{
-				SelectFromAddGroupAction((Undo.AddGroup)action);
+				SelectFromAddNodeAction((Undo.AddNode)action);
 			}
 			else if (action is Undo.Ungroup)
 			{
 				SelectFromUngroupAction((Undo.Ungroup)action);
 			}
-			else if (action is Undo.LinkAction)
+			else if (action is Undo.EdgeAction)
 			{
-				SelectFromLinkAction((Undo.LinkAction)action);
+				SelectFromLinkAction((Undo.EdgeAction)action);
 			}
 		}
 		
@@ -2083,15 +2063,15 @@ namespace Cdn.Studio.Widgets
 		{
 			Wrappers.Wrapper[] selection = d_grid.Selection;
 			
-			if (selection.Length != 1 || !(selection[0] is Wrappers.Group))
+			if (selection.Length != 1 || !(selection[0] is Wrappers.Node))
 			{
 				return;
 			}
 			
-			d_grid.ActiveGroup = (Wrappers.Group)selection[0];
+			d_grid.ActiveNode = (Wrappers.Node)selection[0];
 		}
 		
-		private void OnPropertiesActivated(object sender, EventArgs args)
+		private void OnVariablesActivated(object sender, EventArgs args)
 		{
 			Wrappers.Wrapper[] selection = d_grid.Selection;
 			
@@ -2162,7 +2142,7 @@ namespace Cdn.Studio.Widgets
 		
 		private void CreateSideBarPanels()
 		{
-			WrappersTree tree = new WrappersTree(d_project.Network.TemplateGroup);
+			WrappersTree tree = new WrappersTree(d_project.Network.TemplateNode);
 			tree.RendererToggle.Visible = false;
 			
 			tree.Filter += delegate(WrappersTree.WrapperNode node, ref bool ret) {
@@ -2172,7 +2152,7 @@ namespace Cdn.Studio.Widgets
 			tree.Show();
 			
 			Label ltpl;
-			d_sideBarNotebook.InsertPage(tree, PanelTab(Stock.GroupState, "Library", out ltpl), -1);
+			d_sideBarNotebook.InsertPage(tree, PanelTab(Stock.Node, "Library", out ltpl), -1);
 			
 			tree.Activated += HandleTreeWrapperActivated;
 			tree.TreeView.PopulatePopup += HandleTreeTreeViewPopulatePopup;
@@ -2216,7 +2196,7 @@ namespace Cdn.Studio.Widgets
 					selection.Add(wrapper);
 				}
 				
-				if (wrapper is Wrappers.Link)
+				if (wrapper is Wrappers.Edge)
 				{
 					haslinks = true;
 				}
@@ -2264,7 +2244,7 @@ namespace Cdn.Studio.Widgets
 
 			Wrappers.Wrapper[] sel = d_grid.Selection;
 			
-			if (sel.Length == 0 || !Array.TrueForAll(sel, a => ((haslinks && a is Wrappers.Link) || (hasstates && !(a is Wrappers.Link)))))
+			if (sel.Length == 0 || !Array.TrueForAll(sel, a => ((haslinks && a is Wrappers.Edge) || (hasstates && !(a is Wrappers.Edge)))))
 			{
 				return;
 			}
@@ -2330,7 +2310,7 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 		
-		private void OnViewPropertyEditorActivated(object sender, EventArgs args)
+		private void OnViewVariableEditorActivated(object sender, EventArgs args)
 		{
 			ToggleAction action = sender as ToggleAction;
 			
@@ -2347,7 +2327,7 @@ namespace Cdn.Studio.Widgets
 						Message(Gtk.Stock.DialogError, "Error while editing property", exception);
 					};
 					
-					d_propertyView.TemplateActivated += HandlePropertyTemplateActivated;
+					d_propertyView.TemplateActivated += HandleVariableTemplateActivated;
 					
 					d_vpaned.Pack2(d_propertyView, false, false);
 				}
@@ -2365,7 +2345,7 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 		
-		private void HandlePropertyTemplateActivated(object source, Wrappers.Wrapper template)
+		private void HandleVariableTemplateActivated(object source, Wrappers.Wrapper template)
 		{
 			Editors.Object view = source as Editors.Object;
 			
@@ -2416,7 +2396,7 @@ namespace Cdn.Studio.Widgets
 			
 			d_plotting.Destroyed += delegate(object sender, EventArgs e) {
 				d_plotting = null;
-				(d_normalGroup.GetAction("ViewMonitorAction") as ToggleAction).Active = false;
+				(d_normalNode.GetAction("ViewMonitorAction") as ToggleAction).Active = false;
 			};
 		}
 
@@ -2437,7 +2417,7 @@ namespace Cdn.Studio.Widgets
 
 			d_physics.Destroyed += delegate(object sender, EventArgs e) {
 				d_physics = null;
-				(d_normalGroup.GetAction("ViewPhysicsAction") as ToggleAction).Active = false;
+				(d_normalNode.GetAction("ViewPhysicsAction") as ToggleAction).Active = false;
 			};
 		}
 
@@ -2483,7 +2463,7 @@ namespace Cdn.Studio.Widgets
 		private void OnCutActivated(object sender, EventArgs args)
 		{
 			HandleError(delegate () {
-				d_actions.Cut(d_grid.ActiveGroup, d_grid.Selection);
+				d_actions.Cut(d_grid.ActiveNode, d_grid.Selection);
 			}, "An error occurred while cutting");
 			
 			UpdateSensitivity();
@@ -2501,7 +2481,7 @@ namespace Cdn.Studio.Widgets
 		private void OnDeleteActivated(object sender, EventArgs args)
 		{
 			HandleError(delegate () {
-				d_actions.Delete(d_grid.ActiveGroup, d_grid.Selection);
+				d_actions.Delete(d_grid.ActiveNode, d_grid.Selection);
 			}, "An error occurred while deleting");
 		}
 		
@@ -2512,13 +2492,13 @@ namespace Cdn.Studio.Widgets
 		
 		private void OnStartMonitor(Wrappers.Wrapper[] objs, string property)
 		{
-			List<Property > properties = new List<Property>();
+			List<Variable > properties = new List<Variable>();
 
 			EnsureMonitor();
 			
 			foreach (Wrappers.Wrapper obj in objs)
 			{
-				properties.Add(obj.Property(property));
+				properties.Add(obj.Variable(property));
 			}
 			
 			d_plotting.Add(properties);
@@ -2578,15 +2558,15 @@ namespace Cdn.Studio.Widgets
 			
 			title = error.Object.FullId;
 			
-			if (error.Property != null)
+			if (error.Variable != null)
 			{
-				title += "." + error.Property.Name;
-				expression = error.Property.Expression.AsString;
+				title += "." + error.Variable.Name;
+				expression = error.Variable.Expression.AsString;
 			}
-			else if (error.LinkAction != null)
+			else if (error.EdgeAction != null)
 			{
-				title += "»" + error.LinkAction.Target;
-				expression = error.LinkAction.Equation.AsString;
+				title += "»" + error.EdgeAction.Target;
+				expression = error.EdgeAction.Equation.AsString;
 			}
 			else if (error.Object is Cdn.Function)
 			{
@@ -2609,13 +2589,13 @@ namespace Cdn.Studio.Widgets
 			
 			if (d_propertyView != null)
 			{
-				if (error.Property != null)
+				if (error.Variable != null)
 				{
-					d_propertyView.Select(error.Property);
+					d_propertyView.Select(error.Variable);
 				}
-				else if (error.LinkAction != null)
+				else if (error.EdgeAction != null)
 				{
-					d_propertyView.Select(error.LinkAction);
+					d_propertyView.Select(error.EdgeAction);
 				}
 			}
 		
@@ -2704,38 +2684,38 @@ namespace Cdn.Studio.Widgets
 				return;
 			}
 			
-			List<Cdn.Property> skippedProperties = new List<Cdn.Property>();
+			List<Cdn.Variable> skippedVariables = new List<Cdn.Variable>();
 			List<Undo.IAction> actions = new List<Undo.IAction>();
 			
 			// Copy globals
-			foreach (Cdn.Property property in project.Network.Properties)
+			foreach (Cdn.Variable property in project.Network.Variables)
 			{
-				if (!Network.HasProperty(property.Name))
+				if (!Network.HasVariable(property.Name))
 				{
-					actions.Add(new Undo.AddProperty(Network, property));
+					actions.Add(new Undo.AddVariable(Network, property));
 				}
 				else
 				{
-					skippedProperties.Add(property);
+					skippedVariables.Add(property);
 				}
 			}
 			
-			RepositionImport(Network.TemplateGroup.Children, project.Network.TemplateGroup.Children);
+			RepositionImport(Network.TemplateNode.Children, project.Network.TemplateNode.Children);
 			
 			// Copy templates
-			foreach (Wrappers.Wrapper obj in project.Network.TemplateGroup.Children)
+			foreach (Wrappers.Wrapper obj in project.Network.TemplateNode.Children)
 			{
-				actions.Add(new Undo.AddObject(Network.TemplateGroup, obj));
+				actions.Add(new Undo.AddObject(Network.TemplateNode, obj));
 			}
 			
 			if (importAll)
 			{
-				RepositionImport(d_grid.ActiveGroup.Children, project.Network.Children);
+				RepositionImport(d_grid.ActiveNode.Children, project.Network.Children);
 
 				// Also copy objects
 				foreach (Wrappers.Wrapper obj in project.Network.Children)
 				{
-					actions.Add(new Undo.AddObject(d_grid.ActiveGroup, obj));
+					actions.Add(new Undo.AddObject(d_grid.ActiveNode, obj));
 				}
 			}
 			
@@ -2743,13 +2723,13 @@ namespace Cdn.Studio.Widgets
 				d_actions.Do(new Undo.Group(actions));
 			}, "Failed to import network");
 			
-			if (skippedProperties.Count != 0)
+			if (skippedVariables.Count != 0)
 			{
 				Message(Gtk.Stock.DialogInfo,
 				        "Some globals could not be imported",
 				        String.Format("The {0} `{1}' already existed",
-				                      skippedProperties.Count == 1 ? "global" : "globals",
-				                      String.Join(", ", Array.ConvertAll<Cdn.Property, string>(skippedProperties.ToArray(), item => item.Name))));
+				                      skippedVariables.Count == 1 ? "global" : "globals",
+				                      String.Join(", ", Array.ConvertAll<Cdn.Variable, string>(skippedVariables.ToArray(), item => item.Name))));
 			}
 		}
 		
@@ -2767,13 +2747,13 @@ namespace Cdn.Studio.Widgets
 					if (importAll)
 					{
 						HandleError(delegate () {
-							d_actions.Do(new Undo.Import(Network, d_grid.ActiveGroup, id, filename));
+							d_actions.Do(new Undo.Import(Network, d_grid.ActiveNode, id, filename));
 						}, "Failed to import network");
 					}
 					else
 					{
 						HandleError(delegate () {
-							d_actions.Do(new Undo.Import(Network, Network.TemplateGroup, id, filename));
+							d_actions.Do(new Undo.Import(Network, Network.TemplateNode, id, filename));
 						}, "Failed to import network");
 					}
 				}
@@ -2828,7 +2808,7 @@ namespace Cdn.Studio.Widgets
 			int[] center = d_grid.Center;
 
 			HandleError(delegate () {
-				Select(d_actions.AddFunction(d_grid.ActiveGroup, center[0], center[1]));
+				Select(d_actions.AddFunction(d_grid.ActiveNode, center[0], center[1]));
 			}, "An error occurred while adding a function");
 		}
 		
@@ -2837,7 +2817,7 @@ namespace Cdn.Studio.Widgets
 			int[] center = d_grid.Center;
 
 			HandleError(delegate () {
-				Select(d_actions.AddPiecewisePolynomial(d_grid.ActiveGroup, center[0], center[1]));
+				Select(d_actions.AddPiecewisePolynomial(d_grid.ActiveNode, center[0], center[1]));
 			}, "An error occurred while adding a piecewise polynomial function");
 		}
 	}

@@ -13,10 +13,13 @@ namespace Cdn.Studio.Widgets
 		public static int MinZoom = 10;
 		private static double AnchorRadius = 0.1;
 
-		public delegate void ObjectEventHandler(object source, Wrappers.Wrapper obj);
-		public delegate void PopupEventHandler(object source, int button, long time); 
-		public delegate void ErrorHandler(object source, string error, string message);
-		public delegate void StatusHandler(object source, string status);
+		public delegate void ObjectEventHandler(object source,Wrappers.Wrapper obj);
+
+		public delegate void PopupEventHandler(object source,int button,long time);
+
+		public delegate void ErrorHandler(object source,string error,string message);
+
+		public delegate void StatusHandler(object source,string status);
 		
 		public event ObjectEventHandler Activated = delegate {};
 		public event PopupEventHandler Popup = delegate {};
@@ -24,7 +27,7 @@ namespace Cdn.Studio.Widgets
 		public event EventHandler ModifiedView = delegate {};
 		public event ErrorHandler Error = delegate {};
 		public event EventHandler Cleared = delegate {};
-		public event ObjectEventHandler ActiveGroupChanged = delegate {};
+		public event ObjectEventHandler ActiveNodeChanged = delegate {};
 		public event StatusHandler Status = delegate {};
 		
 		private Allocation d_mouseRect;
@@ -33,24 +36,19 @@ namespace Cdn.Studio.Widgets
 		private Point d_dragState;
 		private bool d_isDragging;
 		private Dictionary<Wrappers.Wrapper, Wrappers.Wrapper.State> d_beforeDragSelection;
-		
 		private Wrappers.Wrapper d_focus;
-		
 		private Wrappers.Network d_network;
 		private Actions d_actions;
-
 		private List<Wrappers.Wrapper> d_hover;
-		private Wrappers.Group d_activeGroup;
+		private Wrappers.Node d_activeNode;
 		private List<Wrappers.Wrapper> d_selection;
-		
 		private double[] d_gridBackground;
 		private double[] d_gridLine;
-		
 		private RenderCache d_gridCache;
 		private Anchor d_anchor;
 		private bool d_isDraggingAnchor;
 		private Point d_dragAnchorState;
-		private Wrappers.Wrapper d_anchorDragHit;
+		private Wrappers.Node d_anchorDragHit;
 		private Wrappers.Wrapper d_hiddenLink;
 		private bool d_drawLeftBorder;
 		private bool d_drawRightBorder;
@@ -132,7 +130,7 @@ namespace Cdn.Studio.Widgets
 		
 		public void Clear()
 		{
-			SetActiveGroup(d_network);
+			SetActiveNode(d_network);
 
 			QueueDraw();
 
@@ -150,15 +148,15 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 		
-		public Wrappers.Group ActiveGroup
+		public Wrappers.Node ActiveNode
 		{
 			get
 			{
-				return d_activeGroup;
+				return d_activeNode;
 			}
 			set
 			{
-				SetActiveGroup(value);
+				SetActiveNode(value);
 			}
 		}
 		
@@ -166,7 +164,7 @@ namespace Cdn.Studio.Widgets
 		{
 			get
 			{
-				return new System.Drawing.Point((int)ActiveGroup.X, (int)ActiveGroup.Y);
+				return new System.Drawing.Point((int)ActiveNode.X, (int)ActiveNode.Y);
 			}
 		}
 		
@@ -174,15 +172,15 @@ namespace Cdn.Studio.Widgets
 		{
 			get
 			{
-				return d_activeGroup != null ? d_activeGroup.Zoom : DefaultZoom;
+				return d_activeNode != null ? d_activeNode.Zoom : DefaultZoom;
 			}
 			set
 			{
 				int clipped = System.Math.Max(System.Math.Min(value, MaxZoom), MinZoom);
 
-				if (d_activeGroup != null && d_activeGroup.Zoom != clipped)
+				if (d_activeNode != null && d_activeNode.Zoom != clipped)
 				{
-					d_activeGroup.Zoom = clipped;
+					d_activeNode.Zoom = clipped;
 					
 					ModifiedView(this, new EventArgs());
 					QueueDraw();
@@ -194,24 +192,24 @@ namespace Cdn.Studio.Widgets
 		{
 			get
 			{
-				int cx = (int)System.Math.Round((ActiveGroup.X + Allocation.Width / 2.0) / (double)ZoomLevel);
-				int cy = (int)System.Math.Round((ActiveGroup.Y + Allocation.Height / 2.0) / (double)ZoomLevel);
+				int cx = (int)System.Math.Round((ActiveNode.X + Allocation.Width / 2.0) / (double)ZoomLevel);
+				int cy = (int)System.Math.Round((ActiveNode.Y + Allocation.Height / 2.0) / (double)ZoomLevel);
 				
 				return new int[] {cx, cy};
 			}
 		}
 		
-		public List<Wrappers.Link> Links
+		public List<Wrappers.Edge> Links
 		{
 			get
 			{
-				List<Wrappers.Link> res = new List<Wrappers.Link>();
+				List<Wrappers.Edge> res = new List<Wrappers.Edge>();
 				
-				foreach (Wrappers.Wrapper obj in ActiveGroup.Children)
+				foreach (Wrappers.Wrapper obj in ActiveNode.Children)
 				{
-					if (obj is Wrappers.Link)
+					if (obj is Wrappers.Edge)
 					{
-						res.Add(obj as Wrappers.Link);
+						res.Add(obj as Wrappers.Edge);
 					}
 				}
 				
@@ -230,19 +228,19 @@ namespace Cdn.Studio.Widgets
 			SelectionChanged(this, new EventArgs());
 		}
 		
-		private void SetActiveGroup(Wrappers.Group grp)
+		private void SetActiveNode(Wrappers.Node grp)
 		{
-			if (d_activeGroup == grp)
+			if (d_activeNode == grp)
 			{
 				return;
 			}
 			
-			if (d_activeGroup != null)
+			if (d_activeNode != null)
 			{
-				d_activeGroup.ChildAdded -= HandleActiveGroupChildAdded;
-				d_activeGroup.ChildRemoved -= HandleActiveGroupChildRemoved;
+				d_activeNode.ChildAdded -= HandleActiveNodeChildAdded;
+				d_activeNode.ChildRemoved -= HandleActiveNodeChildRemoved;
 				
-				foreach (Wrappers.Wrapper child in d_activeGroup.Children)
+				foreach (Wrappers.Wrapper child in d_activeNode.Children)
 				{
 					Disconnect(child);
 				}
@@ -250,8 +248,8 @@ namespace Cdn.Studio.Widgets
 
 			if (grp != null)
 			{
-				grp.ChildAdded += HandleActiveGroupChildAdded;
-				grp.ChildRemoved += HandleActiveGroupChildRemoved;
+				grp.ChildAdded += HandleActiveNodeChildAdded;
+				grp.ChildRemoved += HandleActiveNodeChildRemoved;
 				
 				foreach (Wrappers.Wrapper child in grp.Children)
 				{
@@ -261,12 +259,12 @@ namespace Cdn.Studio.Widgets
 			
 			UnselectAll();
 
-			Wrappers.Group prev = d_activeGroup;
-			d_activeGroup = grp;
+			Wrappers.Node prev = d_activeNode;
+			d_activeNode = grp;
 			
 			QueueDraw();
 			
-			ActiveGroupChanged(this, prev);
+			ActiveNodeChanged(this, prev);
 		}
 		
 		private void Connect(Wrappers.Wrapper child)
@@ -279,7 +277,7 @@ namespace Cdn.Studio.Widgets
 			child.RequestRedraw -= OnRequestRedraw;
 		}
 
-		private void HandleActiveGroupChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
+		private void HandleActiveNodeChildRemoved(Wrappers.Node source, Wrappers.Wrapper child)
 		{
 			Disconnect(child);
 
@@ -287,7 +285,7 @@ namespace Cdn.Studio.Widgets
 			QueueDraw();
 		}
 
-		private void HandleActiveGroupChildAdded(Wrappers.Group source, Wrappers.Wrapper child)
+		private void HandleActiveNodeChildAdded(Wrappers.Node source, Wrappers.Wrapper child)
 		{
 			Connect(child);
 
@@ -310,7 +308,7 @@ namespace Cdn.Studio.Widgets
 			{
 				Wrappers.Network net = obj.Parent as Wrappers.Network;
 				
-				if (obj == net.TemplateGroup)
+				if (obj == net.TemplateNode)
 				{
 					return;
 				}
@@ -367,7 +365,7 @@ namespace Cdn.Studio.Widgets
 		
 		private void QueueDrawObject(Wrappers.Wrapper obj)
 		{
-			if (!ActiveGroup.Contains(obj))
+			if (!ActiveNode.Contains(obj))
 			{
 				return;
 			}
@@ -384,11 +382,12 @@ namespace Cdn.Studio.Widgets
 
 				alloc.Round();
 				
-				alloc.Offset(-ActiveGroup.X, -ActiveGroup.Y);
+				alloc.Offset(-ActiveNode.X, -ActiveNode.Y);
 				QueueDrawArea((int)alloc.X, (int)alloc.Y, (int)alloc.Width, (int)alloc.Height);				
 				
 				((IDisposable)graphics.Target).Dispose();
-			};
+			}
+			;
 		}
 		
 		delegate double ScaledPredicate(double val);
@@ -405,7 +404,7 @@ namespace Cdn.Studio.Widgets
 		
 		private Point ScaledPosition(Point position, ScaledPredicate predicate)
 		{
-			return new Point(Scaled(position.X + ActiveGroup.X, predicate), Scaled(position.Y + ActiveGroup.Y, predicate));
+			return new Point(Scaled(position.X + ActiveNode.X, predicate), Scaled(position.Y + ActiveNode.Y, predicate));
 		}
 				
 		private Point ScaledPosition(double x, double y, ScaledPredicate predicate)
@@ -423,9 +422,9 @@ namespace Cdn.Studio.Widgets
 			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
 			List<Wrappers.Wrapper> links = new List<Wrappers.Wrapper>();
 			
-			foreach (Wrappers.Wrapper obj in ActiveGroup.Children)
+			foreach (Wrappers.Wrapper obj in ActiveNode.Children)
 			{
-				if (obj is Wrappers.Link)
+				if (obj is Wrappers.Edge)
 				{
 					links.Add(obj);
 				}
@@ -447,8 +446,8 @@ namespace Cdn.Studio.Widgets
 			List<Wrappers.Wrapper> res = new List<Wrappers.Wrapper>();
 			Allocation rect = allocation.Copy();
 			
-			rect.X += ActiveGroup.X;
-			rect.Y += ActiveGroup.Y;
+			rect.X += ActiveNode.X;
+			rect.Y += ActiveNode.Y;
 			
 			rect.X = Scaled(rect.X);
 			rect.Y = Scaled(rect.Y);
@@ -466,7 +465,7 @@ namespace Cdn.Studio.Widgets
 				}
 				else
 				{
-					if ((obj as Wrappers.Link).HitTest(rect, ZoomLevel))
+					if ((obj as Wrappers.Edge).HitTest(rect, ZoomLevel))
 					{
 						res.Add(obj);
 					}
@@ -483,7 +482,7 @@ namespace Cdn.Studio.Widgets
 				return;
 			}
 			
-			if (d_activeGroup != obj.Parent)
+			if (d_activeNode != obj.Parent)
 			{
 				CenterView(obj);
 				return;
@@ -496,15 +495,15 @@ namespace Cdn.Studio.Widgets
 			
 			if (!LinkFilter(obj))
 			{
-				Wrappers.Link link = (Wrappers.Link)obj;
+				Wrappers.Edge link = (Wrappers.Edge)obj;
 				
-				x = System.Math.Min(link.From.Allocation.X, link.To.Allocation.X);
-				dx = System.Math.Max(link.From.Allocation.X + link.From.Allocation.Width,
-				                     link.To.Allocation.X + link.To.Allocation.Width) - x;
+				x = System.Math.Min(link.Input.Allocation.X, link.Output.Allocation.X);
+				dx = System.Math.Max(link.Input.Allocation.X + link.Input.Allocation.Width,
+				                     link.Output.Allocation.X + link.Output.Allocation.Width) - x;
 				
-				y = System.Math.Min(link.From.Allocation.Y, link.To.Allocation.Y);
-				dy = System.Math.Max(link.From.Allocation.Y + link.From.Allocation.Height,
-				                     link.To.Allocation.Y + link.To.Allocation.Height) - y;
+				y = System.Math.Min(link.Input.Allocation.Y, link.Output.Allocation.Y);
+				dy = System.Math.Max(link.Input.Allocation.Y + link.Input.Allocation.Height,
+				                     link.Output.Allocation.Y + link.Output.Allocation.Height) - y;
 			}
 			else
 			{
@@ -522,13 +521,13 @@ namespace Cdn.Studio.Widgets
 			int pdy = (int)(dy * ZoomLevel);
 			
 			/* If object is not in the view, scroll to center it */
-			if (px < ActiveGroup.X ||
-			    py < ActiveGroup.Y ||
-			    px + pdx > Allocation.Width + ActiveGroup.X ||
-			    py + pdy > Allocation.Height + ActiveGroup.Y)
+			if (px < ActiveNode.X ||
+			    py < ActiveNode.Y ||
+			    px + pdx > Allocation.Width + ActiveNode.X ||
+			    py + pdy > Allocation.Height + ActiveNode.Y)
 			{
-				ActiveGroup.X = (int)(px + (pdx - Allocation.Width) / 2.0f);
-				ActiveGroup.Y = (int)(py + (pdy - Allocation.Height) / 2.0f);
+				ActiveNode.X = (int)(px + (pdx - Allocation.Width) / 2.0f);
+				ActiveNode.Y = (int)(py + (pdy - Allocation.Height) / 2.0f);
 
 				ModifiedView(this, new EventArgs());
 				QueueDraw();
@@ -539,10 +538,10 @@ namespace Cdn.Studio.Widgets
 		{
 			Point xy;
 
-			xy = Utils.MeanPosition(ActiveGroup.Children);
+			xy = Utils.MeanPosition(ActiveNode.Children);
 			
-			ActiveGroup.X = (int)(xy.X * ZoomLevel - (Allocation.Width / 2.0f));
-			ActiveGroup.Y = (int)(xy.Y * ZoomLevel - (Allocation.Height / 2.0f));
+			ActiveNode.X = (int)(xy.X * ZoomLevel - (Allocation.Width / 2.0f));
+			ActiveNode.Y = (int)(xy.Y * ZoomLevel - (Allocation.Height / 2.0f));
 			
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
@@ -563,7 +562,8 @@ namespace Cdn.Studio.Widgets
 			
 			/* The drag state contains the relative offset of the mouse to the first
 			 * object in the selection. x and y are in unit coordinates */
-			Wrappers.Wrapper first = d_selection.Find(delegate (Wrappers.Wrapper obj) { return LinkFilter(obj); });
+			Wrappers.Wrapper first = d_selection.Find(delegate (Wrappers.Wrapper obj) {
+				return LinkFilter(obj); });
 			
 			if (first == null)
 			{
@@ -592,7 +592,7 @@ namespace Cdn.Studio.Widgets
 		
 		private bool LinkFilter(Wrappers.Wrapper wrapped)
 		{
-			return !(wrapped is Wrappers.Link) || ((Wrappers.Link)wrapped).Empty;
+			return !(wrapped is Wrappers.Edge) || ((Wrappers.Edge)wrapped).Empty;
 		}
 
 		private void DoDragRect(int x, int y, Gdk.ModifierType state)
@@ -639,7 +639,7 @@ namespace Cdn.Studio.Widgets
 			
 			foreach (Wrappers.Wrapper obj in objects)
 			{
-				bool isalt = (!(obj is Wrappers.Link) && ((state & Gdk.ModifierType.ControlMask) != 0));
+				bool isalt = (!(obj is Wrappers.Edge) && ((state & Gdk.ModifierType.ControlMask) != 0));
 				
 				if (!Selected(obj) || obj.SelectedAlt != isalt)
 				{
@@ -658,14 +658,14 @@ namespace Cdn.Studio.Widgets
 			int dx = (int)(evnt.X - d_buttonPress.X);
 			int dy = (int)(evnt.Y - d_buttonPress.Y);
 			
-			ActiveGroup.X = (int)(d_origPosition.X - dx);
-			ActiveGroup.Y = (int)(d_origPosition.Y - dy);
+			ActiveNode.X = (int)(d_origPosition.X - dx);
+			ActiveNode.Y = (int)(d_origPosition.Y - dy);
 			
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
 		}
 		
-		private bool LinkAnchorTest(Wrappers.Link link, bool isFrom, double x, double y)
+		private bool LinkAnchorTest(Wrappers.Edge link, bool isFrom, double x, double y)
 		{
 			List<Point> anchors;
 			
@@ -705,8 +705,8 @@ namespace Cdn.Studio.Widgets
 		
 		private void QueueDrawAnchor(Anchor anchor)
 		{
-			int px = (int)(anchor.Location.X * ZoomLevel - ActiveGroup.X);
-			int py = (int)(anchor.Location.Y * ZoomLevel - ActiveGroup.Y);
+			int px = (int)(anchor.Location.X * ZoomLevel - ActiveNode.X);
+			int py = (int)(anchor.Location.Y * ZoomLevel - ActiveNode.Y);
 			
 			int ar = (int)(AnchorRadius * ZoomLevel * 2);
 
@@ -717,19 +717,19 @@ namespace Cdn.Studio.Widgets
 		{
 			if (d_anchor != null)
 			{
-				d_anchor.Link.LinkFocus = false;
+				d_anchor.Edge.LinkFocus = false;
 
 				QueueDrawAnchor(d_anchor);
 			}
 
 			d_anchor = null;
 
-			x = Scaled(x + ActiveGroup.X);
-			y = Scaled(y + ActiveGroup.Y);
+			x = Scaled(x + ActiveNode.X);
+			y = Scaled(y + ActiveNode.Y);
 
-			foreach (Wrappers.Wrapper obj in ActiveGroup.Children)
+			foreach (Wrappers.Wrapper obj in ActiveNode.Children)
 			{
-				Wrappers.Link link = obj as Wrappers.Link;
+				Wrappers.Edge link = obj as Wrappers.Edge;
 				
 				if (link == null)
 				{
@@ -796,8 +796,8 @@ namespace Cdn.Studio.Widgets
 		{
 			size = System.Math.Max(System.Math.Min(size, MaxZoom), MinZoom);
 			
-			ActiveGroup.X += (int)(((where.X + ActiveGroup.X) * (double)size / ZoomLevel) - (where.X + ActiveGroup.X));
-			ActiveGroup.Y += (int)(((where.Y + ActiveGroup.Y) * (double)size / ZoomLevel) - (where.Y + ActiveGroup.Y));
+			ActiveNode.X += (int)(((where.X + ActiveNode.X) * (double)size / ZoomLevel) - (where.X + ActiveNode.X));
+			ActiveNode.Y += (int)(((where.Y + ActiveNode.Y) * (double)size / ZoomLevel) - (where.Y + ActiveNode.Y));
 			
 			ZoomLevel = size;
 		}
@@ -809,7 +809,7 @@ namespace Cdn.Studio.Widgets
 				return;
 			}
 
-			SetActiveGroup(obj.Parent);
+			SetActiveNode(obj.Parent);
 			
 			ZoomLevel = DefaultZoom;
 			
@@ -817,16 +817,16 @@ namespace Cdn.Studio.Widgets
 			
 			if (!LinkFilter(obj))
 			{
-				Wrappers.Link link = (Wrappers.Link)obj;
-				xy = Utils.MeanPosition(new Wrappers.Wrapper[] {link.From, link.To});
+				Wrappers.Edge link = (Wrappers.Edge)obj;
+				xy = Utils.MeanPosition(new Wrappers.Wrapper[] {link.Input, link.Output});
 			}
 			else
 			{
 				xy = new Point(obj.Allocation.X, obj.Allocation.Y);
 			}
 
-			ActiveGroup.X = (int)(xy.X * ZoomLevel - Allocation.Width / 2.0f);
-			ActiveGroup.Y = (int)(xy.Y * ZoomLevel - Allocation.Height / 2.0f);
+			ActiveNode.X = (int)(xy.X * ZoomLevel - Allocation.Width / 2.0f);
+			ActiveNode.Y = (int)(xy.Y * ZoomLevel - Allocation.Height / 2.0f);
 
 			ModifiedView(this, new EventArgs());
 			QueueDraw();
@@ -858,12 +858,12 @@ namespace Cdn.Studio.Widgets
 				
 				foreach (Wrappers.Wrapper obj in objects)
 				{
-					if (!(obj is Wrappers.Group))
+					if (!(obj is Wrappers.Node))
 					{
 						continue;
 					}
 
-					Wrappers.Group grp = obj as Wrappers.Group;
+					Wrappers.Node grp = obj as Wrappers.Node;
 					Point xy;
 					
 					xy = Utils.MeanPosition(grp.Children);
@@ -871,24 +871,24 @@ namespace Cdn.Studio.Widgets
 					grp.X = (int)(xy.X * MinZoom - pt.X);
 					grp.Y = (int)(xy.Y * MinZoom - pt.Y);
 					
-					SetActiveGroup(grp);
+					SetActiveNode(grp);
 					ZoomLevel = MinZoom;
 					
 					break;
 				}
 			}
-			else if (lowerReached && d_activeGroup.Parent != null)
+			else if (lowerReached && d_activeNode.Parent != null)
 			{
-				Wrappers.Group newActive = d_activeGroup.Parent;
+				Wrappers.Node newActive = d_activeNode.Parent;
 				
 				double x, y;
-				x = d_activeGroup.Allocation.X + d_activeGroup.Allocation.Width / 2;
-				y = d_activeGroup.Allocation.Y + d_activeGroup.Allocation.Height / 2;
+				x = d_activeNode.Allocation.X + d_activeNode.Allocation.Width / 2;
+				y = d_activeNode.Allocation.Y + d_activeNode.Allocation.Height / 2;
 					
 				newActive.X = (int)(x * MaxZoom - pt.X);
 				newActive.Y = (int)(y * MaxZoom - pt.Y);
 				
-				SetActiveGroup(newActive);
+				SetActiveNode(newActive);
 				ZoomLevel = MaxZoom;
 			}
 		}
@@ -923,8 +923,8 @@ namespace Cdn.Studio.Widgets
 			
 			if (moveCanvas)
 			{
-				ActiveGroup.X += dx * ZoomLevel;
-				ActiveGroup.Y += dy * ZoomLevel;
+				ActiveNode.X += dx * ZoomLevel;
+				ActiveNode.Y += dy * ZoomLevel;
 				
 				ModifiedView(this, new EventArgs());
 			}
@@ -953,25 +953,25 @@ namespace Cdn.Studio.Widgets
 			
 			FocusRelease();
 			
-			if (ActiveGroup.Length == 0)
+			if (ActiveNode.Length == 0)
 			{
 				return false;
 			}
 			
 			if (pf == null)
 			{
-				d_focus = ActiveGroup.Children[direction == 1 ? 0 : ActiveGroup.Length - 1];
+				d_focus = ActiveNode.Children[direction == 1 ? 0 : ActiveNode.Length - 1];
 			}
 			else
 			{
-				int nidx = ActiveGroup.IndexOf(pf) + direction;
+				int nidx = ActiveNode.IndexOf(pf) + direction;
 				
-				if (nidx >= ActiveGroup.Length || nidx < 0)
+				if (nidx >= ActiveNode.Length || nidx < 0)
 				{
 					return false;
 				}
 				
-				d_focus = ActiveGroup.Children[nidx];
+				d_focus = ActiveNode.Children[nidx];
 			}
 			
 			if (d_focus != null)
@@ -1001,8 +1001,8 @@ namespace Cdn.Studio.Widgets
 		private void DrawGrid(Cairo.Context graphics)
 		{
 			// Calculate x/y offset of the grid lines
-			float ox = ActiveGroup.X % (float)ZoomLevel;
-			float oy = ActiveGroup.Y % (float)ZoomLevel;
+			float ox = ActiveNode.X % (float)ZoomLevel;
+			float oy = ActiveNode.Y % (float)ZoomLevel;
 			
 			graphics.Save();
 			graphics.Translate(-ZoomLevel - ox, -ZoomLevel - oy);
@@ -1100,20 +1100,20 @@ namespace Cdn.Studio.Widgets
 			}
 			else if (d_anchor.IsFrom)
 			{
-				toAlloc = d_anchor.Link.To.Allocation;
+				toAlloc = d_anchor.Edge.Output.Allocation;
 				fromAlloc = new Allocation(d_dragAnchorState.X, d_dragAnchorState.Y, 1, 1);
 			}
 			else
 			{
 				toAlloc = new Allocation(d_dragAnchorState.X, d_dragAnchorState.Y, 1, 1);
-				fromAlloc = d_anchor.Link.From.Allocation;
+				fromAlloc = d_anchor.Edge.Input.Allocation;
 			}
 			
 			graphics.SetSourceRGB(0.8, 0.8, 0.3);
 			graphics.LineWidth *= 2;
 
 			graphics.SetDash(new double[] {graphics.LineWidth, graphics.LineWidth}, 0);
-			Wrappers.Renderers.Link.Draw(graphics, fromAlloc, toAlloc, 1);
+			Wrappers.Renderers.Edge.Draw(graphics, fromAlloc, toAlloc, 1);
 			
 			graphics.Restore();
 			
@@ -1127,15 +1127,15 @@ namespace Cdn.Studio.Widgets
 		{
 			graphics.Save();
 			
-			graphics.Translate(-ActiveGroup.X, -ActiveGroup.Y);
+			graphics.Translate(-ActiveNode.X, -ActiveNode.Y);
 			graphics.Scale(ZoomLevel, ZoomLevel);
 			graphics.LineWidth = 1.0 / ZoomLevel;
 
 			List<Wrappers.Wrapper> objects = new List<Wrappers.Wrapper>();
 			
-			foreach (Wrappers.Wrapper obj in ActiveGroup.Children)
+			foreach (Wrappers.Wrapper obj in ActiveNode.Children)
 			{
-				Wrappers.Link link = obj as Wrappers.Link;
+				Wrappers.Edge link = obj as Wrappers.Edge;
 
 				if (link == null)
 				{
@@ -1203,15 +1203,15 @@ namespace Cdn.Studio.Widgets
 			{
 				d_isDraggingAnchor = true;
 
-				d_anchor.Link.LinkFocus = false;
+				d_anchor.Edge.LinkFocus = false;
 				
 				if (d_anchor.IsFrom)
 				{
-					d_anchor.Link.To.LinkFocus = true;
+					d_anchor.Edge.Output.LinkFocus = true;
 				}
 				else
 				{
-					d_anchor.Link.From.LinkFocus = true;
+					d_anchor.Edge.Input.LinkFocus = true;
 				}
 
 				UpdateDragAnchor(evnt.X, evnt.Y);
@@ -1294,23 +1294,23 @@ namespace Cdn.Studio.Widgets
 		
 		private void ReattachFromAnchor()
 		{
-			Wrappers.Wrapper fr;
-			Wrappers.Wrapper to;
+			Wrappers.Node fr;
+			Wrappers.Node to;
 
 			if (d_anchor.IsFrom)
 			{
 				fr = d_anchorDragHit;
-				to = d_anchor.Link.To;
+				to = d_anchor.Edge.Output;
 			}
 			else
 			{
-				fr = d_anchor.Link.From;
+				fr = d_anchor.Edge.Input;
 				to = d_anchorDragHit;
 			}
 			
-			if (d_anchor.Link.From != fr || d_anchor.Link.To != to)
+			if (d_anchor.Edge.Input != fr || d_anchor.Edge.Output != to)
 			{
-				d_actions.Do(new Undo.AttachLink(d_anchor.Link, fr, to));
+				d_actions.Do(new Undo.AttachEdge(d_anchor.Edge, fr, to));
 			}
 		}
 
@@ -1344,7 +1344,7 @@ namespace Cdn.Studio.Widgets
 				int dy = (int)d_hiddenLink.Allocation.Y;
 				
 				d_actions.Do(new Undo.Group(new Undo.MoveObject(d_hiddenLink, -dx, -dy),
-				                            new Undo.AttachLink(d_hiddenLink as Wrappers.Link, d_anchorDragHit, d_anchorDragHit)));
+				                            new Undo.AttachEdge(d_hiddenLink as Wrappers.Edge, d_anchorDragHit, d_anchorDragHit)));
 
 				d_anchorDragHit = null;
 				d_hiddenLink = null;
@@ -1376,8 +1376,8 @@ namespace Cdn.Studio.Widgets
 		
 		private void UpdateDragAnchor(double x, double y)
 		{
-			int xpos = (int)Scaled(x + ActiveGroup.X, item => System.Math.Floor(item));
-			int ypos = (int)Scaled(y + ActiveGroup.Y, item => System.Math.Floor(item));
+			int xpos = (int)Scaled(x + ActiveNode.X, item => System.Math.Floor(item));
+			int ypos = (int)Scaled(y + ActiveNode.Y, item => System.Math.Floor(item));
 			
 			if (d_dragAnchorState == null || xpos != d_dragAnchorState.X || ypos != d_dragAnchorState.Y)
 			{
@@ -1385,7 +1385,7 @@ namespace Cdn.Studio.Widgets
 				
 				List<Wrappers.Wrapper> objects = HitTest(new Allocation(x, y, 1, 1));
 				
-				objects.RemoveAll(item => item is Wrappers.Link);
+				objects.RemoveAll(item => !(item is Wrappers.Node));
 				
 				if (d_anchorDragHit != null)
 				{
@@ -1399,7 +1399,7 @@ namespace Cdn.Studio.Widgets
 				
 				if (objects.Count > 0)
 				{
-					d_anchorDragHit = objects[0];
+					d_anchorDragHit = objects[0] as Wrappers.Node;
 					d_anchorDragHit.LinkFocus = true;
 				}
 				
@@ -1489,14 +1489,14 @@ namespace Cdn.Studio.Widgets
 					QueueDraw();
 				}
 				
-				if (selection.Count == 1 && selection[0] is Wrappers.Link)
+				if (selection.Count == 1 && selection[0] is Wrappers.Edge)
 				{
 					List<Wrappers.Wrapper> hits = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
-					hits.RemoveAll(item => item is Wrappers.Link);
+					hits.RemoveAll(item => !(item is Wrappers.Node));
 					
 					if (hits.Count > 0)
 					{
-						d_anchorDragHit = hits[0];
+						d_anchorDragHit = hits[0] as Wrappers.Node;
 						d_anchorDragHit.LinkFocus = true;
 						
 						d_hiddenLink = selection[0];
@@ -1509,7 +1509,7 @@ namespace Cdn.Studio.Widgets
 			else if (d_anchorDragHit != null)
 			{
 				List<Wrappers.Wrapper> hits = HitTest(new Allocation(evnt.X, evnt.Y, 1, 1));
-				hits.RemoveAll(item => item is Wrappers.Link);
+				hits.RemoveAll(item => item is Wrappers.Edge);
 				
 				if (hits.Count == 0)
 				{
@@ -1601,13 +1601,13 @@ namespace Cdn.Studio.Widgets
 			
 			switch (d_selectionState)
 			{
-				case SelectionState.LinksOnly:
-					msg += ", only links";
+			case SelectionState.LinksOnly:
+				msg += ", only links";
 				break;
-				case SelectionState.StatesOnly:
-					msg += ", only states";
+			case SelectionState.StatesOnly:
+				msg += ", only states";
 				break;
-				default:
+			default:
 				break;
 			}
 			
@@ -1616,7 +1616,7 @@ namespace Cdn.Studio.Widgets
 		
 		private void SelectAll(bool isalt)
 		{
-			foreach (Wrappers.Wrapper wrapper in d_activeGroup.Children)
+			foreach (Wrappers.Wrapper wrapper in d_activeNode.Children)
 			{
 				Select(wrapper, isalt);
 			}
@@ -1634,7 +1634,7 @@ namespace Cdn.Studio.Widgets
 			{
 				try
 				{
-					d_actions.Delete(d_activeGroup, Selection);
+					d_actions.Delete(d_activeNode, Selection);
 				}
 				catch (Exception e)
 				{

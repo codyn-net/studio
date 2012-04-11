@@ -31,23 +31,23 @@ namespace Cdn.Studio
 		private Gtk.Menu d_menu;
 		private Gtk.Widget d_widget;
 		private PropertyInfo d_menuProperty;
-		private Wrappers.Group d_group;
+		private Wrappers.Node d_group;
 		
 		public event ActivatedHandler Activated = delegate {};
 
-		public TemplatesMenu(Gtk.Widget widget, Wrappers.Group grp, bool recursive) : this(widget, new Gtk.Menu(), grp, recursive, null)
+		public TemplatesMenu(Gtk.Widget widget, Wrappers.Node grp, bool recursive) : this(widget, new Gtk.Menu(), grp, recursive, null)
 		{
 		}
 		
-		public TemplatesMenu(Gtk.Widget widget, Wrappers.Group grp, bool recursive, WrapperFilter filter) : this(widget, new Gtk.Menu(), grp, recursive, filter)
+		public TemplatesMenu(Gtk.Widget widget, Wrappers.Node grp, bool recursive, WrapperFilter filter) : this(widget, new Gtk.Menu(), grp, recursive, filter)
 		{
 		}
 		
-		public TemplatesMenu(Gtk.Widget widget, Gtk.Menu menu, Wrappers.Group grp, bool recursive) : this(widget, menu, grp, recursive, null)
+		public TemplatesMenu(Gtk.Widget widget, Gtk.Menu menu, Wrappers.Node grp, bool recursive) : this(widget, menu, grp, recursive, null)
 		{
 		}
 		
-		public TemplatesMenu(Gtk.Widget widget, Gtk.Menu menu, Wrappers.Group grp, bool recursive, WrapperFilter filter)
+		public TemplatesMenu(Gtk.Widget widget, Gtk.Menu menu, Wrappers.Node grp, bool recursive, WrapperFilter filter)
 		{
 			d_menu = menu;
 			d_filter = filter;
@@ -87,7 +87,7 @@ namespace Cdn.Studio
 			}
 		}
 
-		private void HideShowMenu(Wrappers.Group source, Wrappers.Wrapper child)
+		private void HideShowMenu(Wrappers.Node source, Wrappers.Wrapper child)
 		{
 			if (d_menu.Children.Length > 0)
 			{
@@ -104,7 +104,7 @@ namespace Cdn.Studio
 			}
 		}
 		
-		private void Traverse(Wrappers.Group grp, Gtk.Menu sub)
+		private void Traverse(Wrappers.Node grp, Gtk.Menu sub)
 		{
 			foreach (Wrappers.Wrapper child in grp.Children)
 			{
@@ -119,7 +119,7 @@ namespace Cdn.Studio
 		
 		private void AddTemplate(Gtk.Menu menu, Wrappers.Wrapper template)
 		{
-			if (!(d_filter == null || d_filter(template) || (template is Wrappers.Group && d_recursive)))
+			if (!(d_filter == null || d_filter(template) || (template is Wrappers.Node && d_recursive)))
 			{
 				return;
 			}
@@ -140,12 +140,12 @@ namespace Cdn.Studio
 			
 			d_map[template] = new MenuInfo(item, menu);
 
-			if (d_recursive && template is Wrappers.Group)
+			if (d_recursive && template is Wrappers.Node)
 			{
 				Gtk.Menu sub = new Gtk.Menu();
 				item.Submenu = sub;
 
-				Traverse((Wrappers.Group)template, sub);
+				Traverse((Wrappers.Node)template, sub);
 			}
 			
 			template.WrappedObject.AddNotification("id", HandleIdChanged);
@@ -163,7 +163,7 @@ namespace Cdn.Studio
 			item.Add(lbl);
 		}
 
-		private void HandleChildAdded(Wrappers.Group source, Wrappers.Wrapper child)
+		private void HandleChildAdded(Wrappers.Node source, Wrappers.Wrapper child)
 		{
 			Gtk.Menu sub;
 			
@@ -171,9 +171,9 @@ namespace Cdn.Studio
 			{
 				d_map[child] = new TemplatesMenu.MenuInfo(null, d_map[source].Menu);
 
-				foreach (Wrappers.Wrapper wrapper in (child as Wrappers.Group).Children)
+				foreach (Wrappers.Wrapper wrapper in (child as Wrappers.Node).Children)
 				{
-					HandleChildAdded(child as Wrappers.Group, wrapper);
+					HandleChildAdded(child as Wrappers.Node, wrapper);
 				}
 				
 				return;
@@ -197,9 +197,9 @@ namespace Cdn.Studio
 
 			d_map.Remove(child);
 			
-			if (d_recursive && child is Wrappers.Group)
+			if (d_recursive && child is Wrappers.Node)
 			{
-				Wrappers.Group grp = (Wrappers.Group)child;
+				Wrappers.Node grp = (Wrappers.Node)child;
 				
 				foreach (Wrappers.Wrapper w in grp.Children)
 				{
@@ -208,7 +208,7 @@ namespace Cdn.Studio
 			}
 		}
 		
-		private void HandleChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
+		private void HandleChildRemoved(Wrappers.Node source, Wrappers.Wrapper child)
 		{
 			if (!d_map.ContainsKey(child))
 			{
@@ -218,9 +218,9 @@ namespace Cdn.Studio
 			Gtk.Menu sub = d_map[child].Menu;
 			sub.Remove(d_map[child].Item);
 			
-			if (d_recursive && child is Wrappers.Group)
+			if (d_recursive && child is Wrappers.Node)
 			{
-				Wrappers.Group grp = (Wrappers.Group)child;
+				Wrappers.Node grp = (Wrappers.Node)child;
 				
 				grp.ChildAdded -= HandleChildAdded;
 				grp.ChildRemoved -= HandleChildRemoved;

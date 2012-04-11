@@ -7,27 +7,27 @@ namespace Cdn.Studio.Widgets
 {
 	public class Pathbar : HBox
 	{
-		public delegate void ActivateHandler(object source, Wrappers.Group grp);
+		public delegate void ActivateHandler(object source, Wrappers.Node grp);
 		public event ActivateHandler Activated = delegate {};
 
-		private Dictionary<Wrappers.Group, ToggleButton> d_pathWidgets;
-		private List<Wrappers.Group> d_pathGroups;
+		private Dictionary<Wrappers.Node, ToggleButton> d_pathWidgets;
+		private List<Wrappers.Node> d_pathGroups;
 
-		private Wrappers.Group d_active;
-		private List<Wrappers.Group> d_roots;
+		private Wrappers.Node d_active;
+		private List<Wrappers.Node> d_roots;
 
-		public Pathbar(params Wrappers.Group[] roots) : base(false, 0)
+		public Pathbar(params Wrappers.Node[] roots) : base(false, 0)
 		{
-			d_pathWidgets = new Dictionary<Wrappers.Group, ToggleButton>();
-			d_pathGroups = new List<Wrappers.Group>();
-			d_roots = new List<Wrappers.Group>(roots);
+			d_pathWidgets = new Dictionary<Wrappers.Node, ToggleButton>();
+			d_pathGroups = new List<Wrappers.Node>();
+			d_roots = new List<Wrappers.Node>(roots);
 
 			d_active = null;
 		}
 		
-		private List<Wrappers.Group> Collect(Wrappers.Group grp)
+		private List<Wrappers.Node> Collect(Wrappers.Node grp)
 		{
-			List<Wrappers.Group> ret = new List<Wrappers.Group>();
+			List<Wrappers.Node> ret = new List<Wrappers.Node>();
 
 			do
 			{
@@ -46,7 +46,7 @@ namespace Cdn.Studio.Widgets
 				Remove(Children[0]);
 			}
 			
-			foreach (Wrappers.Group grp in d_pathGroups)
+			foreach (Wrappers.Node grp in d_pathGroups)
 			{
 				grp.ChildRemoved -= HandleChildRemoved;
 			}
@@ -57,7 +57,7 @@ namespace Cdn.Studio.Widgets
 			d_active = null;
 		}
 		
-		private void SetActive(Wrappers.Group grp, bool active)
+		private void SetActive(Wrappers.Node grp, bool active)
 		{
 			if (grp == null)
 			{
@@ -79,7 +79,7 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 		
-		private string RootName(Wrappers.Group root)
+		private string RootName(Wrappers.Node root)
 		{
 			string ret = root.ToString();
 			
@@ -91,7 +91,7 @@ namespace Cdn.Studio.Widgets
 			return ret;
 		}
 		
-		public void Update(Wrappers.Group grp)
+		public void Update(Wrappers.Node grp)
 		{
 			if (d_active == grp)
 			{
@@ -116,7 +116,7 @@ namespace Cdn.Studio.Widgets
 					return;
 				}
 
-				List<Wrappers.Group> groups = Collect(grp);
+				List<Wrappers.Node> groups = Collect(grp);
 				
 				for (int i = 0; i < groups.Count; ++i)
 				{
@@ -138,7 +138,7 @@ namespace Cdn.Studio.Widgets
 					
 					if (i == 0)
 					{
-						List<Wrappers.Group> roots = new List<Wrappers.Group>(d_roots);
+						List<Wrappers.Node> roots = new List<Wrappers.Node>(d_roots);
 						roots.Remove(groups[0]);
 						
 						if (roots.Count != 0)
@@ -168,9 +168,9 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 
-		private void HandleChildRemoved(Wrappers.Group source, Wrappers.Wrapper child)
+		private void HandleChildRemoved(Wrappers.Node source, Wrappers.Wrapper child)
 		{
-			Wrappers.Group grp = child as Wrappers.Group;
+			Wrappers.Node grp = child as Wrappers.Node;
 			
 			if (grp == null)
 			{
@@ -205,18 +205,18 @@ namespace Cdn.Studio.Widgets
 		
 		private void PopupRoots()
 		{
-			List<Wrappers.Group> roots = new List<Wrappers.Group>(d_roots);
+			List<Wrappers.Node> roots = new List<Wrappers.Node>(d_roots);
 			roots.Remove(d_active);
 			
 			Menu menu = new Menu();
 			menu.Show();
 
-			foreach (Wrappers.Group root in d_roots)
+			foreach (Wrappers.Node root in d_roots)
 			{
 				MenuItem item = new MenuItem(RootName(root));
 				item.Show();
 				
-				Wrappers.Group grp = root;
+				Wrappers.Node grp = root;
 				
 				item.Activated += delegate {
 					Update(grp);
@@ -235,7 +235,7 @@ namespace Cdn.Studio.Widgets
 			Widget w = (Widget)sender;
 			
 			ToggleButton toggle = (ToggleButton)w;
-			Wrappers.Group selected = (Wrappers.Group)w.Data["WrappedGroup"];
+			Wrappers.Node selected = (Wrappers.Node)w.Data["WrappedGroup"];
 			
 			if (selected == d_active)
 			{

@@ -10,9 +10,9 @@ namespace Cdn.Studio.Widgets
 		{
 			public enum HeaderType
 			{
-				State,
-				Link,
-				Property,
+				Node,
+				Edge,
+				Variable,
 				Action
 			}
 			
@@ -32,7 +32,6 @@ namespace Cdn.Studio.Widgets
 			private GLib.Object d_object;
 			private bool d_checked;
 			private List<WrapperNode> d_inconsistent;
-
 			private static Dictionary<Type, Gdk.Pixbuf> s_iconmap;
 			
 			public delegate void ToggledHandler(WrapperNode node);
@@ -57,19 +56,19 @@ namespace Cdn.Studio.Widgets
 				
 				if (d_wrapper != null)
 				{			
-					if (d_wrapper is Wrappers.Group)
+					if (d_wrapper is Wrappers.Node)
 					{
-						stockid = Stock.GroupState;
+						stockid = Stock.Node;
 					}
-					else if (d_wrapper is Wrappers.Link)
+					else if (d_wrapper is Wrappers.Edge)
 					{
-						stockid = Stock.Link;
+						stockid = Stock.Edge;
 					}
 					else
 					{
-						stockid = Stock.State;
+						stockid = Gtk.Stock.MissingImage;
 					}
-					
+
 					icon = d_widget.RenderIcon(stockid, IconSize.Menu, null);
 				}
 			
@@ -78,11 +77,11 @@ namespace Cdn.Studio.Widgets
 				return icon;
 			}
 			
-			public WrapperNode(Widget widget, Cdn.Property property) : this(widget, null, property)
+			public WrapperNode(Widget widget, Cdn.Variable property) : this(widget, null, property)
 			{
 			}
 			
-			public WrapperNode(Widget widget, Cdn.LinkAction action) : this(widget, null, action)
+			public WrapperNode(Widget widget, Cdn.EdgeAction action) : this(widget, null, action)
 			{
 			}
 			
@@ -101,7 +100,7 @@ namespace Cdn.Studio.Widgets
 
 				if (d_wrapper != null)
 				{
-					Wrappers.Group grp = wrapper as Wrappers.Group;
+					Wrappers.Node grp = wrapper as Wrappers.Node;
 					
 					if (grp != null)
 					{
@@ -114,7 +113,7 @@ namespace Cdn.Studio.Widgets
 						}
 					}
 					
-					Wrappers.Link link = wrapper as Wrappers.Link;
+					Wrappers.Edge link = wrapper as Wrappers.Edge;
 					
 					if (link != null)
 					{
@@ -124,22 +123,22 @@ namespace Cdn.Studio.Widgets
 					
 					d_wrapper.WrappedObject.AddNotification("id", OnIdChanged);
 					
-					d_wrapper.PropertyAdded += OnPropertyAdded;
-					d_wrapper.PropertyRemoved += OnPropertyRemoved;
+					d_wrapper.VariableAdded += OnVariableAdded;
+					d_wrapper.VariableRemoved += OnVariableRemoved;
 					
-					foreach (Cdn.Property prop in d_wrapper.WrappedObject.Properties)
+					foreach (Cdn.Variable prop in d_wrapper.WrappedObject.Variables)
 					{
-						OnPropertyAdded(wrapper, prop);	
+						OnVariableAdded(wrapper, prop);
 					}
 				}
 				
 				if (d_object != null)
 				{
-					if (d_object is Cdn.Property)
+					if (d_object is Cdn.Variable)
 					{
 						d_object.AddNotification("name", OnIdChanged);
 					}
-					else if (d_object is Cdn.LinkAction)
+					else if (d_object is Cdn.EdgeAction)
 					{
 						d_object.AddNotification("target", OnIdChanged);
 					}
@@ -156,7 +155,7 @@ namespace Cdn.Studio.Widgets
 					d_wrapper.WrappedObject.RemoveNotification("to", OnLinkChanged);
 					d_wrapper.WrappedObject.RemoveNotification("id", OnIdChanged);
 					
-					Wrappers.Group grp = d_wrapper as Wrappers.Group;
+					Wrappers.Node grp = d_wrapper as Wrappers.Node;
 					
 					if (grp != null)
 					{
@@ -164,17 +163,17 @@ namespace Cdn.Studio.Widgets
 						grp.ChildRemoved -= OnChildRemoved;
 					}
 					
-					d_wrapper.PropertyAdded -= OnPropertyAdded;
-					d_wrapper.PropertyRemoved -= OnPropertyRemoved;
+					d_wrapper.VariableAdded -= OnVariableAdded;
+					d_wrapper.VariableRemoved -= OnVariableRemoved;
 				}
 				
 				if (d_object != null)
 				{
-					if (d_object is Cdn.Property)
+					if (d_object is Cdn.Variable)
 					{
 						d_object.RemoveNotification("name", OnIdChanged);
 					}
-					else if (d_object is Cdn.LinkAction)
+					else if (d_object is Cdn.EdgeAction)
 					{
 						d_object.RemoveNotification("target", OnIdChanged);
 					}
@@ -195,14 +194,14 @@ namespace Cdn.Studio.Widgets
 				EmitChanged();
 			}
 			
-			private void OnChildAdded(Wrappers.Group grp, Wrappers.Wrapper child)
+			private void OnChildAdded(Wrappers.Node grp, Wrappers.Wrapper child)
 			{
 				TreeIter iter;
 				
 				Add(new WrapperNode(d_widget, child), out iter);
 			}
 			
-			private void OnChildRemoved(Wrappers.Group grp, Wrappers.Wrapper child)
+			private void OnChildRemoved(Wrappers.Node grp, Wrappers.Wrapper child)
 			{
 				foreach (WrapperNode node in AllChildren)
 				{
@@ -215,14 +214,14 @@ namespace Cdn.Studio.Widgets
 				}
 			}
 
-			private void OnPropertyAdded(Wrappers.Wrapper wrapper, Cdn.Property property)
+			private void OnVariableAdded(Wrappers.Wrapper wrapper, Cdn.Variable property)
 			{
 				TreeIter iter;
 				
 				Add(new WrapperNode(d_widget, property), out iter);
 			}
 			
-			private void OnPropertyRemoved(Wrappers.Wrapper wrapper, Cdn.Property property)
+			private void OnVariableRemoved(Wrappers.Wrapper wrapper, Cdn.Variable property)
 			{
 				foreach (WrapperNode node in AllChildren)
 				{
@@ -255,10 +254,10 @@ namespace Cdn.Studio.Widgets
 				{
 					switch (d_header)
 					{
-						case HeaderType.Link:
-							return "Links";
-						case HeaderType.State:
-							return "States";
+					case HeaderType.Edge:
+						return "Links";
+					case HeaderType.Node:
+						return "States";
 					}
 					
 					return "None";
@@ -273,14 +272,14 @@ namespace Cdn.Studio.Widgets
 				}
 				else if (d_object != null)
 				{
-					Cdn.Property prop = d_object as Cdn.Property;
+					Cdn.Variable prop = d_object as Cdn.Variable;
 					
 					if (prop != null)
 					{
 						return prop.Name;
 					}
 					
-					Cdn.LinkAction action = d_object as Cdn.LinkAction;
+					Cdn.EdgeAction action = d_object as Cdn.EdgeAction;
 					
 					if (action != null)
 					{
@@ -335,20 +334,20 @@ namespace Cdn.Studio.Widgets
 			}
 			
 			[PrimaryKey()]
-			public Cdn.Property Property
+			public Cdn.Variable Variable
 			{
 				get
 				{
-					return d_object != null ? d_object as Cdn.Property : null;
+					return d_object != null ? d_object as Cdn.Variable : null;
 				}
 			}
 			
 			[PrimaryKey()]
-			public Cdn.LinkAction Action
+			public Cdn.EdgeAction Action
 			{
 				get
 				{
-					return d_object != null ? d_object as Cdn.LinkAction : null;
+					return d_object != null ? d_object as Cdn.EdgeAction : null;
 				}
 			}
 			
@@ -428,22 +427,22 @@ namespace Cdn.Studio.Widgets
 				{
 					if (d_wrapper != null)
 					{
-						if (d_wrapper is Wrappers.Link)
+						if (d_wrapper is Wrappers.Edge)
 						{
-							return HeaderType.Link;
+							return HeaderType.Edge;
 						}
 						else
 						{
-							return HeaderType.State;
+							return HeaderType.Node;
 						}
 					}
 					else if (d_object != null)
 					{
-						if (d_object is Cdn.Property)
+						if (d_object is Cdn.Variable)
 						{	
-							return HeaderType.Property;
+							return HeaderType.Variable;
 						}
-						else if (d_object is Cdn.LinkAction)
+						else if (d_object is Cdn.EdgeAction)
 						{
 							return HeaderType.Action;
 						}
@@ -482,39 +481,38 @@ namespace Cdn.Studio.Widgets
 		private Widgets.TreeView<WrapperNode> d_treeview;
 		private Entry d_entry;
 		private string d_searchText;
-		private Wrappers.Group d_group;
+		private Wrappers.Node d_group;
 		private Dictionary<GLib.Object, bool> d_selected;
 		private Label d_label;
-		
 		private CellRendererToggle d_rendererToggle;
 		private CellRendererPixbuf d_rendererIcon;
 		private CellRendererText d_rendererName;
 		
-		public delegate void NodeHandler(object source, WrapperNode node);
-		public delegate void NodesHandler(object source, WrapperNode[] nodes);
-		public delegate void PopulatePopupHandler(object source, WrapperNode[] nodes, Gtk.Menu menu);
+		public delegate void NodeHandler(object source,WrapperNode node);
+
+		public delegate void NodesHandler(object source,WrapperNode[] nodes);
+
+		public delegate void PopulatePopupHandler(object source,WrapperNode[] nodes,Gtk.Menu menu);
 
 		public event NodesHandler Activated = delegate {};
 		public event NodeHandler Toggled = delegate {};
 		public event PopulatePopupHandler PopulatePopup = delegate {};
 		
-		public delegate void WrapperFilter(WrapperNode node, ref bool ret);
+		public delegate void WrapperFilter(WrapperNode node,ref bool ret);
+
 		private WrapperFilter d_filterStorage;
 
-		public event WrapperFilter Filter
-		{
-			add
-			{
+		public event WrapperFilter Filter {
+			add {
 				d_filterStorage += value;
 				d_treeview.NodeStore.Filter(FilterFunc);
 			}
-			remove
-			{
+			remove {
 				d_filterStorage -= value;
 			}
 		}
 
-		public WrappersTree(Wrappers.Group parent) : base(false, 3)
+		public WrappersTree(Wrappers.Node parent) : base(false, 3)
 		{
 			d_treeview = new Widgets.TreeView<WrapperNode>();
 			d_group = parent;
@@ -645,7 +643,7 @@ namespace Cdn.Studio.Widgets
 		{
 			get { return d_label.Text; }
 		
-				set { d_label.Text = value; }
+			set { d_label.Text = value; }
 		}
 
 		private void OnNodeToggled(WrapperNode node)
@@ -752,7 +750,7 @@ namespace Cdn.Studio.Widgets
 				{
 					return false;
 				}
-				else if (wp.Property != null && !d_selected.ContainsKey(wp.Property))
+				else if (wp.Variable != null && !d_selected.ContainsKey(wp.Variable))
 				{
 					return false;
 				}
@@ -762,9 +760,9 @@ namespace Cdn.Studio.Widgets
 				}
 			}
 			
-			Wrappers.Link link = wp.Wrapper as Wrappers.Link;
+			Wrappers.Edge link = wp.Wrapper as Wrappers.Edge;
 			
-			if (link != null && (link.From != null || link.To != null))
+			if (link != null && (link.Input != null || link.Output != null))
 			{
 				return false;
 			}
@@ -793,7 +791,7 @@ namespace Cdn.Studio.Widgets
 			
 			Cdn.Object o = obj as Cdn.Object;
 
-			Cdn.Group grp = obj as Cdn.Group;
+			Cdn.Node grp = obj as Cdn.Node;
 						
 			if (grp != null)
 			{
@@ -802,38 +800,38 @@ namespace Cdn.Studio.Widgets
 					AddAll(child, ret);
 				}
 				
-				foreach (string name in grp.PropertyInterface.Names)
+				foreach (string name in grp.VariableInterface.Names)
 				{
-					d_selected[grp.Property(name)] = true;
+					d_selected[grp.Variable(name)] = true;
 				}
 			}
 			
 			if (o != null)
 			{			
-				foreach (Cdn.Property prop in o.Properties)
+				foreach (Cdn.Variable prop in o.Variables)
 				{
 					d_selected[prop] = true;
 				}
 			}
 			
-			Cdn.Link link = obj as Cdn.Link;
+			Cdn.Edge link = obj as Cdn.Edge;
 			
 			if (link != null)
 			{
-				foreach (Cdn.LinkAction action in link.Actions)
+				foreach (Cdn.EdgeAction action in link.Actions)
 				{
 					d_selected[action] = true;
 				}
 			}
 		}
 		
-		private void AllObjects(Wrappers.Group grp, List<Wrappers.Object> ret)
+		private void AllObjects(Wrappers.Node grp, List<Wrappers.Object> ret)
 		{
 			foreach (Wrappers.Object child in grp.Children)
 			{
 				ret.Add(child);
 
-				Wrappers.Group cg = child as Wrappers.Group;
+				Wrappers.Node cg = child as Wrappers.Node;
 				
 				if (cg != null)
 				{
@@ -903,18 +901,18 @@ namespace Cdn.Studio.Widgets
 			base.OnDestroyed();
 		}
 		
-		private void ChildAdded(Wrappers.Group grp, Wrappers.Wrapper wrapper)
+		private void ChildAdded(Wrappers.Node grp, Wrappers.Wrapper wrapper)
 		{
 			TreeIter iter;
 			d_treeview.NodeStore.Add(new WrapperNode(d_treeview, wrapper), out iter);
 		}
 		
-		private void ChildRemoved(Wrappers.Group grp, Wrappers.Wrapper wrapper)
+		private void ChildRemoved(Wrappers.Node grp, Wrappers.Wrapper wrapper)
 		{
 			d_treeview.NodeStore.Remove(wrapper);
 		}
 		
-		private void Build(Wrappers.Group grp)
+		private void Build(Wrappers.Node grp)
 		{
 			foreach (Wrappers.Wrapper child in grp.Children)
 			{

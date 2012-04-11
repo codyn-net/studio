@@ -4,14 +4,14 @@ using System.Collections.Generic;
 
 namespace Cdn.Studio.Widgets.Editors
 {
-	public class Group : Gtk.HBox
+	public class Node : Gtk.HBox
 	{
-		private Wrappers.Group d_group;
+		private Wrappers.Node d_group;
 		private ListStore d_proxyStore;
 		private ComboBox d_proxyCombo;
 		private Actions d_actions;
 
-		public Group(Wrappers.Group grp, Actions actions) : base(false, 6)
+		public Node(Wrappers.Node grp, Actions actions) : base(false, 6)
 		{
 			d_group = grp;
 			d_actions = actions;
@@ -40,7 +40,7 @@ namespace Cdn.Studio.Widgets.Editors
 
 			List<Wrappers.Wrapper> children = new List<Wrappers.Wrapper>(d_group.Children);
 			
-			children.RemoveAll(item => item is Wrappers.Link);
+			children.RemoveAll(item => item is Wrappers.Edge);
 
 			children.Sort(delegate (Wrappers.Wrapper a, Wrappers.Wrapper b) {
 				return a.Id.CompareTo(b.Id);

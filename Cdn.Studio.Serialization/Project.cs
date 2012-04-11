@@ -15,19 +15,14 @@ namespace Cdn.Studio.Serialization
 		{
 			[XmlAttribute("y")]
 			public string Y;
-
 			[XmlAttribute("x")]
 			public string X;
-			
 			[XmlAttribute("color")]
 			public string Color;
-			
 			[XmlAttribute("vector")]
 			public bool Vector = false;
-			
 			[XmlAttribute("y-initial")]
 			public double YInitial = double.NaN;
-			
 			[XmlAttribute("x-initial")]
 			public double XInitial = double.NaN;
 		}
@@ -38,22 +33,16 @@ namespace Cdn.Studio.Serialization
 			[XmlElement("plots"),
 			 XmlElement(typeof(Series))]
 			public List<Series> Plots;
-			
 			[XmlAttribute("row")]
 			public int Row;
-			
 			[XmlAttribute("column")]
 			public int Column;
-
 			[XmlAttribute("xmin")]
 			public double XMin = double.NaN;
-			
 			[XmlAttribute("xmax")]
 			public double XMax = double.NaN;
-			
 			[XmlAttribute("ymin")]
 			public double YMin = double.NaN;
-			
 			[XmlAttribute("ymax")]
 			public double YMax = double.NaN;
 
@@ -70,31 +59,22 @@ namespace Cdn.Studio.Serialization
 		{
 			[XmlElement("tool-bar")]
 			public bool ToolBar;
-			
 			[XmlElement("path-bar")]
 			public bool PathBar;
-					
 			[XmlElement("simulate-bar")]
 			public bool SimulateBar;
-			
 			[XmlElement("status-bar")]
 			public bool StatusBar;
-			
 			[XmlElement("pane-position")]
 			public int PanePosition;
-			
 			[XmlElement("side-bar-pane-position")]
 			public int SideBarPanePosition;
-			
 			[XmlElement("simulate-period")]
 			public string SimulatePeriod;
-			
 			[XmlElement("allocation")]
 			public Allocation Allocation;
-			
-			[XmlElement("active-group")]
-			public string ActiveGroup;
-			
+			[XmlElement("active-node")]
+			public string ActiveNode;
 			[XmlElement("active-root")]
 			public string ActiveRoot;
 			
@@ -103,13 +83,10 @@ namespace Cdn.Studio.Serialization
 				[XmlElement("graph"),
 				 XmlElement(typeof(Monitor))]
 				public List<Monitor> Graphs;
-				
 				[XmlAttribute("rows")]
 				public int Rows;
-				
 				[XmlAttribute("columns")]
 				public int Columns;
-				
 				[XmlElement("allocation")]
 				public Allocation Allocation;
 			}
@@ -127,7 +104,7 @@ namespace Cdn.Studio.Serialization
 				SideBarPanePosition = 250;
 				SimulatePeriod = "0:0.01:1";
 				Allocation = new Allocation(-1, -1, 700, 600);
-				ActiveGroup = "";
+				ActiveNode = "";
 
 				Monitors.Graphs = new List<Monitor>();
 				Monitors.Rows = 0;
@@ -140,7 +117,6 @@ namespace Cdn.Studio.Serialization
 		private bool d_saveProjectExternally;
 		private string d_externalProjectFile;
 		private Wrappers.Network d_network;
-
 		private string d_externalPath;
 		private bool d_shared;
 		private bool d_cansave;
@@ -510,7 +486,8 @@ namespace Cdn.Studio.Serialization
 
 				Save(doc, filename);
 				
-				string extfile = Path.Combine(Path.GetDirectoryName(filename), d_externalPath);;
+				string extfile = Path.Combine(Path.GetDirectoryName(filename), d_externalPath);
+				;
 				
 				XmlDocument ext = new XmlDocument();
 				root = ext.CreateElement("cdn");

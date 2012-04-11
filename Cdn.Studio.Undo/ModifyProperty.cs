@@ -2,21 +2,21 @@ using System;
 
 namespace Cdn.Studio.Undo
 {
-	public class ModifyProperty : Property, IAction
+	public class ModifyProperty : Variable, IAction
 	{
 		private string d_expression;
 		private string d_previousExpression;
 
-		private Cdn.PropertyFlags d_flags;
-		private Cdn.PropertyFlags d_previousFlags;
+		private Cdn.VariableFlags d_flags;
+		private Cdn.VariableFlags d_previousFlags;
 
-		public ModifyProperty(Wrappers.Wrapper wrapped, Cdn.Property property, string expression) : base(wrapped, property)
+		public ModifyProperty(Wrappers.Wrapper wrapped, Cdn.Variable property, string expression) : base(wrapped, property)
 		{
 			d_expression = expression == null ? "" : expression;
 			d_previousExpression = property.Expression.AsString;
 		}
 		
-		public ModifyProperty(Wrappers.Wrapper wrapped, Cdn.Property property, Cdn.PropertyFlags flags) : base(wrapped, property)
+		public ModifyProperty(Wrappers.Wrapper wrapped, Cdn.Variable property, Cdn.VariableFlags flags) : base(wrapped, property)
 		{
 			d_expression = null;
 

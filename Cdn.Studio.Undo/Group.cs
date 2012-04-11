@@ -104,7 +104,7 @@ namespace Cdn.Studio.Undo
 		
 		public bool CanMerge(IAction other)
 		{
-			if (!(other is Group))
+			if (!(other is Node))
 			{
 				return false;
 			}

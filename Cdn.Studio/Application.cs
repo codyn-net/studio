@@ -80,20 +80,7 @@ namespace Cdn.Studio
 			System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
 			GLib.GType.Init();
 
-			Gtk.Application.Init("Cdn Studio", ref args);
-			Wrappers.Renderers.Oscillator renderer = new Wrappers.Renderers.Oscillator();
-
-			Gtk.Window.DefaultIconList = new Gdk.Pixbuf[] {
-				renderer.Icon(16),
-				renderer.Icon(22),
-				renderer.Icon(24),
-				renderer.Icon(32),
-				renderer.Icon(48),
-				renderer.Icon(64),
-				renderer.Icon(128),
-				renderer.Icon(192),
-				renderer.Icon(256)
-			};
+			Gtk.Application.Init("Codyn Studio", ref args);
 
 			Studio.Application instance = new Studio.Application();
 			instance.Run(args);

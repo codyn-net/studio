@@ -6,12 +6,12 @@ namespace Cdn.Studio.Undo
 	public class Import : IAction
 	{
 		private Wrappers.Network d_network;
-		private Wrappers.Group d_parent;
+		private Wrappers.Node d_parent;
 		private string d_id;
 		private string d_filename;
 		private Wrappers.Import d_import;
 
-		public Import(Wrappers.Network network, Wrappers.Group parent, string id, string filename)
+		public Import(Wrappers.Network network, Wrappers.Node parent, string id, string filename)
 		{
 			d_network = network;
 			d_parent = parent;
@@ -33,8 +33,8 @@ namespace Cdn.Studio.Undo
 		{
 			imported.Allocation = original.Allocation.Copy();
 			
-			Wrappers.Group grp = original as Wrappers.Group;
-			Wrappers.Group imp = imported as Wrappers.Group;
+			Wrappers.Node grp = original as Wrappers.Node;
+			Wrappers.Node imp = imported as Wrappers.Node;
 			
 			if (grp != null)
 			{
@@ -53,7 +53,7 @@ namespace Cdn.Studio.Undo
 		public void Redo()
 		{
 			Point templateMean;
-			templateMean = Utils.MeanPosition(d_network.TemplateGroup.Children);
+			templateMean = Utils.MeanPosition(d_network.TemplateNode.Children);
 			
 			templateMean.Floor();
 			
@@ -69,17 +69,17 @@ namespace Cdn.Studio.Undo
 			project.Load(d_filename);
 			
 			// Merge annotations
-			foreach (Wrappers.Wrapper wrapper in d_network.TemplateGroup.Children)
+			foreach (Wrappers.Wrapper wrapper in d_network.TemplateNode.Children)
 			{
 				if (d_import.ImportsObject(wrapper))
 				{
-					MergeAnnotations(project.Network.TemplateGroup, wrapper);
+					MergeAnnotations(project.Network.TemplateNode, wrapper);
 					wrapper.Allocation.Move(templateMean);
 					break;
 				}
 			}
 
-			if (d_network.TemplateGroup != d_parent)
+			if (d_network.TemplateNode != d_parent)
 			{
 				foreach (Wrappers.Wrapper wrapper in d_network.Children)
 				{

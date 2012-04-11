@@ -5,9 +5,9 @@ using CCdn = Cdn;
 
 namespace Cdn.Studio.Wrappers
 {
-	public class Group : Wrappers.Object
+	public class Node : Wrappers.Object
 	{
-		public delegate void ChildHandler(Group source, Wrapper child);
+		public delegate void ChildHandler(Node source,Wrapper child);
 		
 		public event ChildHandler ChildAdded = delegate {};
 		public event ChildHandler ChildRemoved = delegate {};
@@ -16,25 +16,25 @@ namespace Cdn.Studio.Wrappers
 		private int d_y;
 		private int d_zoom;
 		
-		public Group() : this(new Cdn.Group("group", null))
+		public Node() : this(new Cdn.Node("node", null))
 		{
 		}
 		
-		protected Group(Cdn.Group obj) : base(obj)
+		protected Node(Cdn.Node obj) : base(obj)
 		{
 			d_x = 0;
 			d_y = 0;
 			d_zoom = Widgets.Grid.DefaultZoom;
 			
-			Renderer = new Renderers.Group(this);
+			Renderer = new Renderers.Node(this);
 		}
 		
-		public static implicit operator Cdn.Object(Group obj)
+		public static implicit operator Cdn.Object(Node obj)
 		{
 			return obj.WrappedObject;
 		}
 		
-		public static implicit operator Cdn.Group(Group obj)
+		public static implicit operator Cdn.Node(Node obj)
 		{
 			return obj.WrappedObject;
 		}
@@ -65,16 +65,16 @@ namespace Cdn.Studio.Wrappers
 			ChildRemoved(this, args.Object);
 		}
 		
-		public bool PropertyIsProxy(string name)
+		public bool VariableIsProxy(string name)
 		{
-			return WrappedObject.PropertyIsProxy(name);
+			return WrappedObject.VariableIsProxy(name);
 		}
 		
-		public new Cdn.Group WrappedObject
+		public new Cdn.Node WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cdn.Group;
+				return base.WrappedObject as Cdn.Node;
 			}
 		}
 		
@@ -116,11 +116,19 @@ namespace Cdn.Studio.Wrappers
 			return WrappedObject.FindObject(name);
 		}
 		
-		public Cdn.Property FindProperty(string name)
+		public Cdn.Variable FindVariable(string name)
 		{
-			return WrappedObject.FindProperty(name);
+			return WrappedObject.FindVariable(name);
 		}
-		
+
+		public Cdn.Variable[] Actors
+		{
+			get
+			{
+				return WrappedObject.Actors;
+			}
+		}
+
 		public Wrapper[] Children
 		{
 			get
@@ -160,11 +168,11 @@ namespace Cdn.Studio.Wrappers
 			return WrappedObject.SetProxy(val);
 		}
 		
-		public Cdn.PropertyInterface PropertyInterface
+		public Cdn.VariableInterface VariableInterface
 		{
 			get
 			{
-				return WrappedObject.PropertyInterface;
+				return WrappedObject.VariableInterface;
 			}
 		}
 		

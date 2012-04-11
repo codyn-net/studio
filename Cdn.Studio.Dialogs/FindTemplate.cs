@@ -9,7 +9,7 @@ namespace Cdn.Studio.Dialogs
 		private Widgets.WrappersTree d_tree;
 		public delegate bool FilterFunc(Wrappers.Wrapper wrapper);
 
-		public FindTemplate(Wrappers.Group grp, FilterFunc func, Gtk.Window parent) : base("Find Template", parent, DialogFlags.DestroyWithParent | DialogFlags.NoSeparator)
+		public FindTemplate(Wrappers.Node grp, FilterFunc func, Gtk.Window parent) : base("Find Template", parent, DialogFlags.DestroyWithParent | DialogFlags.NoSeparator)
 		{
 			d_tree = new Widgets.WrappersTree(grp);
 			d_tree.RendererToggle.Visible = false;

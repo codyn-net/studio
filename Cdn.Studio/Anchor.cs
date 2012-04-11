@@ -6,12 +6,12 @@ namespace Cdn.Studio
 	public class Anchor
 	{
 		private Point d_location;
-		private Wrappers.Link d_link;
+		private Wrappers.Edge d_edge;
 		private bool d_isFrom;
 		
-		public Anchor(Wrappers.Link link, Point location, bool isFrom)
+		public Anchor(Wrappers.Edge link, Point location, bool isFrom)
 		{
-			d_link = link;
+			d_edge = link;
 			d_location = new Point(location);
 			d_isFrom = isFrom;
 		}
@@ -20,15 +20,15 @@ namespace Cdn.Studio
 		{
 			get
 			{
-				return d_isFrom ? d_link.To : d_link.From;
+				return d_isFrom ? d_edge.Output : d_edge.Input;
 			}
 		}
 		
-		public Wrappers.Link Link
+		public Wrappers.Edge Edge
 		{
 			get
 			{
-				return d_link;
+				return d_edge;
 			}
 		}
 		
@@ -44,7 +44,7 @@ namespace Cdn.Studio
 		{
 			get
 			{
-				return d_isFrom ? d_link.From : d_link.To;
+				return d_isFrom ? d_edge.Input : d_edge.Output;
 			}
 		}
 		

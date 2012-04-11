@@ -2,16 +2,15 @@ using System;
 
 namespace Cdn.Studio.Wrappers.Renderers
 {
-	[Name("Group")]
-	public class Group : Renderer
+	[Name("NodeContainer")]
+	public class NodeContainer : Renderer
 	{
 		private double[][] d_colors;
+		protected Wrappers.Node d_group;
 
-		protected Wrappers.Group d_group;
-
-		public Group(Wrappers.Wrapper obj) : base (obj)
+		public NodeContainer(Wrappers.Wrapper obj) : base (obj)
 		{
-			d_group = obj as Wrappers.Group;
+			d_group = obj as Wrappers.Node;
 			d_colors = new double[5][];
 			
 			d_colors[0] = new double[] {26 / 125.0, 80 / 125.0, 130 / 125.0};
@@ -21,7 +20,7 @@ namespace Cdn.Studio.Wrappers.Renderers
 			d_colors[4] = new double[] {80.0 / 125.0, 130.0 / 125.0, 26.0 / 125.0};
 		}
 		
-		public Group() : this(null)
+		public NodeContainer() : this(null)
 		{
 		}
 		

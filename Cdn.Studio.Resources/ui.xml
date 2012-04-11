@@ -48,7 +48,7 @@
       <menuitem name="ViewControl" action="ViewControlAction"/>
 	  <menuitem name="ViewPhysics" action="ViewPhysicsAction"/>
       <separator/>
-      <menuitem name="ViewPropertyEditor" action="ViewPropertyEditorAction"/>
+      <menuitem name="ViewVariableEditor" action="ViewVariableEditorAction"/>
       <menuitem name="ViewToolbar" action="ViewToolbarAction"/>
       <menuitem name="ViewPathbar" action="ViewPathbarAction"/>
       <menuitem name="ViewSimulateButtons" action="ViewSimulateButtonsAction"/>
@@ -60,10 +60,8 @@
       <menuitem name="ZoomOut" action="ZoomOutAction"/>
     </menu>
     <menu name="AddMenu" action="AddMenuAction">
-      <menuitem name="AddState" action="AddStateAction"/>
-      <menuitem name="AddGroup" action="AddGroupAction"/>
-      <menuitem name="AddLink" action="AddLinkAction"/>
-      <menuitem name="AddInputFile" action="AddInputFileAction"/>
+      <menuitem name="AddNode" action="AddNodeAction"/>
+      <menuitem name="AddEdge" action="AddEdgeAction"/>
       <separator/>
       <menuitem name="AddFunction" action="AddFunctionAction"/>
       <menuitem name="AddPiecewisePolynomial" action="AddPiecewisePolynomialAction"/>
@@ -74,16 +72,15 @@
   </menubar>
   <popup name="GridPopup">
     <menu name="AddMenu" action="AddMenuAction">
-      <menuitem name="AddState" action="AddStateAction"/>
-      <menuitem name="AddLink" action="AddLinkAction"/>
-      <menuitem name="AddInputFile" action="AddInputFileAction"/>
+      <menuitem name="AddNode" action="AddNodeAction"/>
+      <menuitem name="AddEdge" action="AddEdgeAction"/>
     </menu>
     <separator/>
       <menuitem name="Cut" action="CutAction"/>
       <menuitem name="Copy" action="CopyAction"/>
       <menuitem name="Paste" action="PasteAction"/>
     <separator/>
-    <menuitem name="Properties" action="PropertiesAction"/>
+    <menuitem name="Variables" action="VariablesAction"/>
     <separator/>
     <menu name="MonitorMenu" action="MonitorMenuAction">
    	  <placeholder name="MonitorPlaceholder"/>
@@ -110,9 +107,8 @@
     <separator/>
     <toolitem name="Delete" action="DeleteAction"/>
     <separator/>
-    <toolitem name="AddState" action="AddStateAction"/>
-    <toolitem name="AddGroup" action="AddGroupAction"/>
-    <toolitem name="AddLink" action="AddLinkAction"/>
+    <toolitem name="AddNode" action="AddNodeAction"/>
+    <toolitem name="AddEdge" action="AddEdgeAction"/>
   </toolbar>
   <popup name="TemplatePopup">
   	<menuitem name="EditTemplate" action="EditTemplateAction"/>

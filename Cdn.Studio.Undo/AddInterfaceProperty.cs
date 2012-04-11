@@ -2,9 +2,9 @@ using System;
 
 namespace Cdn.Studio.Undo
 {
-	public class AddInterfaceProperty : InterfaceProperty, IAction
+	public class AddInterfaceProperty : InterfaceVariable, IAction
 	{
-		public AddInterfaceProperty(Wrappers.Group grp, string name, string childname, string propid) : base(grp, name, childname, propid)
+		public AddInterfaceProperty(Wrappers.Node grp, string name, string childname, string propid) : base(grp, name, childname, propid)
 		{
 		}
 		
@@ -15,7 +15,7 @@ namespace Cdn.Studio.Undo
 				return String.Format("Add interface `{0}' = `{1}.{2}' on `{3}'",
 				                     Name,
 				                     ChildName,
-				                     PropertyId,
+				                     VariableId,
 				                     Wrapped.FullId);
 			}
 		}

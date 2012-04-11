@@ -54,44 +54,44 @@ FILES = \
 	Cdn.Studio.Dialogs/Editor.cs \
 	Cdn.Studio.Dialogs/FindTemplate.cs \
 	Cdn.Studio.Dialogs/Import.cs \
+	Cdn.Studio.Dialogs/Physics.cs \
 	Cdn.Studio.Dialogs/PlotSettings.cs \
 	Cdn.Studio.Dialogs/Plotting.cs \
-	Cdn.Studio.Dialogs/Physics.cs \
-	Cdn.Studio.Dialogs/Property.cs \
+	Cdn.Studio.Dialogs/Variable.cs \
 	Cdn.Studio/DynamicIntegrator.cs \
-	Cdn.Studio/SimulationRange.cs \
 	Cdn.Studio/RenderCache.cs \
 	Cdn.Studio.Renderers/Box.cs \
+	Cdn.Studio.Renderers/Edge.cs \
 	Cdn.Studio.Renderers/Function.cs \
-	Cdn.Studio.Renderers/Group.cs \
-	Cdn.Studio.Renderers/Input.cs \
-	Cdn.Studio.Renderers/Link.cs \
-	Cdn.Studio.Renderers/Oscillator.cs \
+	Cdn.Studio.Renderers/Io.cs \
+	Cdn.Studio.Renderers/Node_1.cs \
+	Cdn.Studio.Renderers/NodeContainer.cs \
 	Cdn.Studio.Renderers/PiecewisePolynomial.cs \
 	Cdn.Studio.Renderers/Renderer.cs \
-	Cdn.Studio.Renderers/State.cs \
 	Cdn.Studio.Serialization/Project.cs \
 	Cdn.Studio/Settings.cs \
 	Cdn.Studio/Simulation.cs \
+	Cdn.Studio/SimulationRange.cs \
 	Cdn.Studio/Stock.cs \
+	Cdn.Studio.Undo/AddEdgeAction.cs \
 	Cdn.Studio.Undo/AddFunctionArgument.cs \
 	Cdn.Studio.Undo/AddFunctionPolynomialPiece.cs \
-	Cdn.Studio.Undo/AddGroup.cs \
 	Cdn.Studio.Undo/AddInterfaceProperty.cs \
-	Cdn.Studio.Undo/AddLinkAction.cs \
+	Cdn.Studio.Undo/AddNode.cs \
 	Cdn.Studio.Undo/AddObject.cs \
-	Cdn.Studio.Undo/AddProperty.cs \
+	Cdn.Studio.Undo/AddVariable.cs \
 	Cdn.Studio.Undo/ApplyTemplate.cs \
-	Cdn.Studio.Undo/AttachLink.cs \
+	Cdn.Studio.Undo/AttachEdge.cs \
+	Cdn.Studio.Undo/EdgeAction.cs \
 	Cdn.Studio.Undo/FunctionArgument.cs \
 	Cdn.Studio.Undo/Function.cs \
 	Cdn.Studio.Undo/FunctionPolynomialPiece.cs \
-	Cdn.Studio.Undo/Group.cs \
 	Cdn.Studio.Undo/IAction.cs \
 	Cdn.Studio.Undo/Import.cs \
-	Cdn.Studio.Undo/InterfaceProperty.cs \
-	Cdn.Studio.Undo/LinkAction.cs \
+	Cdn.Studio.Undo/InterfaceVariable.cs \
 	Cdn.Studio.Undo/Manager.cs \
+	Cdn.Studio.Undo/ModifyEdgeActionEquation.cs \
+	Cdn.Studio.Undo/ModifyEdgeActionTarget.cs \
 	Cdn.Studio.Undo/ModifyExpression.cs \
 	Cdn.Studio.Undo/ModifyFunctionArgumentDefaultValue.cs \
 	Cdn.Studio.Undo/ModifyFunctionArgumentExplicit.cs \
@@ -101,33 +101,32 @@ FILES = \
 	Cdn.Studio.Undo/ModifyFunctionPolynomialPieceCoefficients.cs \
 	Cdn.Studio.Undo/ModifyFunctionPolynomialPieceEnd.cs \
 	Cdn.Studio.Undo/ModifyIntegrator.cs \
-	Cdn.Studio.Undo/ModifyLinkActionEquation.cs \
-	Cdn.Studio.Undo/ModifyLinkActionTarget.cs \
 	Cdn.Studio.Undo/ModifyObjectId.cs \
 	Cdn.Studio.Undo/ModifyProperty.cs \
 	Cdn.Studio.Undo/ModifyProxy.cs \
 	Cdn.Studio.Undo/MoveObject.cs \
+	Cdn.Studio.Undo/Group.cs \
 	Cdn.Studio.Undo/Object.cs \
-	Cdn.Studio.Undo/Property.cs \
+	Cdn.Studio.Undo/RemoveEdgeAction.cs \
 	Cdn.Studio.Undo/RemoveFunctionArgument.cs \
 	Cdn.Studio.Undo/RemoveFunctionPolynomialPiece.cs \
-	Cdn.Studio.Undo/RemoveInterfaceProperty.cs \
-	Cdn.Studio.Undo/RemoveLinkAction.cs \
+	Cdn.Studio.Undo/RemoveInterfaceVariable.cs \
 	Cdn.Studio.Undo/RemoveObject.cs \
-	Cdn.Studio.Undo/RemoveProperty.cs \
+	Cdn.Studio.Undo/RemoveVariable.cs \
 	Cdn.Studio.Undo/Template.cs \
 	Cdn.Studio.Undo/UnapplyTemplate.cs \
 	Cdn.Studio.Undo/Ungroup.cs \
+	Cdn.Studio.Undo/Variable.cs \
 	Cdn.Studio/Utils.cs \
 	Cdn.Studio.Widgets/AboutDialog.cs \
 	Cdn.Studio.Widgets/AddRemovePopup.cs \
 	Cdn.Studio.Widgets/Annotation.cs \
+	Cdn.Studio.Widgets.Editors/Edge.cs \
 	Cdn.Studio.Widgets.Editors/Function.cs \
-	Cdn.Studio.Widgets.Editors/Group.cs \
-	Cdn.Studio.Widgets.Editors/Link.cs \
+	Cdn.Studio.Widgets.Editors/Node.cs \
 	Cdn.Studio.Widgets.Editors/Object.cs \
 	Cdn.Studio.Widgets.Editors/PiecewisePolynomial.cs \
-	Cdn.Studio.Widgets.Editors/Properties.cs \
+	Cdn.Studio.Widgets.Editors/Variables.cs \
 	Cdn.Studio.Widgets.Editors/Wrapper.cs \
 	Cdn.Studio.Widgets/GenericFunctionNode.cs \
 	Cdn.Studio.Widgets/Grid.cs \
@@ -143,16 +142,14 @@ FILES = \
 	Cdn.Studio.Widgets/TreeView.cs \
 	Cdn.Studio.Widgets/Window.cs \
 	Cdn.Studio.Widgets/WrappersTree.cs \
+	Cdn.Studio.Wrappers/Edge.cs \
 	Cdn.Studio.Wrappers/Function.cs \
 	Cdn.Studio.Wrappers/FunctionPolynomial.cs \
 	Cdn.Studio.Wrappers/Graphical.cs \
-	Cdn.Studio.Wrappers/Group.cs \
 	Cdn.Studio.Wrappers/ImportAlias.cs \
 	Cdn.Studio.Wrappers/Import.cs \
-	Cdn.Studio.Wrappers/Input.cs \
-	Cdn.Studio.Wrappers/InputFile.cs \
-	Cdn.Studio.Wrappers/Link.cs \
 	Cdn.Studio.Wrappers/Network.cs \
+	Cdn.Studio.Wrappers/Node.cs \
 	Cdn.Studio.Wrappers/Object.cs \
 	Cdn.Studio.Wrappers/Wrapper.cs
 
@@ -162,7 +159,6 @@ RESOURCES = \
 	Cdn.Studio.Resources/ui.xml \
 	Cdn.Studio.Resources/chain.png \
 	Cdn.Studio.Resources/chain-broken.png \
-	Cdn.Studio.Resources/link.png \
 	Cdn.Studio.Resources/plotting-ui.xml
 
 EXTRAS = \
@@ -188,9 +184,9 @@ CLEANFILES = $(PROGRAMFILES) $(BINARIES)
 
 include $(top_srcdir)/Makefile.include
 
-CDNSTUDIO = $(BUILD_DIR)/cdnstudio
+CDNSTUDIO = $(BUILD_DIR)/cdn-studio
 
-$(eval $(call emit-deploy-wrapper,CDNSTUDIO,cdnstudio,x))
+$(eval $(call emit-deploy-wrapper,CDNSTUDIO,cdn-studio,x))
 
 
 $(eval $(call emit_resgen_targets))

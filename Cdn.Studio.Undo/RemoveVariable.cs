@@ -2,9 +2,9 @@ using System;
 
 namespace Cdn.Studio.Undo
 {
-	public class RemoveProperty : Property, IAction
+	public class RemoveVariable : Variable, IAction
 	{
-		public RemoveProperty(Wrappers.Wrapper wrapped, Cdn.Property property) : base(wrapped, property)
+		public RemoveVariable(Wrappers.Wrapper wrapped, Cdn.Variable property) : base(wrapped, property)
 		{
 		}
 		
@@ -29,7 +29,7 @@ namespace Cdn.Studio.Undo
 		public override bool Verify()
 		{
 			// Will throw an exception
-			Wrapped.WrappedObject.VerifyRemoveProperty(Name);
+			Wrapped.WrappedObject.VerifyRemoveVariable(Name);
 			return true;
 		}
 	}

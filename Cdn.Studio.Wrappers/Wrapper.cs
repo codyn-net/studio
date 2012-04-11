@@ -6,16 +6,16 @@ namespace Cdn.Studio.Wrappers
 {
 	public class Wrapper : Graphical, IDisposable
 	{
-		public delegate void PropertyHandler(Wrapper source, Cdn.Property property);
+		public delegate void VariableHandler(Wrapper source,Cdn.Variable variable);
 
-		public delegate void TemplateHandler(Wrapper source, Wrapper template);
+		public delegate void TemplateHandler(Wrapper source,Wrapper template);
 
 		protected Cdn.Object d_object;
-		protected List<Wrappers.Link> d_links;
+		protected List<Wrappers.Edge> d_links;
 		
-		public event PropertyHandler PropertyAdded = delegate {};
-		public event PropertyHandler PropertyRemoved = delegate {};
-		public event PropertyHandler PropertyChanged = delegate {};
+		public event VariableHandler VariableAdded = delegate {};
+		public event VariableHandler VariableRemoved = delegate {};
+		public event VariableHandler VariableChanged = delegate {};
 		public event TemplateHandler TemplateApplied = delegate {};
 		public event TemplateHandler TemplateUnapplied = delegate {};
 		
@@ -146,7 +146,7 @@ namespace Cdn.Studio.Wrappers
 		
 		protected Wrapper(Cdn.Object obj) : base()
 		{
-			d_links = new List<Link>();
+			d_links = new List<Edge>();
 
 			d_object = obj;
 			
@@ -188,25 +188,17 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public Cdn.Property this[string name]
+		public Cdn.Variable this[string name]
 		{
 			get
 			{
-				return Property(name);
+				return Variable(name);
 			}
 		}
 		
-		public Cdn.Property Property(string name)
+		public Cdn.Variable Variable(string name)
 		{
-			return d_object.Property(name);
-		}
-		
-		public Cdn.Property[] Actors
-		{
-			get
-			{
-				return d_object.Actors;
-			}
+			return d_object.Variable(name);
 		}
 		
 		public Wrapper[] AppliedTemplates
@@ -217,21 +209,21 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public bool HasProperty(string name)
+		public bool HasVariable(string name)
 		{
-			return d_object.HasProperty(name);
+			return d_object.HasVariable(name);
 		}
 		
-		public bool AddProperty(Cdn.Property property)
+		public bool AddVariable(Cdn.Variable property)
 		{
-			return d_object.AddProperty(property);
+			return d_object.AddVariable(property);
 		}
 		
-		public Cdn.Property AddProperty(string name, string val, Cdn.PropertyFlags flags)
+		public Cdn.Variable AddVariable(string name, string val, Cdn.VariableFlags flags)
 		{
-			Cdn.Property prop = new Cdn.Property(name, new Cdn.Expression(val), flags);
+			Cdn.Variable prop = new Cdn.Variable(name, new Cdn.Expression(val), flags);
 			
-			if (AddProperty(prop))
+			if (AddVariable(prop))
 			{
 				return prop;
 			}
@@ -241,14 +233,14 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public Cdn.Property AddProperty(string name, string val)
+		public Cdn.Variable AddVariable(string name, string val)
 		{
-			return AddProperty(name, val, Cdn.PropertyFlags.None);
+			return AddVariable(name, val, Cdn.VariableFlags.None);
 		}
 		
-		public bool RemoveProperty(string name)
+		public bool RemoveVariable(string name)
 		{
-			return d_object.RemoveProperty(name);
+			return d_object.RemoveVariable(name);
 		}
 		
 		public bool IsCompiled
@@ -259,19 +251,19 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public Group Parent
+		public Node Parent
 		{
 			get
 			{
-				return Wrap(d_object.Parent) as Group;
+				return Wrap(d_object.Parent) as Node;
 			}
 		}
 		
-		public Cdn.Property[] Properties
+		public Cdn.Variable[] Variables
 		{
 			get
 			{
-				return d_object.Properties;
+				return d_object.Variables;
 			}
 		}
 		
@@ -295,19 +287,20 @@ namespace Cdn.Studio.Wrappers
 			DoRequestRedraw();
 		}
 		
-		private void HandlePropertyAdded(object o, Cdn.PropertyAddedArgs args)
+		private void HandleVariableAdded(object o, Cdn.VariableAddedArgs args)
 		{
-			PropertyAdded(this, args.Property);
+			VariableAdded(this, args.Variable);
 		}
 		
-		private void HandlePropertyRemoved(object o, Cdn.PropertyRemovedArgs args)
+		private void HandleVariableRemoved(object o, Cdn.VariableRemovedArgs args)
 		{
-			PropertyRemoved(this, args.Property);
+			VariableRemoved(this, args.Variable);
 		}
 		
-		private void HandlePropertyChanged(object o, Cdn.PropertyChangedArgs args)
+		private void HandleVariableChanged(object o, Cdn.ExpressionChangedArgs args)
 		{
-			PropertyChanged(this, args.Property);
+			// TODO
+			VariableChanged(this, (Cdn.Variable)o);
 		}
 		
 		protected virtual void DisconnectWrapped()
@@ -319,9 +312,8 @@ namespace Cdn.Studio.Wrappers
 				WrappedObject.RemoveNotification("annotation", NotifyAnnotationHandler);
 			}
 
-			WrappedObject.PropertyAdded -= HandlePropertyAdded;
-			WrappedObject.PropertyRemoved -= HandlePropertyRemoved;
-			WrappedObject.PropertyChanged -= HandlePropertyChanged;
+			WrappedObject.VariableAdded -= HandleVariableAdded;
+			WrappedObject.VariableRemoved -= HandleVariableRemoved;
 			WrappedObject.Copied -= HandleCopied;
 			
 			WrappedObject.TemplateApplied -= HandleTemplateApplied;
@@ -354,9 +346,8 @@ namespace Cdn.Studio.Wrappers
 				WrappedObject.AddNotification("annotation", NotifyAnnotationHandler);
 			}
 				
-			WrappedObject.PropertyAdded += HandlePropertyAdded;
-			WrappedObject.PropertyRemoved += HandlePropertyRemoved;
-			WrappedObject.PropertyChanged += HandlePropertyChanged;
+			WrappedObject.VariableAdded += HandleVariableAdded;
+			WrappedObject.VariableRemoved += HandleVariableRemoved;
 			WrappedObject.Copied += HandleCopied;
 			WrappedObject.TemplateApplied += HandleTemplateApplied;
 			WrappedObject.TemplateUnapplied += HandleTemplateUnapplied;
@@ -442,7 +433,7 @@ namespace Cdn.Studio.Wrappers
 			WrappedObject.Reset();
 		}
 	
-		public List<Wrappers.Link> Links
+		public List<Wrappers.Edge> Links
 		{
 			get
 			{
@@ -450,7 +441,7 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public void Link(Wrappers.Link link)
+		public void Link(Wrappers.Edge link)
 		{
 			if (!d_links.Contains(link))
 			{
@@ -458,7 +449,7 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public void Unlink(Wrappers.Link link)
+		public void Unlink(Wrappers.Edge link)
 		{
 			d_links.Remove(link);
 		}
@@ -489,27 +480,27 @@ namespace Cdn.Studio.Wrappers
 		
 		public override void DoRequestRedraw()
 		{
-			foreach (Wrappers.Link link in d_links)
+			foreach (Wrappers.Edge link in d_links)
 			{
 				link.DoRequestRedraw();
 			}
 				
 			base.DoRequestRedraw();
 			
-			foreach (Wrappers.Link link in d_links)
+			foreach (Wrappers.Edge link in d_links)
 			{
 				link.DoRequestRedraw();
 			}
 		}
 		
-		public bool VerifyRemoveProperty(string prop)
+		public bool VerifyRemoveVariable(string prop)
 		{
-			return WrappedObject.VerifyRemoveProperty(prop);
+			return WrappedObject.VerifyRemoveVariable(prop);
 		}
 		
-		public Wrappers.Wrapper GetPropertyTemplate(Cdn.Property prop, bool matchFull)
+		public Wrappers.Wrapper GetVariableTemplate(Cdn.Variable prop, bool matchFull)
 		{
-			return Wrappers.Wrapper.Wrap(WrappedObject.GetPropertyTemplate(prop, matchFull));
+			return Wrappers.Wrapper.Wrap(WrappedObject.GetVariableTemplate(prop, matchFull));
 		}
 		
 		public virtual void Removed()
@@ -524,13 +515,13 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public Wrappers.Group TopParent
+		public Wrappers.Node TopParent
 		{
 			get
 			{
 				if (Parent == null)
 				{
-					return this as Wrappers.Group;
+					return this as Wrappers.Node;
 				}
 				else if (Parent.Parent == null)
 				{

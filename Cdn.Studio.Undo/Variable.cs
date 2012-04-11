@@ -2,15 +2,15 @@ using System;
 
 namespace Cdn.Studio.Undo
 {
-	public class Property
+	public class Variable
 	{
 		private Wrappers.Wrapper d_wrapped;
 		private string d_name;
 		private string d_expression;
-		private Cdn.PropertyFlags d_flags;
-		private Cdn.Property d_property;
+		private Cdn.VariableFlags d_flags;
+		private Cdn.Variable d_property;
 		
-		public Property(Wrappers.Wrapper wrapped, string name, string expression, Cdn.PropertyFlags flags)
+		public Variable(Wrappers.Wrapper wrapped, string name, string expression, Cdn.VariableFlags flags)
 		{
 			d_wrapped = wrapped;
 			
@@ -19,7 +19,7 @@ namespace Cdn.Studio.Undo
 			d_flags = flags;
 		}
 		
-		public Property(Wrappers.Wrapper wrapped, Cdn.Property property) : this(wrapped, property.Name, property.Expression.AsString, property.Flags)
+		public Variable(Wrappers.Wrapper wrapped, Cdn.Variable property) : this(wrapped, property.Name, property.Expression.AsString, property.Flags)
 		{
 			d_property = property;
 		}
@@ -32,7 +32,7 @@ namespace Cdn.Studio.Undo
 			}
 		}
 		
-		public Cdn.Property Prop
+		public Cdn.Variable Prop
 		{
 			get
 			{
@@ -50,12 +50,12 @@ namespace Cdn.Studio.Undo
 		
 		public void Add()
 		{
-			d_wrapped.AddProperty(d_name, d_expression, d_flags);
+			d_wrapped.AddVariable(d_name, d_expression, d_flags);
 		}
 		
 		public void Remove()
 		{
-			d_wrapped.RemoveProperty(d_name);
+			d_wrapped.RemoveVariable(d_name);
 		}
 		
 		public virtual bool CanMerge(IAction other)

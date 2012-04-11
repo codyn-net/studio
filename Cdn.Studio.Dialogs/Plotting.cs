@@ -14,18 +14,17 @@ namespace Cdn.Studio.Dialogs
 		{
 			private Cdn.Monitor d_x;
 			private Cdn.Monitor d_y;
-			
-			private Cdn.Property d_xprop;
-			private Cdn.Property d_yprop;
-
+			private Cdn.Variable d_xprop;
+			private Cdn.Variable d_yprop;
 			private Plot.Renderers.Line d_renderer;
 			
 			public event EventHandler Destroyed = delegate {};
-			private Dictionary<Wrappers.Group, Wrappers.Wrapper> d_ancestors;
+
+			private Dictionary<Wrappers.Node, Wrappers.Wrapper> d_ancestors;
 			
 			public event EventHandler ActiveChanged = delegate {};
 			
-			public Series(Cdn.Property x, Cdn.Property y, Plot.Renderers.Line renderer)
+			public Series(Cdn.Variable x, Cdn.Variable y, Plot.Renderers.Line renderer)
 			{
 				d_renderer = renderer;
 				
@@ -36,16 +35,16 @@ namespace Cdn.Studio.Dialogs
 					ActiveChanged(this, new EventArgs());
 				};
 				
-				d_ancestors = new Dictionary<Wrappers.Group, Wrappers.Wrapper>();
+				d_ancestors = new Dictionary<Wrappers.Node, Wrappers.Wrapper>();
 				
 				if (y != null)
 				{
 					y.AddNotification("name", OnNameChanged);
 					y.Object.AddNotification("id", OnNameChanged);
 				
-					y.Object.PropertyRemoved += HandlePropertyRemoved;
+					y.Object.VariableRemoved += HandleVariableRemoved;
 				
-					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(y.Object.Parent) as Wrappers.Group, y.Object);
+					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(y.Object.Parent) as Wrappers.Node, y.Object);
 				}
 				
 				if (x != null)
@@ -53,16 +52,16 @@ namespace Cdn.Studio.Dialogs
 					x.AddNotification("name", OnNameChanged);
 					x.Object.AddNotification("id", OnNameChanged);
 
-					x.Object.PropertyRemoved += HandlePropertyRemoved;
+					x.Object.VariableRemoved += HandleVariableRemoved;
 					
-					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(x.Object.Parent) as Wrappers.Group, x.Object);
+					ConnectParentsRemoved(Wrappers.Wrapper.Wrap(x.Object.Parent) as Wrappers.Node, x.Object);
 				}
 				
 				UpdateName();
 			}
 			
-			public Series(Cdn.Monitor x, Cdn.Monitor y, Plot.Renderers.Line renderer) : this(x != null ? x.Property : null,
-			                                                                                 y != null ? y.Property : null,
+			public Series(Cdn.Monitor x, Cdn.Monitor y, Plot.Renderers.Line renderer) : this(x != null ? x.Variable : null,
+			                                                                                 y != null ? y.Variable : null,
 			                                                                                 renderer)
 			{
 				d_x = x;
@@ -74,7 +73,7 @@ namespace Cdn.Studio.Dialogs
 				get { return d_renderer is Plot.Renderers.Vector; }
 			}
 			
-			private void ConnectParentsRemoved(Wrappers.Group parent, Wrappers.Wrapper obj)
+			private void ConnectParentsRemoved(Wrappers.Node parent, Wrappers.Wrapper obj)
 			{
 				if (parent == null || obj == null)
 				{
@@ -85,10 +84,10 @@ namespace Cdn.Studio.Dialogs
 				
 				parent.ChildRemoved += OnChildRemoved;
 				
-				ConnectParentsRemoved(parent.Parent as Wrappers.Group, parent);
+				ConnectParentsRemoved(parent.Parent as Wrappers.Node, parent);
 			}
 			
-			private bool DisconnectParentsRemoved(Wrappers.Group parent)
+			private bool DisconnectParentsRemoved(Wrappers.Node parent)
 			{
 				Wrappers.Wrapper wrapper;
 
@@ -99,18 +98,18 @@ namespace Cdn.Studio.Dialogs
 				
 				if (!d_ancestors.TryGetValue(parent, out wrapper))
 				{
-					return DisconnectParentsRemoved(parent.Parent as Wrappers.Group);
+					return DisconnectParentsRemoved(parent.Parent as Wrappers.Node);
 				}
 				
 				parent.ChildRemoved -= OnChildRemoved;
 				
-				DisconnectParentsRemoved(wrapper as Wrappers.Group);
+				DisconnectParentsRemoved(wrapper as Wrappers.Node);
 				d_ancestors.Remove(parent);
 				
 				return true;
 			}
 			
-			private void OnChildRemoved(Wrappers.Group parent, Wrappers.Wrapper obj)
+			private void OnChildRemoved(Wrappers.Node parent, Wrappers.Wrapper obj)
 			{
 				Wrappers.Wrapper wrapper;
 				
@@ -120,16 +119,16 @@ namespace Cdn.Studio.Dialogs
 					{
 						Destroyed(this, new EventArgs());
 					}
-					else if (DisconnectParentsRemoved(obj as Wrappers.Group))
+					else if (DisconnectParentsRemoved(obj as Wrappers.Node))
 					{
 						Destroyed(this, new EventArgs());
 					}
 				}
 			}
 			
-			private void HandlePropertyRemoved(object source, Cdn.PropertyRemovedArgs args)
+			private void HandleVariableRemoved(object source, Cdn.VariableRemovedArgs args)
 			{
-				Cdn.Property property = args.Property;
+				Cdn.Variable property = args.Variable;
 
 				if (property == d_xprop || property == d_yprop)
 				{
@@ -144,9 +143,9 @@ namespace Cdn.Studio.Dialogs
 					d_yprop.RemoveNotification("name", OnNameChanged);
 					d_yprop.Object.RemoveNotification("id", OnNameChanged);
 				
-					d_yprop.Object.PropertyRemoved -= HandlePropertyRemoved;
+					d_yprop.Object.VariableRemoved -= HandleVariableRemoved;
 				
-					DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_yprop.Object.Parent) as Wrappers.Group);
+					DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_yprop.Object.Parent) as Wrappers.Node);
 				}
 				
 				if (d_xprop != null)
@@ -154,9 +153,9 @@ namespace Cdn.Studio.Dialogs
 					d_xprop.RemoveNotification("name", OnNameChanged);
 					d_xprop.Object.RemoveNotification("id", OnNameChanged);
 				
-					d_xprop.Object.PropertyRemoved -= HandlePropertyRemoved;
+					d_xprop.Object.VariableRemoved -= HandleVariableRemoved;
 				
-					DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_xprop.Object.Parent) as Wrappers.Group);
+					DisconnectParentsRemoved(Wrappers.Wrapper.Wrap(d_xprop.Object.Parent) as Wrappers.Node);
 				}				
 			}
 			
@@ -186,12 +185,12 @@ namespace Cdn.Studio.Dialogs
 				UpdateName();
 			}
 			
-			public Cdn.Property XProp
+			public Cdn.Variable XProp
 			{
 				get { return d_xprop; }
 			}
 			
-			public Cdn.Property YProp
+			public Cdn.Variable YProp
 			{
 				get { return d_yprop; }
 			}
@@ -405,35 +404,25 @@ namespace Cdn.Studio.Dialogs
 		
 		private Simulation d_simulation;
 		private Wrappers.Network d_network;
-		
 		private bool d_linkRulers;
-
 		private HPaned d_hpaned;
 		private bool d_configured;
-		
 		private Widgets.Table d_content;
 		private Widgets.WrappersTree d_tree;
-		
 		private List<Graph> d_graphs;
 		Gtk.UIManager d_uimanager;
-		
 		private bool d_autoaxis;
 		private bool d_linkaxis;
-		
 		private bool d_ignoreAxisChange;
-		
 		private ActionGroup d_actiongroup;
-		
 		private Expander d_expanderTime;
 		private Expander d_expanderPhase;
-		
 		private bool d_ignoreExpanderChanged;
 		private Widgets.WrappersTree d_phaseTreeY;
 		private Widgets.WrappersTree d_phaseTreeX;
 		private Widget d_phaseWidget;
 		private CheckButton d_vector;
 		private List<Series> d_vectors;
-		
 		private Dictionary<Series, Point> d_initialConditions;
 
 		public Plotting(Wrappers.Network network, Simulation simulation) : base("Monitor")
@@ -525,16 +514,16 @@ namespace Cdn.Studio.Dialogs
 			// Record the current state
 			IntegratorState s = d_simulation.Network.Integrator.State;
 			
-			List<KeyValuePair<Cdn.Property, double>> state = new List<KeyValuePair<Cdn.Property, double>>();
+			List<KeyValuePair<Cdn.Variable, double>> state = new List<KeyValuePair<Cdn.Variable, double>>();
 			
-			foreach (LinkAction action in s.IntegratedLinkActions())
+			foreach (EdgeAction action in s.IntegratedEdgeActions())
 			{
-				state.Add(new KeyValuePair<Cdn.Property, double>(action.TargetProperty, action.TargetProperty.Value));
+				state.Add(new KeyValuePair<Cdn.Variable, double>(action.TargetProperty, action.TargetProperty.Value));
 			}
 			
-			foreach (LinkAction action in s.DirectLinkActions())
+			foreach (EdgeAction action in s.DirectEdgeActions())
 			{
-				state.Add(new KeyValuePair<Cdn.Property, double>(action.TargetProperty, action.TargetProperty.Value));
+				state.Add(new KeyValuePair<Cdn.Variable, double>(action.TargetProperty, action.TargetProperty.Value));
 			}
 			
 			double step = d_simulation.Range.Step;
@@ -572,7 +561,7 @@ namespace Cdn.Studio.Dialogs
 						alpha.Add(System.Math.Atan2(dy, dx));
 
 						// Restore the state
-						foreach (KeyValuePair<Cdn.Property, double> ss in state)
+						foreach (KeyValuePair<Cdn.Variable, double> ss in state)
 						{
 							ss.Key.Value = ss.Value;
 						}
@@ -583,7 +572,7 @@ namespace Cdn.Studio.Dialogs
 			}
 		}
 
-		private void DoPeriodBegin(object o, BeginArgs args)
+		private void DoPeriodBegin(object o, Cdn.BegunArgs args)
 		{
 			ApplyInitialConditions();
 			
@@ -599,12 +588,12 @@ namespace Cdn.Studio.Dialogs
 
 				if (series.X != null)
 				{
-					series.X.Property.Value = pair.Value.X;
+					series.X.Variable.Value = pair.Value.X;
 				}
 				
 				if (series.Y != null)
 				{
-					series.Y.Property.Value = pair.Value.Y;
+					series.Y.Variable.Value = pair.Value.Y;
 				}
 			}
 		}
@@ -729,32 +718,32 @@ namespace Cdn.Studio.Dialogs
 			Widgets.WrappersTree.WrapperNode[] xnodes = d_phaseTreeX.SelectedNodes;
 			Widgets.WrappersTree.WrapperNode[] ynodes = d_phaseTreeY.SelectedNodes;
 			
-			Cdn.Property[] xprops;
-			Cdn.Property[] yprops;
+			Cdn.Variable[] xprops;
+			Cdn.Variable[] yprops;
 			
-			xprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cdn.Property>(Array.FindAll(xnodes, a => a.Property != null), a => a.Property);
-			yprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cdn.Property>(Array.FindAll(ynodes, a => a.Property != null), a => a.Property);
+			xprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cdn.Variable>(Array.FindAll(xnodes, a => a.Variable != null), a => a.Variable);
+			yprops = Array.ConvertAll<Widgets.WrappersTree.WrapperNode, Cdn.Variable>(Array.FindAll(ynodes, a => a.Variable != null), a => a.Variable);
 			
 			if (xprops.Length == 0 || yprops.Length == 0)
 			{
 				return;
 			}
 			
-			List<Cdn.Property> xx = new List<Cdn.Property>();
-			List<Cdn.Property> yy = new List<Cdn.Property>();
+			List<Cdn.Variable> xx = new List<Cdn.Variable>();
+			List<Cdn.Variable> yy = new List<Cdn.Variable>();
 			
 			// If there are as many x properties as y properties, make x/y pairs
 			// otherwise make phase plots for all combinations of x/y
 			if (xprops.Length == yprops.Length)
 			{
-				xx = new List<Cdn.Property>(xprops);
-				yy = new List<Cdn.Property>(yprops);
+				xx = new List<Cdn.Variable>(xprops);
+				yy = new List<Cdn.Variable>(yprops);
 			}
 			else
 			{
-				foreach (Cdn.Property x in xprops)
+				foreach (Cdn.Variable x in xprops)
 				{
-					foreach (Cdn.Property y in yprops)
+					foreach (Cdn.Variable y in yprops)
 					{
 						xx.Add(x);
 						yy.Add(y);
@@ -781,7 +770,7 @@ namespace Cdn.Studio.Dialogs
 		
 		private void FilterIntegratedOnly(Widgets.WrappersTree.WrapperNode node, ref bool ret)
 		{
-			if (node.Property != null && !node.Property.Integrated)
+			if (node.Variable != null && !node.Variable.Integrated)
 			{
 				ret = false;
 			}
@@ -793,7 +782,7 @@ namespace Cdn.Studio.Dialogs
 			{
 				ret = false;
 			}
-			else if (node.Property != null && node.Property.Object is Cdn.Function)
+			else if (node.Variable != null && node.Variable.Object is Cdn.Function)
 			{
 				ret = false;
 			}
@@ -818,14 +807,14 @@ namespace Cdn.Studio.Dialogs
 		private void HandleTreePopulatePopup(object source, Widgets.WrappersTree.WrapperNode[] nodes, Menu menu)
 		{
 			List<Widgets.WrappersTree.WrapperNode> n = new List<Widgets.WrappersTree.WrapperNode>();
-			List<Cdn.Property> properties = new List<Cdn.Property>();
+			List<Cdn.Variable> properties = new List<Cdn.Variable>();
 			
 			foreach (var node in nodes)
 			{
-				if (node.Property != null)
+				if (node.Variable != null)
 				{
 					n.Add(node);
-					properties.Add(node.Property);
+					properties.Add(node.Variable);
 				}
 			}
 
@@ -841,7 +830,7 @@ namespace Cdn.Studio.Dialogs
 			item.Activated += delegate {
 				foreach (var node in n)
 				{
-					Add(node.Property);
+					Add(node.Variable);
 				}
 			};
 
@@ -861,13 +850,13 @@ namespace Cdn.Studio.Dialogs
 
 		private void HandleTreeActivated(object source, Widgets.WrappersTree.WrapperNode[] nodes)
 		{
-			List<Cdn.Property> properties = new List<Cdn.Property>();
+			List<Cdn.Variable> properties = new List<Cdn.Variable>();
 
 			foreach (Widgets.WrappersTree.WrapperNode node in nodes)
 			{
-				if (node.Property != null)
+				if (node.Variable != null)
 				{
-					properties.Add(node.Property);
+					properties.Add(node.Variable);
 				}
 			}
 			
@@ -980,7 +969,7 @@ namespace Cdn.Studio.Dialogs
 			foreach (Series series in graph.Plots)
 			{
 				Series s = series;
-				Gtk.Action action = new Gtk.Action("ActionUnmerge" + idx, series.Y.Property.FullNameForDisplay, null, null);
+				Gtk.Action action = new Gtk.Action("ActionUnmerge" + idx, series.Y.Variable.FullNameForDisplay, null, null);
 				
 				action.Activated += delegate {
 					DoUnmerge(graph, s);
@@ -1023,7 +1012,7 @@ namespace Cdn.Studio.Dialogs
 			}
 		}
 		
-		public Series CreateVectorSeries(Cdn.Property x, Cdn.Property y)
+		public Series CreateVectorSeries(Cdn.Variable x, Cdn.Variable y)
 		{
 			Plot.Renderers.Vector rend = new Plot.Renderers.Vector();
 			rend.MarkerStyle = Plot.Renderers.MarkerStyle.FilledCircle;
@@ -1032,18 +1021,18 @@ namespace Cdn.Studio.Dialogs
 			return new Series(x, y, rend);
 		}
 		
-		public Graph Add(IEnumerable<Cdn.Property> x, IEnumerable<Cdn.Property> y)
+		public Graph Add(IEnumerable<Cdn.Variable> x, IEnumerable<Cdn.Variable> y)
 		{
 			List<Cdn.Monitor> mony = new List<Cdn.Monitor>();
 
-			foreach (Cdn.Property p in y)
+			foreach (Cdn.Variable p in y)
 			{
 				mony.Add(new Cdn.Monitor(d_network, p));
 			}
 			
 			List<Cdn.Monitor> monx = new List<Cdn.Monitor>();
 
-			foreach (Cdn.Property p in x)
+			foreach (Cdn.Variable p in x)
 			{
 				monx.Add(new Cdn.Monitor(d_network, p));
 			}
@@ -1051,11 +1040,11 @@ namespace Cdn.Studio.Dialogs
 			return Add(monx, mony);
 		}
 		
-		public Graph Add(IEnumerable<Cdn.Property> y)
+		public Graph Add(IEnumerable<Cdn.Variable> y)
 		{
 			List<Cdn.Monitor> mons = new List<Cdn.Monitor>();
 
-			foreach (Cdn.Property p in y)
+			foreach (Cdn.Variable p in y)
 			{
 				mons.Add(new Cdn.Monitor(d_network, p));
 			}
@@ -1063,7 +1052,7 @@ namespace Cdn.Studio.Dialogs
 			return Add(mons);
 		}
 		
-		public Graph Add(Cdn.Property y)
+		public Graph Add(Cdn.Variable y)
 		{
 			return Add(new Cdn.Monitor(d_network, y));
 		}
@@ -1430,7 +1419,8 @@ namespace Cdn.Studio.Dialogs
 		}
 		
 		[GLib.ConnectBefore]
-		private void OnGraphMotionNotify(object o, MotionNotifyEventArgs args) {
+		private void OnGraphMotionNotify(object o, MotionNotifyEventArgs args)
+		{
 			Graph graph = (Graph)o;
 
 			if (d_linkRulers && graph.Canvas.Graph.ShowRuler)

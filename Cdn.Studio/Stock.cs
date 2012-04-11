@@ -3,7 +3,6 @@
 //
 // To change standard headers go to Edit->Preferences->Coding->Standard Headers
 //
-
 using System;
 using System.Collections.Generic;
 
@@ -11,18 +10,14 @@ namespace Cdn.Studio
 {
 	class Stock
 	{
-		public static string State = "cdn-state";
-		public static string Link = "cdn-link";
-		public static string Sensor = "cdn-sensor";
+		public static string Node = "cdn-node";
+		public static string Edge = "cdn-edge";
 		public static string Chain = "cdn-chain";
 		public static string ChainBroken = "cdn-chain-broken";
 		public static string Group = "cdn-group";
 		public static string Ungroup = "cdn-ungroup";
-		public static string GroupState = "cdn-group-state";
-		public static string InputFile = "cdn-input-file";
 		public static string Function = "cdn-function";
 		public static string FunctionPolynomial = "cdn-function-polynomial";
-		
 		private static Dictionary<string, Cairo.Surface> s_surfaceCache;
 		
 		static Gtk.IconSet MakeIcons(Wrappers.Renderers.Renderer renderer)
@@ -68,27 +63,24 @@ namespace Cdn.Studio
 		static Stock()
 		{
 			Gtk.StockManager.Add(new Gtk.StockItem[] {
-				new Gtk.StockItem(Stock.State, "State", 0, 0, null),
-				new Gtk.StockItem(Stock.Link, "Link", 0, 0, null),
+				new Gtk.StockItem(Stock.Node, "Node", 0, 0, null),
+				new Gtk.StockItem(Stock.Edge, "Edge", 0, 0, null),
 				new Gtk.StockItem(Stock.Chain, "Chain", 0, 0, null),
 				new Gtk.StockItem(Stock.ChainBroken, "Chain Broken", 0, 0, null),
 				new Gtk.StockItem(Stock.Group, "Group", 0, 0, null),
 				new Gtk.StockItem(Stock.Ungroup, "Ungroup", 0, 0, null),
-				new Gtk.StockItem(Stock.InputFile, "Input File", 0, 0, null),
 				new Gtk.StockItem(Stock.Function, "Function", 0, 0, null),
 				new Gtk.StockItem(Stock.FunctionPolynomial, "Piecewise Polynomial", 0, 0, null)
 			});
 			
 			Gtk.IconFactory factory = new Gtk.IconFactory();
 
-			factory.Add(Stock.State, MakeIcons(new Wrappers.Renderers.State()));
-			factory.Add(Stock.Link, MakeIcons(new Wrappers.Renderers.Link()));
+			factory.Add(Stock.Node, MakeIcons(new Wrappers.Renderers.Node()));
+			factory.Add(Stock.Edge, MakeIcons(new Wrappers.Renderers.Edge()));
 			factory.Add(Stock.Chain, new Gtk.IconSet(Gdk.Pixbuf.LoadFromResource("chain.png")));
 			factory.Add(Stock.ChainBroken, new Gtk.IconSet(Gdk.Pixbuf.LoadFromResource("chain-broken.png")));
-			factory.Add(Stock.Group, MakeIcons(new Wrappers.Renderers.Group(), "group"));
-			factory.Add(Stock.Ungroup, MakeIcons(new Wrappers.Renderers.Group(), "ungroup"));
-			factory.Add(Stock.GroupState, MakeIcons(new Wrappers.Renderers.Group()));
-			factory.Add(Stock.InputFile, MakeIcons(new Wrappers.Renderers.Input()));
+			factory.Add(Stock.Group, MakeIcons(new Wrappers.Renderers.Node(), "group"));
+			factory.Add(Stock.Ungroup, MakeIcons(new Wrappers.Renderers.Node(), "ungroup"));
 			factory.Add(Stock.Function, MakeIcons(new Wrappers.Renderers.Function()));
 			factory.Add(Stock.FunctionPolynomial, MakeIcons(new Wrappers.Renderers.Function()));
 			

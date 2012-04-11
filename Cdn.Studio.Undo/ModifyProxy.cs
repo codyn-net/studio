@@ -4,11 +4,11 @@ namespace Cdn.Studio.Undo
 {
 	public class ModifyProxy : IAction
 	{
-		private Wrappers.Group d_group;
+		private Wrappers.Node d_group;
 		private Wrappers.Wrapper d_proxy;
 		private Wrappers.Wrapper d_previousProxy;
 
-		public ModifyProxy(Wrappers.Group grp, Wrappers.Wrapper proxy)
+		public ModifyProxy(Wrappers.Node grp, Wrappers.Wrapper proxy)
 		{
 			d_group = grp;
 			d_proxy = proxy;

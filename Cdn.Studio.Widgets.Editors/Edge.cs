@@ -8,7 +8,7 @@ namespace Cdn.Studio.Widgets.Editors
 	 Gtk.Binding(Gdk.Key.KP_Subtract, "HandleDeleteBinding"),
 	 Gtk.Binding(Gdk.Key.Insert, "HandleAddBinding"),
 	 Gtk.Binding(Gdk.Key.KP_Add, "HandleAddBinding")]
-	public class Link : ScrolledWindow
+	public class Edge : ScrolledWindow
 	{
 		private class Node : Widgets.Node
 		{
@@ -20,9 +20,9 @@ namespace Cdn.Studio.Widgets.Editors
 				EquationEditable
 			}
 
-			private LinkAction d_action;
+			private EdgeAction d_action;
 
-			public Node(LinkAction action)
+			public Node(EdgeAction action)
 			{
 				d_action = action;
 				
@@ -44,13 +44,13 @@ namespace Cdn.Studio.Widgets.Editors
 				base.Dispose();
 			}
 			
-			private void OnActionChanged(object source,GLib.NotifyArgs args)
+			private void OnActionChanged(object source, GLib.NotifyArgs args)
 			{
 				EmitChanged();
 			}
 			
 			[PrimaryKey]
-			public LinkAction LinkAction
+			public EdgeAction EdgeAction
 			{
 				get	{ return d_action; }
 			}
@@ -120,7 +120,7 @@ namespace Cdn.Studio.Widgets.Editors
 			}
 		}
 
-		private Wrappers.Link d_link;
+		private Wrappers.Edge d_link;
 		private Actions d_actions;
 		private Widgets.TreeView<Node> d_treeview;
 		private bool d_selectAction;
@@ -130,7 +130,7 @@ namespace Cdn.Studio.Widgets.Editors
 		private CellRenderer d_rendererTarget;
 		private CellRenderer d_rendererEquation;
 
-		public Link(Wrappers.Link link, Actions actions)
+		public Edge(Wrappers.Edge link, Actions actions)
 		{
 			d_link = link;
 			d_actions = actions;
@@ -171,8 +171,8 @@ namespace Cdn.Studio.Widgets.Editors
 			d_rendererTarget = renderer;
 
 			renderer.Editable = true;
-			renderer.Edited += HandleLinkActionTargetEdited;
-			renderer.EditingStarted += HandleLinkActionTargetEditingStarted;
+			renderer.Edited += HandleEdgeActionTargetEdited;
+			renderer.EditingStarted += HandleEdgeActionTargetEditingStarted;
 			renderer.EditingCanceled += delegate {
 				if (d_editingEntry != null && Utils.GetCurrentEvent() is Gdk.EventButton)
 				{
@@ -197,7 +197,7 @@ namespace Cdn.Studio.Widgets.Editors
 				};
 			};
 
-			renderer.Edited += HandleLinkActionEquationEdited;
+			renderer.Edited += HandleEdgeActionEquationEdited;
 			
 			renderer.EditingCanceled += delegate {
 				if (d_editingEntry != null && Utils.GetCurrentEvent() is Gdk.EventButton)
@@ -215,7 +215,7 @@ namespace Cdn.Studio.Widgets.Editors
 			Populate();
 		}
 
-		private void HandleLinkActionTargetEditingStarted(object o, EditingStartedArgs args)
+		private void HandleEdgeActionTargetEditingStarted(object o, EditingStartedArgs args)
 		{
 			Entry entry = args.Editable as Entry;
 			
@@ -227,7 +227,7 @@ namespace Cdn.Studio.Widgets.Editors
 			d_editingEntry = entry;
 			d_editingPath = args.Path;
 			
-			if (d_treeview.NodeStore.FindPath(args.Path).LinkAction == null)
+			if (d_treeview.NodeStore.FindPath(args.Path).EdgeAction == null)
 			{
 				entry.Text = "";
 			}
@@ -236,7 +236,7 @@ namespace Cdn.Studio.Widgets.Editors
 				OnEntryKeyPressed(a, d_rendererTarget, TargetEdited);
 			};
 			
-			if (d_link.To == null)
+			if (d_link.Output == null)
 			{
 				return;
 			}
@@ -245,18 +245,18 @@ namespace Cdn.Studio.Widgets.Editors
 			ListStore props = new ListStore(typeof(string));
 			Dictionary<string, bool > found = new Dictionary<string, bool>();
 
-			Wrappers.Group grp = d_link.To as Wrappers.Group;
+			Wrappers.Node grp = d_link.Output;
 			
 			if (grp != null)
 			{
-				foreach (string name in grp.PropertyInterface.Names)
+				foreach (string name in grp.VariableInterface.Names)
 				{
 					props.AppendValues(name);
 					found[name] = true;
 				}
 			}
 
-			foreach (Property prop in d_link.To.Properties)
+			foreach (Variable prop in d_link.Output.Variables)
 			{
 				if (!found.ContainsKey(prop.Name))
 				{
@@ -280,14 +280,14 @@ namespace Cdn.Studio.Widgets.Editors
 		
 		private void Connect()
 		{
-			d_link.ActionAdded += HandleLinkActionAdded;
-			d_link.ActionRemoved += HandleLinkActionRemoved;
+			d_link.ActionAdded += HandleEdgeActionAdded;
+			d_link.ActionRemoved += HandleEdgeActionRemoved;
 		}
 		
 		private void Disconnect()
 		{
-			d_link.ActionAdded -= HandleLinkActionAdded;
-			d_link.ActionRemoved -= HandleLinkActionRemoved;
+			d_link.ActionAdded -= HandleEdgeActionAdded;
+			d_link.ActionRemoved -= HandleEdgeActionRemoved;
 		}
 		
 		private void Populate()
@@ -297,28 +297,28 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 
-			foreach (Cdn.LinkAction action in d_link.Actions)
+			foreach (Cdn.EdgeAction action in d_link.Actions)
 			{
-				AddLinkAction(action);
+				AddEdgeAction(action);
 			}
 			
 			d_dummy = new Node(null);
 			d_treeview.NodeStore.Add(d_dummy);
 		}
 		
-		private void HandleLinkActionRemoved(object source, Cdn.LinkAction action)
+		private void HandleEdgeActionRemoved(object source, Cdn.EdgeAction action)
 		{
 			d_treeview.NodeStore.Remove(action);
 		}
 
-		private void HandleLinkActionAdded(object source, Cdn.LinkAction action)
+		private void HandleEdgeActionAdded(object source, Cdn.EdgeAction action)
 		{
 			d_treeview.NodeStore.Remove(d_dummy);
-			AddLinkAction(action);
+			AddEdgeAction(action);
 			d_treeview.NodeStore.Add(d_dummy);
 		}
 		
-		private void AddLinkAction(Cdn.LinkAction action)
+		private void AddEdgeAction(Cdn.EdgeAction action)
 		{
 			TreeIter iter;
 			
@@ -335,7 +335,7 @@ namespace Cdn.Studio.Widgets.Editors
 		{
 			Node node = d_treeview.NodeStore.FindPath(path);
 			
-			if (node.LinkAction != null && node.LinkAction.Target == text.Trim())
+			if (node.EdgeAction != null && node.EdgeAction.Target == text.Trim())
 			{
 				return;
 			}
@@ -345,24 +345,24 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 			
-			if (node.LinkAction == null)
+			if (node.EdgeAction == null)
 			{
 				d_selectAction = true;
-				d_actions.Do(new Undo.AddLinkAction(d_link, text.Trim(), ""));
+				d_actions.Do(new Undo.AddEdgeAction(d_link, text.Trim(), ""));
 				d_selectAction = false;
 			}
 			else
 			{
-				d_actions.Do(new Undo.ModifyLinkActionTarget(d_link, node.LinkAction.Target, text.Trim()));
+				d_actions.Do(new Undo.ModifyEdgeActionTarget(d_link, node.EdgeAction.Target, text.Trim()));
 			}
 		}
 
-		private void HandleLinkActionTargetEdited(object o, EditedArgs args)
+		private void HandleEdgeActionTargetEdited(object o, EditedArgs args)
 		{
 			TargetEdited(args.NewText, args.Path);
 		}
 		
-		private void HandleLinkActionEquationEdited(object o, EditedArgs args)
+		private void HandleEdgeActionEquationEdited(object o, EditedArgs args)
 		{
 			EquationEdited(args.NewText, args.Path);
 		}
@@ -371,22 +371,22 @@ namespace Cdn.Studio.Widgets.Editors
 		{
 			Node node = d_treeview.NodeStore.FindPath(path);
 			
-			if (node.LinkAction.Equation.AsString == text.Trim())
+			if (node.EdgeAction.Equation.AsString == text.Trim())
 			{
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyLinkActionEquation(d_link, node.LinkAction.Target, text.Trim()));
+			d_actions.Do(new Undo.ModifyEdgeActionEquation(d_link, node.EdgeAction.Target, text.Trim()));
 		}
 
 		private void DoAddAction()
 		{
-			List<string > props = new List<string>(Array.ConvertAll<LinkAction, string>(d_link.Actions, item => item.Target));
+			List<string > props = new List<string>(Array.ConvertAll<EdgeAction, string>(d_link.Actions, item => item.Target));
 			List<string > prefs = new List<string>();
 			
-			if (d_link.To != null)
+			if (d_link.Output != null)
 			{
-				prefs = new List<string>(Array.ConvertAll<Property, string>(d_link.To.Properties, item => item.Name));
+				prefs = new List<string>(Array.ConvertAll<Variable, string>(d_link.Output.Variables, item => item.Name));
 			}
 			else
 			{
@@ -411,7 +411,7 @@ namespace Cdn.Studio.Widgets.Editors
 			} while (props.Contains(name));
 			
 			d_selectAction = true;
-			d_actions.Do(new Undo.AddLinkAction(d_link, name, ""));
+			d_actions.Do(new Undo.AddEdgeAction(d_link, name, ""));
 			d_selectAction = false;
 
 			TreePath path = d_treeview.Selection.GetSelectedRows()[0];
@@ -428,7 +428,7 @@ namespace Cdn.Studio.Widgets.Editors
 				
 				if (node != d_dummy)
 				{
-					actions.Add(new Undo.RemoveLinkAction(d_link, node.LinkAction));
+					actions.Add(new Undo.RemoveEdgeAction(d_link, node.EdgeAction));
 				}
 			}
 			
@@ -542,18 +542,18 @@ namespace Cdn.Studio.Widgets.Editors
 			CellRendererText text = renderer as CellRendererText;
 			Node node = d_treeview.NodeStore.GetFromIter(iter);
 			
-			bool fromtemp = node.LinkAction != null ? (d_link.GetActionTemplate(node.LinkAction, true) != null) : false;
-			bool overridden = node.LinkAction != null ? (d_link.GetActionTemplate(node.LinkAction, false) != null) : false;
+			bool fromtemp = node.EdgeAction != null ? (d_link.GetActionTemplate(node.EdgeAction, true) != null) : false;
+			bool overridden = node.EdgeAction != null ? (d_link.GetActionTemplate(node.EdgeAction, false) != null) : false;
 			
 			text.Weight = (int)Pango.Weight.Normal;
 			text.Style = Pango.Style.Normal;
 			
-			if (node.LinkAction == null)
+			if (node.EdgeAction == null)
 			{
 				text.ForegroundGdk = d_treeview.Style.Foreground(StateType.Insensitive);
 				text.Style = Pango.Style.Italic;
 			}
-			else if (d_link.To == null || d_link.To.Property(node.Target) == null)
+			else if (d_link.Output == null || d_link.Output.Variable(node.Target) == null)
 			{
 				text.Foreground = "#ff0000";
 			}
@@ -711,7 +711,7 @@ namespace Cdn.Studio.Widgets.Editors
 			}
 		}
 		
-		private delegate void EditedHandler(string text, string path);
+		private delegate void EditedHandler(string text,string path);
 		
 		private void OnEntryKeyPressed(KeyPressEventArgs args, CellRenderer renderer, EditedHandler handler)
 		{

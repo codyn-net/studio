@@ -8,35 +8,35 @@ namespace Cdn.Studio.Dialogs
 	{
 		private class LineSpec
 		{
-			private List<Cdn.Property> d_x;
-			private List<Cdn.Property> d_y;
+			private List<Cdn.Variable> d_x;
+			private List<Cdn.Variable> d_y;
 			private List<Cdn.Object> d_objs;
 			private List<List<Biorob.Math.Point>> d_data;
 			private Plot.Renderers.Line d_renderer;
 
 			public LineSpec()
 			{
-				d_x = new List<Cdn.Property>();
-				d_y = new List<Cdn.Property>();
+				d_x = new List<Cdn.Variable>();
+				d_y = new List<Cdn.Variable>();
 				d_data = new List<List<Biorob.Math.Point>>();
 				d_objs = new List<Object>();
 				d_renderer = new Plot.Renderers.Line {LineStyle = Plot.Renderers.LineStyle.Single,
 				MarkerStyle = Plot.Renderers.MarkerStyle.FilledCircle, MarkerSize = 10};
 			}
 
-			public void Add(Cdn.Object obj, Cdn.Link link)
+			public void Add(Cdn.Object obj, Cdn.Edge link)
 			{
-				if (link != null && link.Property("anchor_x") != null && link.Property("anchor_y") != null)
+				if (link != null && link.Variable("anchor_x") != null && link.Variable("anchor_y") != null)
 				{
-					d_x.Add(link.Property("anchor_x"));
-					d_y.Add(link.Property("anchor_y"));
+					d_x.Add(link.Variable("anchor_x"));
+					d_y.Add(link.Variable("anchor_y"));
 
 					d_objs.Add(obj);
 				}
-				else if (obj.Property("position_x") != null && obj.Property("position_y") != null)
+				else if (obj.Variable("position_x") != null && obj.Variable("position_y") != null)
 				{
-					d_x.Add(obj.Property("position_x"));
-					d_y.Add(obj.Property("position_y"));
+					d_x.Add(obj.Variable("position_x"));
+					d_y.Add(obj.Variable("position_y"));
 
 					d_objs.Add(obj);
 				}
@@ -147,10 +147,11 @@ namespace Cdn.Studio.Dialogs
 			d_button.Sensitive = true;
 		}
 
-		private void HandleSimOnBegin(object o, Cdn.BeginArgs args)
+		private void HandleSimOnBegin(object o, Cdn.BegunArgs args)
 		{
-			d_to = args.To;
-			d_step = args.Step;
+			// TODO
+			//d_to = args.To;
+			//d_step = args.Step;
 
 			if (d_timeoutid != 0)
 			{
@@ -243,14 +244,20 @@ namespace Cdn.Studio.Dialogs
 			foreach (Cdn.Object o in objs)
 			{
 				bool didit = false;
+				Cdn.Node n = o as Cdn.Node;
 
-				foreach (Cdn.Link l in o.Links)
+				if (n == null)
 				{
-					if (objs.Contains(l.From))
+					continue;
+				}
+
+				foreach (Cdn.Edge l in n.Edges)
+				{
+					if (objs.Contains(l.Input))
 					{
 						LineSpec spec = new LineSpec();
 
-						spec.Add(l.From, l);
+						spec.Add(l.Input, l);
 						spec.Add(o, null);
 
 						d_specs.Add(spec);

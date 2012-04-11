@@ -129,9 +129,9 @@ namespace Cdn.Studio
 			
 			foreach (Wrappers.Wrapper obj in objects)
 			{
-				Wrappers.Link link = obj as Wrappers.Link;
+				Wrappers.Edge link = obj as Wrappers.Edge;
 				
-				if (link != null && (link.From != null || link.To != null))
+				if (link != null && (link.Input != null || link.Output != null))
 				{
 					continue;
 				}
@@ -151,11 +151,11 @@ namespace Cdn.Studio
 			return ret;
 		}
 		
-		public static IEnumerable<Wrappers.Link> FilterLink(IEnumerable<Wrappers.Wrapper> wrappers)
+		public static IEnumerable<Wrappers.Edge> FilterLink(IEnumerable<Wrappers.Wrapper> wrappers)
 		{
 			foreach (Wrappers.Wrapper wrapper in wrappers)
 			{
-				Wrappers.Link link = wrapper as Wrappers.Link;
+				Wrappers.Edge link = wrapper as Wrappers.Edge;
 				
 				if (link != null)
 				{

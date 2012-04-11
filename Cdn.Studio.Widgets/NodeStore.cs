@@ -90,9 +90,12 @@ namespace Cdn.Studio.Widgets
 	
 	public class Node : GLib.Object, IDisposable, IEnumerable<Node>
 	{
-		public delegate void NodeAddedHandler(Node parent, Node child);
-		public delegate void NodeRemovedHandler(Node parent, Node child, int wasAtIndex);
+		public delegate void NodeAddedHandler(Node parent,Node child);
+
+		public delegate void NodeRemovedHandler(Node parent,Node child,int wasAtIndex);
+
 		public delegate void NodeHandler(Node node);
+
 		public delegate bool FilterFunc(Node node);
 
 		private Node d_parent;
@@ -173,9 +176,9 @@ namespace Cdn.Studio.Widgets
 		}
 		
 		IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+		{
+			return GetEnumerator();
+		}
 		
 		public Node Parent
 		{
@@ -646,19 +649,16 @@ namespace Cdn.Studio.Widgets
 		}
 
 		private GLib.GType[] d_gtypes;
-
 		private List<MethodInfo> d_valueGetters;
 		private List<CustomRenderer> d_customRenderers;
-
 		private Dictionary<Type, MethodInfo> d_primaryKeys;
 		private Dictionary<int, MethodInfo> d_sortColumns;
 		private Dictionary<int, bool> d_sortable;
-
 		private TreeModelAdapter d_adapter;
 		private int d_sortColumn;
 		private Node.FilterFunc d_lastFilter;
 		
-		public delegate void NodeChangedHandler(NodeStore<T> store, Node child);
+		public delegate void NodeChangedHandler(NodeStore<T> store,Node child);
 
 		public event NodeChangedHandler NodeChanged = delegate {};
 
@@ -1299,7 +1299,8 @@ namespace Cdn.Studio.Widgets
 				if (d_sortColumns.ContainsKey(d_sortColumn))
 				{
 					MethodInfo info = d_sortColumns[d_sortColumn];
-					return delegate (Node first, Node second) { return (int)info.Invoke(first, new object[] {second}); };
+					return delegate (Node first, Node second) {
+						return (int)info.Invoke(first, new object[] {second}); };
 				}
 				else
 				{

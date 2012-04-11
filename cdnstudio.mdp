@@ -3,7 +3,7 @@
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="cdnstudio" />
       <Build debugmode="True" target="Exe" />
-      <Execution consolepause="False" commandlineparameters="/home/jvanden/work/phd/cdn/libcdn-network/cdn-network/cart.cdn" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
+      <Execution consolepause="False" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
       <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
     <Configuration name="Release" ctype="DotNetProjectConfiguration">
@@ -16,17 +16,16 @@
   <Contents>
     <File subtype="Code" buildaction="EmbedAsResource" name="Cdn.Studio.Resources/chain.png" />
     <File subtype="Code" buildaction="EmbedAsResource" name="Cdn.Studio.Resources/chain-broken.png" />
-    <File subtype="Code" buildaction="EmbedAsResource" name="Cdn.Studio.Resources/link.png" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Wrappers" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Group.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Node.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Graphical.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Link.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Edge.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Wrapper.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Renderers" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Renderer.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Group.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/NodeContainer.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Box.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/State.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Node_1.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Serialization" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Network.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
@@ -49,19 +48,18 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/Object.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveObject.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/MoveObject.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Oscillator.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/Property.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddProperty.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveProperty.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/Variable.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddVariable.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveVariable.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyProperty.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/LinkAction.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddLinkAction.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveLinkAction.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyLinkActionTarget.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyLinkActionEquation.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/EdgeAction.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddEdgeAction.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveEdgeAction.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyEdgeActionTarget.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyEdgeActionEquation.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyProxy.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Dialogs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Dialogs/Property.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Dialogs/Variable.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
@@ -85,14 +83,14 @@
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets/AddRemovePopup.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets/TreeView.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AttachLink.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddGroup.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AttachEdge.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddNode.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/Ungroup.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets/ScrolledWindow.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets/Notebook.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets/TemplatesMenu.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyObjectId.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Link.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Edge.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
@@ -124,12 +122,10 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/ImportAlias.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/Import.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Object.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Input.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/InputFile.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Input.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Io.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddInterfaceProperty.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/InterfaceProperty.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveInterfaceProperty.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/InterfaceVariable.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveInterfaceVariable.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio/RenderCache.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Renderers" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets/Annotation.cs" />
@@ -141,11 +137,11 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Dialogs/Editor.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Function.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets.Editors" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Properties.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Variables.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Group.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Node.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Link.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Edge.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Object.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets" />
@@ -174,14 +170,14 @@
     <ProjectReference type="Gac" localcopy="True" refto="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="gtksourceview2-sharp, Version=2.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cdn/lib/libplot1-sharp/Plot.dll" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cdn/lib/cdn-network-sharp-2.0/CdnNetwork.dll" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../home/jvanden/.packeteer/install-cdn/lib/libbiorob-math1-sharp/Biorob.Math.dll" />
     <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
     <ProjectReference type="Gac" localcopy="True" refto="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <ProjectReference type="Gac" localcopy="True" refto="Mono.Cairo, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
     <ProjectReference type="Gac" localcopy="True" refto="System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../../home/jvanden/.packeteer/install-cpg/lib/libplot1-sharp/Plot.dll" />
+    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../../home/jvanden/.packeteer/install-cpg/lib/libbiorob-math1-sharp/Biorob.Math.dll" />
+    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../../home/jvanden/.packeteer/install-cpg/lib/codyn-sharp-3.0/Codyn.dll" />
   </References>
 </Project>

@@ -2,7 +2,7 @@ using System;
 
 namespace Cdn.Studio.Wrappers
 {
-	public class ImportAlias : Group
+	public class ImportAlias : Node
 	{		
 		protected ImportAlias(Cdn.ImportAlias obj) : base(obj)
 		{

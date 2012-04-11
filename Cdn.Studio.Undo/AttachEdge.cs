@@ -2,20 +2,20 @@ using System;
 
 namespace Cdn.Studio.Undo
 {
-	public class AttachLink : Object, IAction
+	public class AttachEdge : Object, IAction
 	{
-		private Wrappers.Wrapper d_from;
-		private Wrappers.Wrapper d_prevFrom;
-		private Wrappers.Wrapper d_to;
-		private Wrappers.Wrapper d_prevTo;
-		private Wrappers.Link d_link;
+		private Wrappers.Node d_from;
+		private Wrappers.Node d_prevFrom;
+		private Wrappers.Node d_to;
+		private Wrappers.Node d_prevTo;
+		private Wrappers.Edge d_link;
 
-		public AttachLink(Wrappers.Link link, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(link.Parent, link)
+		public AttachEdge(Wrappers.Edge link, Wrappers.Node from, Wrappers.Node to) : base(link.Parent, link)
 		{
 			d_from = from;
 			d_to = to;
-			d_prevFrom = link.From;
-			d_prevTo = link.To;
+			d_prevFrom = link.Input;
+			d_prevTo = link.Output;
 			d_link = link;
 		}
 		

@@ -2,9 +2,9 @@ using System;
 
 namespace Cdn.Studio.Undo
 {
-	public class RemoveInterfaceProperty : InterfaceProperty, IAction
+	public class RemoveInterfaceVariable : InterfaceVariable, IAction
 	{
-		public RemoveInterfaceProperty(Wrappers.Group grp, string name, string childname, string propid) : base(grp, name, childname, propid)
+		public RemoveInterfaceVariable(Wrappers.Node grp, string name, string childname, string propid) : base(grp, name, childname, propid)
 		{
 		}
 		
@@ -15,7 +15,7 @@ namespace Cdn.Studio.Undo
 				return String.Format("Remove interface `{0}' = `{1}.{2}' from `{3}'",
 				                     Name,
 				                     ChildName,
-				                     PropertyId,
+				                     VariableId,
 				                     Wrapped.FullId);
 			}
 		}

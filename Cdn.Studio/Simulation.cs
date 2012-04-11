@@ -8,17 +8,15 @@ namespace Cdn.Studio
 		private Integrator d_integrator;
 		private SimulationRange d_range;
 		
-		public event BeginHandler OnBegin = delegate {};
+		public event Cdn.BegunHandler OnBegin = delegate {};
 		public event EventHandler OnEnd = delegate {};
 		private event SteppedHandler OnSteppedProxy;
 		
 		private bool d_running;
 		private uint d_idleRun;
 		
-		public event SteppedHandler OnStepped
-		{
-			add
-			{
+		public event SteppedHandler OnStepped {
+			add {
 				OnSteppedProxy += value;
 				
 				if (OnSteppedProxy.GetInvocationList().Length == 1 && d_integrator != null)
@@ -26,8 +24,7 @@ namespace Cdn.Studio
 					d_integrator.Stepped += HandleIntegratorStepped;
 				}
 			}
-			remove
-			{
+			remove {
 				OnSteppedProxy -= value;
 				
 				if (OnSteppedProxy.GetInvocationList().Length == 0 && d_integrator != null)
@@ -80,16 +77,16 @@ namespace Cdn.Studio
 					d_integrator.Stepped -= HandleIntegratorStepped;
 				}
 
-				d_integrator.Begin -= HandleIntegratorBegin;
-				d_integrator.End -= HandleIntegratorEnd;
+				d_integrator.Begun -= HandleIntegratorBegin;
+				d_integrator.Ended -= HandleIntegratorEnd;
 			}
 			
 			d_integrator = integrator;
 			
 			if (d_integrator != null)
 			{
-				d_integrator.Begin += HandleIntegratorBegin;
-				d_integrator.End += HandleIntegratorEnd;
+				d_integrator.Begun += HandleIntegratorBegin;
+				d_integrator.Ended += HandleIntegratorEnd;
 				
 				if (hasSteppers)
 				{
@@ -106,18 +103,15 @@ namespace Cdn.Studio
 			}
 		}
 		
-		private void HandleIntegratorBegin(object source, BeginArgs args)
+		private void HandleIntegratorBegin(object source, BegunArgs args)
 		{
-			d_range = new SimulationRange(args.From, args.Step, args.To);
 			d_running = true;
-
 			OnBegin(this, args);
 		}
 		
 		private void HandleIntegratorEnd(object source, EventArgs args)
 		{
 			d_running = false;
-
 			OnEnd(this, args);
 		}
 		

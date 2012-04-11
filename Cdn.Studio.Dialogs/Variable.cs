@@ -4,12 +4,12 @@ using Cdn.Studio.Widgets;
 
 namespace Cdn.Studio.Dialogs
 {
-	public class Property : Dialog
+	public class Variable : Dialog
 	{
 		Wrappers.Wrapper d_object;
 		Widgets.Editors.Wrapper d_view;
 		
-		public Property(Wrappers.Network network, Widgets.Window parent, Wrappers.Wrapper obj)
+		public Variable(Wrappers.Network network, Widgets.Window parent, Wrappers.Wrapper obj)
 		{
 			d_object = obj;
 			
@@ -17,7 +17,7 @@ namespace Cdn.Studio.Dialogs
 			TransientFor = parent;
 			HasSeparator = false;
 			
-			if (obj is Wrappers.Link)
+			if (obj is Wrappers.Edge)
 			{
 				SetDefaultSize(600, 300);
 			}
@@ -31,7 +31,7 @@ namespace Cdn.Studio.Dialogs
 			
 			VBox.PackStart(d_view, true, true, 0);
 			
-			d_object.PropertyChanged += delegate(Wrappers.Wrapper source, Cdn.Property name) {
+			d_object.VariableChanged += delegate(Wrappers.Wrapper source, Cdn.Variable name) {
 				UpdateTitle();
 			};
 			

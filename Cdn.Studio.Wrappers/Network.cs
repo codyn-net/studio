@@ -2,7 +2,7 @@ using System;
 
 namespace Cdn.Studio.Wrappers
 {
-	public class Network : Group
+	public class Network : Node
 	{
 		public event EventHandler Reverting = delegate {};
 		public event EventHandler Reverted = delegate {};
@@ -109,11 +109,11 @@ namespace Cdn.Studio.Wrappers
 			WrappedObject.Step(timestep);
 		}
 		
-		public Group TemplateGroup
+		public Node TemplateNode
 		{
 			get
 			{
-				return (Group)Wrap(WrappedObject.TemplateGroup);
+				return (Node)Wrap(WrappedObject.TemplateNode);
 			}
 		}
 	}

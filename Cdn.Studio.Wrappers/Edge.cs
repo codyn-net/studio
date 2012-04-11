@@ -4,48 +4,47 @@ using Biorob.Math;
 
 namespace Cdn.Studio.Wrappers
 {
-	public class Link : Object
+	public class Edge : Object
 	{		
-		public delegate void ActionEventHandler(object source, Cdn.LinkAction action);
+		public delegate void ActionEventHandler(object source,Cdn.EdgeAction action);
 
 		public event ActionEventHandler ActionAdded = delegate {};
 		public event ActionEventHandler ActionRemoved = delegate {};
 		
-		private Wrappers.Wrapper d_from;
-		private Wrappers.Wrapper d_to;
-		
+		private Wrappers.Node d_input;
+		private Wrappers.Node d_output;
 		private int d_offset;
 		private List<Point> d_fromAnchors;
 		private List<Point> d_toAnchors;
 		
-		protected Link(Cdn.Link obj) : this(obj, null, null)
+		protected Edge(Cdn.Edge obj) : this(obj, null, null)
 		{
 		}
 		
-		public Link() : this(new Cdn.Link("link", null, null), null, null)
+		public Edge() : this(new Cdn.Edge("edge", null, null), null, null)
 		{
 		}
 		
-		public Link(Cdn.Link obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
+		public Edge(Cdn.Edge obj, Wrappers.Wrapper from, Wrappers.Wrapper to) : base(obj)
 		{
-			Renderer = new Renderers.Link(this);
+			Renderer = new Renderers.Edge(this);
 
 			if (obj != null && from != null)
 			{
-				obj.From = from;
+				obj.Input = from;
 			}
 
 			UpdateFrom();
 			
 			if (obj != null && to != null)
 			{
-				obj.To = to;
+				obj.Output = to;
 			}
 
 			UpdateTo();
 			
-			obj.AddNotification("to", OnToChanged);
-			obj.AddNotification("from", OnFromChanged);
+			obj.AddNotification("output", OnToChanged);
+			obj.AddNotification("input", OnFromChanged);
 			
 			obj.ActionAdded += HandleActionAdded;
 			obj.ActionRemoved += HandleActionRemoved;
@@ -53,12 +52,12 @@ namespace Cdn.Studio.Wrappers
 			CalculateAnchors();
 		}
 
-		public static implicit operator Cdn.Object(Link obj)
+		public static implicit operator Cdn.Object(Edge obj)
 		{
 			return obj.WrappedObject;
 		}
 		
-		public static implicit operator Cdn.Link(Link obj)
+		public static implicit operator Cdn.Edge(Edge obj)
 		{
 			return obj.WrappedObject;
 		}
@@ -69,24 +68,24 @@ namespace Cdn.Studio.Wrappers
 			
 			if (field == Graphical.State.LinkFocus)
 			{
-				if (d_from != null)
+				if (d_input != null)
 				{
-					d_from.LinkFocus = val;
+					d_input.LinkFocus = val;
 				}
-				if (d_to != null)
+				if (d_output != null)
 				{
-					d_to.LinkFocus = val;
+					d_output.LinkFocus = val;
 				}
 			}
 			
 			return ret;
 		}
 
-		public new Renderers.Link Renderer
+		public new Renderers.Edge Renderer
 		{
 			get
 			{
-				return (Renderers.Link)base.Renderer;
+				return (Renderers.Edge)base.Renderer;
 			}
 			set
 			{
@@ -112,23 +111,23 @@ namespace Cdn.Studio.Wrappers
 			}
 			
 			// See how many links there are between o1 and o2
-			List<Wrappers.Link> d1 = new List<Wrappers.Link>();
+			List<Wrappers.Edge> d1 = new List<Wrappers.Edge>();
 			
 			// From o1 to o2
-			foreach (Wrappers.Link l in o2.Links)
+			foreach (Wrappers.Edge l in o2.Links)
 			{
-				if (l.From == o1)
+				if (l.Input == o1)
 				{
 					d1.Add(l);
 				}
 			}
 			
-			List<Wrappers.Link> d2 = new List<Wrappers.Link>();
+			List<Wrappers.Edge> d2 = new List<Wrappers.Edge>();
 			
 			// From o2 to o1
-			foreach (Wrappers.Link l in o1.Links)
+			foreach (Wrappers.Edge l in o1.Links)
 			{
-				if (l.From == o2)
+				if (l.Input == o2)
 				{
 					d2.Add(l);
 				}
@@ -149,25 +148,25 @@ namespace Cdn.Studio.Wrappers
 		
 		private void UpdateFrom()
 		{
-			if (d_from != null)
+			if (d_input != null)
 			{
-				d_from.Moved -= OnFromMoved;
+				d_input.Moved -= OnFromMoved;
 			}
 			
-			Wrappers.Wrapper oldFrom = d_from;
-			d_from = WrappedObject.From;
+			Wrappers.Node oldFrom = d_input;
+			d_input = Wrappers.Wrapper.Wrap(WrappedObject.Input as Cdn.Node) as Wrappers.Node;
 			
-			RecalculateLinkOffsets(oldFrom, d_to);
+			RecalculateLinkOffsets(oldFrom, d_output);
 			
-			if (d_from != null)
+			if (d_input != null)
 			{
-				d_from.Moved += OnFromMoved;
+				d_input.Moved += OnFromMoved;
 				
-				RecalculateLinkOffsets(d_from, d_to);
+				RecalculateLinkOffsets(d_input, d_output);
 				
-				d_from.LinkFocus = LinkFocus;
+				d_input.LinkFocus = LinkFocus;
 				
-				if (d_to != null)
+				if (d_output != null)
 				{
 					Allocation.Assign(0, 0, 1, 1);
 				}
@@ -176,27 +175,27 @@ namespace Cdn.Studio.Wrappers
 		
 		private void UpdateTo()
 		{
-			if (d_to != null)
+			if (d_output != null)
 			{
-				d_to.Moved -= OnToMoved;
-				d_to.Unlink(this);
+				d_output.Moved -= OnToMoved;
+				d_output.Unlink(this);
 			}
 			
-			Wrappers.Wrapper oldTo = d_to;			
-			d_to = WrappedObject.To;
+			Wrappers.Node oldTo = d_output;
+			d_output = Wrappers.Wrapper.Wrap(WrappedObject.Output as Cdn.Node) as Wrappers.Node;
 			
-			RecalculateLinkOffsets(d_from, oldTo);
+			RecalculateLinkOffsets(d_input, oldTo);
 			
-			if (d_to != null)
+			if (d_output != null)
 			{
-				d_to.Moved += OnToMoved;
-				d_to.Link(this);
+				d_output.Moved += OnToMoved;
+				d_output.Link(this);
 				
-				RecalculateLinkOffsets(d_from, d_to);
+				RecalculateLinkOffsets(d_input, d_output);
 				
-				d_to.LinkFocus = LinkFocus;
+				d_output.LinkFocus = LinkFocus;
 				
-				if (d_from != null)
+				if (d_input != null)
 				{
 					Allocation.Assign(0, 0, 1, 1);
 				}
@@ -232,7 +231,7 @@ namespace Cdn.Studio.Wrappers
 			{
 				if (d_object != null)
 				{
-					return new Wrappers.Wrapper[] {d_from, d_to};
+					return new Wrappers.Wrapper[] {d_input, d_output};
 				}
 				else
 				{
@@ -256,36 +255,36 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public bool SameObjects(Wrappers.Link other)
+		public bool SameObjects(Wrappers.Edge other)
 		{
-			return (other.d_from == d_from && other.d_to == d_to);
+			return (other.d_input == d_input && other.d_output == d_output);
 		}
 		
-		public Wrappers.Wrapper From
-		{
-			get
-			{
-				return d_from;
-			}
-			set
-			{
-				WrappedObject.From = value;
-			}
-		}
-		
-		public Wrappers.Wrapper To
+		public Wrappers.Node Input
 		{
 			get
 			{
-				return d_to;
+				return d_input;
 			}
 			set
 			{
-				WrappedObject.To = value;
+				WrappedObject.Input = value;
 			}
 		}
 		
-		public Cdn.LinkAction[] Actions
+		public Wrappers.Node Output
+		{
+			get
+			{
+				return d_output;
+			}
+			set
+			{
+				WrappedObject.Output = value;
+			}
+		}
+		
+		public Cdn.EdgeAction[] Actions
 		{
 			get
 			{
@@ -293,9 +292,9 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public Cdn.LinkAction AddAction(string target, Cdn.Expression expression)
+		public Cdn.EdgeAction AddAction(string target, Cdn.Expression expression)
 		{
-			Cdn.LinkAction action = new Cdn.LinkAction(target, expression);
+			Cdn.EdgeAction action = new Cdn.EdgeAction(target, expression);
 			
 			if (AddAction(action))
 			{
@@ -307,35 +306,35 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public bool AddAction(Cdn.LinkAction action)
+		public bool AddAction(Cdn.EdgeAction action)
 		{
 			return WrappedObject.AddAction(action);
 		}
 		
-		public Cdn.LinkAction GetAction(string target)
+		public Cdn.EdgeAction GetAction(string target)
 		{
 			return WrappedObject.GetAction(target);
 		}
 		
-		public bool RemoveAction(Cdn.LinkAction action)
+		public bool RemoveAction(Cdn.EdgeAction action)
 		{
 			return WrappedObject.RemoveAction(action);
 		}
 		
-		public new Cdn.Link WrappedObject
+		public new Cdn.Edge WrappedObject
 		{
 			get
 			{
-				return base.WrappedObject as Cdn.Link;
+				return base.WrappedObject as Cdn.Edge;
 			}
 		}
 		
 		public void Reattach()
 		{
-			Attach(d_from, d_to);			
+			Attach(d_input, d_output);
 		}
 		
-		public void Attach(Wrappers.Wrapper from, Wrappers.Wrapper to)
+		public void Attach(Wrappers.Node from, Wrappers.Node to)
 		{
 			WrappedObject.Attach(from, to);
 		}
@@ -351,7 +350,7 @@ namespace Cdn.Studio.Wrappers
 		{
 			get
 			{
-				return From == null || To == null;
+				return Input == null || Output == null;
 			}
 		}
 
@@ -361,8 +360,8 @@ namespace Cdn.Studio.Wrappers
 			
 			for (int i = 0; i < 5; ++i)
 			{
-				other.X = Renderers.Link.EvaluateBezier(p1.X, p2.X, p3.X, p4.X, i / 5.0);
-				other.Y = Renderers.Link.EvaluateBezier(p1.Y, p2.Y, p3.Y, p4.Y, i / 5.0);
+				other.X = Renderers.Edge.EvaluateBezier(p1.X, p2.X, p3.X, p4.X, i / 5.0);
+				other.Y = Renderers.Edge.EvaluateBezier(p1.Y, p2.Y, p3.Y, p4.Y, i / 5.0);
 				
 				if (rect.Intersects(other))
 				{
@@ -428,11 +427,11 @@ namespace Cdn.Studio.Wrappers
 			
 			if (isFrom)
 			{
-				obj = d_from;
+				obj = d_input;
 			}
 			else
 			{
-				obj = d_to;
+				obj = d_output;
 			}
 
 			Allocation alloc = obj.Allocation;
@@ -500,8 +499,8 @@ namespace Cdn.Studio.Wrappers
 
 			for (int i = 1; i <= num; ++i)
 			{
-				Point pt = Renderers.Link.EvaluateBezier(points[0], points[1], points[2], points[3], (double)i / num);
-				dist.Add(Renderers.Link.DistanceToLine(prevp, pt, new Point(rect.X, rect.Y)));
+				Point pt = Renderers.Edge.EvaluateBezier(points[0], points[1], points[2], points[3], (double)i / num);
+				dist.Add(Renderers.Edge.DistanceToLine(prevp, pt, new Point(rect.X, rect.Y)));
 				
 				prevp = pt;
 			}
@@ -542,7 +541,7 @@ namespace Cdn.Studio.Wrappers
 				yy.Add(points[i].Y * scale);
 			}
 			
-			double ssize = Renderers.Link.ArrowSize * scale;
+			double ssize = Renderers.Edge.ArrowSize * scale;
 			double minx = Utils.Min(xx) - ssize;
 			double maxx = Utils.Max(xx) + ssize;
 			double miny = Utils.Min(yy) - ssize;
@@ -563,19 +562,19 @@ namespace Cdn.Studio.Wrappers
 		
 		public override bool CanDrawAnnotation(Cairo.Context context)
 		{
-			if (d_from == null || d_to == null)
+			if (d_input == null || d_output == null)
 			{
 				return base.CanDrawAnnotation(context);
 			}
-			else if (d_from == d_to)
+			else if (d_input == d_output)
 			{
-				return d_from.CanDrawAnnotation(context);
+				return d_input.CanDrawAnnotation(context);
 			}
 			
-			double fx = context.Matrix.Xx * d_from.Allocation.X;
-			double tx = context.Matrix.Xx * d_to.Allocation.X;
-			double fy = context.Matrix.Yy * d_from.Allocation.Y;
-			double ty = context.Matrix.Yy * d_to.Allocation.Y;
+			double fx = context.Matrix.Xx * d_input.Allocation.X;
+			double tx = context.Matrix.Xx * d_output.Allocation.X;
+			double fy = context.Matrix.Yy * d_input.Allocation.Y;
+			double ty = context.Matrix.Yy * d_output.Allocation.Y;
 			
 			double dist = System.Math.Sqrt(System.Math.Pow(fx - tx, 2) + System.Math.Pow(fy - ty, 2));
 			return dist > 2 * RenderAnnotationAtsize;
@@ -583,7 +582,7 @@ namespace Cdn.Studio.Wrappers
 		
 		public override void AnnotationHotspot(Cairo.Context context, double width, double height, int size, out double x, out double y)
 		{
-			if (d_from == null || d_to == null)
+			if (d_input == null || d_output == null)
 			{
 				base.AnnotationHotspot(context, width, height, size, out x, out y);
 			}
@@ -596,9 +595,9 @@ namespace Cdn.Studio.Wrappers
 			}
 		}
 		
-		public Wrappers.Link GetActionTemplate(Cdn.LinkAction action, bool match_full)
+		public Wrappers.Edge GetActionTemplate(Cdn.EdgeAction action, bool match_full)
 		{
-			return (Wrappers.Link)Wrapper.Wrap(WrappedObject.GetActionTemplate(action, match_full));
+			return (Wrappers.Edge)Wrapper.Wrap(WrappedObject.GetActionTemplate(action, match_full));
 		}
 	}
 }
