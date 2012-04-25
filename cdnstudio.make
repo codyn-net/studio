@@ -63,8 +63,7 @@ FILES = \
 	Cdn.Studio.Renderers/Box.cs \
 	Cdn.Studio.Renderers/Edge.cs \
 	Cdn.Studio.Renderers/Function.cs \
-	Cdn.Studio.Renderers/Node_1.cs \
-	Cdn.Studio.Renderers/NodeContainer.cs \
+	Cdn.Studio.Renderers/Node.cs \
 	Cdn.Studio.Renderers/PiecewisePolynomial.cs \
 	Cdn.Studio.Renderers/Renderer.cs \
 	Cdn.Studio.Serialization/Project.cs \

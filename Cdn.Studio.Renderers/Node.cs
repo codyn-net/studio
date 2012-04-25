@@ -2,15 +2,15 @@ using System;
 
 namespace Cdn.Studio.Wrappers.Renderers
 {
-	[Name("NodeContainer")]
-	public class NodeContainer : Renderer
+	[Name("Node")]
+	public class Node : Renderer
 	{
 		private double[][] d_colors;
-		protected Wrappers.Node d_group;
+		protected Wrappers.Node d_node;
 
-		public NodeContainer(Wrappers.Wrapper obj) : base (obj)
+		public Node(Wrappers.Wrapper obj) : base (obj)
 		{
-			d_group = obj as Wrappers.Node;
+			d_node = obj as Wrappers.Node;
 			d_colors = new double[5][];
 			
 			d_colors[0] = new double[] {26 / 125.0, 80 / 125.0, 130 / 125.0};
@@ -20,7 +20,7 @@ namespace Cdn.Studio.Wrappers.Renderers
 			d_colors[4] = new double[] {80.0 / 125.0, 130.0 / 125.0, 26.0 / 125.0};
 		}
 		
-		public NodeContainer() : this(null)
+		public Node() : this(null)
 		{
 		}
 		
@@ -100,7 +100,7 @@ namespace Cdn.Studio.Wrappers.Renderers
 		
 		public override void Draw(Cairo.Context context)
 		{
-			Allocation alloc = d_group != null ? d_group.Allocation : new Allocation(0, 0, 1, 1);
+			Allocation alloc = d_node != null ? d_node.Allocation : new Allocation(0, 0, 1, 1);
 			
 			Cache.Render(context, alloc.Width, alloc.Height, delegate (Cairo.Context graphics, double width, double height) {
 				double uw = graphics.LineWidth;

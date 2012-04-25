@@ -23,9 +23,8 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Wrapper.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Renderers" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Renderer.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/NodeContainer.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Node.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Box.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Node_1.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Serialization" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Network.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
