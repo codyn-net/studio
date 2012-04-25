@@ -122,7 +122,6 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/ImportAlias.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/Import.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Object.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Renderers/Io.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddInterfaceProperty.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/InterfaceVariable.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveInterfaceVariable.cs" />

@@ -63,7 +63,6 @@ FILES = \
 	Cdn.Studio.Renderers/Box.cs \
 	Cdn.Studio.Renderers/Edge.cs \
 	Cdn.Studio.Renderers/Function.cs \
-	Cdn.Studio.Renderers/Io.cs \
 	Cdn.Studio.Renderers/Node_1.cs \
 	Cdn.Studio.Renderers/NodeContainer.cs \
 	Cdn.Studio.Renderers/PiecewisePolynomial.cs \
