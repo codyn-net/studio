@@ -127,6 +127,7 @@ namespace Cdn.Studio
 		
 		public void RunPeriod(double from, double timestep, double to)
 		{
+			d_network.Reset();
 			d_network.Run(from, timestep, to);
 		}
 		
