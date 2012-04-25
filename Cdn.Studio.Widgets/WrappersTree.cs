@@ -64,6 +64,10 @@ namespace Cdn.Studio.Widgets
 					{
 						stockid = Stock.Edge;
 					}
+					else if (d_wrapper is Wrappers.Function)
+					{
+						stockid = Stock.Function;
+					}
 					else
 					{
 						stockid = Gtk.Stock.MissingImage;
