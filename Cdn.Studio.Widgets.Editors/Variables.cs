@@ -872,7 +872,7 @@ namespace Cdn.Studio.Widgets.Editors
 				flags &= ~VariableFlags.Integrated;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Variable, flags));
+			d_actions.Do(new Undo.ModifyVariable(d_wrapper, node.Variable, flags));
 		}
 		
 		private void DoFlagsEdited(object source, EditedArgs args)
@@ -913,7 +913,7 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Variable, newflags));
+			d_actions.Do(new Undo.ModifyVariable(d_wrapper, node.Variable, newflags));
 		}
 		
 		private void ExpressionEdited(string newValue, string path)
@@ -930,7 +930,7 @@ namespace Cdn.Studio.Widgets.Editors
 				return;
 			}
 			
-			d_actions.Do(new Undo.ModifyProperty(d_wrapper, node.Variable, newValue.Trim()));
+			d_actions.Do(new Undo.ModifyVariable(d_wrapper, node.Variable, newValue.Trim()));
 		}
 		
 		private void DoExpressionEdited(object source, EditedArgs args)
@@ -1177,8 +1177,8 @@ namespace Cdn.Studio.Widgets.Editors
 				{
 					Cdn.Variable tempProp = temp.Variable(node.Variable.Name);
 
-					actions.Add(new Undo.ModifyProperty(d_wrapper, node.Variable, tempProp.Expression.AsString));
-					actions.Add(new Undo.ModifyProperty(d_wrapper, node.Variable, tempProp.Flags));
+					actions.Add(new Undo.ModifyVariable(d_wrapper, node.Variable, tempProp.Expression.AsString));
+					actions.Add(new Undo.ModifyVariable(d_wrapper, node.Variable, tempProp.Flags));
 				}
 				else
 				{

@@ -102,7 +102,7 @@ FILES = \
 	Cdn.Studio.Undo/ModifyFunctionPolynomialPieceEnd.cs \
 	Cdn.Studio.Undo/ModifyIntegrator.cs \
 	Cdn.Studio.Undo/ModifyObjectId.cs \
-	Cdn.Studio.Undo/ModifyProperty.cs \
+	Cdn.Studio.Undo/ModifyVariable.cs \
 	Cdn.Studio.Undo/ModifyProxy.cs \
 	Cdn.Studio.Undo/MoveObject.cs \
 	Cdn.Studio.Undo/Group.cs \

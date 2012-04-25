@@ -1241,7 +1241,7 @@ namespace Cdn.Studio.Widgets
 			}
 			set
 			{
-				ToggleAction action = d_normalNode.GetAction("ViewPropertyEditorAction") as ToggleAction;
+				ToggleAction action = d_normalNode.GetAction("ViewVariableEditorAction") as ToggleAction;
 			
 				if (value == -1)
 				{
@@ -1955,7 +1955,7 @@ namespace Cdn.Studio.Widgets
 			}, "An error occurred while adding a link");
 		}
 
-		private void SelectFromPropertyAction(Undo.Variable action)
+		private void SelectFromVariableAction(Undo.Variable action)
 		{
 			if (action.Wrapped == Network)
 			{
@@ -2013,7 +2013,7 @@ namespace Cdn.Studio.Widgets
 		{
 			if (action is Undo.Variable)
 			{
-				SelectFromPropertyAction((Undo.Variable)action);
+				SelectFromVariableAction((Undo.Variable)action);
 			}
 			else if (action is Undo.Object)
 			{

@@ -51,7 +51,7 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/Variable.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddVariable.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveVariable.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyProperty.cs" />
+    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyVariable.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/EdgeAction.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/AddEdgeAction.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveEdgeAction.cs" />
