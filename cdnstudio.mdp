@@ -1,10 +1,10 @@
-<Project name="cdnstudio" fileversion="2.0" DefaultNamespace="Cdn.Studio" language="C#" clr-version="Net_2_0" targetFramework="3.5" ctype="DotNetProject">
+<Project name="cdnstudio" fileversion="2.0" DefaultNamespace="Cdn.Studio" language="C#" clr-version="Net_2_0" targetFramework="4.0" ctype="DotNetProject">
   <Configurations active="Debug">
     <Configuration name="Debug" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Debug" assembly="cdnstudio" />
       <Build debugmode="True" target="Exe" />
-      <Execution consolepause="False" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
-      <CodeGeneration compiler="Mcs" warninglevel="3" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
+      <Execution consolepause="False" commandlineparameters="/media/JBackup/jesse/phd/CoMan_LegsCad_15Dof_V1_FB/codyn/test.cdn" runwithwarnings="True" runtime="MsNet" clr-version="Net_2_0" />
+      <CodeGeneration compiler="Mcs" warninglevel="4" optimize="True" unsafecodeallowed="False" generateoverflowchecks="True" definesymbols="DEBUG" generatexmldocumentation="False" ctype="CSharpCompilerParameters" />
     </Configuration>
     <Configuration name="Release" ctype="DotNetProjectConfiguration">
       <Output directory="bin/Release" assembly="cdnstudio" />
@@ -56,7 +56,6 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/RemoveEdgeAction.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyEdgeActionTarget.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyEdgeActionEquation.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyProxy.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Dialogs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Dialogs/Variable.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio" />
@@ -137,7 +136,6 @@
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets.Editors" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Variables.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Node.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/Edge.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets" />
@@ -157,7 +155,6 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyFunctionArgumentExplicit.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/ModifyFunctionArgumentName.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets.Editors/PiecewisePolynomial.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Dialogs/Physics.cs" />
     <File subtype="Directory" buildaction="Compile" name="Cdn.Studio.Widgets" />
   </Contents>
   <References>
@@ -168,14 +165,14 @@
     <ProjectReference type="Gac" localcopy="True" refto="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <ProjectReference type="Gac" localcopy="True" refto="gtksourceview2-sharp, Version=2.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
-    <ProjectReference type="Gac" localcopy="True" refto="System, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-    <ProjectReference type="Gac" localcopy="True" refto="Mono.Posix, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
-    <ProjectReference type="Gac" localcopy="True" refto="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-    <ProjectReference type="Gac" localcopy="True" refto="Mono.Cairo, Version=2.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
-    <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-    <ProjectReference type="Gac" localcopy="True" refto="System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../../home/jvanden/.packeteer/install-cpg/lib/libplot1-sharp/Plot.dll" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../../home/jvanden/.packeteer/install-cpg/lib/libbiorob-math1-sharp/Biorob.Math.dll" />
-    <ProjectReference specificVersion="False" type="Assembly" localcopy="True" refto="../../../../../../home/jvanden/.packeteer/install-cpg/lib/codyn-sharp-3.0/Codyn.dll" />
+    <ProjectReference type="Gac" localcopy="True" refto="System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <ProjectReference type="Gac" localcopy="True" refto="Mono.Posix, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
+    <ProjectReference type="Gac" localcopy="True" refto="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <ProjectReference type="Gac" localcopy="True" refto="Mono.Cairo, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
+    <ProjectReference type="Gac" localcopy="True" refto="System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <ProjectReference type="Gac" localcopy="True" refto="System.Core, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+    <ProjectReference type="Gac" localcopy="False" refto="Codyn, Version=3.0.0.0, Culture=neutral" />
+    <ProjectReference type="Gac" localcopy="False" refto="Plot, Version=1.0.4652.20080, Culture=neutral" />
+    <ProjectReference type="Gac" localcopy="False" refto="Biorob.Math, Version=1.0.4652.19843, Culture=neutral" />
   </References>
 </Project>
