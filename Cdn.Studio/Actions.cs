@@ -234,11 +234,8 @@ namespace Cdn.Studio
 		{
 			List<Wrappers.Wrapper> sel = new List<Wrappers.Wrapper>(selection);
 
-			// Collect all the links that go from or to the group, but are not fully in there
-			Wrappers.Wrapper proxy = null;
-
-			List<Wrappers.Edge> proxyLinks = new List<Wrappers.Edge>();
-
+			// Find all the links that go from or to the group, but are not fully in there
+			// TODO: automatically create interfaces when needed
 			foreach (Wrappers.Edge link in Utils.FilterLink(parent.Children))
 			{
 				bool containsTo = sel.Contains(link.Output);
@@ -246,32 +243,14 @@ namespace Cdn.Studio
 
 				if (containsTo != containsFrom)
 				{
-					if (proxy == null)
-					{
-						proxy = containsTo ? link.Output : link.Input;
-					}
-					else if ((containsTo && link.Output != proxy) || (containsFrom && link.Input != proxy))
-					{
-						throw new Exception(String.Format("Links outside the group are acting on different objects in the group. The current behavior of the network cannot be preserved."));
-					}
-					
-					proxyLinks.Add(link);
+					throw new Exception(String.Format("Links outside the group are acting on different objects in the group. The current behavior of the network cannot be preserved."));
 				}
 				else if (containsTo && containsFrom && !sel.Contains(link))
 				{
 					sel.Add(link);
 				}
 			}
-			
-			if (proxy != null && parent.Proxy != null && parent.Proxy != proxy)
-			{
-				throw new Exception(String.Format("Links outside the group are acting on an object which is different from the proxy of the current parent. The current behavior of the network cannot be preserved."));
-			}
-			else if (proxy == null)
-			{
-				proxy = parent.Proxy;
-			}
-			
+
 			// Collect all objects and link fully encapsulated in the group
 			List<Wrappers.Wrapper> ingroup = new List<Wrappers.Wrapper>();
 			List<Undo.IAction> actions = new List<Undo.IAction>();
@@ -283,11 +262,6 @@ namespace Cdn.Studio
 				if (link == null || (sel.Contains(link.Output) && sel.Contains(link.Input)))
 				{
 					ingroup.Add(wrapper);
-				}
-				
-				if (proxy == null && !(wrapper is Wrappers.Edge))
-				{
-					proxy = wrapper;
 				}
 				
 				// Also fill the first actions that remove all the objects from the parent
@@ -305,11 +279,6 @@ namespace Cdn.Studio
 			
 			actions.Add(new Undo.AddObject(parent, newGroup));
 			
-			if (proxy == parent.Proxy)
-			{
-				actions.Add(new Undo.ModifyProxy(parent, newGroup));
-			}
-			
 			// Then we add all the 'ingroup' objects to the group
 			foreach (Wrappers.Wrapper wrapper in ingroup)
 			{
@@ -322,26 +291,7 @@ namespace Cdn.Studio
 				// Add object to the group
 				actions.Add(new Undo.AddObject(newGroup, wrapper));
 			}
-			
-			// Set the proxy if needed
-			if (proxy != null)
-			{
-				actions.Add(new Undo.ModifyProxy(newGroup, proxy));
-			}
-			
-			// Then reconnect all the proxy links to the group instead
-			foreach (Wrappers.Edge link in proxyLinks)
-			{
-				if (sel.Contains(link.Input))
-				{
-					actions.Add(new Undo.AttachEdge(link, newGroup, link.Output));
-				}
-				else
-				{
-					actions.Add(new Undo.AttachEdge(link, link.Input, newGroup));
-				}
-			}
-			
+
 			Do(new Undo.AddNode(newGroup, actions));
 			return newGroup;
 		}
@@ -389,18 +339,12 @@ namespace Cdn.Studio
 		private Undo.IAction[] Ungroup(Wrappers.Node parent, Wrappers.Node grp)
 		{
 			// Check if links can be redirected to the proxy
-			if (HasLinks(grp) && grp.Proxy == null)
+			if (HasLinks(grp))
 			{
 				throw new Exception(String.Format("The group `{0}' has links but no proxy to redirect the links to when ungrouping", grp.Id));
 			}
-			
+
 			List<Undo.IAction> actions = new List<Undo.IAction>();
-			
-			// Unset the proxy so that the undo also sets the proxy again
-			if (grp.Proxy != null)
-			{
-				actions.Add(new Undo.ModifyProxy(grp, null));
-			}
 			
 			// Remove all objects from the group
 			foreach (Wrappers.Wrapper wrapper in grp.Children)
@@ -429,34 +373,8 @@ namespace Cdn.Studio
 			}
 			
 			// Reattach any links coming from or going to the group, redirect to proxy
-			foreach (Wrappers.Edge link in Utils.FilterLink(grp.Parent.Children))
-			{
-				if (link.Output == grp && link.Input == grp)
-				{
-					actions.Add(new Undo.AttachEdge(link, grp.Proxy as Wrappers.Node, grp.Proxy as Wrappers.Node));
-				}
-				else if (link.Output == grp)
-				{
-					actions.Add(new Undo.AttachEdge(link, link.Input, grp.Proxy as Wrappers.Node));
-				}
-				else if (link.Input == grp)
-				{
-					actions.Add(new Undo.AttachEdge(link, grp.Proxy as Wrappers.Node, link.Output));
-				}
-			}
-			
-			// Copy properties defined on the group to the proxy
-			if (grp.Proxy != null)
-			{
-				foreach (Cdn.Variable prop in grp.Variables)
-				{
-					if (!grp.VariableIsProxy(prop.Name))
-					{
-						actions.Add(new Undo.AddVariable(grp.Proxy, prop));
-					}
-				}
-			}
-			
+			// TODO: reattach to interfaces
+
 			return actions.ToArray();
 		}
 		

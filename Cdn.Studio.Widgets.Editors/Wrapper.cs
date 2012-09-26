@@ -4,10 +4,12 @@ namespace Cdn.Studio.Widgets.Editors
 {
 	public class Wrapper : Gtk.VBox
 	{
-		public delegate void TemplateHandler(object source, Wrappers.Wrapper template);
+		public delegate void TemplateHandler(object source,Wrappers.Wrapper template);
+
 		public event TemplateHandler TemplateActivated = delegate {};
 
-		public delegate void ErrorHandler(object source, Exception exception);
+		public delegate void ErrorHandler(object source,Exception exception);
+
 		public event ErrorHandler Error = delegate {};
 
 		private Wrappers.Wrapper d_wrapper;
@@ -79,16 +81,6 @@ namespace Cdn.Studio.Widgets.Editors
 				};
 			}
 					
-			Wrappers.Node grp = d_wrapper as Wrappers.Node;
-			
-			if (grp != null)
-			{
-				Node gp = new Node(grp, d_actions);
-				gp.Show();
-				
-				top.PackStart(gp, false, false, 0);
-			}
-
 			PackStart(top, false, false, 0);
 			
 			Wrappers.Edge link = d_wrapper as Wrappers.Edge;

@@ -16,7 +16,7 @@ namespace Cdn.Studio.Wrappers
 		private int d_y;
 		private int d_zoom;
 		
-		public Node() : this(new Cdn.Node("node", null))
+		public Node() : this(new Cdn.Node("node"))
 		{
 		}
 		
@@ -63,11 +63,6 @@ namespace Cdn.Studio.Wrappers
 		private void HandleChildRemoved(object o, ChildRemovedArgs args)
 		{
 			ChildRemoved(this, args.Object);
-		}
-		
-		public bool VariableIsProxy(string name)
-		{
-			return WrappedObject.VariableIsProxy(name);
 		}
 		
 		public new Cdn.Node WrappedObject
@@ -153,19 +148,6 @@ namespace Cdn.Studio.Wrappers
 		public int IndexOf(Wrapper obj)
 		{
 			return Array.IndexOf<Cdn.Object>(WrappedObject.Children, obj.WrappedObject);
-		}
-		
-		public Wrapper Proxy
-		{
-			get
-			{
-				return WrappedObject.Proxy;
-			}
-		}
-		
-		public bool SetProxy(Wrapper val)
-		{
-			return WrappedObject.SetProxy(val);
 		}
 		
 		public Cdn.VariableInterface VariableInterface

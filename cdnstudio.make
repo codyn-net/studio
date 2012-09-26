@@ -101,7 +101,6 @@ FILES = \
 	Cdn.Studio.Undo/ModifyIntegrator.cs \
 	Cdn.Studio.Undo/ModifyObjectId.cs \
 	Cdn.Studio.Undo/ModifyVariable.cs \
-	Cdn.Studio.Undo/ModifyProxy.cs \
 	Cdn.Studio.Undo/MoveObject.cs \
 	Cdn.Studio.Undo/Group.cs \
 	Cdn.Studio.Undo/Object.cs \
@@ -121,7 +120,6 @@ FILES = \
 	Cdn.Studio.Widgets/Annotation.cs \
 	Cdn.Studio.Widgets.Editors/Edge.cs \
 	Cdn.Studio.Widgets.Editors/Function.cs \
-	Cdn.Studio.Widgets.Editors/Node.cs \
 	Cdn.Studio.Widgets.Editors/Object.cs \
 	Cdn.Studio.Widgets.Editors/PiecewisePolynomial.cs \
 	Cdn.Studio.Widgets.Editors/Variables.cs \

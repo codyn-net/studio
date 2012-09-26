@@ -19,24 +19,18 @@ namespace Cdn.Studio.Widgets
 		private Plot.Renderers.Renderer d_dragRenderer;
 		private bool d_dragmerge;
 		private Gtk.Widget d_dragHighlight;
-
 		private int d_dragRow;
 		private int d_dragColumn;
-
 		private int d_rows;
 		private int d_columns;
 		private int d_rowSpacing;
 		private int d_columnSpacing;
-		
 		private int[] d_x;
 		private int[] d_y;
 		private int[] d_width;
 		private int[] d_height;
-		
 		private Point d_lastPress;
-		
 		private Gdk.Window d_window;
-
 		private Plotting.Graph[,] d_children;
 		
 		public delegate Plotting.Graph CreateGraphHandler();
@@ -154,12 +148,12 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 		
-		public new void Add(Plotting.Graph widget)
+		public void Add(Plotting.Graph widget)
 		{
 			base.Add(widget);
 		}
 		
-		public new void Add(Plotting.Graph widget, int row, int col)
+		public void Add(Plotting.Graph widget, int row, int col)
 		{
 			if (row < 0 || col < 0)
 			{
@@ -469,7 +463,7 @@ namespace Cdn.Studio.Widgets
 			return true;
 		}
 		
-		public delegate bool ForeachCellHandler(int r, int c, Gtk.Widget widget);
+		public delegate bool ForeachCellHandler(int r,int c,Gtk.Widget widget);
 		
 		public bool ForeachCell(ForeachCellHandler handler)
 		{
@@ -649,8 +643,10 @@ namespace Cdn.Studio.Widgets
 			                                          new Gtk.TargetEntry("Plot.Renderer", Gtk.TargetFlags.App, 2)},
 			                   Gdk.DragAction.Move);
 			
-			graph.DragBegin += delegate (object source, Gtk.DragBeginArgs args) { DoDragBegin(graph, args.Context); };
-			graph.DragEnd += delegate (object source, Gtk.DragEndArgs args) { DoDragEnd(graph, args.Context); };
+			graph.DragBegin += delegate (object source, Gtk.DragBeginArgs args) {
+				DoDragBegin(graph, args.Context); };
+			graph.DragEnd += delegate (object source, Gtk.DragEndArgs args) {
+				DoDragEnd(graph, args.Context); };
 			graph.ButtonPressEvent += delegate (object source, Gtk.ButtonPressEventArgs args) {
 				d_lastPress = new Point(args.Event.X, args.Event.Y);
 			};

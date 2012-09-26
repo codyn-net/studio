@@ -11,7 +11,7 @@ namespace Cdn.Studio.Undo
 			d_parent = parent;
 		}
 
-		public new Wrappers.Node Parent
+		public Wrappers.Node Parent
 		{
 			get
 			{
