@@ -51,7 +51,6 @@ namespace Cdn.Studio.Widgets
 		private ActionGroup d_importLibrariesNode;
 		private uint d_idleSelectionChanged;
 		private uint d_updateImportLibrariesTimeout;
-		private Dialogs.Physics d_physics;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -332,7 +331,6 @@ namespace Cdn.Studio.Widgets
 				new ToggleActionEntry("ViewStatusbarAction", null, "Statusbar", null, "Show/Hide statusbar", OnViewStatusbarActivated, true),
 				new ToggleActionEntry("ViewMonitorAction", null, "Monitor", "<Control>m", "Show/Hide monitor window", OnToggleMonitorActivated, false),
 				new ToggleActionEntry("ViewControlAction", null, "Control", "<Control>k", "Show/Hide control window", OnToggleControlActivated, false),
-				new ToggleActionEntry("ViewPhysicsAction", null, "Physics", "<Control>p", "Show/Hide physics window", OnTogglePhysicsActivated, false),
 				new ToggleActionEntry("ViewSideBarAction", Gtk.Stock.DialogInfo, "Sidebar", "F9", "Show/Hide sidebar panel", OnViewSideBarActivated, false)
 			});
 			
@@ -2400,45 +2398,6 @@ namespace Cdn.Studio.Widgets
 			};
 		}
 
-		private void EnsurePhysics()
-		{
-			if (d_physics != null)
-			{
-				return;
-			}
-
-			d_physics = new Dialogs.Physics(Network, d_simulation);
-			d_physics.Realize();
-
-			d_windowGroup.AddWindow(d_physics);
-
-			PositionWindow(d_physics);
-			d_physics.Present();
-
-			d_physics.Destroyed += delegate(object sender, EventArgs e) {
-				d_physics = null;
-				(d_normalNode.GetAction("ViewPhysicsAction") as ToggleAction).Active = false;
-			};
-		}
-
-		private void OnTogglePhysicsActivated(object sender, EventArgs args)
-		{
-			ToggleAction toggle = sender as ToggleAction;
-			
-			if (!toggle.Active && d_plotting != null)
-			{
-				Gtk.Window ctrl = d_physics;
-				d_physics = null;
-				ctrl.Destroy();
-			}
-			else if (toggle.Active)
-			{
-				EnsurePhysics();
-
-				d_physics.Present();
-			}
-		}
-		
 		private void OnToggleMonitorActivated(object sender, EventArgs args)
 		{
 			ToggleAction toggle = sender as ToggleAction;

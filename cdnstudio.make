@@ -54,7 +54,6 @@ FILES = \
 	Cdn.Studio.Dialogs/Editor.cs \
 	Cdn.Studio.Dialogs/FindTemplate.cs \
 	Cdn.Studio.Dialogs/Import.cs \
-	Cdn.Studio.Dialogs/Physics.cs \
 	Cdn.Studio.Dialogs/PlotSettings.cs \
 	Cdn.Studio.Dialogs/Plotting.cs \
 	Cdn.Studio.Dialogs/Variable.cs \
