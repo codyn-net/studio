@@ -31,11 +31,21 @@ namespace Cdn.Studio.Wrappers
 		
 		public static implicit operator Cdn.Object(Node obj)
 		{
+			if (obj == null)
+			{
+				return null;
+			}
+
 			return obj.WrappedObject;
 		}
 		
 		public static implicit operator Cdn.Node(Node obj)
 		{
+			if (obj == null)
+			{
+				return null;
+			}
+
 			return obj.WrappedObject;
 		}
 		
@@ -114,6 +124,16 @@ namespace Cdn.Studio.Wrappers
 		public Cdn.Variable FindVariable(string name)
 		{
 			return WrappedObject.FindVariable(name);
+		}
+
+		public bool HasSelfEdge
+		{
+			get { return WrappedObject.HasSelfEdge; }
+		}
+
+		public Wrappers.Edge SelfEdge
+		{
+			get { return Wrapper.Wrap(WrappedObject.SelfEdge) as Wrappers.Edge; }
 		}
 
 		public Cdn.Variable[] Actors
