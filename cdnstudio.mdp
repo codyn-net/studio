@@ -114,7 +114,6 @@
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/UnapplyTemplate.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Undo/Template.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio/Anchor.cs" />
-    <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Widgets/Progress.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Dialogs/Import.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/Import.cs" />
     <File subtype="Code" buildaction="Compile" name="Cdn.Studio.Wrappers/ImportAlias.cs" />
