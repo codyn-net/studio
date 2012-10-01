@@ -1419,8 +1419,6 @@ namespace Cdn.Studio.Widgets
 			
 			if (!d_isDragging && !d_isDraggingAnchor)
 			{
-				DoMouseInOut(evnt.X, evnt.Y);
-				
 				if (d_mouseRect.Width >= 0 && d_mouseRect.Height >= 0)
 				{
 					if (d_beforeDragSelection == null)
@@ -1438,6 +1436,10 @@ namespace Cdn.Studio.Widgets
 					}
 
 					DoDragRect((int)evnt.X, (int)evnt.Y, evnt.State);
+				}
+				else
+				{
+					DoMouseInOut(evnt.X, evnt.Y);
 				}
 				
 				return true;
