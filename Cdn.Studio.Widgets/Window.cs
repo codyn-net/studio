@@ -44,9 +44,6 @@ namespace Cdn.Studio.Widgets
 		private WindowGroup d_windowGroup;
 		private Wrappers.Wrapper d_templatePopupObject;
 		private Wrappers.Wrapper d_templatePopupTemplate;
-		//private DateTime d_runElapsed;
-		//private Progress d_progress;
-		//private bool d_checkProgress;
 		private uint d_importLibrariesMergeId;
 		private ActionGroup d_importLibrariesNode;
 		private uint d_idleSelectionChanged;
@@ -116,10 +113,6 @@ namespace Cdn.Studio.Widgets
 
 		private void HandleSimulationBegin(object o, BegunArgs args)
 		{
-			//d_simulation.OnStepped += HandleSimulationStepped;
-			//d_runElapsed = DateTime.Now;
-			//d_checkProgress = true;
-			
 			d_grid.GdkWindow.Cursor = new Gdk.Cursor(Gdk.CursorType.Watch);
 			
 			UpdateSensitivity();
@@ -131,44 +124,10 @@ namespace Cdn.Studio.Widgets
 			
 			d_grid.GdkWindow.Cursor = null;
 			
-			/*if (d_progress != null)
-			{
-				d_progress.Dispose();
-				d_progress = null;
-			}*/
-			
 			if (d_plotting != null)
 			{
 				d_plotting.Present();
 			}
-		}
-
-		private void HandleSimulationStepped(object o, SteppedArgs args)
-		{
-			/*if (d_checkProgress)
-			{
-				double realTime = (DateTime.Now - d_runElapsed).TotalSeconds;
-
-				if (realTime >= 0.5)
-				{
-					double span = d_simulation.Range.To - d_simulation.Range.From;
-					double todo = span - args.Time;
-					
-					double estimated = todo / (args.Time - d_simulation.Range.From) * realTime;
-					
-					if (estimated > 1)
-					{
-						d_progress = new Progress(d_grid);
-					}
-					
-					d_checkProgress = false;
-				}
-			}
-			
-			if (d_progress != null)
-			{
-				d_progress.Update((args.Time - d_simulation.Range.From) / (d_simulation.Range.To - d_simulation.Range.From));
-			}*/
 		}
 
 		private void UpdateUndoState()
@@ -322,7 +281,7 @@ namespace Cdn.Studio.Widgets
 				new ActionEntry("HelpMenuAction", null, "_Help", null, null, null),
 				new ActionEntry("AboutAction", null, "About", null, null, OnAboutActivated)
 			});
-			
+
 			d_normalNode.Add(new ToggleActionEntry[] {
 				new ToggleActionEntry("ViewVariableEditorAction", Gtk.Stock.Properties, "Variable Editor", "<Control>F9", "Show/Hide variable editor pane", OnViewVariableEditorActivated, true),
 				new ToggleActionEntry("ViewToolbarAction", null, "Toolbar", null, "Show/Hide toolbar", OnViewToolbarActivated, true),

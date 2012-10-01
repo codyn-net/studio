@@ -130,7 +130,6 @@ FILES = \
 	Cdn.Studio.Widgets/NodeStore.cs \
 	Cdn.Studio.Widgets/Notebook.cs \
 	Cdn.Studio.Widgets/Pathbar.cs \
-	Cdn.Studio.Widgets/Progress.cs \
 	Cdn.Studio.Widgets/ScrolledWindow.cs \
 	Cdn.Studio.Widgets/Table.cs \
 	Cdn.Studio.Widgets/TemplatesMenu.cs \
