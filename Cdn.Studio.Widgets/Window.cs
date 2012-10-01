@@ -754,7 +754,7 @@ namespace Cdn.Studio.Widgets
 				}
 			}
 			
-			d_periodEntry.Text = "0:0.01:1";
+			d_periodEntry.Text = "0:0.005:10";
 			d_simulation.Range = new SimulationRange(d_periodEntry.Text);
 
 			d_grid.GrabFocus();
