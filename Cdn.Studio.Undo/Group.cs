@@ -62,7 +62,7 @@ namespace Cdn.Studio.Undo
 				}
 				catch
 				{
-					/* If there was an error, reverse alraedy done actions */
+					/* If there was an error, reverse already done actions */
 					undid.Reverse();
 
 					foreach (IAction ac in undid)
