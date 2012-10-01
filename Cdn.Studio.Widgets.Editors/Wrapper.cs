@@ -84,6 +84,12 @@ namespace Cdn.Studio.Widgets.Editors
 			PackStart(top, false, false, 0);
 			
 			Wrappers.Edge link = d_wrapper as Wrappers.Edge;
+			Wrappers.Node node = d_wrapper as Wrappers.Node;
+
+			if (node != null && node.HasSelfEdge)
+			{
+				link = node.SelfEdge;
+			}
 			
 			if (link != null)
 			{
