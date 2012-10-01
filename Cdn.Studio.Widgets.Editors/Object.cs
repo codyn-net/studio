@@ -5,10 +5,12 @@ namespace Cdn.Studio.Widgets.Editors
 {
 	public class Object : Gtk.HBox
 	{
-		public delegate void TemplateHandler(object source, Wrappers.Wrapper template);
+		public delegate void TemplateHandler(object source,Wrappers.Wrapper template);
+
 		public event TemplateHandler TemplateActivated = delegate {};
 
-		public delegate void ErrorHandler(object source, Exception exception);
+		public delegate void ErrorHandler(object source,Exception exception);
+
 		public event ErrorHandler Error = delegate {};
 
 		private Wrappers.Wrapper d_object;
@@ -52,36 +54,46 @@ namespace Cdn.Studio.Widgets.Editors
 			lbl.Show();
 			
 			PackStart(lbl, false, false, 0);
-			
-			d_entry = new Entry();
-			d_entry.Show();
-			
-			d_entry.WidthChars = 15;
-			
-			if (d_object != null)
+
+			if (d_object != null && d_object is Wrappers.Network)
 			{
-				d_entry.Text = d_object.Id;
+				Label nm = new Label("network");
+				nm.Show();
+
+				PackStart(nm, false, false, 0);
+			}
+			else
+			{
+				d_entry = new Entry();
+				d_entry.Show();
 			
-				d_entry.Activated += delegate {
-					ModifyId();
-				};
+				d_entry.WidthChars = 15;
 			
-				d_entry.FocusOutEvent += delegate {
-					ModifyId();
-				};
-			
-				d_entry.KeyPressEvent += delegate(object o, KeyPressEventArgs args) {
-					if (args.Event.Key == Gdk.Key.Escape)
-					{
-						d_entry.Text = d_object.Id;
-						d_entry.Position = d_entry.Text.Length;
-					}
-				};
+				if (d_object != null)
+				{
+					d_entry.Text = d_object.Id;
+				
+					d_entry.Activated += delegate {
+						ModifyId();
+					};
+				
+					d_entry.FocusOutEvent += delegate {
+						ModifyId();
+					};
+				
+					d_entry.KeyPressEvent += delegate(object o, KeyPressEventArgs args) {
+						if (args.Event.Key == Gdk.Key.Escape)
+						{
+							d_entry.Text = d_object.Id;
+							d_entry.Position = d_entry.Text.Length;
+						}
+					};
+				}
+
+				PackStart(d_entry, false, false, 0);
 			}
 			
-			PackStart(d_entry, false, false, 0);
-			
-			if (d_object != null && !(d_object is Wrappers.Function))
+			if (d_object != null && !(d_object is Wrappers.Function || d_object is Wrappers.Network))
 			{			
 				HBox templateBox = new HBox(false, 0);
 				templateBox.Show();
