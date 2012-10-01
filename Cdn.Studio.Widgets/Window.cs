@@ -921,7 +921,17 @@ namespace Cdn.Studio.Widgets
 		}
 		
 		private void ObjectActivated(Wrappers.Wrapper obj)
-		{			
+		{
+			Wrappers.Node node = obj as Wrappers.Node;
+
+			if (node != null)
+			{
+				d_grid.ActiveNode = node;
+			}
+		}
+
+		private void OpenVariableEditorDialog(Wrappers.Wrapper obj)
+		{
 			if (d_propertyEditors.ContainsKey(obj))
 			{
 				d_propertyEditors[obj].Present();
@@ -1109,12 +1119,16 @@ namespace Cdn.Studio.Widgets
 			UpdateAnnotation();
 
 			Wrappers.Wrapper[] selection = d_grid.Selection;
-			
+
 			if (d_propertyView != null)
 			{
 				if (selection.Length == 1)
 				{
 					d_propertyView.Object = selection[0];
+				}
+				else if (selection.Length == 0)
+				{
+					d_propertyView.Object = d_grid.ActiveNode;
 				}
 				else
 				{
