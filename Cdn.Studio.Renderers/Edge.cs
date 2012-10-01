@@ -257,7 +257,18 @@ namespace Cdn.Studio.Wrappers.Renderers
 			}
 			else if (WrappedObject != null && WrappedObject.MouseFocus)
 			{
-				graphics.LineWidth *= 2;
+				if (WrappedObject.Selected)
+				{
+					graphics.LineWidth *= 4;
+				}
+				else
+				{
+					graphics.LineWidth *= 3;
+				}
+			}
+			else if (WrappedObject != null && WrappedObject.Selected)
+			{
+				graphics.LineWidth *= 3;
 			}
 		}
 		
