@@ -102,7 +102,7 @@ namespace Cdn.Studio.Serialization
 				StatusBar = true;
 				PanePosition = 250;
 				SideBarPanePosition = 250;
-				SimulatePeriod = "0:0.01:1";
+				SimulatePeriod = "0:0.005:10";
 				Allocation = new Allocation(-1, -1, 700, 600);
 				ActiveNode = "";
 
