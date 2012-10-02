@@ -33,8 +33,6 @@
       <menuitem name="Group" action="GroupAction"/>
       <menuitem name="Ungroup" action="UngroupAction"/>
       <separator/>
-      <menuitem name="EditGlobals" action="EditGlobalsAction"/>
-      <separator/>
       <menuitem name="PlotSettings" action="EditPlotSettingsAction"/>
     </menu>
     <menu name="SimulateMenu" action="SimulateMenuAction">

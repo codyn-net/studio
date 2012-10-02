@@ -249,7 +249,6 @@ namespace Cdn.Studio.Widgets
 				new ActionEntry("PasteAction", Gtk.Stock.Paste, null, "<Control>V", "Paste objects", OnPasteActivated),
 				new ActionEntry("GroupAction", Stock.Node, "Group", "<Control>G", "Group objects", OnGroupActivated),
 				new ActionEntry("UngroupAction", Stock.Ungroup, "Ungroup", "<Control><Shift>G", "Ungroup object", OnUngroupActivated),
-				new ActionEntry("EditGlobalsAction", null, "Globals", "<Control>H", "Edit the network globals", OnEditGlobalsActivated),
 				new ActionEntry("EditPlotSettingsAction", null, "Plot Settings", null, "Edit the global plot settings", OnEditPlotSettingsActivated),
 
 				new ActionEntry("SimulateMenuAction", null, "_Simulate", null, null, null),
@@ -2006,11 +2005,6 @@ namespace Cdn.Studio.Widgets
 			d_grid.QueueDraw();
 		}
 
-		private void OnEditGlobalsActivated(object sender, EventArgs args)
-		{
-			ObjectActivated(Network);
-		}
-		
 		private void OnCenterViewActivated(object sender, EventArgs args)
 		{
 			d_grid.CenterView();
