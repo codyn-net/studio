@@ -181,23 +181,6 @@ namespace Cdn.Studio.Widgets.Editors
 						parts.Add(String.Format("<i>From: <tt>{0}</tt></i>", templ.FullIdForDisplay));
 					}
 
-					if (d_variable.Expression.Instructions.Length != 0)
-					{
-						parts.Add(String.Format("<i>Value: <tt>{0}</tt></i>", d_variable.Value));
-
-						ExpressionTreeIter it = new ExpressionTreeIter(d_variable.Expression);
-						it.Simplify();
-
-						string its = it.ToStringDbg();
-
-						if (its.Length >= 203)
-						{
-							its = its.Substring(0, 200) + "...";
-						}
-
-						parts.Add(String.Format("<i>Expression: <tt>{0}</tt></i>", its));
-					}
-						
 					if (parts.Count == 0)
 					{
 						return null;
