@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{FA1C4929-AEDB-45A0-8D5E-96BB4A3AB49C}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Cdn.Studio</RootNamespace>
+    <AssemblyName>cdnstudio</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <ConsolePause>false</ConsolePause>
+    <Commandlineparameters>/tmp/test.xml</Commandlineparameters>
+    <Execution>
+      <Execution clr-version="Net_2_0" xmlns="" />
+    </Execution>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <Execution>
+      <Execution clr-version="Net_2_0" xmlns="" />
+    </Execution>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Cdn.Studio.Resources\chain.png">
+      <LogicalName>chain.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Cdn.Studio.Resources\chain-broken.png">
+      <LogicalName>chain-broken.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Cdn.Studio.Resources\plotting-ui.xml">
+      <LogicalName>plotting-ui.xml</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Cdn.Studio.Resources\ui.xml">
+      <LogicalName>ui.xml</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Cdn.Studio.Wrappers\" />
+    <Folder Include="Cdn.Studio.Renderers\" />
+    <Folder Include="Cdn.Studio.Serialization\" />
+    <Folder Include="Cdn.Studio\" />
+    <Folder Include="Cdn.Studio.Undo\" />
+    <Folder Include="Cdn.Studio.Dialogs\" />
+    <Folder Include="Cdn.Studio.Clipboard\" />
+    <Folder Include="Cdn.Studio.Widgets\" />
+    <Folder Include="Cdn.Studio.Widgets.Editors\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Cdn.Studio.Wrappers\Node.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\Graphical.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\Edge.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\Wrapper.cs" />
+    <Compile Include="Cdn.Studio.Renderers\Renderer.cs" />
+    <Compile Include="Cdn.Studio.Renderers\Node.cs" />
+    <Compile Include="Cdn.Studio.Renderers\Box.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\Network.cs" />
+    <Compile Include="Cdn.Studio\Allocation.cs" />
+    <Compile Include="Cdn.Studio\Application.cs" />
+    <Compile Include="Cdn.Studio\AssemblyInfo.cs" />
+    <Compile Include="Cdn.Studio\DynamicIntegrator.cs" />
+    <Compile Include="Cdn.Studio\SimulationRange.cs" />
+    <Compile Include="Cdn.Studio\Settings.cs" />
+    <Compile Include="Cdn.Studio\Simulation.cs" />
+    <Compile Include="Cdn.Studio\Stock.cs" />
+    <Compile Include="Cdn.Studio\Utils.cs" />
+    <Compile Include="Cdn.Studio.Undo\Manager.cs" />
+    <Compile Include="Cdn.Studio.Undo\IAction.cs" />
+    <Compile Include="Cdn.Studio.Undo\Group.cs" />
+    <Compile Include="Cdn.Studio.Undo\AddObject.cs" />
+    <Compile Include="Cdn.Studio.Undo\Object.cs" />
+    <Compile Include="Cdn.Studio.Undo\RemoveObject.cs" />
+    <Compile Include="Cdn.Studio.Undo\MoveObject.cs" />
+    <Compile Include="Cdn.Studio.Undo\Variable.cs" />
+    <Compile Include="Cdn.Studio.Undo\AddVariable.cs" />
+    <Compile Include="Cdn.Studio.Undo\RemoveVariable.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyVariable.cs" />
+    <Compile Include="Cdn.Studio.Undo\EdgeAction.cs" />
+    <Compile Include="Cdn.Studio.Undo\AddEdgeAction.cs" />
+    <Compile Include="Cdn.Studio.Undo\RemoveEdgeAction.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyEdgeActionTarget.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyEdgeActionEquation.cs" />
+    <Compile Include="Cdn.Studio.Dialogs\Variable.cs" />
+    <Compile Include="Cdn.Studio\Actions.cs" />
+    <Compile Include="Cdn.Studio.Clipboard\Internal.cs" />
+    <Compile Include="Cdn.Studio.Widgets\Window.cs" />
+    <Compile Include="Cdn.Studio.Widgets\Table.cs" />
+    <Compile Include="Cdn.Studio.Widgets\Grid.cs" />
+    <Compile Include="Cdn.Studio.Widgets\MessageArea.cs" />
+    <Compile Include="Cdn.Studio.Widgets\AddRemovePopup.cs" />
+    <Compile Include="Cdn.Studio.Widgets\TreeView.cs" />
+    <Compile Include="Cdn.Studio.Undo\AttachEdge.cs" />
+    <Compile Include="Cdn.Studio.Undo\AddNode.cs" />
+    <Compile Include="Cdn.Studio.Undo\Ungroup.cs" />
+    <Compile Include="Cdn.Studio.Widgets\ScrolledWindow.cs" />
+    <Compile Include="Cdn.Studio.Widgets\Notebook.cs" />
+    <Compile Include="Cdn.Studio.Widgets\TemplatesMenu.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyObjectId.cs" />
+    <Compile Include="Cdn.Studio.Renderers\Edge.cs" />
+    <Compile Include="Cdn.Studio.Serialization\Project.cs" />
+    <Compile Include="Cdn.Studio.Widgets\Pathbar.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyIntegrator.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\Function.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyFunctionArguments.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyExpression.cs" />
+    <Compile Include="Cdn.Studio.Undo\Function.cs" />
+    <Compile Include="Cdn.Studio.Widgets\NodeStore.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\FunctionPolynomial.cs" />
+    <Compile Include="Cdn.Studio.Widgets\GenericFunctionNode.cs" />
+    <Compile Include="Cdn.Studio.Undo\FunctionPolynomialPiece.cs" />
+    <Compile Include="Cdn.Studio.Undo\AddFunctionPolynomialPiece.cs" />
+    <Compile Include="Cdn.Studio.Undo\RemoveFunctionPolynomialPiece.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyFunctionPolynomialPieceBegin.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyFunctionPolynomialPieceEnd.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyFunctionPolynomialPieceCoefficients.cs" />
+    <Compile Include="Cdn.Studio.Undo\ApplyTemplate.cs" />
+    <Compile Include="Cdn.Studio.Undo\UnapplyTemplate.cs" />
+    <Compile Include="Cdn.Studio.Undo\Template.cs" />
+    <Compile Include="Cdn.Studio\Anchor.cs" />
+    <Compile Include="Cdn.Studio.Dialogs\Import.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\Import.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\ImportAlias.cs" />
+    <Compile Include="Cdn.Studio.Undo\Import.cs" />
+    <Compile Include="Cdn.Studio.Wrappers\Object.cs" />
+    <Compile Include="Cdn.Studio.Undo\AddInterfaceProperty.cs" />
+    <Compile Include="Cdn.Studio.Undo\InterfaceVariable.cs" />
+    <Compile Include="Cdn.Studio.Undo\RemoveInterfaceVariable.cs" />
+    <Compile Include="Cdn.Studio\RenderCache.cs" />
+    <Compile Include="Cdn.Studio.Widgets\Annotation.cs" />
+    <Compile Include="Cdn.Studio.Widgets\AboutDialog.cs" />
+    <Compile Include="Cdn.Studio\Config.cs" />
+    <Compile Include="Cdn.Studio.Widgets\WrappersTree.cs" />
+    <Compile Include="Cdn.Studio.Dialogs\FindTemplate.cs" />
+    <Compile Include="Cdn.Studio.Dialogs\Editor.cs" />
+    <Compile Include="Cdn.Studio.Renderers\Function.cs" />
+    <Compile Include="Cdn.Studio.Widgets.Editors\Variables.cs" />
+    <Compile Include="Cdn.Studio.Widgets.Editors\Edge.cs" />
+    <Compile Include="Cdn.Studio.Widgets.Editors\Object.cs" />
+    <Compile Include="Cdn.Studio.Widgets.Editors\Wrapper.cs" />
+    <Compile Include="Cdn.Studio.Dialogs\PlotSettings.cs" />
+    <Compile Include="Cdn.Studio.Dialogs\Plotting.cs" />
+    <Compile Include="Cdn.Studio.Widgets\IDragIcon.cs" />
+    <Compile Include="Cdn.Studio.Widgets.Editors\Function.cs" />
+    <Compile Include="Cdn.Studio.Renderers\PiecewisePolynomial.cs" />
+    <Compile Include="Cdn.Studio.Undo\AddFunctionArgument.cs" />
+    <Compile Include="Cdn.Studio.Undo\FunctionArgument.cs" />
+    <Compile Include="Cdn.Studio.Undo\RemoveFunctionArgument.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyFunctionArgumentDefaultValue.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyFunctionArgumentExplicit.cs" />
+    <Compile Include="Cdn.Studio.Undo\ModifyFunctionArgumentName.cs" />
+    <Compile Include="Cdn.Studio.Widgets.Editors\PiecewisePolynomial.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-2.0</Package>
+    </Reference>
+    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-2.0</Package>
+    </Reference>
+    <Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>glib-sharp-2.0</Package>
+    </Reference>
+    <Reference Include="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>glade-sharp-2.0</Package>
+    </Reference>
+    <Reference Include="pango-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-sharp-2.0</Package>
+    </Reference>
+    <Reference Include="gtk-dotnet, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtk-dotnet-2.0</Package>
+    </Reference>
+    <Reference Include="gtksourceview2-sharp, Version=2.0.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f">
+      <Package>gtksourceview2-sharp</Package>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="Mono.Posix" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="Mono.Cairo" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="Codyn, Version=3.0.0.0, Culture=neutral">
+      <Private>False</Private>
+      <Package>codyn-sharp-3.0</Package>
+    </Reference>
+    <Reference Include="Plot, Version=1.0.4652.20080, Culture=neutral">
+      <Private>False</Private>
+      <Package>plot-sharp-1</Package>
+    </Reference>
+    <Reference Include="Biorob.Math, Version=1.0.4652.19843, Culture=neutral">
+      <Private>False</Private>
+      <Package>biorob-math-sharp-1.0</Package>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+</Project>
