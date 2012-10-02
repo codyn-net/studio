@@ -966,46 +966,32 @@ namespace Cdn.Studio.Widgets
 			{
 				return new string[] {};
 			}
-			
-			List<string > props = (new List<Cdn.Variable>(objects[0].Variables)).ConvertAll<string>(item => item.Name);
-			int i = 1;
-			
-			/* Merge in the interface properties */
-			Wrappers.Node grp = objects[0] as Wrappers.Node;
-			
-			if (grp != null)
+
+			HashSet<string> vars = new HashSet<string>();
+
+			foreach (var obj in objects)
 			{
-				foreach (string name in grp.VariableInterface.Names)
+				foreach (var v in obj.Variables)
 				{
-					if (!props.Contains(name))
-					{
-						props.Add(name);
-					}
-				}
-			}
-			
-			while (props.Count > 0 && i < objects.Length)
-			{
-				List<string > pp = (new List<Cdn.Variable>(objects[i].Variables)).ConvertAll<string>(item => item.Name);
-				
-				grp = objects[i] as Wrappers.Node;
-				
-				if (grp != null)
-				{
-					foreach (string name in grp.VariableInterface.Names)
-					{
-						if (!pp.Contains(name))
-						{
-							pp.Add(name);
-						}
-					}
+					vars.Add(v.Name);
 				}
 
-				props.RemoveAll(item => !pp.Contains(item));
-				++i;
+				var node = obj as Wrappers.Node;
+
+				if (node != null)
+				{
+					foreach (string name in node.VariableInterface.Names)
+					{
+						vars.Add(name);
+					}
+				}
 			}
-			
-			return props.ToArray();
+
+			string[] ret = new string[vars.Count];
+			vars.CopyTo(ret);
+			Array.Sort(ret);
+
+			return ret;
 		}
 		
 		private bool CurrentIsTemplate
@@ -1045,10 +1031,10 @@ namespace Cdn.Studio.Widgets
 			{
 				Wrappers.Wrapper[] selection = d_grid.Selection;
 				
-				foreach (string prop in CommonVariables(selection))
+				foreach (string v in CommonVariables(selection))
 				{
-					string name = "Monitor" + prop;
-					string p = (string)prop.Clone();
+					string name = "Monitor" + v;
+					string p = (string)v.Clone();
 					
 					d_popupActionGroup.Add(new ActionEntry[] {
 						new ActionEntry(name + "Action", null, p.Replace("_", "__"), null, null, delegate (object s, EventArgs a) {
@@ -2422,18 +2408,26 @@ namespace Cdn.Studio.Widgets
 			Message(Gtk.Stock.DialogError, error, message);
 		}
 		
-		private void OnStartMonitor(Wrappers.Wrapper[] objs, string property)
+		private void OnStartMonitor(Wrappers.Wrapper[] objs, string varname)
 		{
-			List<Variable > properties = new List<Variable>();
+			List<Variable > vars = new List<Variable>();
 
 			EnsureMonitor();
 			
 			foreach (Wrappers.Wrapper obj in objs)
 			{
-				properties.Add(obj.Variable(property));
+				var v = obj.Variable(varname);
+
+				if (v != null)
+				{
+					vars.Add(v);
+				}
 			}
-			
-			d_plotting.Add(properties);
+
+			if (vars.Count != 0)
+			{
+				d_plotting.Add(vars);
+			}
 		}
 
 		private void OnSimulationRunPeriod(object sender, EventArgs args)
