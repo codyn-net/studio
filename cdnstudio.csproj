@@ -146,7 +146,6 @@
     <Compile Include="Cdn.Studio\Config.cs" />
     <Compile Include="Cdn.Studio.Widgets\WrappersTree.cs" />
     <Compile Include="Cdn.Studio.Dialogs\FindTemplate.cs" />
-    <Compile Include="Cdn.Studio.Dialogs\Editor.cs" />
     <Compile Include="Cdn.Studio.Renderers\Function.cs" />
     <Compile Include="Cdn.Studio.Widgets.Editors\Variables.cs" />
     <Compile Include="Cdn.Studio.Widgets.Editors\Edge.cs" />

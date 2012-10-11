@@ -51,7 +51,6 @@ FILES = \
 	Cdn.Studio/AssemblyInfo.cs \
 	Cdn.Studio.Clipboard/Internal.cs \
 	Cdn.Studio/Config.cs \
-	Cdn.Studio.Dialogs/Editor.cs \
 	Cdn.Studio.Dialogs/FindTemplate.cs \
 	Cdn.Studio.Dialogs/Import.cs \
 	Cdn.Studio.Dialogs/PlotSettings.cs \
@@ -161,7 +160,6 @@ EXTRAS = \
 REFERENCES =  \
 	$(GTK_SHARP_20_LIBS) \
 	$(GLIB_SHARP_20_LIBS) \
-	$(GTKSOURCEVIEW_SHARP_20_LIBS) \
 	System \
 	Mono.Posix \
 	System.Drawing \
