@@ -18,7 +18,7 @@ SHAMROCK_EXPAND_DATADIR
 AC_PROG_INSTALL
 
 dnl check for dmcs first
-AC_PATH_PROG(CMCS, dmcs gmcs, no)
+AC_PATH_PROGS(CMCS, dmcs gmcs, no)
 
 if test "x$CMCS" = "xno"; then
 	AC_MSG_ERROR([dmcs and gmcs not found])
