@@ -1,3 +1,11 @@
+cdn-studio (3.1-1) UNRELEASED; urgency=low
+
+  * New upstream release
+  * Initial release of the codyn studio
+
+ -- Jesse van den Kieboom <jesse.vandenkieboom@epfl.ch>  Thu, 11 Oct 2012 18:21:33 +0200
+
+
 cpgstudio (1.2-2) UNRELEASED; urgency=low
 
   * Update cpg-network-sharp dependency
