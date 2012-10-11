@@ -2,7 +2,7 @@ dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
 AC_INIT(cdn-studio, 3.0)
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([1.11 tar-ustar dist-xz no-dist-gzip -Wno-portability])
 AM_MAINTAINER_MODE([enable])
 AC_CONFIG_MACRO_DIR([m4])
 dnl pkg-config
