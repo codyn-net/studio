@@ -5,12 +5,12 @@ Build-Depends: debhelper (>= 7),
                autotools-dev,
                cdbs,
                pkg-config,
-               mono-dmcs,
+               mono-gmcs,
                codyn3-sharp (>= 3.1),
                libbiorob-math1-sharp,
                libplot1-sharp,
                gtk-sharp2,
-               libmono-cairo4.0-cil
+               libmono-cairo2.0-cil
 Standards-Version: 3.8.0
 Section: editors
 Homepage: http://birg.epfl.ch
@@ -18,6 +18,6 @@ Homepage: http://birg.epfl.ch
 Package: cdn-studio
 Section: editors
 Architecture: any
-Depends: gtk-sharp2, libmono-cairo4.0-cil, libmono-system4.0-cil, libmono-corlib4.0-cil, libcodyn3 (>= 3.2)
+Depends: gtk-sharp2, libmono-cairo2.0-cil, libmono-system2.0-cil, libmono-corlib2.0-cil, libcodyn3 (>= 3.2)
 Description: codyn studio
  A designer studio for codyn
