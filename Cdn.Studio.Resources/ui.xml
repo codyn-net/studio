@@ -1,0 +1,115 @@
+<ui>
+  <menubar>
+    <menu name="FileMenu" action="FileMenuAction">
+      <menuitem name="New" action="NewAction"/>
+      <menuitem name="Open" action="OpenAction"/>
+      <menuitem name="Recent" action="RecentAction"/>
+      <separator/>
+      <menuitem name="Revert" action="RevertAction"/>
+      <separator/>
+      <menuitem name="Save" action="SaveAction"/>
+      <menuitem name="SaveAs" action="SaveAsAction"/>
+      <separator/>
+      <menuitem name="SaveProject" action="SaveProjectAction"/>
+      <separator/>
+      <menu name="Import" action="ImportAction">
+      	<menuitem name="ImportFile" action="ImportFileAction"/>
+      	<separator/>
+      	<placeholder name="ImportLibraries"/>
+      </menu>
+      <menuitem name="Export" action="ExportAction"/>
+      <separator/>
+      <menuitem name="Quit" action="QuitAction"/>
+    </menu>
+    <menu name="EditMenu" action="EditMenuAction">
+      <menuitem name="Undo" action="UndoAction"/>
+      <menuitem name="Redo" action="RedoAction"/>
+      <separator/>
+      <menuitem name="Cut" action="CutAction"/>
+      <menuitem name="Copy" action="CopyAction"/>
+      <menuitem name="Paste" action="PasteAction"/>
+      <separator/>
+      <menuitem name="Delete" action="DeleteAction"/>
+      <menuitem name="Group" action="GroupAction"/>
+      <menuitem name="Ungroup" action="UngroupAction"/>
+      <separator/>
+      <menuitem name="PlotSettings" action="EditPlotSettingsAction"/>
+    </menu>
+    <menu name="SimulateMenu" action="SimulateMenuAction">
+      <menuitem name="Simulate" action="SimulateAction"/>
+      <menuitem name="Step" action="StepAction"/>
+    </menu>
+    <menu name="ViewMenu" action="ViewMenuAction">
+      <menuitem name="Center" action="CenterAction"/>
+      <separator/>
+      <menuitem name="ViewMonitor" action="ViewMonitorAction"/>
+      <menuitem name="ViewControl" action="ViewControlAction"/>
+      <separator/>
+      <menuitem name="ViewVariableEditor" action="ViewVariableEditorAction"/>
+      <menuitem name="ViewToolbar" action="ViewToolbarAction"/>
+      <menuitem name="ViewPathbar" action="ViewPathbarAction"/>
+      <menuitem name="ViewSimulateButtons" action="ViewSimulateButtonsAction"/>
+      <menuitem name="ViewStatusbar" action="ViewStatusbarAction"/>
+      <menuitem name="ViewSideBar" action="ViewSideBarAction"/>
+      <separator/>
+      <menuitem name="ZoomDefault" action="ZoomDefaultAction"/>
+      <menuitem name="ZoomIn" action="ZoomInAction"/>
+      <menuitem name="ZoomOut" action="ZoomOutAction"/>
+    </menu>
+    <menu name="AddMenu" action="AddMenuAction">
+      <menuitem name="AddNode" action="AddNodeAction"/>
+      <menuitem name="AddEdge" action="AddEdgeAction"/>
+      <separator/>
+      <menuitem name="AddFunction" action="AddFunctionAction"/>
+      <menuitem name="AddPiecewisePolynomial" action="AddPiecewisePolynomialAction"/>
+    </menu>
+    <menu name="HelpMenu" action="HelpMenuAction">
+      <menuitem name="About" action="AboutAction"/>
+    </menu>
+  </menubar>
+  <popup name="GridPopup">
+    <menu name="AddMenu" action="AddMenuAction">
+      <menuitem name="AddNode" action="AddNodeAction"/>
+      <menuitem name="AddEdge" action="AddEdgeAction"/>
+    </menu>
+    <separator/>
+      <menuitem name="Cut" action="CutAction"/>
+      <menuitem name="Copy" action="CopyAction"/>
+      <menuitem name="Paste" action="PasteAction"/>
+    <separator/>
+    <menuitem name="Variables" action="VariablesAction"/>
+    <separator/>
+    <menu name="MonitorMenu" action="MonitorMenuAction">
+   	  <placeholder name="MonitorPlaceholder"/>
+    </menu>
+    <!--<menu name="ControlMenu" action="ControlMenuAction">
+      <placeholder name="ControlPlaceholder"/>
+    </menu>-->
+    <separator/>
+    <menuitem name="Group" action="GroupAction"/>
+    <menuitem name="Ungroup" action="UngroupAction"/>
+    <menuitem name="EditGroup" action="EditGroupAction"/>
+  </popup>
+  <toolbar>
+    <toolitem name="New" action="NewAction"/>
+    <toolitem name="Open" action="OpenAction"/>
+    <toolitem name="Save" action="SaveAction"/>
+    <separator/>
+    <toolitem name="Undo" action="UndoAction"/>
+    <toolitem name="Redo" action="RedoAction"/>
+    <separator/>
+    <toolitem name="Cut" action="CutAction"/>
+    <toolitem name="Copy" action="CopyAction"/>
+    <toolitem name="Paste" action="PasteAction"/>
+    <separator/>
+    <toolitem name="Delete" action="DeleteAction"/>
+    <separator/>
+    <toolitem name="AddNode" action="AddNodeAction"/>
+    <toolitem name="AddEdge" action="AddEdgeAction"/>
+  </toolbar>
+  <popup name="TemplatePopup">
+  	<menuitem name="EditTemplate" action="EditTemplateAction"/>
+  	<menuitem name="RemoveTemplate" action="RemoveTemplateAction"/>
+  </popup>
+</ui>
+

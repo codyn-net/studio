@@ -1,0 +1,8 @@
+<ui>
+  <toolbar>
+    <toolitem name="AutoAxis" action="ActionAutoAxis"/>
+    <toolitem name="LinkAxis" action="ActionLinkAxis"/>
+    <separator/>
+    <toolitem name="Reset" action="ActionReset"/>
+  </toolbar>
+</ui>

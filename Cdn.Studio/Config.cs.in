@@ -1,0 +1,9 @@
+namespace Cdn.Studio
+{
+	class Config
+	{
+		public static string Prefix = "@prefix@";
+		public static string Lib = "@expanded_libdir@";
+		public static string Version = "@PACKAGE_VERSION@";
+	}
+}
