@@ -14,3 +14,5 @@ Makefile
 Makefile.in
 missing
 Packages.mdse
+INSTALL
+COPYING
