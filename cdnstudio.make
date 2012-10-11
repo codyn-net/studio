@@ -156,7 +156,7 @@ RESOURCES = \
 	Cdn.Studio.Resources/plotting-ui.xml
 
 EXTRAS = \
-	cdnstudio.in
+	cdn-studio.in
 
 REFERENCES =  \
 	$(GTK_SHARP_20_LIBS) \
