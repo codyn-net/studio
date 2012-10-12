@@ -86,24 +86,6 @@ namespace Cdn.Studio.Widgets.Editors
 						parts.Add(annotation.Replace("\n", " "));
 					}
 
-					if (d_action.Equation != null &&
-						d_action.Equation.Instructions.Length != 0)
-					{
-						parts.Add(String.Format("<i>Value: <tt>{0}</tt></i>", d_action.Equation.Evaluate()));
-
-						ExpressionTreeIter it = new ExpressionTreeIter(d_action.Equation);
-						it.Simplify();
-
-						string its = it.ToStringDbg();
-
-						if (its.Length >= 80)
-						{
-							its = its.Substring(0, 76) + "...";
-						}
-
-						parts.Add(String.Format("<i>Expression: <tt>{0}</tt></i>", its));
-					}
-
 					if (parts.Count == 0)
 					{
 						return null;
