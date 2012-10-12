@@ -36,7 +36,6 @@ namespace Cdn.Studio.Widgets
 		private Widget d_menubar;
 		private HPaned d_hpaned;
 		private Notebook d_sideBarNotebook;
-		private Annotation d_annotation;
 		private Dialogs.PlotSettings d_plotsettingsDialog;
 		private bool d_modified;
 		private Undo.Manager d_undoManager;
@@ -329,8 +328,8 @@ namespace Cdn.Studio.Widgets
 			vbox.PackStart(d_vboxContents, true, true, 0);
 			
 			d_hpaned = new HPaned();
-			d_hpaned.Position = 250;
-			
+			d_hpaned.Position = 700 - 250;
+
 			d_grid = new Grid(Network, d_actions);
 			
 			d_hpaned.Pack1(d_grid, true, true);
@@ -598,8 +597,6 @@ namespace Cdn.Studio.Widgets
 		private void DoActiveNodeChanged(object source, Wrappers.Wrapper prev)
 		{
 			d_pathbar.Update(d_grid.ActiveNode);
-			UpdateAnnotation();
-			
 			UpdateSensitivity();
 		}
 		
@@ -1073,36 +1070,11 @@ namespace Cdn.Studio.Widgets
 			{
 			}
 		}
-		
-		private void UpdateAnnotation()
-		{
-			if (d_annotation == null)
-			{
-				return;
-			}
-			
-			Wrappers.Wrapper[] selection = d_grid.Selection;
-			
-			if (selection.Length == 1)
-			{
-				d_annotation.Update(selection[0].WrappedObject as Cdn.Annotatable);
-			}
-			else if (selection.Length == 0 && d_grid.ActiveNode != null)
-			{
-				d_annotation.Update(d_grid.ActiveNode.WrappedObject as Cdn.Annotatable);
-			}
-			else
-			{
-				d_annotation.Update(null);
-			}
-		}
-		
+
 		private bool OnIdleSelectionChanged()
 		{
 			d_idleSelectionChanged = 0;
 			
-			UpdateAnnotation();
-
 			Wrappers.Wrapper[] selection = d_grid.Selection;
 
 			if (d_propertyView != null)
@@ -1476,6 +1448,8 @@ namespace Cdn.Studio.Widgets
 				Message(Gtk.Stock.DialogError, "Error while loading network", e);
 				return;
 			}
+
+			d_grid.Loaded();
 			
 			RestoreSettings();
 			UpdateTitle();
@@ -2103,24 +2077,12 @@ namespace Cdn.Studio.Widgets
 			tree.Show();
 			
 			Label ltpl;
+
+			d_sideBarNotebook.ShowTabs = false;
 			d_sideBarNotebook.InsertPage(tree, PanelTab(Stock.Node, "Library", out ltpl), -1);
 			
 			tree.Activated += HandleTreeWrapperActivated;
 			tree.TreeView.PopulatePopup += HandleTreeTreeViewPopulatePopup;
-
-			d_annotation = new Annotation();
-			d_annotation.Show();
-			
-			Label lbl;
-			Widget tab = PanelTab(Gtk.Stock.Info, "Annotations", out lbl);
-			
-			d_annotation.TitleChanged += delegate {
-				lbl.Markup = d_annotation.Title;
-			};
-
-			UpdateAnnotation();
-
-			d_sideBarNotebook.InsertPage(d_annotation, tab, -1);			
 		}
 
 		private void HandleTreeTreeViewPopulatePopup(object source, Menu menu)
@@ -2243,6 +2205,7 @@ namespace Cdn.Studio.Widgets
 					d_sideBarNotebook.Show();
 
 					d_hpaned.Pack2(d_sideBarNotebook, false, false);
+					d_hpaned.Position = WidthRequest - 250;
 					
 					CreateSideBarPanels();
 					

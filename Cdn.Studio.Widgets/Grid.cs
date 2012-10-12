@@ -52,6 +52,7 @@ namespace Cdn.Studio.Widgets
 		private Wrappers.Wrapper d_hiddenLink;
 		private bool d_drawLeftBorder;
 		private bool d_drawRightBorder;
+		private Pango.Layout d_annotationLayout;
 		
 		private enum SelectionState
 		{
@@ -127,6 +128,11 @@ namespace Cdn.Studio.Widgets
 				QueueDraw();
 			}
 		}
+
+		public void Loaded()
+		{
+			UpdateAnnotation();
+		}
 		
 		public void Clear()
 		{
@@ -157,6 +163,36 @@ namespace Cdn.Studio.Widgets
 			set
 			{
 				SetActiveNode(value);
+			}
+		}
+
+		private void UpdateAnnotation()
+		{
+			if (d_activeNode == null)
+			{
+				if (d_annotationLayout != null)
+				{
+					d_annotationLayout = null;
+					QueueDraw();
+				}
+			}
+			else
+			{
+				var an = d_activeNode.WrappedObject as Annotatable;
+
+				if (an == null || String.IsNullOrEmpty(an.Annotation))
+				{
+					if (d_annotationLayout != null)
+					{
+						d_annotationLayout = null;
+						QueueDraw();
+					}
+				}
+				else if (d_annotationLayout == null || d_annotationLayout.Text != an.Annotation)
+				{
+					d_annotationLayout = CreatePangoLayout(an.Annotation);
+					QueueDraw();
+				}
 			}
 		}
 		
@@ -225,6 +261,7 @@ namespace Cdn.Studio.Widgets
 			}
 			
 			obj.Selected = false;
+
 			SelectionChanged(this, new EventArgs());
 		}
 		
@@ -261,7 +298,8 @@ namespace Cdn.Studio.Widgets
 
 			Wrappers.Node prev = d_activeNode;
 			d_activeNode = grp;
-			
+
+			UpdateAnnotation();
 			QueueDraw();
 			
 			ActiveNodeChanged(this, prev);
@@ -1792,6 +1830,7 @@ namespace Cdn.Studio.Widgets
 		private void OnSelectionChanged(object source, EventArgs args)
 		{
 			FocusRelease();
+			UpdateAnnotation();
 		}
 		
 		protected override bool OnFocusOutEvent(Gdk.EventFocus evnt)
@@ -1806,6 +1845,43 @@ namespace Cdn.Studio.Widgets
 			
 			return base.OnFocusOutEvent(evnt);
 		}
+
+		private void DrawAnnotation(Cairo.Context graphics)
+		{
+			if (d_annotationLayout == null)
+			{
+				return;
+			}
+
+			graphics.Save();
+
+			Pango.Rectangle ink;
+			Pango.Rectangle logical;
+
+			d_annotationLayout.GetPixelExtents(out ink, out logical);
+
+			graphics.LineWidth = 1;
+
+			int margin = 10;
+			int padding = 8;
+			int borderpad = 4;
+
+			graphics.Rectangle(margin, margin, logical.Width + padding * 2, logical.Height + padding * 2);
+			graphics.SetSourceRGBA(1, 1, 1, 0.75);
+			graphics.Fill();
+
+			graphics.Rectangle(margin + borderpad + 0.5, margin + borderpad + 0.5, logical.Width + (padding - borderpad) * 2, logical.Height + (padding - borderpad) * 2);
+			graphics.SetSourceRGB(0.95, 0.95, 0.95);
+			graphics.SetDash(new double[] {5, 5}, 0);
+			graphics.Stroke();
+
+			graphics.SetSourceRGB(0.5, 0.5, 0.5);
+
+			graphics.MoveTo(margin + padding, margin + padding);
+			Pango.CairoHelper.ShowLayout(graphics, d_annotationLayout);
+
+			graphics.Restore();
+		}
 		
 		public void Draw(Cairo.Context graphics)
 		{			
@@ -1813,6 +1889,7 @@ namespace Cdn.Studio.Widgets
 
 			DrawBackground(graphics);
 			DrawGrid(graphics);
+			DrawAnnotation(graphics);
 
 			DrawObjects(graphics);
 			DrawSelectionRect(graphics);

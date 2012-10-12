@@ -516,7 +516,7 @@ namespace Cdn.Studio.Widgets
 			}
 		}
 
-		public WrappersTree(Wrappers.Node parent) : base(false, 3)
+		public WrappersTree(Wrappers.Node parent) : base(false, 0)
 		{
 			d_treeview = new Widgets.TreeView<WrapperNode>();
 			d_group = parent;
@@ -618,7 +618,7 @@ namespace Cdn.Studio.Widgets
 			hbox.PackStart(img, false, false, 0);
 			hbox.PackStart(d_label, false, false, 0);
 			hbox.PackStart(d_entry, true, true, 0);
-			hbox.BorderWidth = 3;
+			hbox.BorderWidth = 6;
 			
 			PackStart(hbox, false, false, 0);
 
