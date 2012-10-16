@@ -48,8 +48,8 @@ namespace Cdn.Studio.Widgets
 			
 			Gtk.Drag.DestSet(this, 0, new Gtk.TargetEntry[] {new Gtk.TargetEntry("TableItem", Gtk.TargetFlags.App, 1)}, Gdk.DragAction.Move);
 		}
-		
-		[System.Runtime.InteropServices.DllImport("gtk-x11-2.0")]
+
+		[System.Runtime.InteropServices.DllImport("libgtk-win32-2.0-0.dll")]
 		private static extern void gtk_widget_set_realized(IntPtr widget, bool realized);
 		
 		protected override void OnRealized()

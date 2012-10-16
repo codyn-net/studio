@@ -164,7 +164,7 @@ namespace Cdn.Studio
 			}
 		}
 		
-		[DllImport("gtk-x11-2.0")]
+		[DllImport("libgtk-win32-2.0-0.dll")]
 		private static extern IntPtr gtk_get_current_event();
 		
 		public static Gdk.Event GetCurrentEvent()
