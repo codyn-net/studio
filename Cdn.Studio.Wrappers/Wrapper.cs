@@ -69,7 +69,7 @@ namespace Cdn.Studio.Wrappers
 							
 							if (info != null)
 							{
-								s_typeMapping[child] = info;
+								s_typeMapping[type] = info;
 								break;
 							}
 							else
