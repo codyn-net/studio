@@ -425,7 +425,6 @@ namespace Cdn.Studio.Widgets
 				
 				((IDisposable)graphics.Target).Dispose();
 			}
-			;
 		}
 		
 		delegate double ScaledPredicate(double val);
