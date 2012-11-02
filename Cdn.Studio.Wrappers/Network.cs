@@ -79,26 +79,6 @@ namespace Cdn.Studio.Wrappers
 			return WrappedObject.LoadFromString(s);
 		}
 		
-		public void Merge(Network other)
-		{
-			WrappedObject.Merge(other);
-		}
-		
-		public void Merge(Cdn.Network other)
-		{
-			WrappedObject.Merge(other);
-		}
-		
-		public void MergeFromPath(string filename)
-		{
-			WrappedObject.MergeFromPath(filename);
-		}
-		
-		public void MergeFromString(string s)
-		{
-			WrappedObject.MergeFromString(s);
-		}
-		
 		public void Run(double from, double timestep, double to)
 		{
 			WrappedObject.Run(from, timestep, to);
