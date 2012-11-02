@@ -560,26 +560,6 @@ namespace Cdn.Studio.Wrappers
 			// Handled by renderer
 		}
 		
-		public override bool CanDrawAnnotation(Cairo.Context context)
-		{
-			if (d_input == null || d_output == null)
-			{
-				return base.CanDrawAnnotation(context);
-			}
-			else if (d_input == d_output)
-			{
-				return d_input.CanDrawAnnotation(context);
-			}
-			
-			double fx = context.Matrix.Xx * d_input.Allocation.X;
-			double tx = context.Matrix.Xx * d_output.Allocation.X;
-			double fy = context.Matrix.Yy * d_input.Allocation.Y;
-			double ty = context.Matrix.Yy * d_output.Allocation.Y;
-			
-			double dist = System.Math.Sqrt(System.Math.Pow(fx - tx, 2) + System.Math.Pow(fy - ty, 2));
-			return dist > 2 * RenderAnnotationAtsize;
-		}
-		
 		public override void AnnotationHotspot(Cairo.Context context, double width, double height, int size, out double x, out double y)
 		{
 			if (d_input == null || d_output == null)
