@@ -43,8 +43,9 @@ if test "x$enable_release" = "xyes" ; then
 	CONFIG_REQUESTED="yes"
 fi
 if test -z "$CONFIG_REQUESTED" ; then
-	AM_CONDITIONAL(ENABLE_RELEASE, true)
-	enable_release=yes
+	AM_CONDITIONAL(ENABLE_DEBUG, true)
+	enable_debug=yes
+	RUN_DEBUG="--debug "
 fi
 
 AC_SUBST(RUN_DEBUG)
