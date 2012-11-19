@@ -5,3 +5,5 @@ SUBDIRS = m4 data
 
 # Projectspecifieke makefile opnemen
 include cdnstudio.make
+
+.NOTPARALLEL:
