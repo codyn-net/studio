@@ -32,6 +32,7 @@ AC_ARG_ENABLE(debug,
 AM_CONDITIONAL(ENABLE_DEBUG, test x$enable_debug = xyes)
 if test "x$enable_debug" = "xyes" ; then
 	CONFIG_REQUESTED="yes"
+	RUN_DEBUG="--debug "
 fi
 AC_ARG_ENABLE(release,
 	AC_HELP_STRING([--enable-release],
@@ -45,6 +46,8 @@ if test -z "$CONFIG_REQUESTED" ; then
 	AM_CONDITIONAL(ENABLE_RELEASE, true)
 	enable_release=yes
 fi
+
+AC_SUBST(RUN_DEBUG)
 
 dnl package checks, common for all configs
 PKG_CHECK_MODULES([GTK_SHARP_20], [gtk-sharp-2.0])
