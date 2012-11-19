@@ -1,3 +1,16 @@
 #!/bin/sh
 
-exec mono "@expanded_libdir@/@PACKAGE@/cdnstudio.exe" "$@"
+mono_framework_path="/Library/Frameworks/Mono.framework/Versions/Current"
+codyn_framework_path="/Library/Frameworks/Codyn.framework/Resources/mono"
+
+if [ -d "$mono_framework_path" ]; then
+	export DYLD_FALLBACK_LIBRARY_PATH="$mono_framework_path/lib:$codyn_framework_path/lib:$DYLD_FALLBACK_LIBRARY_PATH:/usr/lib:/usr/local/lib"
+fi
+
+studiopath="@expanded_libdir@/@PACKAGE@/cdn-studio.exe"
+
+if [ ! -z "$CDN_STUDIO_GDB" ]; then
+	exec gdb --args mono --debug "$studiopath" "$@"
+else
+	exec mono @RUN_DEBUG@"$studiopath" "$@"
+fi
