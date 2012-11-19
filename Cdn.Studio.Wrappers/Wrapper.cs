@@ -635,6 +635,11 @@ namespace Cdn.Studio.Wrappers
 
 		private Allocation AnnotationAllocation(double scale, Cairo.Context graphics)
 		{
+			if (d_annotationInfo == null)
+			{
+				return null;
+			}
+
 			double x = 0;
 			double y = 0;
 
@@ -718,8 +723,16 @@ namespace Cdn.Studio.Wrappers
 		public override Allocation Extents(double scale, Cairo.Context graphics)
 		{
 			var ext = base.Extents(scale, graphics);
+			var anext = AnnotationAllocation(scale, graphics);
 
-			return ext.Extend(AnnotationAllocation(scale, graphics));
+			if (anext != null)
+			{
+				return ext.Extend(anext);
+			}
+			else
+			{
+				return ext;
+			}
 		}
 	}
 }
