@@ -55,8 +55,17 @@ PKG_CHECK_MODULES([GTK_SHARP_20], [gtk-sharp-2.0])
 PKG_CHECK_MODULES([GLIB_SHARP_20], [glib-sharp-2.0])
 
 dnl package checks, per config
-PKG_CHECK_MODULES([CDNNETWORK_SHARP], [codyn-sharp-3.0])
+AC_ARG_WITH([framework],
+             AS_HELP_STRING([--with-framework=path],[Enable build for OS X framework (default: no)]),
+              [with_framework=$withval],
+              [with_framework=no])
 
+if test "x$with_framework" != "xno"; then
+OLDPKG_CONFIG="$PKG_CONFIG"
+PKG_CONFIG="$PKG_CONFIG --define-variable=prefix=$with_framework"
+fi
+
+PKG_CHECK_MODULES([CDNNETWORK_SHARP], [codyn-sharp-3.0])
 PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
 PKG_CHECK_MODULES([PLOT_SHARP], [plot-sharp-1])
 
@@ -64,6 +73,10 @@ dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
 UNSTABLE_INSTALL_ASSEMBLIES="codyn-sharp-3.0 biorob-math-sharp-1.0 plot-sharp-1"
 INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES\"`"
+
+if test "x$with_framework" != "xno"; then
+PKG_CONFIG="$OLDPKG_CONFIG"
+fi
 
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
