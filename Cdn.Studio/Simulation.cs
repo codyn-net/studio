@@ -14,6 +14,8 @@ namespace Cdn.Studio
 		
 		private bool d_running;
 		private uint d_idleRun;
+
+		private bool d_reseed;
 		
 		public event SteppedHandler OnStepped {
 			add {
@@ -47,6 +49,12 @@ namespace Cdn.Studio
 			};
 
 			d_network.WrappedObject.AddNotification("integrator", HandleNotifyIntegrator);
+		}
+
+		public bool Reseed
+		{
+			get { return d_reseed; }
+			set { d_reseed = value; }
 		}
 		
 		public SimulationRange Range
@@ -127,6 +135,11 @@ namespace Cdn.Studio
 		
 		public void RunPeriod(double from, double timestep, double to)
 		{
+			if (d_reseed)
+			{
+				d_network.WrappedObject.RandomSeed = (uint)DateTime.Now.TimeOfDay.TotalMilliseconds;
+			}
+
 			d_network.Reset();
 
 			try

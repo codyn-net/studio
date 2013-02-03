@@ -47,6 +47,7 @@ namespace Cdn.Studio.Widgets
 		private ActionGroup d_importLibrariesNode;
 		private uint d_idleSelectionChanged;
 		private uint d_updateImportLibrariesTimeout;
+		private CheckButton d_reseedButton;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -350,7 +351,7 @@ namespace Cdn.Studio.Widgets
 			d_simulateButtons = new HBox(false, 3);
 			d_simulateButtons.BorderWidth = 3;
 			BuildButtonBar(d_simulateButtons);
-			
+
 			d_vboxContents.PackStart(d_simulateButtons, false, false, 0);
 			
 			d_statusbar = new Statusbar();
@@ -702,6 +703,13 @@ namespace Cdn.Studio.Widgets
 			ComboBox combo = CreateIntegrators();
 			combo.Show();
 			hbox.PackStart(combo, false, false, 0);
+
+			d_reseedButton = new CheckButton("Reseed random number generator");
+			d_reseedButton.Toggled += (sender, e) => {
+				d_simulation.Reseed = d_reseedButton.Active;
+			};
+
+			hbox.PackStart(d_reseedButton);
 		
 			/*but = new Button();
 			but.Image = new Image(Gtk.Stock.MediaNext, IconSize.Button);
@@ -1323,6 +1331,8 @@ namespace Cdn.Studio.Widgets
 			
 			d_periodEntry.Text = s.SimulatePeriod;
 			d_simulation.Range = new SimulationRange(d_periodEntry.Text);
+
+			d_reseedButton.Active = s.ReseedRng;
 			
 			// Restore root
 			if (!String.IsNullOrEmpty(s.ActiveRoot))
@@ -1536,6 +1546,7 @@ namespace Cdn.Studio.Widgets
 			s.PanePosition = PanePosition;
 			s.SideBarPanePosition = SideBarPanePosition;
 			s.SimulatePeriod = d_periodEntry.Text;
+			s.ReseedRng = d_reseedButton.Active;
 			
 			s.Allocation = WindowAllocation(this);
 			

@@ -77,6 +77,8 @@ namespace Cdn.Studio.Serialization
 			public string ActiveNode;
 			[XmlElement("active-root")]
 			public string ActiveRoot;
+			[XmlElement("reseed-rng")]
+			public bool ReseedRng;
 			
 			public struct MonitorsType
 			{
@@ -105,6 +107,7 @@ namespace Cdn.Studio.Serialization
 				SimulatePeriod = "0:0.005:10";
 				Allocation = new Allocation(-1, -1, 700, 600);
 				ActiveNode = "";
+				ReseedRng = false;
 
 				Monitors.Graphs = new List<Monitor>();
 				Monitors.Rows = 0;
