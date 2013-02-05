@@ -1035,6 +1035,13 @@ namespace Cdn.Studio.Widgets
 			{
 				Wrappers.Wrapper[] selection = d_grid.Selection;
 				
+				if (selection.Length == 0)
+				{
+					selection = new Wrappers.Wrapper[] {
+						d_grid.ActiveNode
+					};
+				}
+				
 				foreach (string v in CommonVariables(selection))
 				{
 					string name = "Monitor" + v;
