@@ -770,7 +770,7 @@ namespace Cdn.Studio.Dialogs
 		
 		private void FilterIntegratedOnly(Widgets.WrappersTree.WrapperNode node, ref bool ret)
 		{
-			if (node.Variable != null && !node.Variable.Integrated)
+			if (node.Variable != null && !node.Variable.HasFlag(VariableFlags.Integrated))
 			{
 				ret = false;
 			}
