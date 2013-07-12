@@ -1623,6 +1623,42 @@ namespace Cdn.Studio.Dialogs
 			});
 		}
 
+		public bool ShowSearchbar
+		{
+			get { return d_searchSidebar; }
+			set
+			{
+				d_searchSidebar = value;
+
+				ToggleAction action = d_actiongroup.GetAction("ActionSearch") as ToggleAction;
+				action.Active = d_searchSidebar;
+			}
+		}
+
+		public bool AutoAxis
+		{
+			get { return d_autoaxis; }
+			set
+			{
+				d_autoaxis = value;
+
+				ToggleAction action = d_actiongroup.GetAction("ActionAutoAxis") as ToggleAction;
+				action.Active = d_autoaxis;
+			}
+		}
+
+		public bool LinkAxis
+		{
+			get { return d_linkaxis; }
+			set
+			{
+				d_linkaxis = value;
+
+				ToggleAction action = d_actiongroup.GetAction("ActionLinkAxis") as ToggleAction;
+				action.Active = d_linkaxis;
+			}
+		}
+
 		private void OnToggleSearchSidebar(object sender, EventArgs args)
 		{
 			d_searchSidebar = ((ToggleAction)sender).Active;

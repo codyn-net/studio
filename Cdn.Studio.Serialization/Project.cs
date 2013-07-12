@@ -79,18 +79,33 @@ namespace Cdn.Studio.Serialization
 			public string ActiveRoot;
 			[XmlElement("reseed-rng")]
 			public bool ReseedRng;
-			
+
 			public struct MonitorsType
 			{
 				[XmlElement("graph"),
 				 XmlElement(typeof(Monitor))]
 				public List<Monitor> Graphs;
+
 				[XmlAttribute("rows")]
 				public int Rows;
+
 				[XmlAttribute("columns")]
 				public int Columns;
+
 				[XmlElement("allocation")]
 				public Allocation Allocation;
+
+				[XmlElement("shown")]
+				public bool Shown;
+
+				[XmlElement("show-searchbar")]
+				public bool ShowSearchbar;
+
+				[XmlElement("link-axis")]
+				public bool LinkAxis;
+
+				[XmlElement("auto-axis")]
+				public bool AutoAxis;
 			}
 			
 			[XmlElement("monitors")]
@@ -112,6 +127,10 @@ namespace Cdn.Studio.Serialization
 				Monitors.Graphs = new List<Monitor>();
 				Monitors.Rows = 0;
 				Monitors.Columns = 0;
+				Monitors.Shown = false;
+				Monitors.AutoAxis = true;
+				Monitors.LinkAxis = true;
+				Monitors.ShowSearchbar = true;
 			}
 		}
 		

@@ -1197,9 +1197,13 @@ namespace Cdn.Studio.Widgets
 			// Restore monitors
 			Serialization.Project.SettingsType.MonitorsType mons = s.Monitors;
 			
-			if (mons.Columns > 0 && mons.Rows > 0)
+			if (mons.Shown)
 			{
 				EnsureMonitor();
+
+				d_plotting.AutoAxis = s.Monitors.AutoAxis;
+				d_plotting.LinkAxis = s.Monitors.LinkAxis;
+				d_plotting.ShowSearchbar = s.Monitors.ShowSearchbar;
 				
 				if (mons.Allocation != null)
 				{
@@ -1411,10 +1415,18 @@ namespace Cdn.Studio.Widgets
 			s.Monitors.Graphs.Clear();
 			s.Monitors.Rows = 0;
 			s.Monitors.Columns = 0;
+			s.Monitors.Shown = d_plotting != null;
+			s.Monitors.LinkAxis = true;
+			s.Monitors.AutoAxis = true;
+			s.Monitors.ShowSearchbar = true;
 			
 			// Save monitor state
 			if (d_plotting != null)
 			{
+				s.Monitors.LinkAxis = d_plotting.LinkAxis;
+				s.Monitors.AutoAxis = d_plotting.AutoAxis;
+				s.Monitors.ShowSearchbar = d_plotting.ShowSearchbar;
+
 				foreach (Dialogs.Plotting.Graph graph in d_plotting.Graphs)
 				{
 					Serialization.Project.Monitor mon = new Serialization.Project.Monitor();
