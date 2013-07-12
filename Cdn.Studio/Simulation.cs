@@ -52,6 +52,17 @@ namespace Cdn.Studio
 			};
 
 			d_network.WrappedObject.AddNotification("integrator", HandleNotifyIntegrator);
+
+			d_network.WrappedObjectChanged += (source, oldwrapped) => {
+				if (oldwrapped != null)
+				{
+					oldwrapped.RemoveNotification("integrator", HandleNotifyIntegrator);
+				}
+
+				d_network.WrappedObject.AddNotification("integrator", HandleNotifyIntegrator);
+
+				UpdateIntegrator(d_network.Integrator);
+			};
 		}
 
 		public bool Reseed

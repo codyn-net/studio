@@ -6,9 +6,9 @@ namespace Cdn.Studio.Wrappers
 {
 	public class Wrapper : Graphical, IDisposable
 	{
-		public delegate void VariableHandler(Wrapper source,Cdn.Variable variable);
-
-		public delegate void TemplateHandler(Wrapper source,Wrapper template);
+		public delegate void VariableHandler(Wrapper source, Cdn.Variable variable);
+		public delegate void TemplateHandler(Wrapper source, Wrapper template);
+		public delegate void WrappedChanged(Wrapper source, Cdn.Object oldwrapped);
 
 		protected Cdn.Object d_object;
 		protected List<Wrappers.Edge> d_links;
@@ -20,6 +20,7 @@ namespace Cdn.Studio.Wrappers
 		public event VariableHandler VariableChanged = delegate {};
 		public event TemplateHandler TemplateApplied = delegate {};
 		public event TemplateHandler TemplateUnapplied = delegate {};
+		public event WrappedChanged WrappedObjectChanged = delegate {};
 		
 		public static string WrapperDataKey = "CdnStudioWrapperDataKey";
 		private static Dictionary<Type, ConstructorInfo> s_typeMapping;
@@ -171,8 +172,13 @@ namespace Cdn.Studio.Wrappers
 		protected void SetWrappedObject(Cdn.Object obj)
 		{
 			DisconnectWrapped();
+
+			var oldobj = d_object;
+
 			d_object = obj;
+
 			ConnectWrapped();
+			WrappedObjectChanged(this, oldobj);
 		}
 		
 		public Wrapper() : this(null)
