@@ -429,7 +429,10 @@ namespace Cdn.Studio.Dialogs
 		{
 			d_simulation = simulation;
 			d_graphs = new List<Graph>();
-			
+
+			Role = "Monitor";
+			TypeHint = Gdk.WindowTypeHint.Dialog;
+
 			d_initialConditions = new Dictionary<Series, Point>();
 
 			d_simulation.OnBegin += DoPeriodBegin;
