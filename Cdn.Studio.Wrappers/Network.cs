@@ -71,12 +71,30 @@ namespace Cdn.Studio.Wrappers
 		
 		public bool LoadFromPath(string filename)
 		{
-			return WrappedObject.LoadFromPath(filename);
+			try
+			{
+				SetWrappedObject(new Cdn.Network(filename));
+			}
+			catch
+			{
+				return false;
+			}
+
+			return true;
 		}
 		
 		public bool LoadFromString(string s)
 		{
-			return WrappedObject.LoadFromString(s);
+			try
+			{
+				SetWrappedObject(Cdn.Network.NewFromString(s));
+			}
+			catch
+			{
+				return false;
+			}
+
+			return true;
 		}
 		
 		public void Run(double from, double timestep, double to)
