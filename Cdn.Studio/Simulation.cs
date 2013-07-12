@@ -17,8 +17,10 @@ namespace Cdn.Studio
 
 		private bool d_reseed;
 		
-		public event SteppedHandler OnStepped {
-			add {
+		public event SteppedHandler OnStepped
+		{
+			add
+			{
 				OnSteppedProxy += value;
 				
 				if (OnSteppedProxy.GetInvocationList().Length == 1 && d_integrator != null)
@@ -26,7 +28,8 @@ namespace Cdn.Studio
 					d_integrator.Stepped += HandleIntegratorStepped;
 				}
 			}
-			remove {
+			remove
+			{
 				OnSteppedProxy -= value;
 				
 				if (OnSteppedProxy.GetInvocationList().Length == 0 && d_integrator != null)
