@@ -43,10 +43,7 @@ namespace Cdn.Studio.Widgets
 		private WindowGroup d_windowGroup;
 		private Wrappers.Wrapper d_templatePopupObject;
 		private Wrappers.Wrapper d_templatePopupTemplate;
-		private uint d_importLibrariesMergeId;
-		private ActionGroup d_importLibrariesNode;
 		private uint d_idleSelectionChanged;
-		private uint d_updateImportLibrariesTimeout;
 		private CheckButton d_reseedButton;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
@@ -378,8 +375,6 @@ namespace Cdn.Studio.Widgets
 			d_grid.Status += DoStatus;
 			
 			d_pathbar.Activated += HandlePathbarActivated;
-			
-			BuildImportLibraries();
 		}
 
 		private void HandleUIManagerConnectProxy(object o, ConnectProxyArgs args)
@@ -400,168 +395,6 @@ namespace Cdn.Studio.Widgets
 			item.Deselected += delegate {
 				StatusMessage("", false);
 			};
-		}
-		
-		private List<string> UniqueImportPaths()
-		{
-			List<string > ret = new List<string>();
-			
-			foreach (string path in Cdn.Import.SearchPath)
-			{
-				string p = System.IO.Path.GetFullPath(path);
-
-				if (!ret.Contains(p))
-				{
-					ret.Add(p);
-				}
-			}
-			
-			return ret;
-		}
-		
-		private void BuildImportLibraries()
-		{
-			UpdateImportLibraries();
-			
-			// Add monitors for all root libs
-			foreach (string path in UniqueImportPaths())
-			{
-				if (!Directory.Exists(path))
-				{
-					continue;
-				}
-
-				FileSystemWatcher watcher = new FileSystemWatcher(path);
-				
-				watcher.IncludeSubdirectories = true;
-				watcher.EnableRaisingEvents = true;
-
-				watcher.Renamed += delegate(object sender, RenamedEventArgs e) {
-					UpdateImportLibrariesDelayed();
-				};
-				
-				watcher.Created += delegate(object sender, FileSystemEventArgs e) {
-					UpdateImportLibrariesDelayed();
-				};
-				
-				watcher.Deleted += delegate(object sender, FileSystemEventArgs e) {
-					UpdateImportLibrariesDelayed();
-				};
-				
-				watcher.Changed += delegate(object sender, FileSystemEventArgs e) {
-					UpdateImportLibrariesDelayed();
-				};
-			}
-		}
-		
-		private void UpdateImportLibrariesDelayed()
-		{
-			if (d_updateImportLibrariesTimeout != 0)
-			{
-				GLib.Source.Remove(d_updateImportLibrariesTimeout);
-			}
-
-			d_updateImportLibrariesTimeout = GLib.Timeout.Add(1000, delegate {
-				UpdateImportLibraries();
-				return false;
-			});
-		}
-		
-		private void CreateImportParents(string actionpath, Dictionary<string, string> libs)
-		{
-			if (libs.ContainsKey(actionpath))
-			{
-				return;
-			}
-			
-			int pos = actionpath.LastIndexOf('/');
-			
-			if (pos < 0)
-			{
-				return;
-			}
-			
-			string parentpath = actionpath.Substring(0, pos);
-			string name = actionpath.Substring(pos + 1).Replace("/", ".");
-			
-			CreateImportParents(parentpath, libs);
-			libs[actionpath] = "";
-			
-			d_importLibrariesNode.Add(new Gtk.Action(name + "Action", name));
-			d_uimanager.AddUi(d_importLibrariesMergeId, parentpath, name, name + "Action", UIManagerItemType.Menu, false);
-		}
-		
-		private void ScanImports(string dirname, string actionpath, Dictionary<string, string> libs)
-		{
-			if (!Directory.Exists(dirname))
-			{
-				return;
-			}
-			
-			string[] paths = Directory.GetDirectories(dirname);
-			
-			Array.Sort(paths);
-
-			foreach (string subdir in paths)
-			{
-				ScanImports(subdir, actionpath + "/" + System.IO.Path.GetFileName(subdir), libs);
-			}
-			
-			paths = Directory.GetFiles(dirname);
-			Array.Sort(paths);
-			
-			foreach (string filename in paths)
-			{
-				string name = System.IO.Path.GetFileNameWithoutExtension(filename);
-				string myaction = actionpath + "/" + name + "__File__";
-				
-				if (libs.ContainsKey(myaction))
-				{
-					continue;
-				}
-				
-				if (!libs.ContainsKey(actionpath))
-				{
-					// Create parents
-					CreateImportParents(actionpath, libs);
-				}
-				
-				string fullname = myaction.Replace("/", ".");
-				Gtk.Action action = new Gtk.Action(fullname + "Action", name, "Import " + filename, null);
-				
-				string thename = filename;
-				
-				action.Activated += delegate {
-					DoImport(thename, false);
-				};
-
-				d_importLibrariesNode.Add(action);
-				d_uimanager.AddUi(d_importLibrariesMergeId, actionpath, fullname, fullname + "Action", UIManagerItemType.Menuitem, false);
-				
-				libs[myaction] = filename;
-			}
-		}
-		
-		private void UpdateImportLibraries()
-		{
-			if (d_importLibrariesMergeId != 0)
-			{
-				d_uimanager.RemoveUi(d_importLibrariesMergeId);
-				d_uimanager.RemoveActionGroup(d_importLibrariesNode);
-			}
-			
-			d_importLibrariesNode = new ActionGroup("ImportLibrariesNode");			
-			d_importLibrariesMergeId = d_uimanager.NewMergeId();
-			d_uimanager.InsertActionGroup(d_importLibrariesNode, 0);
-
-			Dictionary<string, string > libs = new Dictionary<string, string>();
-			
-			libs["/ui/menubar/FileMenu/Import/ImportLibraries"] = "";
-			
-			foreach (string dirname in UniqueImportPaths())
-			{
-				ScanImports(dirname, "/ui/menubar/FileMenu/Import/ImportLibraries", libs);
-			}
 		}
 
 		private void OnRecentItemActivated(object sender, EventArgs e)
