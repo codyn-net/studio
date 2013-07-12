@@ -173,9 +173,19 @@ namespace Cdn.Studio.Wrappers
 		{
 			DisconnectWrapped();
 
+			if (d_object != null)
+			{
+				d_object.Data[WrapperDataKey] = null;
+			}
+
 			var oldobj = d_object;
 
 			d_object = obj;
+
+			if (d_object != null)
+			{
+				d_object.Data[WrapperDataKey] = this;
+			}
 
 			ConnectWrapped();
 			WrappedObjectChanged(this, oldobj);
