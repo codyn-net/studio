@@ -7,7 +7,8 @@ using Biorob.Math;
 namespace Cdn.Studio.Dialogs
 {
 	[Binding(Gdk.Key.R, Gdk.ModifierType.ControlMask, "ToggleAutoAxis"),
-	 Binding(Gdk.Key.L, Gdk.ModifierType.ControlMask, "ToggleLinkAxis")]
+	 Binding(Gdk.Key.L, Gdk.ModifierType.ControlMask, "ToggleLinkAxis"),
+	 Binding(Gdk.Key.F9, 0, "ToggleSearchbar")]
 	public class Plotting : Gtk.Window
 	{
 		public class Series : IDisposable
@@ -409,10 +410,12 @@ namespace Cdn.Studio.Dialogs
 		private bool d_configured;
 		private Widgets.Table d_content;
 		private Widgets.WrappersTree d_tree;
+		private Widget d_sidebarWidget;
 		private List<Graph> d_graphs;
 		Gtk.UIManager d_uimanager;
 		private bool d_autoaxis;
 		private bool d_linkaxis;
+		private bool d_searchSidebar;
 		private bool d_ignoreAxisChange;
 		private ActionGroup d_actiongroup;
 		private Expander d_expanderTime;
@@ -444,6 +447,7 @@ namespace Cdn.Studio.Dialogs
 			d_network = network;
 			d_autoaxis = true;
 			d_linkaxis = true;
+			d_searchSidebar = true;
 			
 			d_vectors = new List<Series>();
 
@@ -699,6 +703,8 @@ namespace Cdn.Studio.Dialogs
 			
 			vboxExpand.PackStart(phase);
 			d_phaseWidget = phase;
+
+			d_sidebarWidget = vboxExpand;
 
 			d_hpaned.Pack2(vboxExpand, false, false);
 			
@@ -1436,16 +1442,17 @@ namespace Cdn.Studio.Dialogs
 		{
 			d_uimanager = new UIManager();
 			d_actiongroup = new ActionGroup("NormalActions");
-			
+
 			d_actiongroup.Add(new ToggleActionEntry[] {
 				new ToggleActionEntry("ActionAutoAxis", Gtk.Stock.ZoomFit, "Auto Axis", "<Control>r", "Automatically scale axes to fit data", OnAutoAxisToggled, d_autoaxis),
-				new ToggleActionEntry("ActionLinkAxis", Cdn.Studio.Stock.Chain, "Link Axis", "<Control>l", "Automatically scale all axes to the same range", OnLinkAxisToggled, d_linkaxis)
+				new ToggleActionEntry("ActionLinkAxis", Cdn.Studio.Stock.Chain, "Link Axis", "<Control>l", "Automatically scale all axes to the same range", OnLinkAxisToggled, d_linkaxis),
+				new ToggleActionEntry("ActionSearch", Gtk.Stock.Find, "Search", "F9", "Toggle search sidebar", OnToggleSearchSidebar, d_searchSidebar)
 			});
 			
 			d_actiongroup.Add(new ActionEntry[] {
 				new ActionEntry("ActionReset", Gtk.Stock.RevertToSaved, "Reset", null, "Reset Settings", OnResetActivated)
 			});
-			
+
 			d_uimanager.InsertActionGroup(d_actiongroup, 0);
 			d_uimanager.AddUiFromResource("plotting-ui.xml");
 
@@ -1615,6 +1622,13 @@ namespace Cdn.Studio.Dialogs
 				}
 			});
 		}
+
+		private void OnToggleSearchSidebar(object sender, EventArgs args)
+		{
+			d_searchSidebar = ((ToggleAction)sender).Active;
+
+			d_sidebarWidget.Visible = d_searchSidebar;
+		}
 		
 		private void OnAutoAxisToggled(object sender, EventArgs args)
 		{
@@ -1669,6 +1683,13 @@ namespace Cdn.Studio.Dialogs
 			}
 			
 			UpdateAutoScaling();
+		}
+
+		private void ToggleSearchbar()
+		{
+			ToggleAction action = d_actiongroup.GetAction("ActionSearch") as ToggleAction;
+			
+			action.Active = !action.Active;
 		}
 		
 		private void ToggleLinkAxis()
