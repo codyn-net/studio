@@ -117,7 +117,7 @@ namespace Cdn.Studio.Widgets.Editors
 			{
 				get
 				{
-					return d_variable != null ? d_variable.Integrated : false;
+					return d_variable != null ? d_variable.HasFlag(VariableFlags.Integrated) : false;
 				}
 			}
 			

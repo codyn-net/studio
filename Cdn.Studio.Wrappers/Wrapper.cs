@@ -6,18 +6,21 @@ namespace Cdn.Studio.Wrappers
 {
 	public class Wrapper : Graphical, IDisposable
 	{
-		public delegate void VariableHandler(Wrapper source,Cdn.Variable variable);
-
-		public delegate void TemplateHandler(Wrapper source,Wrapper template);
+		public delegate void VariableHandler(Wrapper source, Cdn.Variable variable);
+		public delegate void TemplateHandler(Wrapper source, Wrapper template);
+		public delegate void WrappedChanged(Wrapper source, Cdn.Object oldwrapped);
 
 		protected Cdn.Object d_object;
 		protected List<Wrappers.Edge> d_links;
+		protected AnnotationInfo d_annotationInfo;
+		protected List<Cdn.Object> d_annotationRelative;
 		
 		public event VariableHandler VariableAdded = delegate {};
 		public event VariableHandler VariableRemoved = delegate {};
 		public event VariableHandler VariableChanged = delegate {};
 		public event TemplateHandler TemplateApplied = delegate {};
 		public event TemplateHandler TemplateUnapplied = delegate {};
+		public event WrappedChanged WrappedObjectChanged = delegate {};
 		
 		public static string WrapperDataKey = "CdnStudioWrapperDataKey";
 		private static Dictionary<Type, ConstructorInfo> s_typeMapping;
@@ -69,7 +72,7 @@ namespace Cdn.Studio.Wrappers
 							
 							if (info != null)
 							{
-								s_typeMapping[child] = info;
+								s_typeMapping[type] = info;
 								break;
 							}
 							else
@@ -169,8 +172,23 @@ namespace Cdn.Studio.Wrappers
 		protected void SetWrappedObject(Cdn.Object obj)
 		{
 			DisconnectWrapped();
+
+			if (d_object != null)
+			{
+				d_object.Data[WrapperDataKey] = null;
+			}
+
+			var oldobj = d_object;
+
 			d_object = obj;
+
+			if (d_object != null)
+			{
+				d_object.Data[WrapperDataKey] = this;
+			}
+
 			ConnectWrapped();
+			WrappedObjectChanged(this, oldobj);
 		}
 		
 		public Wrapper() : this(null)
@@ -281,9 +299,41 @@ namespace Cdn.Studio.Wrappers
 		{
 			DoRequestRedraw();
 		}
+
+		private void ExtractAnnotationInfo()
+		{
+			var annotatable = d_object as Cdn.Annotatable;
+
+			if (annotatable != null && !String.IsNullOrEmpty(annotatable.Annotation))
+			{
+				d_annotationInfo = annotatable.ParseAnnotation();
+
+				if (!String.IsNullOrEmpty(d_annotationInfo.RelativeTo))
+				{
+					var node = d_object as Cdn.Node;
+
+					if (node == null)
+					{
+						node = d_object.Parent;
+					}
+
+					if (node != null)
+					{
+						d_annotationRelative = new List<Cdn.Object>(node.FindObjects(d_annotationInfo.RelativeTo));
+					}
+				}
+			}
+			else
+			{
+				d_annotationInfo = null;
+				d_annotationRelative = new List<Cdn.Object>();
+			}
+		}
 		
 		private void NotifyAnnotationHandler(object source, GLib.NotifyArgs args)
 		{
+			ExtractAnnotationInfo();
+
 			DoRequestRedraw();
 		}
 		
@@ -552,59 +602,152 @@ namespace Cdn.Studio.Wrappers
 		
 		public virtual void AnnotationHotspot(Cairo.Context context, double width, double height, int size, out double x, out double y)
 		{
-			x = 2; //width - size - 2;
-			y = 2;
+			x = 0;
+			y = 0;
 		}
-		
-		public virtual bool CanDrawAnnotation(Cairo.Context context)
-		{
-			double w = Allocation.Width;
-			double h = Allocation.Height;
-			
-			SizeOnCanvas(context, ref w, ref h);
-			
-			return w > 2 * RenderAnnotationAtsize && h > 2 * RenderAnnotationAtsize;
-		}
-		
-		protected virtual void DrawAnnotation(Cairo.Context context, Cdn.Annotatable annotatable)
-		{
-			if (!CanDrawAnnotation(context))
-			{
-				return;
-			}
 
-			double w = Allocation.Width;
-			double h = Allocation.Height;
-			
-			SizeOnCanvas(context, ref w, ref h);
-			
-			int size = RenderAnnotationAtsize;
-			double x;
-			double y;
+		public virtual void DrawAnnotation(Cairo.Context context, Cdn.AnnotationInfo info)
+		{
+			var uw = context.LineWidth;
+			var alloc = AnnotationAllocation(1 / uw, context);
 
-			Cairo.Surface surf = Stock.Surface(context, Gtk.Stock.DialogInfo, size);
-			
+			alloc.Offset(-Allocation.X / uw, -Allocation.Y / uw);
+
 			context.Save();
-			
-			AnnotationHotspot(context, w, h, size, out x, out y);
-			
-			context.Scale(1 / context.Matrix.Xx, 1 / context.Matrix.Yy);
+			context.Scale(context.LineWidth, context.LineWidth);
+			context.LineWidth = 1;
 
-			context.SetSourceSurface(surf, (int)x, (int)y);
-			context.Paint();
-			
+			context.Rectangle(alloc.X, alloc.Y, alloc.Width, alloc.Height);
+			context.SetSourceRGBA(1, 1, 1, 0.75);
+			context.Fill();
+
+			context.Rectangle(alloc.X + 2, alloc.Y + 2, alloc.Width - 4, alloc.Height - 4);
+			context.SetSourceRGB(0.95, 0.95, 0.95);
+			context.SetDash(new double[] {5, 5}, 0);
+			context.Stroke();
+
+			Pango.Layout layout = Pango.CairoHelper.CreateLayout(context);
+			Pango.CairoHelper.UpdateLayout(context, layout);
+			layout.FontDescription = Settings.Font;
+
+			layout.SetText(info.Text.Trim());
+
+			context.MoveTo(alloc.X + 2, alloc.Y + 2);
+			context.SetSourceRGB(0.5, 0.5, 0.5);
+			Pango.CairoHelper.ShowLayout(context, layout);
+
 			context.Restore();
 		}
-		
+
 		public override void Draw(Cairo.Context context)
 		{
 			base.Draw(context);
 			
-			Cdn.Annotatable annotatable = WrappedObject as Cdn.Annotatable;
-			
-			if (annotatable != null && !String.IsNullOrEmpty(annotatable.Annotation))
+			if (d_annotationInfo != null)
 			{
-				DrawAnnotation(context, annotatable);
+				DrawAnnotation(context, d_annotationInfo);
+			}
+		}
+
+		private Allocation AnnotationAllocation(double scale, Cairo.Context graphics)
+		{
+			if (d_annotationInfo == null)
+			{
+				return null;
+			}
+
+			double x = 0;
+			double y = 0;
+
+			if (d_annotationRelative != null && d_annotationRelative.Count > 0)
+			{
+				foreach (var wrap in d_annotationRelative)
+				{
+					int lx;
+					int ly;
+
+					wrap.GetLocation(out lx, out ly);
+
+					x += lx;
+					y += ly;
+				}
+
+				x /= d_annotationRelative.Count;
+				y /= d_annotationRelative.Count;
+			}
+			else
+			{
+				x = Allocation.X + Allocation.Width / 2;
+				y = Allocation.Y + Allocation.Height / 2;
+			}
+
+			double ax;
+			double ay;
+
+			if (!d_annotationInfo.GetLocation(out ax, out ay))
+			{
+				ax = 0;
+				ay = -0.5;
+			}
+
+			x += ax;
+			y += ay;
+
+			int w;
+			int h;
+
+			MeasureString(graphics, d_annotationInfo.Text.Trim(), out w, out h);
+
+			Allocation ret = new Cdn.Studio.Allocation(x, y, w / scale, h / scale);
+
+			var anchor = d_annotationInfo.Anchor;
+
+			switch (anchor)
+			{
+			case Cdn.AnnotationAnchor.North:
+			case AnnotationAnchor.NorthWest:
+			case AnnotationAnchor.NorthEast:
+				ret.Y -= ret.Height;
+				break;
+			case AnnotationAnchor.West:
+			case AnnotationAnchor.East:
+			case AnnotationAnchor.Center:
+				ret.Y -= ret.Height * 0.5;
+				break;
+			}
+
+			switch (anchor)
+			{
+			case AnnotationAnchor.NorthWest:
+			case AnnotationAnchor.SouthWest:
+			case AnnotationAnchor.West:
+				ret.X += Allocation.Width * 0.5;
+				break;
+			case AnnotationAnchor.South:
+			case AnnotationAnchor.North:
+			case AnnotationAnchor.Center:
+				ret.X -= Allocation.Width * 0.5 + ret.Width;
+				break;
+			}
+
+			ret.Scale(scale);
+			ret.GrowBorder(4);
+
+			return ret;
+		}
+
+		public override Allocation Extents(double scale, Cairo.Context graphics)
+		{
+			var ext = base.Extents(scale, graphics);
+			var anext = AnnotationAllocation(scale, graphics);
+
+			if (anext != null)
+			{
+				return ext.Extend(anext);
+			}
+			else
+			{
+				return ext;
 			}
 		}
 	}

@@ -43,10 +43,8 @@ namespace Cdn.Studio.Widgets
 		private WindowGroup d_windowGroup;
 		private Wrappers.Wrapper d_templatePopupObject;
 		private Wrappers.Wrapper d_templatePopupTemplate;
-		private uint d_importLibrariesMergeId;
-		private ActionGroup d_importLibrariesNode;
 		private uint d_idleSelectionChanged;
-		private uint d_updateImportLibrariesTimeout;
+		private CheckButton d_reseedButton;
 
 		public Window() : base (Gtk.WindowType.Toplevel)
 		{
@@ -350,7 +348,7 @@ namespace Cdn.Studio.Widgets
 			d_simulateButtons = new HBox(false, 3);
 			d_simulateButtons.BorderWidth = 3;
 			BuildButtonBar(d_simulateButtons);
-			
+
 			d_vboxContents.PackStart(d_simulateButtons, false, false, 0);
 			
 			d_statusbar = new Statusbar();
@@ -377,8 +375,6 @@ namespace Cdn.Studio.Widgets
 			d_grid.Status += DoStatus;
 			
 			d_pathbar.Activated += HandlePathbarActivated;
-			
-			BuildImportLibraries();
 		}
 
 		private void HandleUIManagerConnectProxy(object o, ConnectProxyArgs args)
@@ -399,168 +395,6 @@ namespace Cdn.Studio.Widgets
 			item.Deselected += delegate {
 				StatusMessage("", false);
 			};
-		}
-		
-		private List<string> UniqueImportPaths()
-		{
-			List<string > ret = new List<string>();
-			
-			foreach (string path in Cdn.Import.SearchPath)
-			{
-				string p = System.IO.Path.GetFullPath(path);
-
-				if (!ret.Contains(p))
-				{
-					ret.Add(p);
-				}
-			}
-			
-			return ret;
-		}
-		
-		private void BuildImportLibraries()
-		{
-			UpdateImportLibraries();
-			
-			// Add monitors for all root libs
-			foreach (string path in UniqueImportPaths())
-			{
-				if (!Directory.Exists(path))
-				{
-					continue;
-				}
-
-				FileSystemWatcher watcher = new FileSystemWatcher(path);
-				
-				watcher.IncludeSubdirectories = true;
-				watcher.EnableRaisingEvents = true;
-
-				watcher.Renamed += delegate(object sender, RenamedEventArgs e) {
-					UpdateImportLibrariesDelayed();
-				};
-				
-				watcher.Created += delegate(object sender, FileSystemEventArgs e) {
-					UpdateImportLibrariesDelayed();
-				};
-				
-				watcher.Deleted += delegate(object sender, FileSystemEventArgs e) {
-					UpdateImportLibrariesDelayed();
-				};
-				
-				watcher.Changed += delegate(object sender, FileSystemEventArgs e) {
-					UpdateImportLibrariesDelayed();
-				};
-			}
-		}
-		
-		private void UpdateImportLibrariesDelayed()
-		{
-			if (d_updateImportLibrariesTimeout != 0)
-			{
-				GLib.Source.Remove(d_updateImportLibrariesTimeout);
-			}
-
-			d_updateImportLibrariesTimeout = GLib.Timeout.Add(1000, delegate {
-				UpdateImportLibraries();
-				return false;
-			});
-		}
-		
-		private void CreateImportParents(string actionpath, Dictionary<string, string> libs)
-		{
-			if (libs.ContainsKey(actionpath))
-			{
-				return;
-			}
-			
-			int pos = actionpath.LastIndexOf('/');
-			
-			if (pos < 0)
-			{
-				return;
-			}
-			
-			string parentpath = actionpath.Substring(0, pos);
-			string name = actionpath.Substring(pos + 1).Replace("/", ".");
-			
-			CreateImportParents(parentpath, libs);
-			libs[actionpath] = "";
-			
-			d_importLibrariesNode.Add(new Gtk.Action(name + "Action", name));
-			d_uimanager.AddUi(d_importLibrariesMergeId, parentpath, name, name + "Action", UIManagerItemType.Menu, false);
-		}
-		
-		private void ScanImports(string dirname, string actionpath, Dictionary<string, string> libs)
-		{
-			if (!Directory.Exists(dirname))
-			{
-				return;
-			}
-			
-			string[] paths = Directory.GetDirectories(dirname);
-			
-			Array.Sort(paths);
-
-			foreach (string subdir in paths)
-			{
-				ScanImports(subdir, actionpath + "/" + System.IO.Path.GetFileName(subdir), libs);
-			}
-			
-			paths = Directory.GetFiles(dirname);
-			Array.Sort(paths);
-			
-			foreach (string filename in paths)
-			{
-				string name = System.IO.Path.GetFileNameWithoutExtension(filename);
-				string myaction = actionpath + "/" + name + "__File__";
-				
-				if (libs.ContainsKey(myaction))
-				{
-					continue;
-				}
-				
-				if (!libs.ContainsKey(actionpath))
-				{
-					// Create parents
-					CreateImportParents(actionpath, libs);
-				}
-				
-				string fullname = myaction.Replace("/", ".");
-				Gtk.Action action = new Gtk.Action(fullname + "Action", name, "Import " + filename, null);
-				
-				string thename = filename;
-				
-				action.Activated += delegate {
-					DoImport(thename, false);
-				};
-
-				d_importLibrariesNode.Add(action);
-				d_uimanager.AddUi(d_importLibrariesMergeId, actionpath, fullname, fullname + "Action", UIManagerItemType.Menuitem, false);
-				
-				libs[myaction] = filename;
-			}
-		}
-		
-		private void UpdateImportLibraries()
-		{
-			if (d_importLibrariesMergeId != 0)
-			{
-				d_uimanager.RemoveUi(d_importLibrariesMergeId);
-				d_uimanager.RemoveActionGroup(d_importLibrariesNode);
-			}
-			
-			d_importLibrariesNode = new ActionGroup("ImportLibrariesNode");			
-			d_importLibrariesMergeId = d_uimanager.NewMergeId();
-			d_uimanager.InsertActionGroup(d_importLibrariesNode, 0);
-
-			Dictionary<string, string > libs = new Dictionary<string, string>();
-			
-			libs["/ui/menubar/FileMenu/Import/ImportLibraries"] = "";
-			
-			foreach (string dirname in UniqueImportPaths())
-			{
-				ScanImports(dirname, "/ui/menubar/FileMenu/Import/ImportLibraries", libs);
-			}
 		}
 
 		private void OnRecentItemActivated(object sender, EventArgs e)
@@ -702,6 +536,13 @@ namespace Cdn.Studio.Widgets
 			ComboBox combo = CreateIntegrators();
 			combo.Show();
 			hbox.PackStart(combo, false, false, 0);
+
+			d_reseedButton = new CheckButton("Reseed random number generator");
+			d_reseedButton.Toggled += (sender, e) => {
+				d_simulation.Reseed = d_reseedButton.Active;
+			};
+
+			hbox.PackStart(d_reseedButton);
 		
 			/*but = new Button();
 			but.Image = new Image(Gtk.Stock.MediaNext, IconSize.Button);
@@ -1027,6 +868,13 @@ namespace Cdn.Studio.Widgets
 			{
 				Wrappers.Wrapper[] selection = d_grid.Selection;
 				
+				if (selection.Length == 0)
+				{
+					selection = new Wrappers.Wrapper[] {
+						d_grid.ActiveNode
+					};
+				}
+				
 				foreach (string v in CommonVariables(selection))
 				{
 					string name = "Monitor" + v;
@@ -1323,6 +1171,8 @@ namespace Cdn.Studio.Widgets
 			
 			d_periodEntry.Text = s.SimulatePeriod;
 			d_simulation.Range = new SimulationRange(d_periodEntry.Text);
+
+			d_reseedButton.Active = s.ReseedRng;
 			
 			// Restore root
 			if (!String.IsNullOrEmpty(s.ActiveRoot))
@@ -1347,9 +1197,13 @@ namespace Cdn.Studio.Widgets
 			// Restore monitors
 			Serialization.Project.SettingsType.MonitorsType mons = s.Monitors;
 			
-			if (mons.Columns > 0 && mons.Rows > 0)
+			if (mons.Shown)
 			{
 				EnsureMonitor();
+
+				d_plotting.AutoAxis = s.Monitors.AutoAxis;
+				d_plotting.LinkAxis = s.Monitors.LinkAxis;
+				d_plotting.ShowSearchbar = s.Monitors.ShowSearchbar;
 				
 				if (mons.Allocation != null)
 				{
@@ -1536,6 +1390,7 @@ namespace Cdn.Studio.Widgets
 			s.PanePosition = PanePosition;
 			s.SideBarPanePosition = SideBarPanePosition;
 			s.SimulatePeriod = d_periodEntry.Text;
+			s.ReseedRng = d_reseedButton.Active;
 			
 			s.Allocation = WindowAllocation(this);
 			
@@ -1560,10 +1415,18 @@ namespace Cdn.Studio.Widgets
 			s.Monitors.Graphs.Clear();
 			s.Monitors.Rows = 0;
 			s.Monitors.Columns = 0;
+			s.Monitors.Shown = d_plotting != null;
+			s.Monitors.LinkAxis = true;
+			s.Monitors.AutoAxis = true;
+			s.Monitors.ShowSearchbar = true;
 			
 			// Save monitor state
 			if (d_plotting != null)
 			{
+				s.Monitors.LinkAxis = d_plotting.LinkAxis;
+				s.Monitors.AutoAxis = d_plotting.AutoAxis;
+				s.Monitors.ShowSearchbar = d_plotting.ShowSearchbar;
+
 				foreach (Dialogs.Plotting.Graph graph in d_plotting.Graphs)
 				{
 					Serialization.Project.Monitor mon = new Serialization.Project.Monitor();

@@ -63,7 +63,9 @@ CLEANFILES += $(ASSEMBLY) $(ASSEMBLY).mdb $(BINARIES) $(build_resx_resources) $(
 DISTCLEANFILES = $(GENERATED_FILES) $(pc_files) $(BUILD_DIR)/*
 
 asmdir = $(pkglibdir)
-asm_SCRIPTS = $(ASSEMBLY)
+asm_SCRIPTS = $(ASSEMBLY) cdn-studio.exe.config
+
+EXTRA_DIST += cdn-studio.exe.config
 
 bin_SCRIPTS = $(BINARIES)
 

@@ -14,9 +14,13 @@ namespace Cdn.Studio
 		
 		private bool d_running;
 		private uint d_idleRun;
+
+		private bool d_reseed;
 		
-		public event SteppedHandler OnStepped {
-			add {
+		public event SteppedHandler OnStepped
+		{
+			add
+			{
 				OnSteppedProxy += value;
 				
 				if (OnSteppedProxy.GetInvocationList().Length == 1 && d_integrator != null)
@@ -24,7 +28,8 @@ namespace Cdn.Studio
 					d_integrator.Stepped += HandleIntegratorStepped;
 				}
 			}
-			remove {
+			remove
+			{
 				OnSteppedProxy -= value;
 				
 				if (OnSteppedProxy.GetInvocationList().Length == 0 && d_integrator != null)
@@ -47,6 +52,23 @@ namespace Cdn.Studio
 			};
 
 			d_network.WrappedObject.AddNotification("integrator", HandleNotifyIntegrator);
+
+			d_network.WrappedObjectChanged += (source, oldwrapped) => {
+				if (oldwrapped != null)
+				{
+					oldwrapped.RemoveNotification("integrator", HandleNotifyIntegrator);
+				}
+
+				d_network.WrappedObject.AddNotification("integrator", HandleNotifyIntegrator);
+
+				UpdateIntegrator(d_network.Integrator);
+			};
+		}
+
+		public bool Reseed
+		{
+			get { return d_reseed; }
+			set { d_reseed = value; }
 		}
 		
 		public SimulationRange Range
@@ -127,6 +149,11 @@ namespace Cdn.Studio
 		
 		public void RunPeriod(double from, double timestep, double to)
 		{
+			if (d_reseed)
+			{
+				d_network.WrappedObject.RandomSeed = (uint)DateTime.Now.TimeOfDay.TotalMilliseconds;
+			}
+
 			d_network.Reset();
 
 			try

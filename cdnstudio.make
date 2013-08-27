@@ -5,21 +5,21 @@
 if ENABLE_DEBUG
 ASSEMBLY_COMPILER_COMMAND = $(CMCS)
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:3 -optimize+ -debug "-define:DEBUG"
-ASSEMBLY = bin/Debug/cdnstudio.exe
+ASSEMBLY = bin/Debug/cdn-studio.exe
 ASSEMBLY_MDB = $(ASSEMBLY).mdb
 COMPILE_TARGET = exe
 PROJECT_REFERENCES =
 BUILD_DIR = bin/Debug
 
-CDNSTUDIO_EXE_MDB_SOURCE=bin/Debug/cdnstudio.exe.mdb
-CDNSTUDIO_EXE_MDB=$(BUILD_DIR)/cdnstudio.exe.mdb
+CDNSTUDIO_EXE_MDB_SOURCE=bin/Debug/cdn-studio.exe.mdb
+CDNSTUDIO_EXE_MDB=$(BUILD_DIR)/cdn-studio.exe.mdb
 
 endif
 
 if ENABLE_RELEASE
 ASSEMBLY_COMPILER_COMMAND = $(CMCS)
 ASSEMBLY_COMPILER_FLAGS =  -noconfig -codepage:utf8 -warn:4 -optimize+
-ASSEMBLY = bin/Release/cdnstudio.exe
+ASSEMBLY = bin/Release/cdn-studio.exe
 ASSEMBLY_MDB =
 COMPILE_TARGET = exe
 PROJECT_REFERENCES =
@@ -192,9 +192,13 @@ $(ASSEMBLY) $(ASSEMBLY_MDB): $(build_sources) $(build_resources) $(build_datafil
 install-data-hook:
 	for ASM in $(INSTALLED_ASSEMBLIES); do \
 		$(INSTALL) -c -m 0755 $$ASM $(DESTDIR)$(pkglibdir); \
+		! test -f $$ASM.mdb || $(INSTALL) -c -m 0755 $$ASM.mdb $(DESTDIR)$(pkglibdir); \
+		! test -f $$ASM.config || $(INSTALL) -c -m 0644 $$ASM.config $(DESTDIR)$(pkglibdir); \
 	done;
 
 uninstall-hook:
 	for ASM in $(INSTALLED_ASSEMBLIES); do \
 		rm -f $(DESTDIR)$(pkglibdir)/`basename $$ASM`; \
+		rm -f $(DESTDIR)$(pkglibdir)/`basename $$ASM`.mdb; \
+		rm -f $(DESTDIR)$(pkglibdir)/`basename $$ASM`.config; \
 	done;

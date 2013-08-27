@@ -4,5 +4,7 @@
     <toolitem name="LinkAxis" action="ActionLinkAxis"/>
     <separator/>
     <toolitem name="Reset" action="ActionReset"/>
+	<separator/>
+	<toolitem name="Search" action="ActionSearch"/>
   </toolbar>
 </ui>

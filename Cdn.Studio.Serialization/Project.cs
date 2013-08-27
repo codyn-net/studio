@@ -77,18 +77,35 @@ namespace Cdn.Studio.Serialization
 			public string ActiveNode;
 			[XmlElement("active-root")]
 			public string ActiveRoot;
-			
+			[XmlElement("reseed-rng")]
+			public bool ReseedRng;
+
 			public struct MonitorsType
 			{
 				[XmlElement("graph"),
 				 XmlElement(typeof(Monitor))]
 				public List<Monitor> Graphs;
+
 				[XmlAttribute("rows")]
 				public int Rows;
+
 				[XmlAttribute("columns")]
 				public int Columns;
+
 				[XmlElement("allocation")]
 				public Allocation Allocation;
+
+				[XmlElement("shown")]
+				public bool Shown;
+
+				[XmlElement("show-searchbar")]
+				public bool ShowSearchbar;
+
+				[XmlElement("link-axis")]
+				public bool LinkAxis;
+
+				[XmlElement("auto-axis")]
+				public bool AutoAxis;
 			}
 			
 			[XmlElement("monitors")]
@@ -105,10 +122,15 @@ namespace Cdn.Studio.Serialization
 				SimulatePeriod = "0:0.005:10";
 				Allocation = new Allocation(-1, -1, 700, 600);
 				ActiveNode = "";
+				ReseedRng = false;
 
 				Monitors.Graphs = new List<Monitor>();
 				Monitors.Rows = 0;
 				Monitors.Columns = 0;
+				Monitors.Shown = false;
+				Monitors.AutoAxis = true;
+				Monitors.LinkAxis = true;
+				Monitors.ShowSearchbar = true;
 			}
 		}
 		
@@ -120,7 +142,7 @@ namespace Cdn.Studio.Serialization
 		private string d_externalPath;
 		private bool d_shared;
 		private bool d_cansave;
-		
+
 		public Project()
 		{
 			Clear();
@@ -133,70 +155,40 @@ namespace Cdn.Studio.Serialization
 		[XmlAttribute("path")]
 		public string ExternalPath
 		{
-			get
-			{	
-				return d_externalPath;
-			}
-			set
-			{
-				d_externalPath = value;
-			}
+			get { return d_externalPath; }
+			set { d_externalPath = value; }
 		}
 
 		public string ExternalProjectFile
 		{
-			get
-			{
-				return d_externalProjectFile;
-			}
+			get { return d_externalProjectFile; }
 		}
 		
 		public string Filename
 		{
-			get
-			{
-				return d_filename;
-			}
-			set
-			{
-				d_filename = null;
-			}
+			get { return d_filename; }
+			set { d_filename = null; }
 		}
 		
 		public bool SaveProjectExternally
 		{
-			get
-			{
-				return d_saveProjectExternally;
-			}
-			set
-			{
-				d_saveProjectExternally = value;
-			}
+			get { return d_saveProjectExternally; }
+			set { d_saveProjectExternally = value; }
 		}
 		
 		public bool CanSave
 		{
-			get
-			{
-				return d_cansave;
-			}
+			get { return d_cansave; }
 		}
 		
 		public Wrappers.Network Network
 		{
-			get
-			{
-				return d_network;
-			}
+			get { return d_network; }
 		}
 			
 		public SettingsType Settings
 		{
-			get
-			{
-				return d_settings;
-			}
+			get { return d_settings; }
 		}
 		
 		public void Clear()
@@ -242,7 +234,7 @@ namespace Cdn.Studio.Serialization
 			XmlAttribute shared = projectNode != null ? projectNode.Attributes["shared"] : null;
 			
 			d_shared = (shared != null && shared.InnerText.Trim() == "yes");
-			
+
 			if (projectNode != null)
 			{
 				/* Remove project node from doc, then load network from XML to prevent
@@ -253,8 +245,9 @@ namespace Cdn.Studio.Serialization
 				XmlWriter xmlWriter = XmlTextWriter.Create(swriter, WriterSettings());
 				
 				doc.Save(xmlWriter);
+
 				d_network.LoadFromString(swriter.ToString());
-				
+
 				d_saveProjectExternally = false;
 			}
 			else

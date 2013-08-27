@@ -1,7 +1,7 @@
 dnl Warning: This is an automatically generated file, do not edit!
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.54])
-AC_INIT(cdn-studio, 3.2)
+AC_INIT(cdn-studio, 3.4)
 AM_INIT_AUTOMAKE([1.11 tar-ustar dist-xz no-dist-gzip -Wno-portability])
 AM_MAINTAINER_MODE([enable])
 AC_CONFIG_MACRO_DIR([m4])
@@ -32,6 +32,7 @@ AC_ARG_ENABLE(debug,
 AM_CONDITIONAL(ENABLE_DEBUG, test x$enable_debug = xyes)
 if test "x$enable_debug" = "xyes" ; then
 	CONFIG_REQUESTED="yes"
+	RUN_DEBUG="--debug "
 fi
 AC_ARG_ENABLE(release,
 	AC_HELP_STRING([--enable-release],
@@ -42,17 +43,29 @@ if test "x$enable_release" = "xyes" ; then
 	CONFIG_REQUESTED="yes"
 fi
 if test -z "$CONFIG_REQUESTED" ; then
-	AM_CONDITIONAL(ENABLE_RELEASE, true)
-	enable_release=yes
+	AM_CONDITIONAL(ENABLE_DEBUG, true)
+	enable_debug=yes
+	RUN_DEBUG="--debug "
 fi
+
+AC_SUBST(RUN_DEBUG)
 
 dnl package checks, common for all configs
 PKG_CHECK_MODULES([GTK_SHARP_20], [gtk-sharp-2.0])
 PKG_CHECK_MODULES([GLIB_SHARP_20], [glib-sharp-2.0])
 
 dnl package checks, per config
-PKG_CHECK_MODULES([CDNNETWORK_SHARP], [codyn-sharp-3.0])
+AC_ARG_WITH([framework],
+             AS_HELP_STRING([--with-framework=path],[Enable build for OS X framework (default: no)]),
+              [with_framework=$withval],
+              [with_framework=no])
 
+if test "x$with_framework" != "xno"; then
+OLDPKG_CONFIG="$PKG_CONFIG"
+PKG_CONFIG="$PKG_CONFIG --define-variable=prefix=$with_framework"
+fi
+
+PKG_CHECK_MODULES([CDNNETWORK_SHARP], [codyn-sharp-3.0])
 PKG_CHECK_MODULES([BIOROB_MATH_SHARP], [biorob-math-sharp-1.0])
 PKG_CHECK_MODULES([PLOT_SHARP], [plot-sharp-1])
 
@@ -60,6 +73,10 @@ dnl find assembly paths for unstable installed assemblies that will be
 dnl copied into monoskel installation directory for local usage with the app
 UNSTABLE_INSTALL_ASSEMBLIES="codyn-sharp-3.0 biorob-math-sharp-1.0 plot-sharp-1"
 INSTALLED_ASSEMBLIES="`$PKG_CONFIG --variable=Libraries \"$UNSTABLE_INSTALL_ASSEMBLIES\"`"
+
+if test "x$with_framework" != "xno"; then
+PKG_CONFIG="$OLDPKG_CONFIG"
+fi
 
 AC_SUBST(INSTALLED_ASSEMBLIES)
 
