@@ -80,7 +80,7 @@ namespace Cdn.Studio
 			System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-US");
 			GLib.GType.Init();
 
-			Gtk.Application.Init("Codyn Studio", ref args);
+			Gtk.Application.Init("cdn-studio", ref args);
 
 			Studio.Application instance = new Studio.Application();
 			instance.Run(args);
