@@ -57,6 +57,4 @@ install-data-hook: update-icon-cache
 uninstall-local: uninstall-icons
 uninstall-hook: update-icon-cache
 
-EXTRA_DIST = 				\
-	$(public_icons) \
-	$(private_icons)
+EXTRA_DIST = $(private_icons)
