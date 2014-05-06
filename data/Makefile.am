@@ -1,6 +1,6 @@
 SUBDIRS = icons
 
 desktopdir = $(datadir)/applications
-desktop_DATA = cdnstudio.desktop
+desktop_DATA = cdn-studio.desktop
 
 EXTRA_DIST = $(desktop_DATA)

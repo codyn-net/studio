@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=cdn-studio
+GenericName=codyn studio
+Comment=codyn dynamical systems studio
+Exec=cdn-studio %U
+TryExec=cdn-studio
+Terminal=false
+Type=Application
+StartupNotify=true
+MimeType=text/x-cdn;
+Icon=cdn-studio
+Categories=GNOME;GTK;
+StartupWMClass=Cdn-studio

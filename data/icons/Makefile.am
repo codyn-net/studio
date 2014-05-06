@@ -5,32 +5,32 @@ public_icons_themes = \
 	LowContrastLargePrint
 
 public_icons = \
-	hicolor_apps_16x16_cdnstudio.png \
-	hicolor_apps_22x22_cdnstudio.png \
-	hicolor_apps_24x24_cdnstudio.png \
-	hicolor_apps_32x32_cdnstudio.png \
-	hicolor_apps_48x48_cdnstudio.png \
-	hicolor_apps_64x64_cdnstudio.png \
-	hicolor_apps_128x128_cdnstudio.png \
-	hicolor_apps_192x192_cdnstudio.png \
-	hicolor_apps_256x256_cdnstudio.png \
-	hicolor_apps_scalable_cdnstudio.svg
+	hicolor_apps_16x16_cdn-studio.png \
+	hicolor_apps_22x22_cdn-studio.png \
+	hicolor_apps_24x24_cdn-studio.png \
+	hicolor_apps_32x32_cdn-studio.png \
+	hicolor_apps_48x48_cdn-studio.png \
+	hicolor_apps_64x64_cdn-studio.png \
+	hicolor_apps_128x128_cdn-studio.png \
+	hicolor_apps_192x192_cdn-studio.png \
+	hicolor_apps_256x256_cdn-studio.png \
+	hicolor_apps_scalable_cdn-studio.svg
 
 private_icons = \
-	cdnstudio16x16.png	\
-	cdnstudio22x22.png	\
-	cdnstudio24x24.png	\
-	cdnstudio32x32.png	\
-	cdnstudio48x48.png	\
-	cdnstudio64x64.png	\
-	cdnstudio128x128.png \
-	cdnstudio192x192.png \
-	cdnstudio256x256.png \
-	cdnstudio.svg
+	cdn-studio16x16.png	\
+	cdn-studio22x22.png	\
+	cdn-studio24x24.png	\
+	cdn-studio32x32.png	\
+	cdn-studio48x48.png	\
+	cdn-studio64x64.png	\
+	cdn-studio128x128.png \
+	cdn-studio192x192.png \
+	cdn-studio256x256.png \
+	cdn-studio.svg
 
 gtk_update_icon_cache = gtk-update-icon-cache -f -t
 
-iconsdir = $(datadir)/cdnstudio/icons
+iconsdir = $(datadir)/cdn-studio/icons
 icons_DATA = $(private_icons)
 
 update-icon-cache:
