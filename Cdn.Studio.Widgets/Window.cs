@@ -52,7 +52,9 @@ namespace Cdn.Studio.Widgets
 
 			d_windowGroup = new WindowGroup();
 			d_windowGroup.AddWindow(this);
-			
+
+			IconName = "cdn-studio";
+
 			d_project.Network.WrappedObject.CompileError += OnCompileError;
 
 			d_project.Network.WrappedObject.AddNotification("integrator", OnIntegratorChanged);
