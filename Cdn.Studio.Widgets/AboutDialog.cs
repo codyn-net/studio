@@ -31,7 +31,7 @@ namespace Cdn.Studio.Widgets
 		{
 			Version = Config.Version;
 			Authors = new string[] {"Jesse van den Kieboom (jesse.vandenkieboom@epfl.ch)"};
-			Website = "http://www.codyn.net";
+			Website = "http://www.codyn.net/";
 			ProgramName = "codyn studio";
 			LogoIconName = "cdn-studio";
 		}
