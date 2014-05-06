@@ -1,36 +1,17 @@
 public_icons_themes = \
-	hicolor	\
-	HighContrastLargePrint \
-	HighContrastLargePrintInverse \
-	LowContrastLargePrint
+	hicolor
+
+sizes = 16 22 24 32 48 64 128 192 256
+
+private_icons = $(foreach i,$(sizes),cdn-studio$(i)x$(i).png) cdn-studio.svg
 
 public_icons = \
-	hicolor_apps_16x16_cdnstudio.png \
-	hicolor_apps_22x22_cdnstudio.png \
-	hicolor_apps_24x24_cdnstudio.png \
-	hicolor_apps_32x32_cdnstudio.png \
-	hicolor_apps_48x48_cdnstudio.png \
-	hicolor_apps_64x64_cdnstudio.png \
-	hicolor_apps_128x128_cdnstudio.png \
-	hicolor_apps_192x192_cdnstudio.png \
-	hicolor_apps_256x256_cdnstudio.png \
-	hicolor_apps_scalable_cdnstudio.svg
-
-private_icons = \
-	cdnstudio16x16.png	\
-	cdnstudio22x22.png	\
-	cdnstudio24x24.png	\
-	cdnstudio32x32.png	\
-	cdnstudio48x48.png	\
-	cdnstudio64x64.png	\
-	cdnstudio128x128.png \
-	cdnstudio192x192.png \
-	cdnstudio256x256.png \
-	cdnstudio.svg
+	$(foreach i,$(sizes),hicolor_apps_$(i)x$(i)_cdn-studio.png) \
+	hicolor_apps_scalable_cdn-studio.svg
 
 gtk_update_icon_cache = gtk-update-icon-cache -f -t
 
-iconsdir = $(datadir)/cdnstudio/icons
+iconsdir = $(datadir)/cdn-studio/icons
 icons_DATA = $(private_icons)
 
 update-icon-cache:
@@ -52,8 +33,13 @@ install-icons:
 		CONTEXT=`echo $$icon | cut -d_ -f2`; \
 		SIZE=`echo $$icon | cut -d_ -f3`; \
 		ICONFILE=`echo $$icon | cut -d_ -f4`; \
+		if [ $$SIZE == "scalable" ]; then \
+			SRCFILE=$$ICONFILE; \
+		else \
+			SRCFILE=$${ICONFILE%.*}$$SIZE.$${ICONFILE#*.}; \
+		fi; \
 		mkdir -p $(DESTDIR)$(datadir)/icons/$$THEME/$$SIZE/$$CONTEXT; \
-		$(INSTALL_DATA) $(srcdir)/$$icon $(DESTDIR)$(datadir)/icons/$$THEME/$$SIZE/$$CONTEXT/$$ICONFILE; \
+		$(INSTALL_DATA) $(srcdir)/$$SRCFILE $(DESTDIR)$(datadir)/icons/$$THEME/$$SIZE/$$CONTEXT/$$ICONFILE; \
 	done;
 
 uninstall-icons:
@@ -71,6 +57,4 @@ install-data-hook: update-icon-cache
 uninstall-local: uninstall-icons
 uninstall-hook: update-icon-cache
 
-EXTRA_DIST = 				\
-	$(public_icons) \
-	$(private_icons)
+EXTRA_DIST = $(private_icons)
