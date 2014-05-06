@@ -1,3 +1,10 @@
+cdn-studio (3.6.1-1) UNRELEASED; urgency=low
+
+  * New upstream release
+  * New icon and application data
+
+ -- Jesse van den Kieboom <jesse.vandenkieboom@epfl.ch>  Tue, 06 May 2014 12:58:53 +0200
+
 cdn-studio (3.6-1) UNRELEASED; urgency=low
 
   * New upstream release
