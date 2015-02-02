@@ -1,6 +1,12 @@
 cdn-studio (3.6.1-2) UNRELEASED; urgency=medium
 
   * Changes maintainer to A. Tuleu
+  * Removes duplicate Section: field
+  * Adds missing ${misc:Depends} 
+  * Sets source format to 3.0 (quilt)
+  * Adds missing debian/copyright
+  * Bumps Standards-Version to 3.9.5
+  * Adds missing debian watch
 
  -- Alexandre Tuleu <alexandre.tuleu.2005@polytechnique.org>  Mon, 02 Feb 2015 14:13:27 +0100
 

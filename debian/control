@@ -13,11 +13,11 @@ Build-Depends: debhelper (>= 7),
                libmono-cairo4.0-cil
 Standards-Version: 3.8.0
 Section: editors
-Homepage: http://birg.epfl.ch
+Homepage: http://codyn.net
 
 Package: cdn-studio
-Section: editors
 Architecture: any
-Depends: gtk-sharp2, libmono-cairo4.0-cil, libmono-system4.0-cil, libmono-corlib4.0-cil, libcodyn3 (>= 3.2)
+Depends: gtk-sharp2, libmono-cairo4.0-cil, libmono-system4.0-cil,
+ libmono-corlib4.0-cil, libcodyn3 (>= 3.2), ${misc:Depends}
 Description: codyn studio
  A designer studio for codyn
