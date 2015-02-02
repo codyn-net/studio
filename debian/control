@@ -1,6 +1,6 @@
 Source: cdn-studio
 Priority: extra
-Maintainer: Jesse van den Kieboom <jesse.vandenkieboom@epfl.ch>
+Maintainer: Alexandre Tuleu <alexandre.tuleu.2005@polytechnique.org>
 Build-Depends: debhelper (>= 7),
                autotools-dev,
                cdbs,
